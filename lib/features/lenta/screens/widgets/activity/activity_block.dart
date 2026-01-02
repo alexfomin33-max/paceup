@@ -404,51 +404,43 @@ class ActivityBlock extends ConsumerWidget {
                     // Открываем комментарии — поведение как было
                     onOpenComments: () {
                       // ────────────────────────────────────────────────────────────────
-                      // 🔹 Используем showModalBottomSheet с useRootNavigator для перекрытия нижнего меню
+                      // 🔹 Используем helper-функцию для плавного открытия bottom sheet
                       // ────────────────────────────────────────────────────────────────
-                      showModalBottomSheet(
+                      // ────────────────────────────────────────────────────────────────
+                      // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
+                      // ────────────────────────────────────────────────────────────────
+                      final lentaState = ref.read(
+                        lentaProvider(currentUserId),
+                      );
+                      final activityItem = lentaState.items.firstWhere(
+                        (a) => a.lentaId == updatedActivity.lentaId,
+                        orElse: () =>
+                            updatedActivity, // fallback на обновленную activity
+                      );
+
+                      showCommentsBottomSheet(
                         context: context,
-                        useRootNavigator: true,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (context) {
-                          // ────────────────────────────────────────────────────────────────
-                          // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
-                          // ────────────────────────────────────────────────────────────────
-                          final lentaState = ref.read(
+                        itemType: 'activity',
+                        itemId: activityItem.id,
+                        currentUserId: currentUserId,
+                        lentaId: activityItem.lentaId,
+                        // Оптимистичное обновление: увеличиваем счетчик на 1
+                        onCommentAdded: () {
+                          // Получаем актуальный счетчик из провайдера перед обновлением
+                          final currentState = ref.read(
                             lentaProvider(currentUserId),
                           );
-                          final activityItem = lentaState.items.firstWhere(
-                            (a) => a.lentaId == updatedActivity.lentaId,
-                            orElse: () =>
-                                updatedActivity, // fallback на обновленную activity
+                          final latestActivity = currentState.items.firstWhere(
+                            (a) => a.lentaId == activityItem.lentaId,
+                            orElse: () => activityItem, // fallback
                           );
 
-                          return CommentsBottomSheet(
-                            itemType: 'activity',
-                            itemId: activityItem.id,
-                            currentUserId: currentUserId,
-                            lentaId: activityItem.lentaId,
-                            // Оптимистичное обновление: увеличиваем счетчик на 1
-                            onCommentAdded: () {
-                              // Получаем актуальный счетчик из провайдера перед обновлением
-                              final currentState = ref.read(
-                                lentaProvider(currentUserId),
+                          ref
+                              .read(lentaProvider(currentUserId).notifier)
+                              .updateComments(
+                                activityItem.lentaId,
+                                latestActivity.comments + 1,
                               );
-                              final latestActivity = currentState.items
-                                  .firstWhere(
-                                    (a) => a.lentaId == activityItem.lentaId,
-                                    orElse: () => activityItem, // fallback
-                                  );
-
-                              ref
-                                  .read(lentaProvider(currentUserId).notifier)
-                                  .updateComments(
-                                    activityItem.lentaId,
-                                    latestActivity.comments + 1,
-                                  );
-                            },
-                          );
                         },
                       );
                     },

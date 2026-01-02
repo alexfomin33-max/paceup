@@ -165,7 +165,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
                 color: AppColors.getTextPrimaryColor(context),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             GestureDetector(
               onTap: widget.onOpenComments,
               child: const Icon(

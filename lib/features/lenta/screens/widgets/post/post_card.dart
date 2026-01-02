@@ -315,7 +315,7 @@ class _PostCardState extends ConsumerState<PostCard> {
           // ШАПКА: единый UserHeader (аватар, имя, дата, trailing-меню)
           // ──────────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: UserHeader(
               userName: post.userName,
               userAvatar: post.userAvatar,
@@ -440,16 +440,18 @@ class _PostCardState extends ConsumerState<PostCard> {
               onTap: _openPostDescription,
               behavior: HitTestBehavior.opaque,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
                 child: ExpandableText(text: post.postContent),
               ),
             ),
+
+          const SizedBox(height: 12),
 
           // ──────────────────────────────────────────────────────────────
           // НИЖНЯЯ ПАНЕЛЬ: лайк и комментарии
           // ──────────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.only(left: 14, right: 16),
             child: Row(
               children: [
                 // Лайк-бар: локальная анимация + API
@@ -480,6 +482,8 @@ class _PostCardState extends ConsumerState<PostCard> {
               ],
             ),
           ),
+
+          const SizedBox(height: 14),
         ],
       ),
     );

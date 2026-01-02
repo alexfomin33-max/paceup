@@ -15,6 +15,52 @@ void showSnack(BuildContext context, String message) {
   }
 }
 
+// ────────────────────────────────────────────────────────────────
+// 🔹 Helper-функция для плавного открытия bottom sheet с комментариями
+// ────────────────────────────────────────────────────────────────
+void showCommentsBottomSheet({
+  required BuildContext context,
+  required String itemType,
+  required int itemId,
+  required int currentUserId,
+  required int lentaId,
+  VoidCallback? onCommentAdded,
+}) {
+  // ────────────────────────────────────────────────────────────────
+  // ✅ ВАЖНО: используем штатный showModalBottomSheet
+  // Причина: кастомные Route на некоторых прошивках (например, MIUI)
+  // могут провоцировать ANR при открытии модальных окон.
+  // ────────────────────────────────────────────────────────────────
+  //
+  // ────────────────────────────────────────────────────────────────
+  // 🎞️ ПЛАВНОСТЬ: увеличиваем длительность анимации открытия/закрытия
+  // через transitionAnimationController (без изменения визуала).
+  // ────────────────────────────────────────────────────────────────
+  final overlay = Navigator.of(context, rootNavigator: true).overlay;
+  final AnimationController? transitionController = overlay == null
+      ? null
+      : AnimationController(
+          vsync: overlay,
+          duration: const Duration(milliseconds: 350),
+          reverseDuration: const Duration(milliseconds: 250),
+        );
+
+  showModalBottomSheet(
+    context: context,
+    useRootNavigator: true,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    transitionAnimationController: transitionController,
+    builder: (_) => CommentsBottomSheet(
+      itemType: itemType,
+      itemId: itemId,
+      currentUserId: currentUserId,
+      lentaId: lentaId,
+      onCommentAdded: onCommentAdded,
+    ),
+  );
+}
+
 bool isTruthy(dynamic v) {
   if (v == null) return false;
   if (v is bool) return v;

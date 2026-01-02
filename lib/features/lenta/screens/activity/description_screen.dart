@@ -813,49 +813,41 @@ class _ActivityDescriptionPageState
                       hideRightActions: a.points.isEmpty,
                       onOpenComments: () {
                         // ────────────────────────────────────────────────────────────────
-                        // 🔹 Открываем комментарии в bottom sheet
+                        // 🔹 Открываем комментарии в bottom sheet с плавной анимацией
                         // ────────────────────────────────────────────────────────────────
-                        showModalBottomSheet(
+                        final lentaState = ref.read(
+                          lentaProvider(widget.currentUserId),
+                        );
+                        final activityItem = lentaState.items.firstWhere(
+                          (item) => item.lentaId == a.lentaId,
+                          orElse: () => a,
+                        );
+
+                        showCommentsBottomSheet(
                           context: context,
-                          useRootNavigator: true,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) {
-                            final lentaState = ref.read(
+                          itemType: 'activity',
+                          itemId: activityItem.id,
+                          currentUserId: widget.currentUserId,
+                          lentaId: activityItem.lentaId,
+                          onCommentAdded: () {
+                            final currentState = ref.read(
                               lentaProvider(widget.currentUserId),
                             );
-                            final activityItem = lentaState.items.firstWhere(
-                              (item) => item.lentaId == a.lentaId,
-                              orElse: () => a,
+                            final latestActivity = currentState.items.firstWhere(
+                              (a) => a.lentaId == activityItem.lentaId,
+                              orElse: () => activityItem,
                             );
 
-                            return CommentsBottomSheet(
-                              itemType: 'activity',
-                              itemId: activityItem.id,
-                              currentUserId: widget.currentUserId,
-                              lentaId: activityItem.lentaId,
-                              onCommentAdded: () {
-                                final currentState = ref.read(
-                                  lentaProvider(widget.currentUserId),
+                            ref
+                                .read(
+                                  lentaProvider(
+                                    widget.currentUserId,
+                                  ).notifier,
+                                )
+                                .updateComments(
+                                  activityItem.lentaId,
+                                  latestActivity.comments + 1,
                                 );
-                                final latestActivity = currentState.items
-                                    .firstWhere(
-                                      (a) => a.lentaId == activityItem.lentaId,
-                                      orElse: () => activityItem,
-                                    );
-
-                                ref
-                                    .read(
-                                      lentaProvider(
-                                        widget.currentUserId,
-                                      ).notifier,
-                                    )
-                                    .updateComments(
-                                      activityItem.lentaId,
-                                      latestActivity.comments + 1,
-                                    );
-                              },
-                            );
                           },
                         );
                       },

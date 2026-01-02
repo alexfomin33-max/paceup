@@ -434,6 +434,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                               _PostLikeBar(
                                 post: _currentPost,
                                 currentUserId: widget.currentUserId,
+                                likedUsers: _likedUsers,
                                 onLikeChanged: (likes, isLiked) {
                                   // Обновляем состояние поста при изменении лайка
                                   setState(() {
@@ -1216,11 +1217,13 @@ class _CommentsList extends StatelessWidget {
 class _PostLikeBar extends ConsumerStatefulWidget {
   final Activity post;
   final int currentUserId;
+  final List<_LikeUser> likedUsers;
   final Function(int likes, bool isLiked)? onLikeChanged;
 
   const _PostLikeBar({
     required this.post,
     required this.currentUserId,
+    required this.likedUsers,
     this.onLikeChanged,
   });
 
@@ -1356,7 +1359,111 @@ class _PostLikeBarState extends ConsumerState<_PostLikeBar>
               color: AppColors.getTextPrimaryColor(context),
             ),
           ),
+          // ──────────────────────────────────────────────────────────────
+          // МИНИ-АВАТАРКИ ПОЛЬЗОВАТЕЛЕЙ, КОТОРЫЕ ПОСТАВИЛИ ЛАЙК
+          // ──────────────────────────────────────────────────────────────
+          if (widget.likedUsers.isNotEmpty) ...[
+            const SizedBox(width: 8),
+            _LikedUsersAvatars(users: widget.likedUsers),
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// МИНИ-АВАТАРКИ ПОЛЬЗОВАТЕЛЕЙ, КОТОРЫЕ ПОСТАВИЛИ ЛАЙК
+/// Показываем максимум 3 аватарки с наложением (аналогично участникам клуба)
+/// ─────────────────────────────────────────────────────────────────────────────
+class _LikedUsersAvatars extends StatelessWidget {
+  final List<_LikeUser> users;
+
+  const _LikedUsersAvatars({required this.users});
+
+  /// Формирование URL для аватара
+  String _getAvatarUrl(String avatar, int userId) {
+    if (avatar.isEmpty) {
+      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    }
+    if (avatar.startsWith('http')) return avatar;
+    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (users.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Берем первые 3 пользователя
+    final displayUsers = users.take(3).toList();
+    final avatarSize = 20.0; // Очень маленький размер
+    final overlap = 4.0; // Наложение между аватарками
+
+    return SizedBox(
+      height: avatarSize,
+      width: avatarSize + (displayUsers.length - 1) * (avatarSize - overlap),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: List.generate(displayUsers.length, (index) {
+          final user = displayUsers[index];
+          final avatarUrl = _getAvatarUrl(user.avatar, user.id);
+          return Positioned(
+            left: index * (avatarSize - overlap),
+            child: Container(
+              width: avatarSize,
+              height: avatarSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: AppColors.getSurfaceColor(context),
+                  width: 1.5,
+                ),
+              ),
+              child: ClipOval(
+                child: avatarUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: avatarUrl,
+                        width: avatarSize,
+                        height: avatarSize,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          width: avatarSize,
+                          height: avatarSize,
+                          color: AppColors.getBorderColor(context),
+                          child: Center(
+                            child: CupertinoActivityIndicator(
+                              radius: avatarSize * 0.2,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => Container(
+                          width: avatarSize,
+                          height: avatarSize,
+                          color: AppColors.getBorderColor(context),
+                          child: Icon(
+                            Icons.person,
+                            size: avatarSize * 0.6,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        width: avatarSize,
+                        height: avatarSize,
+                        color: AppColors.getBorderColor(context),
+                        child: Icon(
+                          Icons.person,
+                          size: avatarSize * 0.6,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
