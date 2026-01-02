@@ -217,6 +217,31 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
   }
 
+  /// Форматирует каденс, умножая значение на 2
+  /// Принимает строку из API (может быть число или "—")
+  /// Возвращает отформатированную строку с удвоенным значением
+  String _formatCadence(String? cadence) {
+    if (cadence == null || cadence.isEmpty || cadence == '—') {
+      return '—';
+    }
+
+    try {
+      // Парсим число из строки
+      final number = double.tryParse(cadence);
+      if (number != null) {
+        // Умножаем на 2 и округляем до целого
+        final doubledValue = (number * 2).round();
+        return doubledValue.toString();
+      }
+
+      // Если не удалось распарсить, возвращаем как есть
+      return cadence;
+    } catch (e) {
+      // В случае ошибки возвращаем исходное значение
+      return cadence;
+    }
+  }
+
   /// Получает метрики из загруженных данных
   List<_MetricRowData> _getMetrics() {
     if (_statsData == null) {
@@ -248,7 +273,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         _MetricRowData(
           Icons.directions_walk_outlined,
           'Средний каденс',
-          metrics.avgCadence ?? '—',
+          _formatCadence(metrics.avgCadence),
         ),
         _MetricRowData(
           Icons.terrain_outlined,
