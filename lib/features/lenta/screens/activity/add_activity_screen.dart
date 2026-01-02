@@ -1716,20 +1716,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       );
 
       if (response['success'] != true) {
-        if (kDebugMode) {
-          debugPrint('⚠️ Failed to upload GPX file: ${response['message']}');
-        }
         // Не бросаем исключение, так как это не критично для создания активности
-      } else {
-        if (kDebugMode) {
-          debugPrint('✅ GPX file uploaded and parsed successfully');
-        }
       }
     } catch (e) {
       // Ошибка загрузки GPX файла не критична
-      if (kDebugMode) {
-        debugPrint('⚠️ Failed to upload activity GPX file: $e');
-      }
     }
   }
 
@@ -1764,19 +1754,9 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
       if (response['success'] == true) {
         // Фотографии успешно загружены
-        if (kDebugMode) {
-          debugPrint('✅ Photos uploaded successfully');
-        }
-      } else {
-        if (kDebugMode) {
-          debugPrint('⚠️ Failed to upload photos: ${response['message']}');
-        }
       }
     } catch (e) {
       // Ошибка загрузки фотографий не критична
-      if (kDebugMode) {
-        debugPrint('⚠️ Failed to upload activity photos: $e');
-      }
     }
   }
 

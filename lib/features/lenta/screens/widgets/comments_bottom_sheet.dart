@@ -10,8 +10,6 @@ void showSnack(BuildContext context, String message) {
   final m = ScaffoldMessenger.maybeOf(context);
   if (m != null) {
     m.showSnackBar(SnackBar(content: Text(message)));
-  } else {
-    debugPrint('Snack: $message');
   }
 }
 

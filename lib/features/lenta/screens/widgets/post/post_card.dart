@@ -261,9 +261,6 @@ class _PostCardState extends ConsumerState<PostCard> {
         );
       }
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Ошибка при скрытии постов: $e');
-      }
       if (context.mounted) {
         await showCupertinoDialog<void>(
           context: context,

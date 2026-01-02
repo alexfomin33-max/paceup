@@ -2,7 +2,6 @@
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -777,17 +776,9 @@ Future<bool> _sendDeleteActivityRequest({
 
     // Дополнительная проверка по сообщению для надежности
     return success || message == 'Тренировка удалена';
-  } on ApiException catch (e) {
-    // Логируем ошибку API для отладки
-    if (kDebugMode) {
-      debugPrint('⚠️ Ошибка удаления активности: ${e.message}');
-    }
+  } on ApiException {
     return false;
-  } catch (e) {
-    // Логируем неожиданные ошибки
-    if (kDebugMode) {
-      debugPrint('⚠️ Неожиданная ошибка при удалении активности: $e');
-    }
+  } catch (_) {
     return false;
   }
 }
@@ -893,9 +884,6 @@ Future<void> _handleHideActivities({
       );
     }
   } catch (e) {
-    if (kDebugMode) {
-      debugPrint('Ошибка при скрытии тренировок: $e');
-    }
     if (context.mounted) {
       await showCupertinoDialog<void>(
         context: context,

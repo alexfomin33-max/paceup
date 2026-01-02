@@ -281,8 +281,6 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
         );
       }
     } catch (e) {
-      // Логируем ошибки для отладки
-      debugPrint('⚠️ Ошибка при отметке уведомлений как прочитанных: $e');
       // Пробрасываем ошибку наверх для обработки в UI
       rethrow;
     }
@@ -324,8 +322,7 @@ class NotificationsNotifier extends StateNotifier<NotificationsState> {
       // ✅ copyWith всегда создает новый объект, что гарантирует обновление подписчиков в Riverpod
       state = state.copyWith(unreadCount: unreadCount);
     } catch (e) {
-      // Логируем ошибки для отладки, но не прерываем работу
-      debugPrint('⚠️ Ошибка при обновлении счетчика уведомлений: $e');
+      // Игнорируем ошибки, но не прерываем работу
     }
   }
 }

@@ -1405,15 +1405,9 @@ class _ActivityDescriptionPageState
       final message = response['message']?.toString() ?? '';
 
       return success || message == 'Тренировка удалена';
-    } on ApiException catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️ Ошибка удаления активности: ${e.message}');
-      }
+    } on ApiException {
       return false;
-    } catch (e) {
-      if (kDebugMode) {
-        debugPrint('⚠️ Неожиданная ошибка при удалении активности: $e');
-      }
+    } catch (_) {
       return false;
     }
   }

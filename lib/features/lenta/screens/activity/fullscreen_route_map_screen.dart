@@ -167,9 +167,7 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
                   ),
                 );
               } catch (annotationError) {
-                debugPrint(
-                  '⚠️ Не удалось создать полилинию на карте: $annotationError',
-                );
+                // Игнорируем ошибки создания полилинии
               }
 
               // Подстраиваем камеру под границы с обработкой ошибок канала
@@ -198,11 +196,8 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
                 );
                 await mapboxMap.setCamera(camera);
               } catch (cameraError) {
-                // Если канал еще не готов, логируем и продолжаем работу
+                // Если канал еще не готов, продолжаем работу
                 // Карта отобразится с начальной позицией из cameraOptions
-                debugPrint(
-                  '⚠️ Не удалось настроить камеру карты: $cameraError',
-                );
               }
 
               // ────────────────────────────────────────────────────────────────

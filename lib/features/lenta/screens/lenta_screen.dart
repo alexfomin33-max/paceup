@@ -252,9 +252,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (Platform.isAndroid) {
         final hasHC = await _health.isHealthConnectAvailable();
         if (hasHC == false) {
-          if (kDebugMode) {
-            debugPrint('Health Connect недоступен');
-          }
           return false;
         }
       }
@@ -286,9 +283,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       return granted;
     } catch (e) {
-      if (kDebugMode) {
-        debugPrint('Ошибка при запросе разрешений Health: $e');
-      }
       return false;
     }
   }
@@ -306,11 +300,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       final hasPermissions = await _requestHealthPermissions();
 
       if (!hasPermissions) {
-        if (kDebugMode) {
-          debugPrint(
-            'Разрешения Health Connect не выданы, синхронизация пропущена',
-          );
-        }
       } else {
         final syncService = ref.read(healthSyncServiceProvider);
 
@@ -324,19 +313,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               .syncNewWorkouts(ref)
               .then((result) {
                 _isSyncingHealthData = false;
-                if (kDebugMode && result.importedCount > 0) {
-                  debugPrint(
-                    'Автоматически импортировано тренировок из Health Connect: ${result.importedCount}',
-                  );
-                }
               })
               .catchError((error) {
                 _isSyncingHealthData = false;
-                if (kDebugMode) {
-                  debugPrint(
-                    'Ошибка автоматической синхронизации Health Connect: $error',
-                  );
-                }
               });
         }
       }
@@ -345,9 +324,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _syncStravaActivities();
     } catch (e) {
       _isSyncingHealthData = false;
-      if (kDebugMode) {
-        debugPrint('Ошибка синхронизации: $e');
-      }
     }
   }
 
@@ -372,23 +348,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           .syncNewWorkouts(ref)
           .then((result) {
             _isSyncingStrava = false;
-            if (kDebugMode && result.importedCount > 0) {
-              debugPrint(
-                'Автоматически импортировано тренировок из Strava: ${result.importedCount}',
-              );
-            }
           })
           .catchError((error) {
             _isSyncingStrava = false;
-            if (kDebugMode) {
-              debugPrint('Ошибка автоматической синхронизации Strava: $error');
-            }
           });
     } catch (e) {
       _isSyncingStrava = false;
-      if (kDebugMode) {
-        debugPrint('Ошибка синхронизации Strava: $e');
-      }
     }
   }
 
@@ -404,9 +369,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _showOthers = prefs.getBool(_keyShowOthers) ?? true;
     } catch (e) {
       // Игнорируем ошибки, используем значения по умолчанию
-      if (kDebugMode) {
-        debugPrint('Ошибка загрузки фильтров: $e');
-      }
     }
   }
 
@@ -420,9 +382,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       await prefs.setBool(_keyShowOthers, _showOthers);
     } catch (e) {
       // Игнорируем ошибки сохранения
-      if (kDebugMode) {
-        debugPrint('Ошибка сохранения фильтров: $e');
-      }
     }
   }
 
@@ -446,10 +405,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // Сохраняем фильтры
     await _saveFilters();
-
-    if (kDebugMode) {
-      debugPrint('🔄 Перезагрузка ленты с фильтрами: trainings=$trainings, posts=$posts, own=$own, others=$others');
-    }
 
     // Перезагружаем данные с новыми фильтрами
     // Используем forceRefresh для полной перезагрузки с очисткой кэша
@@ -868,9 +823,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             })
             .catchError((error) {
               // Игнорируем ошибки prefetch (не критично)
-              if (kDebugMode) {
-                debugPrint('⚠️ Prefetch failed for index $i: $error');
-              }
             });
       }
     }

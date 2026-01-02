@@ -295,8 +295,6 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
       }
     } catch (e) {
       if (!mounted) return;
-      // Показываем ошибку через debugPrint (согласно правилам)
-      debugPrint('Ошибка отправки комментария: $e');
     } finally {
       if (mounted) setState(() => _sendingComment = false);
     }

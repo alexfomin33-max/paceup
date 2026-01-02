@@ -228,8 +228,6 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
           _isToggling = false;
         });
       }
-      // Логируем ошибку для отладки
-      debugPrint('❌ Ошибка подписки/отписки: $e');
     }
   }
 
