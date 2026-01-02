@@ -72,10 +72,22 @@ class LentaNotifier extends StateNotifier<LentaState> {
   Future<List<Activity>> _loadActivities({
     required int page,
     required int limit,
+    bool showTrainings = true,
+    bool showPosts = true,
+    bool showOwn = true,
+    bool showOthers = true,
   }) async {
     final response = await _api.post(
       '/activities_lenta.php',
-      body: {'userId': '$userId', 'limit': '$limit', 'page': '$page'},
+      body: {
+        'userId': '$userId',
+        'limit': '$limit',
+        'page': '$page',
+        'showTrainings': showTrainings ? '1' : '0',
+        'showPosts': showPosts ? '1' : '0',
+        'showOwn': showOwn ? '1' : '0',
+        'showOthers': showOthers ? '1' : '0',
+      },
       timeout: const Duration(seconds: 15),
     );
 
@@ -130,7 +142,12 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// 2. В фоне загружаем свежие данные с сервера (1-3 сек)
   /// 3. Плавно обновляем UI и сохраняем в кэш
   /// 4. Если ошибка сети — показываем кэш (работа без интернета)
-  Future<void> loadInitial() async {
+  Future<void> loadInitial({
+    bool showTrainings = true,
+    bool showPosts = true,
+    bool showOwn = true,
+    bool showOthers = true,
+  }) async {
     // 🔒 Защита от одновременного выполнения
     if (_isLoading) return;
 
@@ -141,7 +158,14 @@ class LentaNotifier extends StateNotifier<LentaState> {
       state = state.copyWith(isRefreshing: true, error: null);
 
       // ────────── ШАГ 2: Загружаем свежие данные ──────────
-      final freshItems = await _loadActivities(page: 1, limit: limit);
+      final freshItems = await _loadActivities(
+        page: 1,
+        limit: limit,
+        showTrainings: showTrainings,
+        showPosts: showPosts,
+        showOwn: showOwn,
+        showOthers: showOthers,
+      );
 
       // ✅ Дедупликация на случай, если API вернет дубликаты
       final deduplicatedItems = _deduplicateItems(freshItems);
@@ -181,7 +205,12 @@ class LentaNotifier extends StateNotifier<LentaState> {
   ///
   /// Обновляет данные с сервера и сохраняет в кэш
   /// ✅ Обновляет существующие элементы свежими данными (включая счетчики комментариев)
-  Future<void> refresh() async {
+  Future<void> refresh({
+    bool showTrainings = true,
+    bool showPosts = true,
+    bool showOwn = true,
+    bool showOthers = true,
+  }) async {
     // 🔒 Защита от одновременного выполнения
     if (_isLoading) return;
 
@@ -189,7 +218,14 @@ class LentaNotifier extends StateNotifier<LentaState> {
       _isLoading = true;
       state = state.copyWith(isRefreshing: true, error: null);
 
-      final freshItems = await _loadActivities(page: 1, limit: limit);
+      final freshItems = await _loadActivities(
+        page: 1,
+        limit: limit,
+        showTrainings: showTrainings,
+        showPosts: showPosts,
+        showOwn: showOwn,
+        showOthers: showOthers,
+      );
 
       // ✅ Дедупликация на случай, если API вернет дубликаты
       final deduplicatedFreshItems = _deduplicateItems(freshItems);
@@ -257,7 +293,12 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// Очищает кэш и полностью перезагружает первую страницу
   /// Используется после создания нового поста для гарантированного
   /// отображения обновленных данных
-  Future<void> forceRefresh() async {
+  Future<void> forceRefresh({
+    bool showTrainings = true,
+    bool showPosts = true,
+    bool showOwn = true,
+    bool showOthers = true,
+  }) async {
     // 🔒 Защита от одновременного выполнения
     if (_isLoading) return;
 
@@ -269,7 +310,14 @@ class LentaNotifier extends StateNotifier<LentaState> {
       await _cache.clearActivitiesCache(userId: userId);
 
       // Загружаем свежие данные с сервера
-      final freshItems = await _loadActivities(page: 1, limit: limit);
+      final freshItems = await _loadActivities(
+        page: 1,
+        limit: limit,
+        showTrainings: showTrainings,
+        showPosts: showPosts,
+        showOwn: showOwn,
+        showOthers: showOthers,
+      );
 
       // ✅ Дедупликация на случай, если API вернет дубликаты
       final deduplicatedItems = _deduplicateItems(freshItems);
@@ -301,14 +349,26 @@ class LentaNotifier extends StateNotifier<LentaState> {
   /// Загрузка следующей страницы (пагинация)
   ///
   /// Загружает новые данные и сохраняет в кэш
-  Future<void> loadMore() async {
+  Future<void> loadMore({
+    bool showTrainings = true,
+    bool showPosts = true,
+    bool showOwn = true,
+    bool showOthers = true,
+  }) async {
     if (!state.hasMore || state.isLoadingMore) return;
 
     try {
       state = state.copyWith(isLoadingMore: true, error: null);
 
       final nextPage = state.currentPage + 1;
-      final moreItems = await _loadActivities(page: nextPage, limit: limit);
+      final moreItems = await _loadActivities(
+        page: nextPage,
+        limit: limit,
+        showTrainings: showTrainings,
+        showPosts: showPosts,
+        showOwn: showOwn,
+        showOthers: showOthers,
+      );
 
       // Сохраняем новые данные в кэш
       await _cache.cacheActivities(moreItems, userId: userId);

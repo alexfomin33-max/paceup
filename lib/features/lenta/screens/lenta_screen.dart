@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../../domain/models/activity_lenta.dart';
@@ -80,6 +81,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   bool _showOwn = true; // показывать свои посты/тренировки
   bool _showOthers = true; // показывать посты/тренировки других пользователей
 
+  // Ключи для сохранения фильтров в SharedPreferences
+  static const String _keyShowTrainings = 'lenta_filter_show_trainings';
+  static const String _keyShowPosts = 'lenta_filter_show_posts';
+  static const String _keyShowOwn = 'lenta_filter_show_own';
+  static const String _keyShowOthers = 'lenta_filter_show_others';
+
   // Плагин Health (Health Connect/HealthKit) для запроса разрешений
   final Health _health = Health();
 
@@ -151,10 +158,17 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _actualUserId = userId;
 
       if (mounted) {
+        // Загружаем сохраненные фильтры перед загрузкой данных
+        await _loadFilters();
         setState(() {});
         // Начальная загрузка через Riverpod provider
         // После завершения загрузки обновим счетчик непрочитанных чатов
-        ref.read(lentaProvider(userId).notifier).loadInitial().then((_) {
+        ref.read(lentaProvider(userId).notifier).loadInitial(
+          showTrainings: _showTrainings,
+          showPosts: _showPosts,
+          showOwn: _showOwn,
+          showOthers: _showOthers,
+        ).then((_) {
           if (mounted && _actualUserId != null && _actualUserId == userId) {
             // Обновляем счетчик после завершения загрузки ленты
             ref
@@ -191,7 +205,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (lentaState.hasMore &&
           !lentaState.isLoadingMore &&
           pos.extentAfter < 400) {
-        ref.read(lentaProvider(_actualUserId!).notifier).loadMore();
+        ref.read(lentaProvider(_actualUserId!).notifier).loadMore(
+          showTrainings: _showTrainings,
+          showPosts: _showPosts,
+          showOwn: _showOwn,
+          showOthers: _showOthers,
+        );
       }
     });
   }
@@ -375,6 +394,82 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   // ———————————— Refresh через Riverpod ————————————
 
+  /// Загрузка сохраненных фильтров из SharedPreferences
+  Future<void> _loadFilters() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _showTrainings = prefs.getBool(_keyShowTrainings) ?? true;
+      _showPosts = prefs.getBool(_keyShowPosts) ?? true;
+      _showOwn = prefs.getBool(_keyShowOwn) ?? true;
+      _showOthers = prefs.getBool(_keyShowOthers) ?? true;
+    } catch (e) {
+      // Игнорируем ошибки, используем значения по умолчанию
+      if (kDebugMode) {
+        debugPrint('Ошибка загрузки фильтров: $e');
+      }
+    }
+  }
+
+  /// Сохранение фильтров в SharedPreferences
+  Future<void> _saveFilters() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_keyShowTrainings, _showTrainings);
+      await prefs.setBool(_keyShowPosts, _showPosts);
+      await prefs.setBool(_keyShowOwn, _showOwn);
+      await prefs.setBool(_keyShowOthers, _showOthers);
+    } catch (e) {
+      // Игнорируем ошибки сохранения
+      if (kDebugMode) {
+        debugPrint('Ошибка сохранения фильтров: $e');
+      }
+    }
+  }
+
+  /// Перезагрузка данных с учетом текущих фильтров
+  Future<void> _reloadWithFilters({
+    bool? showTrainings,
+    bool? showPosts,
+    bool? showOwn,
+    bool? showOthers,
+  }) async {
+    if (_actualUserId == null) return;
+
+    // Используем переданные значения или текущие значения переменных
+    final trainings = showTrainings ?? _showTrainings;
+    final posts = showPosts ?? _showPosts;
+    final own = showOwn ?? _showOwn;
+    final others = showOthers ?? _showOthers;
+
+    // Очищаем кеш предзагруженных индексов
+    _prefetchedIndices.clear();
+
+    // Сохраняем фильтры
+    await _saveFilters();
+
+    if (kDebugMode) {
+      debugPrint('🔄 Перезагрузка ленты с фильтрами: trainings=$trainings, posts=$posts, own=$own, others=$others');
+    }
+
+    // Перезагружаем данные с новыми фильтрами
+    // Используем forceRefresh для полной перезагрузки с очисткой кэша
+    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh(
+      showTrainings: trainings,
+      showPosts: posts,
+      showOwn: own,
+      showOthers: others,
+    );
+
+    // Прокрутка к началу
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
   /// Pull-to-refresh обновление ленты
   Future<void> _onRefresh() async {
     // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
@@ -383,7 +478,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
-    await ref.read(lentaProvider(userId).notifier).refresh();
+    await ref.read(lentaProvider(userId).notifier).refresh(
+      showTrainings: _showTrainings,
+      showPosts: _showPosts,
+      showOwn: _showOwn,
+      showOthers: _showOthers,
+    );
     // Обновляем количество непрочитанных чатов при обновлении ленты
     ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
     // Обновляем счетчик непрочитанных уведомлений при обновлении ленты
@@ -509,7 +609,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // ✅ Используем _actualUserId для forceRefresh
     // Принудительное обновление с очисткой кэша
-    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh();
+    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh(
+      showTrainings: _showTrainings,
+      showPosts: _showPosts,
+      showOwn: _showOwn,
+      showOthers: _showOthers,
+    );
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -544,7 +649,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // ✅ Используем userId из AuthService (уже получен выше) для forceRefresh
     // Принудительное обновление с очисткой кэша
     // Используем forceRefresh вместо refresh для полного обновления данных
-    await ref.read(lentaProvider(userId).notifier).forceRefresh();
+    await ref.read(lentaProvider(userId).notifier).forceRefresh(
+      showTrainings: _showTrainings,
+      showPosts: _showPosts,
+      showOwn: _showOwn,
+      showOthers: _showOthers,
+    );
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -647,7 +757,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       // ✅ Используем userId из AuthService для forceRefresh
       // Принудительное обновление с очисткой кэша
-      await ref.read(lentaProvider(userId).notifier).forceRefresh();
+      await ref.read(lentaProvider(userId).notifier).forceRefresh(
+        showTrainings: _showTrainings,
+        showPosts: _showPosts,
+        showOwn: _showOwn,
+        showOthers: _showOthers,
+      );
     }
   }
 
@@ -914,7 +1029,12 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
               final userId = await _auth.getUserId();
               if (userId == null) return;
-              ref.read(lentaProvider(userId).notifier).loadInitial();
+              ref.read(lentaProvider(userId).notifier).loadInitial(
+                showTrainings: _showTrainings,
+                showPosts: _showPosts,
+                showOwn: _showOwn,
+                showOthers: _showOthers,
+              );
             },
           );
         }
@@ -922,23 +1042,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         final items = lentaSnapshot.items;
 
         // ────────────────────────────────────────────────────────────────
-        // 🔍 ФИЛЬТРАЦИЯ: применяем фильтры (тип контента + автор)
+        // ✅ ФИЛЬТРАЦИЯ НА СЕРВЕРЕ: данные уже отфильтрованы на сервере
         // ────────────────────────────────────────────────────────────────
-        final filteredItems = items.where((activity) {
-          // ────────── 1) Фильтр по типу (посты/тренировки) ──────────
-          final isPost = activity.type == 'post';
-          final typeMatch = isPost ? _showPosts : _showTrainings;
-          if (!typeMatch) return false;
-
-          // ────────── 2) Фильтр по автору (свои/других) ──────────
-          // ✅ В нормальном потоке _actualUserId уже загружен,
-          // но оставляем защиту на случай редких гонок.
-          final currentUserId = _actualUserId;
-          if (currentUserId == null) return true;
-
-          final isOwn = activity.userId == currentUserId;
-          return isOwn ? _showOwn : _showOthers;
-        }).toList();
+        final filteredItems = items;
 
         // ────────────────────────────────────────────────────────────────
         // 📦 НАЧАЛЬНАЯ ЗАГРУЗКА: показываем skeleton loader
@@ -981,41 +1087,53 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   showPosts: _showPosts,
                   showOwn: _showOwn,
                   showOthers: _showOthers,
-                  onTrainingsChanged: (value) {
+                  onTrainingsChanged: (value) async {
+                    final newPosts = (!value && !_showPosts) ? true : _showPosts;
                     setState(() {
                       _showTrainings = value;
-                      // Гарантируем, что хотя бы один фильтр активен
-                      if (!value && !_showPosts) {
-                        _showPosts = true;
-                      }
+                      _showPosts = newPosts;
                     });
+                    // Перезагружаем данные с новыми фильтрами
+                    await _reloadWithFilters(
+                      showTrainings: value,
+                      showPosts: newPosts,
+                    );
                   },
-                  onPostsChanged: (value) {
+                  onPostsChanged: (value) async {
+                    final newTrainings = (!value && !_showTrainings) ? true : _showTrainings;
                     setState(() {
                       _showPosts = value;
-                      // Гарантируем, что хотя бы один фильтр активен
-                      if (!value && !_showTrainings) {
-                        _showTrainings = true;
-                      }
+                      _showTrainings = newTrainings;
                     });
+                    // Перезагружаем данные с новыми фильтрами
+                    await _reloadWithFilters(
+                      showPosts: value,
+                      showTrainings: newTrainings,
+                    );
                   },
-                  onOwnChanged: (value) {
+                  onOwnChanged: (value) async {
+                    final newOthers = (!value && !_showOthers) ? true : _showOthers;
                     setState(() {
                       _showOwn = value;
-                      // Гарантируем, что хотя бы один фильтр активен
-                      if (!value && !_showOthers) {
-                        _showOthers = true;
-                      }
+                      _showOthers = newOthers;
                     });
+                    // Перезагружаем данные с новыми фильтрами
+                    await _reloadWithFilters(
+                      showOwn: value,
+                      showOthers: newOthers,
+                    );
                   },
-                  onOthersChanged: (value) {
+                  onOthersChanged: (value) async {
+                    final newOwn = (!value && !_showOwn) ? true : _showOwn;
                     setState(() {
                       _showOthers = value;
-                      // Гарантируем, что хотя бы один фильтр активен
-                      if (!value && !_showOwn) {
-                        _showOwn = true;
-                      }
+                      _showOwn = newOwn;
                     });
+                    // Перезагружаем данные с новыми фильтрами
+                    await _reloadWithFilters(
+                      showOthers: value,
+                      showOwn: newOwn,
+                    );
                   },
                 ),
                 const SizedBox(height: 12),
@@ -1102,41 +1220,53 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                         showPosts: _showPosts,
                         showOwn: _showOwn,
                         showOthers: _showOthers,
-                        onTrainingsChanged: (value) {
+                        onTrainingsChanged: (value) async {
+                          final newPosts = (!value && !_showPosts) ? true : _showPosts;
                           setState(() {
                             _showTrainings = value;
-                            // Гарантируем, что хотя бы один фильтр активен
-                            if (!value && !_showPosts) {
-                              _showPosts = true;
-                            }
+                            _showPosts = newPosts;
                           });
+                          // Перезагружаем данные с новыми фильтрами
+                          await _reloadWithFilters(
+                            showTrainings: value,
+                            showPosts: newPosts,
+                          );
                         },
-                        onPostsChanged: (value) {
+                        onPostsChanged: (value) async {
+                          final newTrainings = (!value && !_showTrainings) ? true : _showTrainings;
                           setState(() {
                             _showPosts = value;
-                            // Гарантируем, что хотя бы один фильтр активен
-                            if (!value && !_showTrainings) {
-                              _showTrainings = true;
-                            }
+                            _showTrainings = newTrainings;
                           });
+                          // Перезагружаем данные с новыми фильтрами
+                          await _reloadWithFilters(
+                            showPosts: value,
+                            showTrainings: newTrainings,
+                          );
                         },
-                        onOwnChanged: (value) {
+                        onOwnChanged: (value) async {
+                          final newOthers = (!value && !_showOthers) ? true : _showOthers;
                           setState(() {
                             _showOwn = value;
-                            // Гарантируем, что хотя бы один фильтр активен
-                            if (!value && !_showOthers) {
-                              _showOthers = true;
-                            }
+                            _showOthers = newOthers;
                           });
+                          // Перезагружаем данные с новыми фильтрами
+                          await _reloadWithFilters(
+                            showOwn: value,
+                            showOthers: newOthers,
+                          );
                         },
-                        onOthersChanged: (value) {
+                        onOthersChanged: (value) async {
+                          final newOwn = (!value && !_showOwn) ? true : _showOwn;
                           setState(() {
                             _showOthers = value;
-                            // Гарантируем, что хотя бы один фильтр активен
-                            if (!value && !_showOwn) {
-                              _showOwn = true;
-                            }
+                            _showOwn = newOwn;
                           });
+                          // Перезагружаем данные с новыми фильтрами
+                          await _reloadWithFilters(
+                            showOthers: value,
+                            showOwn: newOwn,
+                          );
                         },
                       ),
                       const SizedBox(height: 12),
