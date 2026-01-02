@@ -858,8 +858,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         },
         onEquipmentSelected: (Equipment newEquipment) {
           setState(() {
+            // Обновляем выбранную экипировку при выборе через попап
+            // Это гарантирует, что последняя выбранная экипировка будет сохранена при сохранении изменений
             _selectedEquipment = newEquipment;
           });
+          // Перезагружаем список доступной экипировки для обновления выпадающего списка
+          _loadEquipment();
         },
       );
     }

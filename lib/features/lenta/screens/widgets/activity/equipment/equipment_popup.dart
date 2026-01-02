@@ -424,6 +424,10 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
         },
       );
 
+      // Вызываем callback для обновления выбранной экипировки (для экрана редактирования)
+      // Это гарантирует, что последняя выбранная экипировка будет сохранена при сохранении изменений
+      widget.onEquipmentSelected?.call(newEquipment);
+
       // Вызываем callback для обновления UI
       widget.onEquipmentChanged?.call();
     } catch (e) {
