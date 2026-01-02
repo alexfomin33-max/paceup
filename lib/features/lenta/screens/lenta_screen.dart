@@ -72,6 +72,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   bool _isSyncingHealthData = false;
   bool _isSyncingStrava = false;
 
+  // ────────────────────────────────────────────────────────────────
+  // 🔍 ФИЛЬТРЫ: состояние фильтрации постов и тренировок
+  // ────────────────────────────────────────────────────────────────
+  bool _showTrainings = true; // показывать тренировки
+  bool _showPosts = true; // показывать посты
+  bool _showOwn = true; // показывать свои посты/тренировки
+  bool _showOthers = true; // показывать посты/тренировки других пользователей
+
   // Плагин Health (Health Connect/HealthKit) для запроса разрешений
   final Health _health = Health();
 
@@ -914,11 +922,30 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         final items = lentaSnapshot.items;
 
         // ────────────────────────────────────────────────────────────────
+        // 🔍 ФИЛЬТРАЦИЯ: применяем фильтры (тип контента + автор)
+        // ────────────────────────────────────────────────────────────────
+        final filteredItems = items.where((activity) {
+          // ────────── 1) Фильтр по типу (посты/тренировки) ──────────
+          final isPost = activity.type == 'post';
+          final typeMatch = isPost ? _showPosts : _showTrainings;
+          if (!typeMatch) return false;
+
+          // ────────── 2) Фильтр по автору (свои/других) ──────────
+          // ✅ В нормальном потоке _actualUserId уже загружен,
+          // но оставляем защиту на случай редких гонок.
+          final currentUserId = _actualUserId;
+          if (currentUserId == null) return true;
+
+          final isOwn = activity.userId == currentUserId;
+          return isOwn ? _showOwn : _showOthers;
+        }).toList();
+
+        // ────────────────────────────────────────────────────────────────
         // 📦 НАЧАЛЬНАЯ ЗАГРУЗКА: показываем skeleton loader
         // ────────────────────────────────────────────────────────────────
         // Если нет данных и идёт загрузка - показываем skeleton loader вместо индикатора
         // Это предотвращает визуальный микролаг после splash screen
-        if (items.isEmpty && lentaSnapshot.isRefreshing) {
+        if (filteredItems.isEmpty && lentaSnapshot.isRefreshing) {
           return ListView(
             padding: const EdgeInsets.only(top: 4, bottom: 12),
             physics: const NeverScrollableScrollPhysics(),
@@ -935,26 +962,73 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         // ────────────────────────────────────────────────────────────────
         // 📭 ПУСТАЯ ЛЕНТА: показываем заглушку с pull-to-refresh
         // ────────────────────────────────────────────────────────────────
-        if (items.isEmpty) {
+        if (filteredItems.isEmpty && !lentaSnapshot.isRefreshing) {
           return RefreshIndicator.adaptive(
             onRefresh: _onRefresh,
             child: ListView(
               controller: _scrollController,
-              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              padding: const EdgeInsets.only(bottom: 12),
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
-              children: const [
-                SizedBox(height: 32),
-                Center(
+              children: [
+                // ────────────────────────────────────────────────────────
+                // 🔍 ФИЛЬТРЫ: блок с кнопками фильтрации
+                // ────────────────────────────────────────────────────────
+                const SizedBox(height: 12),
+                _FeedFilterBar(
+                  showTrainings: _showTrainings,
+                  showPosts: _showPosts,
+                  showOwn: _showOwn,
+                  showOthers: _showOthers,
+                  onTrainingsChanged: (value) {
+                    setState(() {
+                      _showTrainings = value;
+                      // Гарантируем, что хотя бы один фильтр активен
+                      if (!value && !_showPosts) {
+                        _showPosts = true;
+                      }
+                    });
+                  },
+                  onPostsChanged: (value) {
+                    setState(() {
+                      _showPosts = value;
+                      // Гарантируем, что хотя бы один фильтр активен
+                      if (!value && !_showTrainings) {
+                        _showTrainings = true;
+                      }
+                    });
+                  },
+                  onOwnChanged: (value) {
+                    setState(() {
+                      _showOwn = value;
+                      // Гарантируем, что хотя бы один фильтр активен
+                      if (!value && !_showOthers) {
+                        _showOthers = true;
+                      }
+                    });
+                  },
+                  onOthersChanged: (value) {
+                    setState(() {
+                      _showOthers = value;
+                      // Гарантируем, что хотя бы один фильтр активен
+                      if (!value && !_showOwn) {
+                        _showOwn = true;
+                      }
+                    });
+                  },
+                ),
+                const SizedBox(height: 12),
+                const SizedBox(height: 32),
+                const Center(
                   child: Text('Пока в ленте пусто', style: AppTextStyles.h14w4),
                 ),
-                SizedBox(height: 32),
+                const SizedBox(height: 32),
                 // ────────────────────────────────────────────────────────
                 // 📦 БЛОК РЕКОМЕНДАЦИЙ: показываем даже при пустой ленте
                 // ────────────────────────────────────────────────────────
-                RecommendedBlock(),
-                SizedBox(height: 120),
+                const RecommendedBlock(),
+                const SizedBox(height: 120),
               ],
             ),
           );
@@ -980,10 +1054,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               // ✅ Триггерим prefetch для текущей видимой позиции
               // после остановки скролла (с debounce)
               final pos = _scrollController.position;
-              if (pos.hasContentDimensions) {
+              if (pos.hasContentDimensions && filteredItems.isNotEmpty) {
                 final visibleIndex =
-                    (pos.pixels / (pos.maxScrollExtent / items.length)).floor();
-                _prefetchNextImages(visibleIndex, items);
+                    (pos.pixels / (pos.maxScrollExtent / filteredItems.length))
+                        .floor();
+                _prefetchNextImages(visibleIndex, filteredItems);
               }
             }
 
@@ -993,14 +1068,18 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             onRefresh: _onRefresh,
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.only(top: 4, bottom: 12),
+              padding: const EdgeInsets.only(bottom: 12),
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
               // ────────── cacheExtent ──────────
               // ✅ Подгружаем чуть дальше экрана (~1.5x высоты) для плавности
               cacheExtent: MediaQuery.of(context).size.height * 1.5,
-              itemCount: items.length + (lentaSnapshot.isLoadingMore ? 1 : 0),
+              // itemCount = 1 (фильтр) + filteredItems.length + (isLoadingMore ? 1 : 0)
+              itemCount:
+                  1 +
+                  filteredItems.length +
+                  (lentaSnapshot.isLoadingMore ? 1 : 0),
               // ────────────────────────────────────────────────────────
               // 🎯 ОПТИМИЗАЦИЯ: RepaintBoundary добавляем вручную только
               // для сложных виджетов (посты с изображениями).
@@ -1011,23 +1090,87 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   false, // отключаем автоматическое добавление
               addSemanticIndexes: false,
               itemBuilder: (context, i) {
-                if (lentaSnapshot.isLoadingMore && i == items.length) {
+                // ────────────────────────────────────────────────────────
+                // 🔍 ФИЛЬТРЫ: показываем блок фильтров перед первой записью
+                // ────────────────────────────────────────────────────────
+                if (i == 0) {
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      _FeedFilterBar(
+                        showTrainings: _showTrainings,
+                        showPosts: _showPosts,
+                        showOwn: _showOwn,
+                        showOthers: _showOthers,
+                        onTrainingsChanged: (value) {
+                          setState(() {
+                            _showTrainings = value;
+                            // Гарантируем, что хотя бы один фильтр активен
+                            if (!value && !_showPosts) {
+                              _showPosts = true;
+                            }
+                          });
+                        },
+                        onPostsChanged: (value) {
+                          setState(() {
+                            _showPosts = value;
+                            // Гарантируем, что хотя бы один фильтр активен
+                            if (!value && !_showTrainings) {
+                              _showTrainings = true;
+                            }
+                          });
+                        },
+                        onOwnChanged: (value) {
+                          setState(() {
+                            _showOwn = value;
+                            // Гарантируем, что хотя бы один фильтр активен
+                            if (!value && !_showOthers) {
+                              _showOthers = true;
+                            }
+                          });
+                        },
+                        onOthersChanged: (value) {
+                          setState(() {
+                            _showOthers = value;
+                            // Гарантируем, что хотя бы один фильтр активен
+                            if (!value && !_showOwn) {
+                              _showOwn = true;
+                            }
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+                  );
+                }
+
+                // Корректируем индекс для элементов ленты (i - 1, так как i == 0 это фильтр)
+                final itemIndex = i - 1;
+
+                // Индикатор загрузки в конце списка
+                if (lentaSnapshot.isLoadingMore &&
+                    itemIndex == filteredItems.length) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     child: Center(child: CupertinoActivityIndicator()),
                   );
                 }
 
-                final activity = items[i];
+                // Проверка валидности индекса
+                if (itemIndex < 0 || itemIndex >= filteredItems.length) {
+                  return const SizedBox.shrink();
+                }
+
+                final activity = filteredItems[itemIndex];
 
                 // ────────────────────────────────────────────────────────
                 // 📦 БЛОК РЕКОМЕНДАЦИЙ: показываем всегда
                 // ────────────────────────────────────────────────────────
-                // Если карточек 1 или меньше — показываем после первой (i == 0)
-                // Если карточек 2 или больше — показываем после второй (i == 1)
-                final shouldShowRecommended = items.length <= 1
-                    ? i == 0
-                    : i == 1;
+                // Если карточек 1 или меньше — показываем после первой (itemIndex == 0)
+                // Если карточек 2 или больше — показываем после второй (itemIndex == 1)
+                final shouldShowRecommended = filteredItems.length <= 1
+                    ? itemIndex == 0
+                    : itemIndex == 1;
 
                 if (shouldShowRecommended) {
                   final card = _buildFeedItem(activity);
@@ -1278,6 +1421,136 @@ class _SkeletonPostCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// 🔍 ФИЛЬТРЫ: блок фильтрации постов и тренировок
+// ────────────────────────────────────────────────────────────────
+
+/// Блок фильтров для ленты с кнопками:
+/// - "Тренировки" / "Посты" (тип контента)
+/// - "Свои" / "Других" (автор)
+/// Использует стиль пилюль из events_filters_bottom_sheet
+class _FeedFilterBar extends StatelessWidget {
+  final bool showTrainings;
+  final bool showPosts;
+  final bool showOwn;
+  final bool showOthers;
+  final ValueChanged<bool>? onTrainingsChanged;
+  final ValueChanged<bool>? onPostsChanged;
+  final ValueChanged<bool>? onOwnChanged;
+  final ValueChanged<bool>? onOthersChanged;
+
+  const _FeedFilterBar({
+    this.showTrainings = true,
+    this.showPosts = true,
+    this.showOwn = true,
+    this.showOthers = true,
+    this.onTrainingsChanged,
+    this.onPostsChanged,
+    this.onOwnChanged,
+    this.onOthersChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+      child: Row(
+        children: [
+          _FilterPillButton(
+            label: 'Тренировки',
+            isSelected: showTrainings,
+            onTap: () {
+              // Нельзя отключить последний активный фильтр
+              if (!showTrainings || showPosts) {
+                onTrainingsChanged?.call(!showTrainings);
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          _FilterPillButton(
+            label: 'Посты',
+            isSelected: showPosts,
+            onTap: () {
+              // Нельзя отключить последний активный фильтр
+              if (!showPosts || showTrainings) {
+                onPostsChanged?.call(!showPosts);
+              }
+            },
+          ),
+          const Spacer(),
+          _FilterPillButton(
+            label: 'Свои',
+            isSelected: showOwn,
+            onTap: () {
+              // Нельзя отключить последний активный фильтр
+              if (!showOwn || showOthers) {
+                onOwnChanged?.call(!showOwn);
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          _FilterPillButton(
+            label: 'Других',
+            isSelected: showOthers,
+            onTap: () {
+              // Нельзя отключить последний активный фильтр
+              if (!showOthers || showOwn) {
+                onOthersChanged?.call(!showOthers);
+              }
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Кнопка-пилюля для фильтра (в стиле events_filters_bottom_sheet)
+class _FilterPillButton extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _FilterPillButton({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getSurfaceColor(context);
+    final textColor = isSelected
+        ? AppColors.surface
+        : AppColors.getTextPrimaryColor(context);
+    final borderColor = isSelected
+        ? AppColors.brandPrimary
+        : AppColors.getBorderColor(context);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: borderColor, width: 1),
+          ),
+          child: Text(
+            label,
+            style: AppTextStyles.h14w4.copyWith(color: textColor),
+          ),
+        ),
       ),
     );
   }
