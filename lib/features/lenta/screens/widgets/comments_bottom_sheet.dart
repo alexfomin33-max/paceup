@@ -273,7 +273,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       top: false,
       child: Container(
         constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxHeight: MediaQuery.of(context).size.height * 0.95,
         ),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
@@ -404,7 +404,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
         // 🔹 Кастомная верстка вместо ListTile: аватарка выровнена сверху
         // ────────────────────────────────────────────────────────────────
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

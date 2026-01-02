@@ -263,11 +263,9 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab>
                 ),
               );
             },
-            loading: () => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 32),
-              child: const Center(
-                child: CupertinoActivityIndicator(radius: 10),
-              ),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
+              child: Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
             error: (error, stack) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 32),

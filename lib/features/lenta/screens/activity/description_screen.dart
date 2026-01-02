@@ -1669,7 +1669,8 @@ class _SplitsTableFull extends StatelessWidget {
         .toList();
 
     // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
-    final paceValuesForComparison = (activityType == 'run' || activityType == 'ski')
+    final paceValuesForComparison =
+        (activityType == 'run' || activityType == 'ski')
         ? paceValues
               .map(
                 (v) => (v.floor() * 60 + ((v - v.floor()) * 60).round())
@@ -1766,7 +1767,8 @@ class _SplitsTableFull extends StatelessWidget {
           // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
           // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
           // ────────────────────────────────────────────────────────────────
-          final paceSecForVisual = (activityType == 'run' || activityType == 'ski')
+          final paceSecForVisual =
+              (activityType == 'run' || activityType == 'ski')
               ? (paceValue.floor() * 60 +
                         ((paceValue - paceValue.floor()) * 60).round())
                     .toDouble()
@@ -2471,12 +2473,12 @@ class _ChartMetricsHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             metricItem(
-              min != null ? '${min.toStringAsFixed(1)}' : '—',
+              min != null ? min.toStringAsFixed(1) : '—',
               'Мин. высота',
             ),
             const SizedBox(width: 64),
             metricItem(
-              max != null ? '${max.toStringAsFixed(1)}' : '—',
+              max != null ? max.toStringAsFixed(1) : '—',
               'Макс. высота',
             ),
           ],

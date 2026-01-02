@@ -423,7 +423,7 @@ class _LikedUsersList extends StatelessWidget {
             SelectableText.rich(
               TextSpan(
                 text: error!,
-                style: TextStyle(color: AppColors.error, fontSize: 13),
+                style: const TextStyle(color: AppColors.error, fontSize: 13),
               ),
             ),
             if (onRetry != null) ...[

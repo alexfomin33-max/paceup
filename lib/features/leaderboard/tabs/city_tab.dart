@@ -177,15 +177,17 @@ class _CityTabState extends ConsumerState<CityTab>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // Обязательно вызываем для AutomaticKeepAliveClientMixin
+    super.build(
+      context,
+    ); // Обязательно вызываем для AutomaticKeepAliveClientMixin
     // ── Загружаем профиль пользователя для получения города
     if (_currentUserId != null) {
       final profileState = ref.watch(profileHeaderProvider(_currentUserId!));
-      
+
       // ── Устанавливаем город из профиля, если он доступен и еще не был установлен
-      if (!_citySetFromProfile && 
-          profileState.profile != null && 
-          profileState.profile!.city != null && 
+      if (!_citySetFromProfile &&
+          profileState.profile != null &&
+          profileState.profile!.city != null &&
           profileState.profile!.city!.isNotEmpty) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && !_citySetFromProfile) {
@@ -263,8 +265,10 @@ class _CityTabState extends ConsumerState<CityTab>
                     });
                   },
                   onSubmitted: _applyCity, // Применяем город при нажатии Enter
-                  hasError: _selectedCity == null && _cityController.text.isNotEmpty,
-                  errorText: _selectedCity == null && _cityController.text.isNotEmpty
+                  hasError:
+                      _selectedCity == null && _cityController.text.isNotEmpty,
+                  errorText:
+                      _selectedCity == null && _cityController.text.isNotEmpty
                       ? 'Выберите город из списка'
                       : null,
                 ),
@@ -352,10 +356,7 @@ class _CityTabState extends ConsumerState<CityTab>
               // Если город не выбран, показываем сообщение
               if (_selectedCity == null || _selectedCity!.isEmpty) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 32,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
                   child: Center(
                     child: Text(
                       'Выберите город для отображения лидерборда',
@@ -371,10 +372,7 @@ class _CityTabState extends ConsumerState<CityTab>
 
               if (rows.isEmpty) {
                 return const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 32,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
                   child: Center(
                     child: Text(
                       'Нет данных для отображения',
@@ -406,20 +404,12 @@ class _CityTabState extends ConsumerState<CityTab>
                 ),
               );
             },
-            loading: () => Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 32,
-              ),
-              child: const Center(
-                child: CupertinoActivityIndicator(radius: 10),
-              ),
+            loading: () => const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 32),
+              child: Center(child: CupertinoActivityIndicator(radius: 10)),
             ),
             error: (error, stack) => Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 32,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 32),
               child: Center(
                 child: Column(
                   children: [
