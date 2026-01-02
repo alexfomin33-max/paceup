@@ -438,56 +438,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       return;
     }
 
-    // ─── Переход на тренировку/активность
-    // Проверяем и objectType и notificationType для надежности
-    final isActivityNotification =
-        objectType == 'activity' ||
-        objectType == 'training' ||
-        notificationType == 'workouts' ||
-        notificationType.contains('workout') ||
-        notificationType.contains('тренировк');
-
-    if (isActivityNotification) {
-      final foundActivity = await _loadActivityById(objectId, currentUserId);
-
-      // Проверяем, что виджет все еще смонтирован после async операции
-      if (!mounted) return;
-
-      if (foundActivity != null) {
-        Navigator.of(context, rootNavigator: true).push(
-          TransparentPageRoute(
-            builder: (_) => ActivityDescriptionPage(
-              activity: foundActivity,
-              currentUserId: currentUserId,
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
-    // ─── Переход на пост
-    // Для поста открываем экран поста
-    if (objectType == 'post' || notificationType.contains('пост')) {
-      final foundPost = await _loadPostById(objectId, currentUserId);
-
-      // Проверяем, что виджет все еще смонтирован после async операции
-      if (!mounted) return;
-
-      if (foundPost != null) {
-        Navigator.of(context, rootNavigator: true).push(
-          TransparentPageRoute(
-            builder: (_) => PostDescriptionScreen(
-              post: foundPost,
-              currentUserId: currentUserId,
-            ),
-          ),
-        );
-      }
-      return;
-    }
-
     // ─── Переход на комментарий
+    // ВАЖНО: проверяем комментарии ПЕРВЫМИ, так как они более специфичны
     // Для комментария objectType и objectId указывают на объект (activity/post),
     // к которому был оставлен комментарий, а не на сам комментарий
     final isCommentNotification =
@@ -497,7 +449,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     if (isCommentNotification) {
       // Открываем экран объекта, к которому относится комментарий
-      if (objectType == 'activity') {
+      if (objectType == 'activity' || objectType == 'training') {
         final foundActivity = await _loadActivityById(objectId, currentUserId);
 
         // Проверяем, что виджет все еще смонтирован после async операции
@@ -534,6 +486,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     }
 
     // ─── Переход на лайк
+    // ВАЖНО: проверяем лайки ВТОРЫМИ, так как они более специфичны чем общие посты/активности
     // Для лайка открываем экран объекта, которому поставили лайк
     final isLikeNotification =
         notificationType == 'likes' ||
@@ -541,7 +494,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         notificationType.contains('лайк');
 
     if (isLikeNotification) {
-      if (objectType == 'activity') {
+      if (objectType == 'activity' || objectType == 'training') {
         final foundActivity = await _loadActivityById(objectId, currentUserId);
 
         // Проверяем, что виджет все еще смонтирован после async операции
@@ -573,6 +526,56 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             ),
           );
         }
+      }
+      return;
+    }
+
+    // ─── Переход на пост
+    // Для поста открываем экран поста
+    if (objectType == 'post' || notificationType.contains('пост')) {
+      final foundPost = await _loadPostById(objectId, currentUserId);
+
+      // Проверяем, что виджет все еще смонтирован после async операции
+      if (!mounted) return;
+
+      if (foundPost != null) {
+        Navigator.of(context, rootNavigator: true).push(
+          TransparentPageRoute(
+            builder: (_) => PostDescriptionScreen(
+              post: foundPost,
+              currentUserId: currentUserId,
+            ),
+          ),
+        );
+      }
+      return;
+    }
+
+    // ─── Переход на тренировку/активность
+    // Проверяем и objectType и notificationType для надежности
+    // ВАЖНО: эта проверка идет ПОСЛЕДНЕЙ, так как она самая общая
+    final isActivityNotification =
+        objectType == 'activity' ||
+        objectType == 'training' ||
+        notificationType == 'workouts' ||
+        notificationType.contains('workout') ||
+        notificationType.contains('тренировк');
+
+    if (isActivityNotification) {
+      final foundActivity = await _loadActivityById(objectId, currentUserId);
+
+      // Проверяем, что виджет все еще смонтирован после async операции
+      if (!mounted) return;
+
+      if (foundActivity != null) {
+        Navigator.of(context, rootNavigator: true).push(
+          TransparentPageRoute(
+            builder: (_) => ActivityDescriptionPage(
+              activity: foundActivity,
+              currentUserId: currentUserId,
+            ),
+          ),
+        );
       }
       return;
     }
