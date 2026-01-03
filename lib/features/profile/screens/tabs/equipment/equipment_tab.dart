@@ -653,18 +653,8 @@ class _GearListCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         child: Column(
           children: List.generate(items.length, (i) {

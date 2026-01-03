@@ -189,10 +189,11 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
     // Получаем актуальное состояние участия из провайдера
     // Провайдер - единственный источник правды, данные загружаются из API
-    final currentIsParticipating = participantsAsync.maybeWhen(
+    // Используем when вместо maybeWhen, чтобы правильно обработать состояние loading
+    final currentIsParticipating = participantsAsync.when(
       data: (data) => data.isCurrentUserParticipating,
-      orElse: () =>
-          false, // По умолчанию не участвует, если данные еще загружаются
+      loading: () => null, // null означает, что данные еще загружаются
+      error: (_, __) => false, // При ошибке считаем, что не участвует
     );
 
     return InteractiveBackSwipe(
@@ -478,7 +479,8 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
             // ─────────── Кнопка "Начать"
             // Показываем кнопку только если пользователь еще не участвует
-            if (!currentIsParticipating)
+            // Не показываем кнопку, пока данные загружаются (currentIsParticipating == null)
+            if (currentIsParticipating != null && !currentIsParticipating)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),

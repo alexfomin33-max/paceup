@@ -260,18 +260,8 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AppColors.getBorderColor(context),
-          width: 0.5,
+          width: 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
       ),
       child: child,
     );

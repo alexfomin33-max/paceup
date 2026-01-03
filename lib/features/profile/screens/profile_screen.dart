@@ -636,10 +636,16 @@ class _ProfileFlexibleSpace extends StatelessWidget {
     final surface = AppColors.getSurfaceColor(context);
     final profile = profileState.profile;
 
-    final followers = profile?.followers ?? 0;
-    final following = profile?.following ?? 0;
-    final avatarUrl = profile?.avatar;
-    final backgroundUrl = profile?.background;
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 ПРОВЕРКА: убеждаемся, что профиль соответствует текущему
+    // userId, чтобы не показывать данные другого пользователя
+    // ──────────────────────────────────────────────────────────────
+    final isValidProfile = profile != null && profile.id == userId;
+
+    final followers = isValidProfile ? (profile.followers ?? 0) : 0;
+    final following = isValidProfile ? (profile.following ?? 0) : 0;
+    final avatarUrl = isValidProfile ? profile.avatar : null;
+    final backgroundUrl = isValidProfile ? profile.background : null;
 
     return Container(
       color: surface,
@@ -690,6 +696,10 @@ class _ProfileFlexibleSpace extends StatelessWidget {
             ),
 
             // Аватар с обводкой внизу обложки (как логотип в клубах)
+            // ──────────────────────────────────────────────────────────────
+            // 🔹 КЛЮЧ: привязываем к userId и avatarUrl, чтобы при смене
+            // пользователя виджет пересоздавался и не показывал старый аватар
+            // ──────────────────────────────────────────────────────────────
             Positioned(
               left: 12,
               bottom: 4,
@@ -702,14 +712,27 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                 ),
                 padding: const EdgeInsets.all(1),
                 child: ClipOval(
-                  child: Avatar(
-                    image: (avatarUrl != null && avatarUrl.isNotEmpty)
-                        ? avatarUrl
-                        : 'assets/avatar_0.png',
-                    size: 90,
-                    fadeIn: true,
-                    gapless: true,
-                  ),
+                  child: isValidProfile
+                      ? Avatar(
+                          key: ValueKey('profile_avatar_${userId}_${avatarUrl ?? 'default'}'),
+                          image: (avatarUrl != null && avatarUrl.isNotEmpty)
+                              ? avatarUrl
+                              : 'assets/avatar_0.png',
+                          size: 90,
+                          fadeIn: true,
+                          gapless: true,
+                        )
+                      : Container(
+                          width: 90,
+                          height: 90,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Center(
+                            child: CupertinoActivityIndicator(
+                              radius: 10,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                          ),
+                        ),
                 ),
               ),
             ),

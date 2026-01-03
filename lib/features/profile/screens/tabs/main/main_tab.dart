@@ -122,10 +122,8 @@ class _MainTabState extends MainTabState
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ViewingEquipmentScreen(
-          initialSegment: 0,
-          userId: widget.userId,
-        ),
+        builder: (_) =>
+            ViewingEquipmentScreen(initialSegment: 0, userId: widget.userId),
       ),
     );
     // Обновляем данные после возврата (если кэш был очищен)
@@ -138,10 +136,8 @@ class _MainTabState extends MainTabState
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ViewingEquipmentScreen(
-          initialSegment: 1,
-          userId: widget.userId,
-        ),
+        builder: (_) =>
+            ViewingEquipmentScreen(initialSegment: 1, userId: widget.userId),
       ),
     );
     // Обновляем данные после возврата (если кэш был очищен)
@@ -288,7 +284,8 @@ class _MainTabState extends MainTabState
     // для условного отображения иконки редактирования в карточках снаряжения
     final currentUserIdAsync = ref.read(currentUserIdProvider);
     final currentUserId = currentUserIdAsync.value;
-    final isOwnProfile = currentUserId != null && currentUserId == widget.userId;
+    final isOwnProfile =
+        currentUserId != null && currentUserId == widget.userId;
 
     return [
       // ───────────────── Активность (горизонтальный скроллер) ─────────────────
@@ -343,7 +340,7 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: SizedBox(height: 16)),
       const SliverToBoxAdapter(child: _SectionTitle('Общая статистика')),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
-      
+
       // График недельной активности (блок внутри WeeklyActivityChart)
       SliverToBoxAdapter(
         child: Padding(
@@ -351,7 +348,7 @@ class _MainTabState extends MainTabState
           child: WeeklyActivityChart(userId: widget.userId),
         ),
       ),
-      
+
       // ───────────────── Показатели ─────────────────
       const SliverToBoxAdapter(child: SizedBox(height: 16)),
       const SliverToBoxAdapter(child: _SectionTitle('Показатели')),
@@ -439,18 +436,8 @@ class _ActivityCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -544,18 +531,8 @@ class _PRRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
         child: Row(
@@ -622,18 +599,8 @@ class _MetricsCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: AppColors.getBorderColor(context),
-            width: 0.5,
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         child: Column(
           children: List.generate(rows.length, (i) {

@@ -59,7 +59,7 @@ class AvailableContent extends ConsumerWidget {
                           children: monthGroup.tasks.map((task) {
                             return AvailableTaskCard(
                               imageUrl: task.logoUrl ?? task.imageUrl,
-                              title: task.formattedTitle,
+                              title: task.name,
                               onPressed: () {
                                 Navigator.of(context, rootNavigator: true).push(
                                   TransparentPageRoute(

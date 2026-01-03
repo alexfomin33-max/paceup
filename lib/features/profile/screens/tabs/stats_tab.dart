@@ -552,7 +552,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(
                     color: AppColors.getBorderColor(context),
-                    width: 0.7,
+                    width: 1.0,
                   ),
                 ),
                 child: DropdownButtonHideUnderline(
@@ -885,18 +885,8 @@ class _YearChartCardState extends State<_YearChartCard> {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AppColors.getBorderColor(context),
-          width: 0.7,
+          width: 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
       child: Column(
@@ -990,18 +980,8 @@ class _MetricsList extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AppColors.getBorderColor(context),
-          width: 0.7,
+          width: 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
       ),
       child: Column(
         children: List.generate(metrics.length * 2 - 1, (i) {
