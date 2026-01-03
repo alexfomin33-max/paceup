@@ -152,7 +152,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'how_to_reg':
         return Icons.emoji_events_outlined;
       case 'person_add':
-        return CupertinoIcons.person_add;
+        return CupertinoIcons.person_badge_plus;
       default:
         return CupertinoIcons.bell;
     }
@@ -207,12 +207,19 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     // Для лайков/сердец всегда красный цвет
     const heartIcons = {'favorite', 'heart'};
 
+    // Для подписок всегда зеленый цвет
+    const followIcons = {'person_badge_plus', 'person_add'};
+
     if (trainingIcons.contains(notification.icon.toLowerCase())) {
       return AppColors.brandPrimary;
     }
 
     if (heartIcons.contains(notification.icon.toLowerCase())) {
       return AppColors.error;
+    }
+
+    if (followIcons.contains(notification.icon.toLowerCase())) {
+      return AppColors.green;
     }
 
     return _getColorFromString(notification.color);
@@ -235,9 +242,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // ─────────────────────────────────────────────────────────────────────────────
   Future<void> _markAllAsRead() async {
     if (_isMarkingAllAsRead) return; // Предотвращаем множественные вызовы
-    
+
     final state = ref.read(notificationsProvider);
-    
+
     // Проверяем, есть ли непрочитанные уведомления
     final hasUnread = state.items.any((n) => !n.isRead);
     if (!hasUnread && state.unreadCount == 0) {
@@ -333,10 +340,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // ─────────────────────────────────────────────────────────────────────────────
   // ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ: загрузка поста по ID
   // ─────────────────────────────────────────────────────────────────────────────
-  Future<al.Activity?> _loadPostById(
-    int postId,
-    int currentUserId,
-  ) async {
+  Future<al.Activity?> _loadPostById(int postId, int currentUserId) async {
     // Сначала пытаемся найти в ленте
     final lentaState = ref.read(lentaProvider(currentUserId));
     try {

@@ -833,16 +833,15 @@ class _ActivityDescriptionPageState
                             final currentState = ref.read(
                               lentaProvider(widget.currentUserId),
                             );
-                            final latestActivity = currentState.items.firstWhere(
-                              (a) => a.lentaId == activityItem.lentaId,
-                              orElse: () => activityItem,
-                            );
+                            final latestActivity = currentState.items
+                                .firstWhere(
+                                  (a) => a.lentaId == activityItem.lentaId,
+                                  orElse: () => activityItem,
+                                );
 
                             ref
                                 .read(
-                                  lentaProvider(
-                                    widget.currentUserId,
-                                  ).notifier,
+                                  lentaProvider(widget.currentUserId).notifier,
                                 )
                                 .updateComments(
                                   activityItem.lentaId,
@@ -2319,14 +2318,22 @@ class _ChartMetricsHeader extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     // 🔹 ВИДЖЕТ ДЛЯ ОТОБРАЖЕНИЯ МЕТРИКИ: большое значение и подпись
     // ────────────────────────────────────────────────────────────────
-    Widget metricItem(String value, String label) {
+    Widget metricItem(String value, String label, {Widget? icon}) {
       return Column(
         children: [
-          Text(
-            value,
-            style: AppTextStyles.h18w6.copyWith(
-              color: AppColors.getTextPrimaryColor(context),
-            ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                value,
+                style: AppTextStyles.h18w6.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+              if (icon != null) ...[const SizedBox(width: 4), icon],
+            ],
           ),
           const SizedBox(height: 2),
           Text(
@@ -2358,9 +2365,25 @@ class _ChartMetricsHeader extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              metricItem('—', 'Ср. пульс'),
+              metricItem(
+                '—',
+                'Ср. пульс',
+                icon: const Icon(
+                  CupertinoIcons.heart_fill,
+                  size: 16,
+                  color: AppColors.female,
+                ),
+              ),
               const SizedBox(width: 64),
-              metricItem('—', 'Макс. пульс'),
+              metricItem(
+                '—',
+                'Макс. пульс',
+                icon: const Icon(
+                  CupertinoIcons.heart_fill,
+                  size: 16,
+                  color: AppColors.female,
+                ),
+              ),
             ],
           );
         } else {
@@ -2396,16 +2419,12 @@ class _ChartMetricsHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             metricItem(
-              average != null
-                  ? '${_fmtSecToMinSec(average.toDouble())} /км'
-                  : '—',
+              average != null ? _fmtSecToMinSec(average.toDouble()) : '—',
               'Ср. темп',
             ),
             const SizedBox(width: 64),
             metricItem(
-              fastest != null
-                  ? '${_fmtSecToMinSec(fastest.toDouble())} /км'
-                  : '—',
+              fastest != null ? _fmtSecToMinSec(fastest.toDouble()) : '—',
               'Макс. темп',
             ),
           ],
@@ -2413,13 +2432,18 @@ class _ChartMetricsHeader extends StatelessWidget {
       } else if (mode == 1) {
         // Пульс: Ср. пульс и Макс. пульс
         final hrSummary = summary!['heartRate'] as Map<String, dynamic>?;
+        final heartIcon = const Icon(
+          CupertinoIcons.heart_fill,
+          size: 12,
+          color: AppColors.error,
+        );
         if (hrSummary == null) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              metricItem('—', 'Ср. пульс'),
+              metricItem('—', 'Ср. пульс', icon: heartIcon),
               const SizedBox(width: 64),
-              metricItem('—', 'Макс. пульс'),
+              metricItem('—', 'Макс. пульс', icon: heartIcon),
             ],
           );
         }
@@ -2433,9 +2457,14 @@ class _ChartMetricsHeader extends StatelessWidget {
             metricItem(
               average != null ? '${average.round()}' : '—',
               'Ср. пульс',
+              icon: heartIcon,
             ),
             const SizedBox(width: 64),
-            metricItem(max != null ? '${max.round()}' : '—', 'Макс. пульс'),
+            metricItem(
+              max != null ? '${max.round()}' : '—',
+              'Макс. пульс',
+              icon: heartIcon,
+            ),
           ],
         );
       } else {
@@ -2537,7 +2566,7 @@ class _CircleAppIcon extends StatelessWidget {
         ? Colors.transparent
         : AppColors.getTextPrimaryColor(
             context,
-          ).withValues(alpha: 0.5 * fadeOpacity.clamp(0.0, 1.0));
+          ).withValues(alpha: 0.4 * fadeOpacity.clamp(0.0, 1.0));
 
     return SizedBox(
       width: 38.0,
