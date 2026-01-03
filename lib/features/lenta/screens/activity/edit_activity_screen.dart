@@ -1151,9 +1151,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         }
 
         // Обновляем ленту
-        await ref
-            .read(lentaProvider(widget.currentUserId).notifier)
-            .forceRefresh();
+        await ref.read(lentaProvider(widget.currentUserId).notifier).refresh();
       },
       onSuccess: () {
         if (!mounted) return;
@@ -1216,7 +1214,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     }
 
     try {
-      final pickedFiles = await picker.pickMultiImage();
+      final pickedFiles = await picker.pickMultiImage(
+        maxWidth: ImagePickerHelper.maxPickerDimension,
+        maxHeight: ImagePickerHelper.maxPickerDimension,
+        imageQuality: ImagePickerHelper.pickerImageQuality,
+      );
       if (pickedFiles.isEmpty) return;
 
       final userId = await auth.getUserId();

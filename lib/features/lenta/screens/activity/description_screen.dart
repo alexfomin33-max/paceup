@@ -1050,7 +1050,11 @@ class _ActivityDescriptionPageState
     }
 
     try {
-      final pickedFiles = await picker.pickMultiImage();
+      final pickedFiles = await picker.pickMultiImage(
+        maxWidth: ImagePickerHelper.maxPickerDimension,
+        maxHeight: ImagePickerHelper.maxPickerDimension,
+        imageQuality: ImagePickerHelper.pickerImageQuality,
+      );
       if (pickedFiles.isEmpty) return;
 
       final userId = await auth.getUserId();

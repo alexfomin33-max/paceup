@@ -9,6 +9,8 @@
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
@@ -16,7 +18,22 @@ import 'package:path_provider/path_provider.dart';
 import '../widgets/image_crop_screen.dart';
 import 'local_image_compressor.dart';
 
+/// Вспомогательная функция для чтения файла в isolate
+/// Используется с compute() для чтения больших изображений без блокировки UI
+Future<Uint8List> _readFileBytes(String filePath) async {
+  final file = File(filePath);
+  return file.readAsBytes();
+}
+
 class ImagePickerHelper {
+  /// Максимальный размер стороны, который мы разрешаем возвращать из галереи.
+  /// 4096px достаточно, чтобы сохранить детализацию, но не уложить устройство.
+  static const double maxPickerDimension = 4096.0;
+
+  /// Качество JPEG при даунскейле средствами ImagePicker (0-100).
+  /// 95 — почти без потери качества, но уменьшает вес файла.
+  static const int pickerImageQuality = 95;
+
   static final ImagePicker _picker = ImagePicker();
 
   /// Выбирает изображение из галереи, обрезает его и сжимает
@@ -85,8 +102,38 @@ class ImagePickerHelper {
     required String title,
     bool isCircular = false,
   }) async {
-    // ── читаем байты выбранного изображения
-    final imageBytes = await source.readAsBytes();
+    // ── показываем индикатор загрузки перед чтением байтов
+    // Это предотвращает ANR при чтении больших изображений
+    if (!context.mounted) return null;
+    showCupertinoDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const CupertinoAlertDialog(
+        content: Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CupertinoActivityIndicator(),
+              SizedBox(height: 12),
+              Text('Загрузка изображения...'),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // ── читаем байты выбранного изображения в отдельном isolate
+    // Это предотвращает блокировку UI при чтении больших файлов
+    Uint8List imageBytes;
+    try {
+      imageBytes = await compute(_readFileBytes, source.path);
+    } finally {
+      // ── закрываем диалог загрузки
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+    }
     if (!context.mounted) return null;
 
     // ── запускаем экран обрезки и ждём результат от пользователя
@@ -140,4 +187,3 @@ class ImagePickerHelper {
     return compressed;
   }
 }
-

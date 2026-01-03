@@ -731,7 +731,11 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
       // ── выбираем и обрезаем изображения для высоты 350px (динамическое соотношение)
       // Используем стандартный pickMultiImage, затем обрезаем каждое
       final picker = ImagePicker();
-      final pickedFiles = await picker.pickMultiImage();
+      final pickedFiles = await picker.pickMultiImage(
+        maxWidth: ImagePickerHelper.maxPickerDimension,
+        maxHeight: ImagePickerHelper.maxPickerDimension,
+        imageQuality: ImagePickerHelper.pickerImageQuality,
+      );
       if (pickedFiles.isEmpty || !mounted) return;
 
       // Рассчитываем соотношение сторон на основе ширины экрана

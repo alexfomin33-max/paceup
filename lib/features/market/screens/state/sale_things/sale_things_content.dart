@@ -11,6 +11,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
+import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/services/auth_service.dart';
 import '../../../../../core/widgets/primary_button.dart';
@@ -282,7 +283,11 @@ class _SaleThingsContentState extends ConsumerState<SaleThingsContent> {
     final picker = ImagePicker();
 
     try {
-      final pickedFiles = await picker.pickMultiImage();
+      final pickedFiles = await picker.pickMultiImage(
+        maxWidth: ImagePickerHelper.maxPickerDimension,
+        maxHeight: ImagePickerHelper.maxPickerDimension,
+        imageQuality: ImagePickerHelper.pickerImageQuality,
+      );
       if (pickedFiles.isEmpty) return;
 
       // ── подготавливаем сжатые версии всех выбранных фотографий

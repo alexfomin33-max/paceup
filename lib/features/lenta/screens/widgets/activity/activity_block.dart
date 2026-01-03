@@ -220,7 +220,7 @@ class ActivityBlock extends ConsumerWidget {
                                                   currentUserId,
                                                 ).notifier,
                                               )
-                                              .forceRefresh();
+                                              .refresh();
                                         }
                                       });
                                 },
@@ -408,9 +408,7 @@ class ActivityBlock extends ConsumerWidget {
                       // ────────────────────────────────────────────────────────────────
                       // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: передаем lentaId и callback
                       // ────────────────────────────────────────────────────────────────
-                      final lentaState = ref.read(
-                        lentaProvider(currentUserId),
-                      );
+                      final lentaState = ref.read(lentaProvider(currentUserId));
                       final activityItem = lentaState.items.firstWhere(
                         (a) => a.lentaId == updatedActivity.lentaId,
                         orElse: () =>
@@ -506,7 +504,11 @@ Future<void> _handleAddPhotos({
   }
 
   try {
-    final pickedFiles = await picker.pickMultiImage();
+    final pickedFiles = await picker.pickMultiImage(
+      maxWidth: ImagePickerHelper.maxPickerDimension,
+      maxHeight: ImagePickerHelper.maxPickerDimension,
+      imageQuality: ImagePickerHelper.pickerImageQuality,
+    );
     if (pickedFiles.isEmpty) return;
 
     final userId = await auth.getUserId();
