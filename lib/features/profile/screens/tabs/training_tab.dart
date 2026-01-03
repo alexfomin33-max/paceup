@@ -866,8 +866,8 @@ class _WorkoutCard extends ConsumerWidget {
                       _fmtDate(item.when),
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 12,
-                        color: AppColors.getTextSecondaryColor(context),
+                        fontSize: 13,
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -933,7 +933,7 @@ class _WorkoutCard extends ConsumerWidget {
                           _metric(
                             context,
                             null,
-                            _removePaceUnits(item.paceText),
+                            _formatPaceWithUnits(item.paceText, item.kind),
                             MainAxisAlignment.start,
                           ),
                         ],
@@ -1186,7 +1186,7 @@ class _WorkoutCard extends ConsumerWidget {
   ) {
     // Разделяем текст на числовую часть и единицы измерения
     final unitPattern = RegExp(
-      r'\s*(км|м|ч|мин|сек|/км|км/ч|м/с)\s*$',
+      r'\s*(км|м|ч|мин|сек|/км|/100м|км/ч|м/с)\s*$',
       caseSensitive: false,
     );
     final match = unitPattern.firstMatch(text);
@@ -1213,7 +1213,7 @@ class _WorkoutCard extends ConsumerWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 15,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               color: AppColors.getTextPrimaryColor(context),
             ),
             children: unitPart != null
@@ -1222,7 +1222,7 @@ class _WorkoutCard extends ConsumerWidget {
                       text: ' $unitPart',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w400,
                         color: AppColors.getTextPrimaryColor(context),
                       ),
@@ -1256,13 +1256,28 @@ class _WorkoutCard extends ConsumerWidget {
     return '$dd ${months[d.month - 1]}, $hh:$mm';
   }
 
-  /// Убирает единицы измерения из текста темпа
-  static String _removePaceUnits(String paceText) {
-    return paceText
+  /// Форматирует темп с правильными единицами измерения в зависимости от типа спорта
+  /// kind: 0=бег, 1=вело, 2=плавание, 3=лыжи
+  static String _formatPaceWithUnits(String paceText, int kind) {
+    // Убираем старые единицы измерения
+    final paceValue = paceText
         .replaceAll('/км', '')
         .replaceAll('км/ч', '')
         .replaceAll('м/с', '')
+        .replaceAll('/100м', '')
         .trim();
+
+    // Добавляем правильные единицы в зависимости от типа спорта
+    switch (kind) {
+      case 1: // велосипед
+        return '$paceValue км/ч';
+      case 2: // плавание
+        return '$paceValue /100м';
+      case 0: // бег
+      case 3: // лыжи
+      default:
+        return '$paceValue /км';
+    }
   }
 }
 
