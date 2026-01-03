@@ -94,39 +94,37 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             })
             .toList(growable: false);
 
-        // Получаем календарь для текущего месяца
-        final monthKey =
-            '${_month.year}-${_month.month.toString().padLeft(2, '0')}';
-        final calendarData = <int, String>{};
-        // Map для хранения типов тренировок по дням (день => Set типов спорта)
-        final daySportTypes = <int, Set<int>>{};
+        // Формируем список пилюль для каждого дня месяца (каждая тренировка — отдельная)
+        final dayBubbles = <int, List<_BubbleData>>{};
 
-        // Получаем дни для текущего месяца из календаря
-        if (data.calendar.containsKey(monthKey)) {
-          final daysMap = data.calendar[monthKey]!;
-          for (final entry in daysMap.entries) {
-            final day = int.tryParse(entry.key);
-            final dist = entry.value;
-            if (day != null) {
-              calendarData[day] = dist;
-            }
-          }
-        }
-
-        // Определяем типы тренировок для каждого дня месяца
+        // Проходим по всем тренировкам текущего месяца и выбранным видам спорта
         for (final activity in data.activities) {
           if (activity.when.year == _month.year &&
-              activity.when.month == _month.month) {
+              activity.when.month == _month.month &&
+              _sports.contains(activity.sportType)) {
             final day = activity.when.day;
-            daySportTypes
-                .putIfAbsent(day, () => <int>{})
-                .add(activity.sportType);
+
+            // Значения в пилюлях — только цифры, единицы убираем для всех видов спорта
+            var distanceText = activity.distanceText.trim();
+            distanceText = distanceText
+                .replaceAll(RegExp(r'\s*(км|km)\s*', caseSensitive: false), '')
+                .trim();
+
+            dayBubbles
+                .putIfAbsent(day, () => <_BubbleData>[])
+                .add(
+                  _BubbleData(
+                    distanceText: distanceText,
+                    sportType: activity.sportType,
+                  ),
+                );
           }
         }
 
         return CustomScrollView(
           physics: const BouncingScrollPhysics(),
-          primary: false, // Отключаем автоматическое использование PrimaryScrollController
+          primary:
+              false, // Отключаем автоматическое использование PrimaryScrollController
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
 
@@ -161,12 +159,8 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             // ── Карточка календаря
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: _CalendarCard(
-                  month: _month,
-                  bubbles: calendarData,
-                  daySportTypes: daySportTypes,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: _CalendarCard(month: _month, dayBubbles: dayBubbles),
               ),
             ),
 
@@ -194,9 +188,12 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
               )
             else
               SliverToBoxAdapter(
-                child: _WorkoutTable(
-                  items: items.map((a) => _Workout.fromTraining(a)).toList(),
-                  profileUserId: widget.userId,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: _WorkoutTable(
+                    items: items.map((a) => _Workout.fromTraining(a)).toList(),
+                    profileUserId: widget.userId,
+                  ),
                 ),
               ),
 
@@ -207,7 +204,10 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(20),
-          child: CupertinoActivityIndicator(radius: 10, color: AppColors.brandPrimary),
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.brandPrimary,
+          ),
         ),
       ),
       error: (error, stack) => Center(
@@ -371,7 +371,7 @@ class _SportIcon extends StatelessWidget {
       case 1: // велосипед
         return AppColors.female; // Розовый цвет, как в main_tab.dart
       case 2: // плавание
-        return AppColors.accentTeal;
+        return AppColors.green;
       case 3: // лыжи
         return AppColors.warning; // Оранжевый цвет для лыж
       default: // бег (0)
@@ -413,16 +413,19 @@ class _SportIcon extends StatelessWidget {
 /// Календарь
 /// ===================
 
+/// Данные для одной пилюли в календаре
+class _BubbleData {
+  final String distanceText;
+  final int sportType;
+
+  const _BubbleData({required this.distanceText, required this.sportType});
+}
+
 class _CalendarCard extends StatelessWidget {
   final DateTime month;
-  final Map<int, String> bubbles;
-  final Map<int, Set<int>> daySportTypes; // день => Set типов спорта
+  final Map<int, List<_BubbleData>> dayBubbles; // день => список пилюль
 
-  const _CalendarCard({
-    required this.month,
-    required this.bubbles,
-    required this.daySportTypes,
-  });
+  const _CalendarCard({required this.month, required this.dayBubbles});
 
   // 🔽 две высоты вместо одной
   static const double _cellHeightTall = 52; // есть облачка
@@ -440,16 +443,6 @@ class _CalendarCard extends StatelessWidget {
           color: AppColors.getBorderColor(context),
           width: 0.7,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
       child: Column(
@@ -468,8 +461,7 @@ class _CalendarCard extends StatelessWidget {
           const SizedBox(height: 6),
           _MonthGrid(
             month: month,
-            bubbles: bubbles,
-            daySportTypes: daySportTypes,
+            dayBubbles: dayBubbles,
             tallHeight: _cellHeightTall,
             compactHeight: _cellHeightCompact,
             dayTop: _dayTop,
@@ -507,8 +499,7 @@ class _Dow extends StatelessWidget {
 
 class _MonthGrid extends StatelessWidget {
   final DateTime month;
-  final Map<int, String> bubbles;
-  final Map<int, Set<int>> daySportTypes; // день => Set типов спорта
+  final Map<int, List<_BubbleData>> dayBubbles; // день => список пилюль
   final double tallHeight;
   final double compactHeight;
   final double dayTop;
@@ -516,130 +507,31 @@ class _MonthGrid extends StatelessWidget {
 
   const _MonthGrid({
     required this.month,
-    required this.bubbles,
-    required this.daySportTypes,
+    required this.dayBubbles,
     required this.tallHeight,
     required this.compactHeight,
     required this.dayTop,
     required this.bubbleTop,
   });
 
-  /// Определяет декорацию облачка (цвет или градиент) на основе типов тренировок в день
-  BoxDecoration _getBubbleDecoration(int day) {
-    final sportTypes = daySportTypes[day];
-    if (sportTypes == null || sportTypes.isEmpty) {
-      return BoxDecoration(
-        color: AppColors.brandPrimary,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      );
-    }
-
-    // Если только один тип тренировки
-    if (sportTypes.length == 1) {
-      Color color;
-      if (sportTypes.contains(1)) {
-        // Только велосипед
+  /// Определяет декорацию облачка на основе типа спорта
+  BoxDecoration _getBubbleDecoration(int sportType) {
+    Color color;
+    switch (sportType) {
+      case 1: // велосипед
         color = AppColors.female;
-      } else if (sportTypes.contains(2)) {
-        // Только плавание
-        color = AppColors.accentTeal;
-      } else if (sportTypes.contains(3)) {
-        // Только лыжи
+        break;
+      case 2: // плавание
+        color = AppColors.green;
+        break;
+      case 3: // лыжи
         color = AppColors.warning;
-      } else {
-        // Только бег
+        break;
+      default: // бег (0)
         color = AppColors.brandPrimary;
-      }
-      return BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      );
     }
-
-    // Если несколько типов тренировок - используем градиент
-    if (sportTypes.length == 2) {
-      // Бег (0) + Велосипед (1)
-      if (sportTypes.contains(0) && sportTypes.contains(1)) {
-        return BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.brandPrimary, AppColors.female],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        );
-      }
-      // Бег (0) + Плавание (2)
-      if (sportTypes.contains(0) && sportTypes.contains(2)) {
-        return BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.brandPrimary, AppColors.accentTeal],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        );
-      }
-      // Велосипед (1) + Плавание (2)
-      if (sportTypes.contains(1) && sportTypes.contains(2)) {
-        return BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AppColors.female, AppColors.accentTeal],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        );
-      }
-    }
-
-    // Если три типа тренировок
-    if (sportTypes.length == 3) {
-      // Бег + Велосипед + Плавание
-      if (sportTypes.contains(0) &&
-          sportTypes.contains(1) &&
-          sportTypes.contains(2)) {
-        return BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [
-              AppColors.brandPrimary,
-              AppColors.female,
-              AppColors.accentTeal,
-            ],
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        );
-      }
-      // Другие комбинации из трех типов - используем градиент с лыжами
-      // Можно добавить специфичные комбинации при необходимости
-    }
-
-    // Если четыре типа тренировок (Бег + Велосипед + Плавание + Лыжи)
-    if (sportTypes.length == 4 &&
-        sportTypes.contains(0) &&
-        sportTypes.contains(1) &&
-        sportTypes.contains(2) &&
-        sportTypes.contains(3)) {
-      return BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            AppColors.brandPrimary,
-            AppColors.female,
-            AppColors.accentTeal,
-            AppColors.warning,
-          ],
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      );
-    }
-
-    // Если другая комбинация - дефолтный цвет
     return BoxDecoration(
-      color: AppColors.brandPrimary,
+      color: color,
       borderRadius: BorderRadius.circular(AppRadius.md),
     );
   }
@@ -656,19 +548,32 @@ class _MonthGrid extends StatelessWidget {
 
     return Column(
       children: List.generate(rows, (r) {
-        // Проверяем, есть ли хотя бы одно облачко в строке r
-        bool hasAnyBubble = false;
+        // Находим максимальное количество пилюль в строке для определения высоты
+        int maxBubblesInRow = 0;
         for (int c = 0; c < 7; c++) {
           final idx = r * 7 + c;
           final dayNum = idx - startOffset + 1;
-          if (dayNum >= 1 &&
-              dayNum <= last.day &&
-              bubbles.containsKey(dayNum)) {
-            hasAnyBubble = true;
-            break;
+          if (dayNum >= 1 && dayNum <= last.day) {
+            final bubbles = dayBubbles[dayNum];
+            if (bubbles != null && bubbles.length > maxBubblesInRow) {
+              maxBubblesInRow = bubbles.length;
+            }
           }
         }
-        final rowHeight = hasAnyBubble ? tallHeight : compactHeight;
+        // Высота ячейки зависит от количества пилюль.
+        // Берём расчётную высоту стеком: отступ до пилюль + высота пилюль +
+        // промежутки + нижний запас, затем сравниваем с компактной высотой.
+        const bubbleHeight = 20.0; // 11px текст + ~9px padding ≈ 20px
+        const bubbleGap = 2.0;
+        final bubblesHeight = maxBubblesInRow > 0
+            ? bubbleTop +
+                  maxBubblesInRow * bubbleHeight +
+                  (maxBubblesInRow - 1) * bubbleGap +
+                  4 // небольшой запас снизу
+            : compactHeight;
+        final rowHeight = maxBubblesInRow > 0
+            ? bubblesHeight.clamp(compactHeight, double.infinity)
+            : compactHeight;
 
         return Row(
           children: List.generate(7, (c) {
@@ -680,7 +585,7 @@ class _MonthGrid extends StatelessWidget {
             }
 
             final isWeekend = (c == 5) || (c == 6);
-            final bubble = bubbles[dayNum];
+            final bubbles = dayBubbles[dayNum];
 
             return Expanded(
               child: SizedBox(
@@ -702,25 +607,39 @@ class _MonthGrid extends StatelessWidget {
                         ),
                       ),
                     ),
-                    if (bubble != null)
+                    // Отображаем все пилюли друг под другом
+                    if (bubbles != null && bubbles.isNotEmpty)
                       Positioned(
                         top: bubbleTop,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: _getBubbleDecoration(dayNum),
-                          child: Text(
-                            bubble,
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              // Цвет всегда светлый, чтобы в тёмной теме текст был
-                              // читаемым на синем фоне
-                              color: AppColors.surface,
-                            ),
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: bubbles.asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final bubble = entry.value;
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                bottom: index < bubbles.length - 1 ? 2 : 0,
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: _getBubbleDecoration(
+                                  bubble.sportType,
+                                ),
+                                child: Text(
+                                  bubble.distanceText,
+                                  style: const TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 11,
+                                    color: AppColors.surface,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
                         ),
                       ),
                   ],
@@ -747,53 +666,24 @@ class _WorkoutTable extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
 
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        border: Border(
-          top: BorderSide(color: AppColors.getBorderColor(context), width: 0.5),
-          bottom: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 0.5,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
-      ),
-      child: Column(
-        children: List.generate(items.length, (i) {
-          final w = items[i];
-          final last = i == items.length - 1;
-          return Column(
-            children: [
-              _WorkoutRow(item: w, profileUserId: profileUserId),
-              if (!last)
-                Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: AppColors.getDividerColor(context),
-                ),
-            ],
-          );
-        }),
-      ),
+    return Column(
+      children: List.generate(items.length, (i) {
+        final w = items[i];
+        return Padding(
+          padding: EdgeInsets.only(bottom: i < items.length - 1 ? 6 : 0),
+          child: _WorkoutCard(item: w, profileUserId: profileUserId),
+        );
+      }),
     );
   }
 }
 
-class _WorkoutRow extends ConsumerWidget {
+/// Отдельная карточка тренировки.
+/// Каждая карточка имеет собственный контейнер с скруглениями и отступами.
+class _WorkoutCard extends ConsumerWidget {
   final _Workout item;
   final int profileUserId;
-  const _WorkoutRow({required this.item, required this.profileUserId});
+  const _WorkoutCard({required this.item, required this.profileUserId});
 
   /// Загружает полную активность из API по ID тренировки
   /// Сначала пытается найти в провайдере ленты, затем загружает через API
@@ -937,107 +827,123 @@ class _WorkoutRow extends ConsumerWidget {
           ),
         );
       },
-      child: Padding(
-        // Увеличен паддинг справа на 4 пикселя
-        padding: const EdgeInsets.fromLTRB(10, 8, 20, 8),
-        child: Row(
-          children: [
-            // Мини-карта/изображение 80x70
-            // Логика приоритетов:
-            // 1. Если есть трек И изображения → показываем трек
-            // 2. Если нет трека, но есть изображения → показываем первое изображение
-            // 3. Если нет трека И нет изображений → показываем заглушку
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: SizedBox(
-                width: 80,
-                height: 70,
-                child: _buildActivityImage(context, item),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+        ),
+        padding: const EdgeInsets.all(6),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
+          child: Row(
+            children: [
+              // Мини-карта/изображение 80x70
+              // Логика приоритетов:
+              // 1. Если есть трек И изображения → показываем трек
+              // 2. Если нет трека, но есть изображения → показываем первое изображение
+              // 3. Если нет трека И нет изображений → показываем заглушку
+              ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.xs),
+                child: SizedBox(
+                  width: 80,
+                  height: 74,
+                  child: _buildActivityImage(context, item),
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
 
-            // Текстовая часть
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Дата/время
-                  Text(
-                    _fmtDate(item.when),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      color: AppColors.getTextSecondaryColor(context),
+              // Текстовая часть
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Дата/время
+                    Text(
+                      _fmtDate(item.when),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Три метрики — строго таблично, выровнены по левому краю
-                  IntrinsicHeight(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        // Иконка вида спорта в отдельной колонке с фиксированной шириной
-                        SizedBox(
-                          width: 21,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: Icon(
-                              item.kind == 0
-                                  ? Icons.directions_run
-                                  : (item.kind == 1
-                                        ? Icons.directions_bike
-                                        : (item.kind == 2
-                                              ? Icons.pool
-                                              : Icons.downhill_skiing)),
-                              size: 15,
-                              color: item.kind == 1
-                                  ? AppColors
-                                        .female // Розовый для велосипеда
-                                  : (item.kind == 2
-                                        ? AppColors
-                                              .accentTeal // Бирюзовый для плавания
-                                        : (item.kind == 3
-                                              ? AppColors.warning // Оранжевый для лыж
-                                              : AppColors
-                                                    .brandPrimary)), // Синий для бега
+                    // Три метрики — строго таблично, выровнены по левому краю
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          // Иконка вида спорта в отдельной колонке с фиксированной шириной
+                          SizedBox(
+                            width: 18,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                width: 18,
+                                height: 18,
+                                decoration: BoxDecoration(
+                                  color: item.kind == 1
+                                      ? AppColors
+                                            .female // Розовый для велосипеда
+                                      : (item.kind == 2
+                                            ? AppColors
+                                                  .green // Зеленый для плавания
+                                            : (item.kind == 3
+                                                  ? AppColors
+                                                        .warning // Оранжевый для лыж
+                                                  : AppColors
+                                                        .brandPrimary)), // Синий для бега
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xl,
+                                  ),
+                                ),
+                                child: Icon(
+                                  item.kind == 0
+                                      ? Icons.directions_run
+                                      : (item.kind == 1
+                                            ? Icons.directions_bike
+                                            : (item.kind == 2
+                                                  ? Icons.pool
+                                                  : Icons.downhill_skiing)),
+                                  size: 12,
+                                  color: AppColors.getSurfaceColor(context),
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: _metric(
+                          const SizedBox(width: 6),
+                          _metric(
                             context,
                             null,
                             item.distText,
                             MainAxisAlignment.start,
                           ),
-                        ),
-                        Expanded(
-                          child: _metric(
-                            context,
-                            CupertinoIcons.stopwatch,
-                            item.durText,
-                            MainAxisAlignment.start,
+                          Expanded(
+                            child: _metric(
+                              context,
+                              null,
+                              item.durText,
+                              MainAxisAlignment.center,
+                            ),
                           ),
-                        ),
-                        SizedBox(
-                          width: 65,
-                          child: _metric(
+                          _metric(
                             context,
-                            Icons.speed,
+                            null,
                             _removePaceUnits(item.paceText),
                             MainAxisAlignment.start,
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1278,21 +1184,51 @@ class _WorkoutRow extends ConsumerWidget {
     String text,
     MainAxisAlignment alignment,
   ) {
+    // Разделяем текст на числовую часть и единицы измерения
+    final unitPattern = RegExp(
+      r'\s*(км|м|ч|мин|сек|/км|км/ч|м/с)\s*$',
+      caseSensitive: false,
+    );
+    final match = unitPattern.firstMatch(text);
+
+    String numberPart = text;
+    String? unitPart;
+
+    if (match != null) {
+      numberPart = text.substring(0, match.start).trim();
+      unitPart = match.group(0)?.trim();
+    }
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.start,
+      mainAxisAlignment: alignment,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (icon != null) ...[
           Icon(icon, size: 16, color: AppColors.getTextSecondaryColor(context)),
           const SizedBox(width: 8),
         ],
-        Text(
-          text,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-            color: AppColors.getTextPrimaryColor(context),
+        Text.rich(
+          TextSpan(
+            text: numberPart,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            children: unitPart != null
+                ? [
+                    TextSpan(
+                      text: ' $unitPart',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ]
+                : null,
           ),
         ),
       ],
@@ -1373,6 +1309,24 @@ class _Workout {
     String paceText = activity.paceText;
     double pace = activity.pace;
 
+    // ──────────────────────────────────────────────────────────────
+    // 🏊 ФОРМАТИРОВАНИЕ ДИСТАНЦИИ ДЛЯ ПЛАВАНИЯ: метры вместо километров
+    // ──────────────────────────────────────────────────────────────
+    String distanceText = activity.distanceText;
+    if (activity.sportType == 2) {
+      // Для плавания конвертируем километры в метры
+      final distanceMeters = activity.distance * 1000;
+      // Форматируем как целое число или с одним знаком после запятой
+      if (distanceMeters == distanceMeters.roundToDouble()) {
+        // Целое число: "300 м"
+        distanceText = '${distanceMeters.toInt()} м';
+      } else {
+        // Дробное число: "300,5 м" (запятая для русской локали)
+        distanceText =
+            '${distanceMeters.toStringAsFixed(1).replaceAll('.', ',')} м';
+      }
+    }
+
     if (activity.sportType == 2) {
       // Для плавания пересчитываем темп в формат "мин/100м"
       if (activity.distance > 0 && activity.duration > 0) {
@@ -1395,7 +1349,7 @@ class _Workout {
       activity.id,
       activity.when,
       activity.sportType,
-      activity.distanceText,
+      distanceText,
       activity.durationText,
       paceText,
       activity.distance,
@@ -1413,8 +1367,8 @@ class _Workout {
     final sportTypeStr = kind == 0
         ? 'run'
         : (kind == 1
-            ? 'bike'
-            : (kind == 2 ? 'swim' : (kind == 3 ? 'ski' : 'run')));
+              ? 'bike'
+              : (kind == 2 ? 'swim' : (kind == 3 ? 'ski' : 'run')));
 
     // Создаём ActivityStats из доступных данных
     final stats = al.ActivityStats(
