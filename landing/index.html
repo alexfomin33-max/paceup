@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="PaceUp - спортивное приложение для трекинга активностей. Бег, велосипед, лыжи, плавание и многое другое.">
+  <title>PaceUp - Твой спорт, твои достижения</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Навигация -->
+  <nav class="navbar">
+    <div class="container">
+      <div class="nav-content">
+        <div class="logo">
+          <img src="../assets/logo.png" alt="PaceUp Logo" class="logo-img">
+          <span class="logo-text">PaceUp</span>
+        </div>
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="#features">Возможности</a></li>
+          <li><a href="#how-it-works">Как работает</a></li>
+          <li><a href="#screenshots">Скриншоты</a></li>
+          <li><a href="#testimonials">Отзывы</a></li>
+          <li><a href="#faq">FAQ</a></li>
+        </ul>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero секция -->
+  <section class="hero">
+    <div class="hero-background"></div>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1 class="hero-title">
+            Твой спорт,<br>
+            <span class="gradient-text">твои достижения</span>
+          </h1>
+          <p class="hero-subtitle">
+            Отслеживай тренировки, ставь рекорды, делись успехами. 
+            Все виды активности в одном приложении.
+          </p>
+          <div class="hero-buttons">
+            <a href="#" class="btn btn-primary">
+              <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
+            </a>
+            <a href="#" class="btn btn-primary">
+              <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
+            </a>
+          </div>
+        </div>
+        <div class="hero-image">
+          <div class="phone-mockup">
+            <img src="../assets/running.jpg" alt="PaceUp App" class="phone-screen">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Статистика -->
+  <section class="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-number" data-target="10000">0</div>
+          <div class="stat-label">Активных пользователей</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="50000">0</div>
+          <div class="stat-label">Тренировок</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="100000">0</div>
+          <div class="stat-label">Километров</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number" data-target="4.8">0</div>
+          <div class="stat-label">Рейтинг в магазинах</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Возможности -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Все возможности в одном приложении</h2>
+        <p class="section-subtitle">Отслеживай любую активность и достигай новых высот</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/running.jpg" alt="Бег">
+          </div>
+          <h3 class="feature-title">Трекинг активностей</h3>
+          <p class="feature-description">
+            Бег, велосипед, лыжи, плавание, ходьба — все виды спорта в одном месте
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/training_map.png" alt="Карты">
+          </div>
+          <h3 class="feature-title">Карты и маршруты</h3>
+          <p class="feature-description">
+            Точное GPS-отслеживание с визуализацией маршрутов на карте
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/card200run.jpg" alt="Лента">
+          </div>
+          <h3 class="feature-title">Лента активностей</h3>
+          <p class="feature-description">
+            Делись тренировками, следи за друзьями, вдохновляйся достижениями
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/race_moscow.png" alt="События">
+          </div>
+          <h3 class="feature-title">Клубы и события</h3>
+          <p class="feature-description">
+            Присоединяйся к клубам, участвуй в событиях и соревнованиях
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/achive_1.png" alt="Достижения">
+          </div>
+          <h3 class="feature-title">Достижения</h3>
+          <p class="feature-description">
+            Получай награды, ставь рекорды и отслеживай свой прогресс
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <img src="../assets/pacepro.png" alt="Аналитика">
+          </div>
+          <h3 class="feature-title">Аналитика</h3>
+          <p class="feature-description">
+            Детальная статистика тренировок и интеграция с Health
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Как это работает -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Как это работает</h2>
+        <p class="section-subtitle">Всего несколько шагов до начала тренировок</p>
+      </div>
+      <div class="steps">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3 class="step-title">Скачай приложение</h3>
+            <p class="step-description">
+              Установи PaceUp на свой смартфон из App Store или Google Play
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3 class="step-title">Выбери активность</h3>
+            <p class="step-description">
+              Выбери вид спорта: бег, велосипед, лыжи, плавание или ходьба
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3 class="step-title">Начни тренировку</h3>
+            <p class="step-description">
+              Нажми "Старт" и приложение автоматически начнет отслеживать твою активность
+            </p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3 class="step-title">Анализируй результаты</h3>
+            <p class="step-description">
+              Просматривай детальную статистику, маршруты и достижения
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Скриншоты -->
+  <section class="screenshots" id="screenshots">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Посмотри, как это выглядит</h2>
+        <p class="section-subtitle">Красивый и интуитивный интерфейс</p>
+      </div>
+      <div class="screenshots-grid">
+        <div class="screenshot-item">
+          <img src="../assets/training_map.png" alt="Карта тренировки">
+          <p class="screenshot-caption">Карта маршрута</p>
+        </div>
+        <div class="screenshot-item">
+          <img src="../assets/card200run.jpg" alt="Активность">
+          <p class="screenshot-caption">Детали тренировки</p>
+        </div>
+        <div class="screenshot-item">
+          <img src="../assets/pacepro.png" alt="Статистика">
+          <p class="screenshot-caption">Аналитика</p>
+        </div>
+        <div class="screenshot-item">
+          <img src="../assets/achive_1.png" alt="Достижения">
+          <p class="screenshot-caption">Достижения</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Преимущества -->
+  <section class="benefits">
+    <div class="container">
+      <div class="benefits-content">
+        <div class="benefits-text">
+          <h2 class="section-title">Почему выбирают PaceUp</h2>
+          <div class="benefits-list">
+            <div class="benefit-item">
+              <div class="benefit-icon">✓</div>
+              <div class="benefit-content">
+                <h3>Офлайн-режим</h3>
+                <p>Работает без интернета — все данные сохраняются локально</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">✓</div>
+              <div class="benefit-content">
+                <h3>Точное GPS</h3>
+                <p>Высокая точность отслеживания маршрутов и расстояний</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">✓</div>
+              <div class="benefit-content">
+                <h3>Социальные функции</h3>
+                <p>Делись тренировками, находи друзей, участвуй в клубах</p>
+              </div>
+            </div>
+            <div class="benefit-item">
+              <div class="benefit-icon">✓</div>
+              <div class="benefit-content">
+                <h3>Интеграция с Health</h3>
+                <p>Синхронизация с Apple Health и Google Fit</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="benefits-image">
+          <img src="../assets/cycling.jpg" alt="Преимущества PaceUp">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Отзывы -->
+  <section class="testimonials" id="testimonials">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Что говорят пользователи</h2>
+        <p class="section-subtitle">Тысячи спортсменов уже используют PaceUp</p>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Отличное приложение! Точное отслеживание, красивый интерфейс. 
+            Использую каждый день для бега."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">
+              <img src="../assets/Avatar_1.png" alt="Алексей">
+            </div>
+            <div class="author-info">
+              <div class="author-name">Алексей</div>
+              <div class="author-role">Бегун</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Лучшее приложение для велосипедистов! Карты отличные, 
+            статистика детальная. Рекомендую!"
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">
+              <img src="../assets/Avatar_2.png" alt="Мария">
+            </div>
+            <div class="author-info">
+              <div class="author-name">Мария</div>
+              <div class="author-role">Велосипедистка</div>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-rating">★★★★★</div>
+          <p class="testimonial-text">
+            "Очень удобно отслеживать все активности в одном месте. 
+            Особенно нравится лента с друзьями."
+          </p>
+          <div class="testimonial-author">
+            <div class="author-avatar">
+              <img src="../assets/Avatar_3.png" alt="Дмитрий">
+            </div>
+            <div class="author-info">
+              <div class="author-name">Дмитрий</div>
+              <div class="author-role">Триатлет</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA секция -->
+  <section class="cta">
+    <div class="container">
+      <div class="cta-content">
+        <h2 class="cta-title">Готов начать?</h2>
+        <p class="cta-subtitle">Скачай PaceUp прямо сейчас и начни отслеживать свои тренировки</p>
+        <div class="cta-buttons">
+          <a href="#" class="btn btn-primary">
+            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
+          </a>
+          <a href="#" class="btn btn-primary">
+            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+        <p class="section-subtitle">Все, что нужно знать о PaceUp</p>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Бесплатно ли приложение?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Да, базовые функции PaceUp полностью бесплатны. Доступны все виды трекинга, карты, лента активностей и социальные функции.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Работает ли приложение без интернета?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Да, PaceUp работает в офлайн-режиме. Все данные сохраняются локально и синхронизируются при подключении к интернету.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Какие виды спорта поддерживаются?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>PaceUp поддерживает бег, велосипед, лыжи, плавание, ходьбу и другие виды активности. Также можно добавлять тренировки вручную.</p>
+          </div>
+        </div>
+        <div class="faq-item">
+          <button class="faq-question">
+            <span>Интегрируется ли с Apple Health / Google Fit?</span>
+            <span class="faq-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <p>Да, PaceUp полностью интегрируется с Apple Health на iOS и Google Fit на Android для синхронизации данных о здоровье.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Футер -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="footer-logo">
+            <img src="../assets/logo.png" alt="PaceUp Logo" class="logo-img">
+            <span class="logo-text">PaceUp</span>
+          </div>
+          <p class="footer-description">
+            Спортивное приложение для трекинга активностей и достижения новых высот.
+          </p>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Приложение</h4>
+          <ul class="footer-links">
+            <li><a href="#features">Возможности</a></li>
+            <li><a href="#how-it-works">Как работает</a></li>
+            <li><a href="#screenshots">Скриншоты</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Контакты</h4>
+          <ul class="footer-links">
+            <li><a href="mailto:info@paceup.com">info@paceup.com</a></li>
+            <li><a href="#">Поддержка</a></li>
+            <li><a href="#">О нас</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4 class="footer-title">Следите за нами</h4>
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Instagram">Instagram</a>
+            <a href="#" class="social-link" aria-label="VK">VK</a>
+            <a href="#" class="social-link" aria-label="Telegram">Telegram</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 PaceUp. Все права защищены.</p>
+        <div class="footer-legal">
+          <a href="#">Политика конфиденциальности</a>
+          <a href="#">Условия использования</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
