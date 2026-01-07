@@ -17,6 +17,7 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../providers/services/api_provider.dart';
 import 'edit_profile/providers/edit_profile_provider.dart';
+import 'edit_profile/providers/edit_profile_state.dart';
 import 'edit_profile/widgets/edit_profile_states.dart';
 import 'edit_profile/widgets/edit_profile_form_pane.dart';
 
@@ -280,29 +281,59 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final formState = ref.watch(formStateProvider);
     final notifier = ref.read(editProfileProvider(widget.userId).notifier);
 
-    // Синхронизируем контроллеры при изменении состояния только если пользователь не редактирует
-    // Это предотвращает перезапись пользовательского ввода
-    if (!_isUserEditingFirstName && profileState.firstName != _firstName.text) {
-      _firstName.text = profileState.firstName;
-    }
-    if (!_isUserEditingLastName && profileState.lastName != _lastName.text) {
-      _lastName.text = profileState.lastName;
-    }
-    if (!_isUserEditingNickname && profileState.nickname != _nickname.text) {
-      _nickname.text = profileState.nickname;
-    }
-    if (!_isUserEditingCity && profileState.city != _city.text) {
-      _city.text = profileState.city;
-    }
-    if (!_isUserEditingHeight && profileState.height != _height.text) {
-      _height.text = profileState.height;
-    }
-    if (!_isUserEditingWeight && profileState.weight != _weight.text) {
-      _weight.text = profileState.weight;
-    }
-    if (!_isUserEditingHrMax && profileState.hrMax != _hrMax.text) {
-      _hrMax.text = profileState.hrMax;
-    }
+    // Слушаем изменения состояния провайдера и синхронизируем контроллеры
+    // когда данные загружаются из API
+    ref.listen<EditProfileState>(editProfileProvider(widget.userId), (previous, next) {
+      // Синхронизируем контроллеры только если данные действительно изменились
+      // Используем addPostFrameCallback чтобы избежать проблем во время билда
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        
+        // Проверяем, есть ли активный фокус на любом поле
+        final hasActiveFocus = FocusScope.of(context).focusedChild != null;
+        
+        // Синхронизируем контроллеры только если нет активного фокуса
+        // или если это первая загрузка данных (previous == null)
+        // Также проверяем, что значение действительно отличается от текущего
+        if (previous == null || !hasActiveFocus) {
+          if (next.firstName != _firstName.text) {
+            _isUserEditingFirstName = false;
+            _firstName.text = next.firstName;
+            _isUserEditingFirstName = true;
+          }
+          if (next.lastName != _lastName.text) {
+            _isUserEditingLastName = false;
+            _lastName.text = next.lastName;
+            _isUserEditingLastName = true;
+          }
+          if (next.nickname != _nickname.text) {
+            _isUserEditingNickname = false;
+            _nickname.text = next.nickname;
+            _isUserEditingNickname = true;
+          }
+          if (next.city != _city.text) {
+            _isUserEditingCity = false;
+            _city.text = next.city;
+            _isUserEditingCity = true;
+          }
+          if (next.height != _height.text) {
+            _isUserEditingHeight = false;
+            _height.text = next.height;
+            _isUserEditingHeight = true;
+          }
+          if (next.weight != _weight.text) {
+            _isUserEditingWeight = false;
+            _weight.text = next.weight;
+            _isUserEditingWeight = true;
+          }
+          if (next.hrMax != _hrMax.text) {
+            _isUserEditingHrMax = false;
+            _hrMax.text = next.hrMax;
+            _isUserEditingHrMax = true;
+          }
+        }
+      });
+    });
 
     return InteractiveBackSwipe(
       child: Scaffold(
