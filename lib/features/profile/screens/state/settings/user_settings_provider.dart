@@ -33,6 +33,18 @@ class UserSettings {
   }
 }
 
+const _cacheKey = 'user_settings_cache';
+
+/// Функция для очистки кеша настроек пользователя
+Future<void> clearUserSettingsCache() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_cacheKey);
+  } catch (e) {
+    // Игнорируем ошибки очистки кеша
+  }
+}
+
 /// Провайдер для получения настроек пользователя
 /// Использует кеширование: сначала показывает кеш (если есть), затем обновляет данные
 final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
@@ -42,12 +54,10 @@ final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
     throw Exception('Пользователь не авторизован');
   }
 
-  const cacheKey = 'user_settings_cache';
-
   // ────────── ШАГ 1: Пытаемся загрузить из кеша (мгновенно) ──────────
   try {
     final prefs = await SharedPreferences.getInstance();
-    final cachedJson = prefs.getString(cacheKey);
+    final cachedJson = prefs.getString(_cacheKey);
     if (cachedJson != null) {
       final cachedData = jsonDecode(cachedJson) as Map<String, dynamic>;
       // Проверяем, что кеш соответствует текущему пользователю
@@ -74,7 +84,7 @@ final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
       final prefs = await SharedPreferences.getInstance();
       final jsonToCache = settings.toJson();
       jsonToCache['user_id'] = userId;
-      await prefs.setString(cacheKey, jsonEncode(jsonToCache));
+      await prefs.setString(_cacheKey, jsonEncode(jsonToCache));
     } catch (e) {
       // Игнорируем ошибки сохранения кеша
     }
@@ -84,7 +94,7 @@ final userSettingsProvider = FutureProvider<UserSettings>((ref) async {
     // Если ошибка загрузки, пробуем вернуть кеш (даже если он старый)
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cachedJson = prefs.getString(cacheKey);
+      final cachedJson = prefs.getString(_cacheKey);
       if (cachedJson != null) {
         final cachedData = jsonDecode(cachedJson) as Map<String, dynamic>;
         if (cachedData['user_id'] == userId) {

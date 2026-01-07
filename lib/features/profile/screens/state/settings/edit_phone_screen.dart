@@ -8,6 +8,7 @@ import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import 'package:mask_input_formatter/mask_input_formatter.dart';
+import 'user_settings_provider.dart';
 
 /// Экран редактирования телефона
 class EditPhoneScreen extends ConsumerStatefulWidget {
@@ -75,6 +76,10 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
         '/update_user_settings.php',
         body: {'user_id': userId, 'phone': _phoneController.text},
       );
+
+      // Очищаем кеш и обновляем данные
+      await clearUserSettingsCache();
+      ref.invalidate(userSettingsProvider);
 
       if (!mounted) return;
       Navigator.of(context).pop(_phoneController.text);

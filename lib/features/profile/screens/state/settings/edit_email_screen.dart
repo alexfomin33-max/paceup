@@ -7,6 +7,7 @@ import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../core/utils/error_handler.dart';
+import 'user_settings_provider.dart';
 
 /// Экран редактирования email
 class EditEmailScreen extends ConsumerStatefulWidget {
@@ -73,6 +74,10 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
         '/update_user_settings.php',
         body: {'user_id': userId, 'email': _emailController.text.trim()},
       );
+
+      // Очищаем кеш и обновляем данные
+      await clearUserSettingsCache();
+      ref.invalidate(userSettingsProvider);
 
       if (!mounted) return;
       Navigator.of(context).pop(_emailController.text.trim());
