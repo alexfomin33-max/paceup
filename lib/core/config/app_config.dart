@@ -10,7 +10,7 @@ class AppConfig {
   // ────────────────────────── API URLs ──────────────────────────
 
   /// Базовый URL бэкенда
-  static const String baseUrl = "http://api.paceup.ru";
+  static const String baseUrl = "https://api.paceup.ru";
 
   // ────────────────────────── Map Tiles ──────────────────────────
 

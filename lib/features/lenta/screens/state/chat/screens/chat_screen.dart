@@ -399,13 +399,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     } else {
       // Для обычных чатов возвращаем URL аватара пользователя
       if (chat.userAvatar == null || chat.userAvatar!.isEmpty) {
-        return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+        return 'https://uploads.paceup.ru/images/users/avatars/def.png';
       }
       if (chat.userAvatar!.startsWith('http')) {
         return chat.userAvatar;
       }
       // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
-      return 'http://uploads.paceup.ru/images/users/avatars/${chat.userId}/${chat.userAvatar}';
+      return 'https://uploads.paceup.ru/images/users/avatars/${chat.userId}/${chat.userAvatar}';
     }
   }
 
@@ -606,7 +606,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                   final w = (52 * dpr).round();
                                   final url =
                                       imageUrl ??
-                                      'http://uploads.paceup.ru/images/users/avatars/def.png';
+                                      'https://uploads.paceup.ru/images/users/avatars/def.png';
                                   return CachedNetworkImage(
                                     key: ValueKey(
                                       'avatar_${chat.id}_${chat.userId}_$url',

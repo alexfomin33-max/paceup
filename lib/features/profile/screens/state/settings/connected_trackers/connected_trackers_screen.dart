@@ -522,7 +522,7 @@ class _ConnectedTrackersScreenState
       // Формируем URL для OAuth авторизации Strava
       // Используем параметр 'state' для передачи user_id, так как Strava возвращает его обратно
       const clientId = '190652';
-      const redirectUri = 'http://api.paceup.ru/strava_oauth_callback.php';
+      const redirectUri = 'https://api.paceup.ru/strava_oauth_callback.php';
       const scope = 'activity:read';
       
       final authUrl = Uri.parse(

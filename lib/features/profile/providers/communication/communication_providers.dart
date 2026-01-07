@@ -137,10 +137,10 @@ int _intFromJson(dynamic value) {
 String _resolveAvatarUrl(int userId, String avatar, String remote) {
   if (remote.isNotEmpty) return remote;
   if (avatar.isEmpty) {
-    return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+    return 'https://uploads.paceup.ru/images/users/avatars/def.png';
   }
   if (avatar.startsWith('http')) return avatar;
-  return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  return 'https://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
 }
 
 /// Состояние списка с пагинацией.
