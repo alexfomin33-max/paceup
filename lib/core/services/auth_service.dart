@@ -3,7 +3,7 @@ import 'api_service.dart';
 
 class AuthService {
   //final storage = const FlutterSecureStorage();
-  final String baseUrl = "http://api.paceup.ru";
+  final String baseUrl = "https://api.paceup.ru";
 
   //Future<String?> getAccessToken() async => await storage.read(key: "access_token");
   //Future<String?> getRefreshToken() async => await storage.read(key: "refresh_token");
@@ -18,7 +18,7 @@ class AuthService {
   }
 
   Future<int?> getUserId() async {
-    final userIdStr = "1";
+    final userIdStr = "2";
     return int.tryParse(userIdStr);
   }
 

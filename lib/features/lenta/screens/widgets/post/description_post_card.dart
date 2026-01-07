@@ -721,10 +721,10 @@ class _LikedUsersList extends StatelessWidget {
   /// Формирование URL для аватара
   String _getAvatarUrl(String avatar, int userId) {
     if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      return 'https://uploads.paceup.ru/images/users/avatars/def.png';
     }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+    return 'https://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
   }
 
   @override
@@ -1382,10 +1382,10 @@ class _LikedUsersAvatars extends StatelessWidget {
   /// Формирование URL для аватара
   String _getAvatarUrl(String avatar, int userId) {
     if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      return 'https://uploads.paceup.ru/images/users/avatars/def.png';
     }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+    return 'https://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
   }
 
   @override

@@ -479,7 +479,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         // Получаем полный URL изображения для оптимистичного обновления
         final imageUrl =
             uploadResponse['image_url'] as String? ??
-            'http://uploads.paceup.ru/$imagePath';
+            'https://uploads.paceup.ru/$imagePath';
 
         // ─── Оптимистичное обновление: добавляем временное сообщение ───
         final tempMessage = ChatMessage(
@@ -919,11 +919,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   /// ─── Получение URL аватара ───
   String _getAvatarUrl(String avatar) {
     if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      return 'https://uploads.paceup.ru/images/users/avatars/def.png';
     }
     if (avatar.startsWith('http')) return avatar;
     // ⚡️ Используем правильный путь: /images/users/avatars/{user_id}/{avatar}
-    return 'http://uploads.paceup.ru/images/users/avatars/${widget.userId}/$avatar';
+    return 'https://uploads.paceup.ru/images/users/avatars/${widget.userId}/$avatar';
   }
 
   /// ─── Показать изображение в полноэкранном режиме ───

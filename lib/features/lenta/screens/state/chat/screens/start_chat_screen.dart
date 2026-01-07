@@ -304,10 +304,10 @@ class _RowTileState extends State<_RowTile> {
   /// Формирование URL для аватара
   String _getAvatarUrl(String avatar, int userId) {
     if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      return 'https://uploads.paceup.ru/images/users/avatars/def.png';
     }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+    return 'https://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
   }
 
   /// ─── Открытие чата с выбранным пользователем ───

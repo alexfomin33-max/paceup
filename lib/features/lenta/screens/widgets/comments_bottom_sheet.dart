@@ -74,7 +74,7 @@ bool isTruthy(dynamic v) {
 /// НАСТРОЙКИ API
 /// =====================
 class ApiConfig {
-  static const String base = 'http://api.paceup.ru/';
+  static const String base = 'https://api.paceup.ru/';
 
   static String get commentsList => '${base}comments_list.php';
   static String get commentsAdd => '${base}comments_add.php';

@@ -324,7 +324,7 @@ class _Avatar extends StatelessWidget {
     return ClipOval(
       child: CachedNetworkImage(
         imageUrl: url.isEmpty
-            ? 'http://uploads.paceup.ru/images/users/avatars/def.png'
+            ? 'https://uploads.paceup.ru/images/users/avatars/def.png'
             : url,
         width: 44,
         height: 44,

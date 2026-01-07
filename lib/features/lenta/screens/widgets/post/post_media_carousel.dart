@@ -28,7 +28,7 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
 
   // Картинка-заглушка для видео
   static const _videoPlaceholder =
-      'http://uploads.paceup.ru/defaults/video_placeholder.jpg';
+      'https://uploads.paceup.ru/defaults/video_placeholder.jpg';
 
   @override
   void initState() {

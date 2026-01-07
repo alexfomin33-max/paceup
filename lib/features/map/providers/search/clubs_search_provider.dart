@@ -38,10 +38,10 @@ class ClubSearch {
   /// Формирование URL для логотипа
   String get logoUrl {
     if (logo.isEmpty) {
-      return 'http://uploads.paceup.ru/images/clubs/default.png';
+      return 'https://uploads.paceup.ru/images/clubs/default.png';
     }
     if (logo.startsWith('http')) return logo;
-    return 'http://uploads.paceup.ru/clubs/$id/logo/$logo';
+    return 'https://uploads.paceup.ru/clubs/$id/logo/$logo';
   }
 }
 

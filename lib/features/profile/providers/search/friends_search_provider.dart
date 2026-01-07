@@ -63,10 +63,10 @@ class FriendUser {
   /// Формирование URL для аватара
   String get avatarUrl {
     if (avatar.isEmpty) {
-      return 'http://uploads.paceup.ru/images/users/avatars/def.png';
+      return 'https://uploads.paceup.ru/images/users/avatars/def.png';
     }
     if (avatar.startsWith('http')) return avatar;
-    return 'http://uploads.paceup.ru/images/users/avatars/$id/$avatar';
+    return 'https://uploads.paceup.ru/images/users/avatars/$id/$avatar';
   }
 }
 

@@ -195,7 +195,7 @@ class ThingsNotifier extends StateNotifier<ThingsState> {
 
     // ── если изображений нет, используем заглушку
     if (images.isEmpty) {
-      images.add('http://uploads.paceup.ru/defaults/thing_placeholder.png');
+      images.add('https://uploads.paceup.ru/defaults/thing_placeholder.png');
     }
 
     return GoodsItem(
