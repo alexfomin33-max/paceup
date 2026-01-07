@@ -47,7 +47,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   // Флаги для отслеживания, редактирует ли пользователь поля
   bool _isUserEditingFirstName = false;
   bool _isUserEditingLastName = false;
+  bool _isUserEditingNickname = false;
   bool _isUserEditingCity = false;
+  bool _isUserEditingHeight = false;
+  bool _isUserEditingWeight = false;
+  bool _isUserEditingHrMax = false;
 
   @override
   void initState() {
@@ -83,11 +87,35 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         if (!_isUserEditingCity) return;
         notifier.updateCity(_city.text);
       });
+
+      _nickname.addListener(() {
+        if (!_isUserEditingNickname) return;
+        notifier.updateNickname(_nickname.text);
+      });
+
+      _height.addListener(() {
+        if (!_isUserEditingHeight) return;
+        notifier.updateHeight(_height.text);
+      });
+
+      _weight.addListener(() {
+        if (!_isUserEditingWeight) return;
+        notifier.updateWeight(_weight.text);
+      });
+
+      _hrMax.addListener(() {
+        if (!_isUserEditingHrMax) return;
+        notifier.updateHrMax(_hrMax.text);
+      });
       
       // После синхронизации включаем отслеживание изменений
       _isUserEditingFirstName = true;
       _isUserEditingLastName = true;
+      _isUserEditingNickname = true;
       _isUserEditingCity = true;
+      _isUserEditingHeight = true;
+      _isUserEditingWeight = true;
+      _isUserEditingHrMax = true;
     });
   }
   
@@ -138,7 +166,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // Временно отключаем отслеживание изменений при синхронизации
     _isUserEditingFirstName = false;
     _isUserEditingLastName = false;
+    _isUserEditingNickname = false;
     _isUserEditingCity = false;
+    _isUserEditingHeight = false;
+    _isUserEditingWeight = false;
+    _isUserEditingHrMax = false;
     
     _firstName.text = state.firstName;
     _lastName.text = state.lastName;
@@ -151,7 +183,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     // Включаем отслеживание обратно
     _isUserEditingFirstName = true;
     _isUserEditingLastName = true;
+    _isUserEditingNickname = true;
     _isUserEditingCity = true;
+    _isUserEditingHeight = true;
+    _isUserEditingWeight = true;
+    _isUserEditingHrMax = true;
   }
 
   /// Сохранение профиля
@@ -252,19 +288,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (!_isUserEditingLastName && profileState.lastName != _lastName.text) {
       _lastName.text = profileState.lastName;
     }
-    if (profileState.nickname != _nickname.text) {
+    if (!_isUserEditingNickname && profileState.nickname != _nickname.text) {
       _nickname.text = profileState.nickname;
     }
     if (!_isUserEditingCity && profileState.city != _city.text) {
       _city.text = profileState.city;
     }
-    if (profileState.height != _height.text) {
+    if (!_isUserEditingHeight && profileState.height != _height.text) {
       _height.text = profileState.height;
     }
-    if (profileState.weight != _weight.text) {
+    if (!_isUserEditingWeight && profileState.weight != _weight.text) {
       _weight.text = profileState.weight;
     }
-    if (profileState.hrMax != _hrMax.text) {
+    if (!_isUserEditingHrMax && profileState.hrMax != _hrMax.text) {
       _hrMax.text = profileState.hrMax;
     }
 
