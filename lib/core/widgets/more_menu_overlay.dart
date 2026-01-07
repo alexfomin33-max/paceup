@@ -22,7 +22,7 @@ class MoreMenuItem {
 
 /// Универсальное всплывающее меню на OverlayEntry, привязывается к anchorKey.
 /// • Безопасно к перестройкам списка (не зависит от контекста карточки).
-/// • С тенью и тонким разделителем между пунктами.
+/// • С тенью, без разделителей между пунктами.
 /// • Сам закрывается при тапе по фону/выборе пункта.
 /// • Регистрируется в MoreMenuHub, чтобы можно было закрыть при скролле.
 class MoreMenuOverlay {
@@ -39,7 +39,6 @@ class MoreMenuOverlay {
       BoxShadow(color: AppColors.scrim20, blurRadius: 4, offset: Offset(0, 1)),
     ],
     this.innerPadding = const EdgeInsets.symmetric(vertical: 6),
-    this.dividerColor = AppColors.divider,
   });
 
   final GlobalKey anchorKey;
@@ -52,7 +51,6 @@ class MoreMenuOverlay {
   final BorderRadius borderRadius;
   final List<BoxShadow> boxShadow;
   final EdgeInsets innerPadding;
-  final Color dividerColor;
 
   OverlayEntry? _entry;
 
@@ -109,12 +107,11 @@ class MoreMenuOverlay {
     final anchorRect = Rect.fromPoints(topLeft, bottomRight);
     final screenSize = overlayBox.size;
 
-    // Высота меню = пункты (~48 на пункт) + паддинги + разделители (0.5).
+    // Высота меню = пункты (~48 на пункт) + паддинги.
     const itemHeight = 48.0;
     final double height =
         innerPadding.vertical +
         items.length * itemHeight +
-        (items.length - 1) * 0.5 +
         2;
 
     // Базовая позиция: под кнопкой, выравниваем по правому краю.
@@ -191,9 +188,6 @@ class MoreMenuOverlay {
     // ── Получаем цвета в зависимости от темы
     final textColor = AppColors.getTextPrimaryColor(ctx);
     final iconColor = AppColors.getIconPrimaryColor(ctx);
-    final divColor = dividerColor == AppColors.divider
-        ? AppColors.getDividerColor(ctx)
-        : dividerColor;
 
     for (int i = 0; i < items.length; i++) {
       final it = items[i];
@@ -223,16 +217,6 @@ class MoreMenuOverlay {
           ),
         ),
       );
-
-      // Тонкий разделитель между пунктами
-      if (i != items.length - 1) {
-        children.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Divider(height: 8, thickness: 0.5, color: divColor),
-          ),
-        );
-      }
     }
 
     return Column(mainAxisSize: MainAxisSize.min, children: children);
