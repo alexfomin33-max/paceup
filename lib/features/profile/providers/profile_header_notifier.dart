@@ -134,6 +134,7 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
   Future<void> reload() async {
     // Сохраняем старый URL для очистки кэша
     final oldAvatar = state.profile?.avatar;
+    final oldBackground = state.profile?.background;
 
     // ШАГ 1: Очищаем кэш профиля для принудительной загрузки свежих данных
     await _cache.clearProfileCache(userId: userId);
@@ -179,28 +180,45 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
     state = state.copyWith(profile: profile, isLoading: false, error: null);
 
     final newAvatar = state.profile?.avatar;
-    if (newAvatar == null || newAvatar.isEmpty) return;
+    final newBackground = state.profile?.background;
 
     // ШАГ 4: Очистка кэша для принудительной перезагрузки
     try {
-      // Очищаем базовый URL
-      await CachedNetworkImage.evictFromCache(newAvatar);
+      if (newAvatar != null && newAvatar.isNotEmpty) {
+        // Очищаем базовый URL
+        await CachedNetworkImage.evictFromCache(newAvatar);
 
-      // Очищаем старый URL (если был другой)
-      if (oldAvatar != null && oldAvatar != newAvatar) {
-        await CachedNetworkImage.evictFromCache(oldAvatar);
+        // Очищаем старый URL (если был другой)
+        if (oldAvatar != null && oldAvatar != newAvatar) {
+          await CachedNetworkImage.evictFromCache(oldAvatar);
+        }
+
+        // Полная очистка через ImageProvider
+        try {
+          final provider = CachedNetworkImageProvider(newAvatar);
+          await provider.evict();
+        } catch (_) {
+          // Игнорируем ошибки
+        }
+
+        // Очистка всех вариантов с cache-busting параметрами
+        await clearImageCacheForUrl(newAvatar);
       }
 
-      // Полная очистка через ImageProvider
-      try {
-        final provider = CachedNetworkImageProvider(newAvatar);
-        await provider.evict();
-      } catch (_) {
-        // Игнорируем ошибки
+      // Аналогично пробиваем кэш фоновой картинки, чтобы видеть новую обложку.
+      if (newBackground != null && newBackground.isNotEmpty) {
+        await CachedNetworkImage.evictFromCache(newBackground);
+        if (oldBackground != null && oldBackground != newBackground) {
+          await CachedNetworkImage.evictFromCache(oldBackground);
+        }
+        try {
+          final providerBg = CachedNetworkImageProvider(newBackground);
+          await providerBg.evict();
+        } catch (_) {
+          // Игнорируем ошибки
+        }
+        await clearImageCacheForUrl(newBackground);
       }
-
-      // Очистка всех вариантов с cache-busting параметрами
-      await clearImageCacheForUrl(newAvatar);
     } catch (e) {
       // Игнорируем ошибки очистки кэша
     }

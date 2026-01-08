@@ -4,45 +4,43 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="PaceUp - спортивное приложение для трекинга активностей. Бег, велосипед, лыжи, плавание и многое другое.">
-  <title>PaceUp - Твой спорт, твои достижения</title>
+  <title>PaceUp - Твой спорт — твои достижения</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Навигация -->
-  <nav class="navbar">
-    <div class="container">
-      <div class="nav-content">
-        <div class="logo">
-          <img src="../assets/logo.png" alt="PaceUp Logo" class="logo-img">
-          <span class="logo-text">PaceUp</span>
-        </div>
-        <ul class="nav-menu" id="navMenu">
-          <li><a href="#features">Возможности</a></li>
-          <li><a href="#how-it-works">Как работает</a></li>
-          <li><a href="#screenshots">Скриншоты</a></li>
-          <li><a href="#testimonials">Отзывы</a></li>
-          <li><a href="#faq">FAQ</a></li>
-        </ul>
-        <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-      </div>
-    </div>
-  </nav>
-
   <!-- Hero секция -->
   <section class="hero">
-    <div class="hero-background"></div>
+    <div class="hero-background" style="background-image: url('img/running.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat;"></div>
+    <!-- Навигация -->
+    <nav class="navbar">
+      <div class="container">
+        <div class="nav-content">
+          <div class="logo">
+            <img src="img/Logo.png" alt="PaceUp Logo" class="logo-img">
+          </div>
+          <ul class="nav-menu" id="navMenu">
+            <li><a href="#features">Возможности</a></li>
+            <li><a href="#how-it-works">Как работает</a></li>
+            <li><a href="#screenshots">Скриншоты</a></li>
+            <li><a href="#testimonials">Отзывы</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+          <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+        </div>
+      </div>
+    </nav>
     <div class="container">
       <div class="hero-content">
         <div class="hero-text">
           <h1 class="hero-title">
-            Твой спорт,<br>
+            Твой спорт —<br>
             <span class="gradient-text">твои достижения</span>
           </h1>
           <p class="hero-subtitle">
@@ -50,42 +48,16 @@
             Все виды активности в одном приложении.
           </p>
           <div class="hero-buttons">
-            <a href="#" class="btn btn-primary">
+            <!-- <a href="#" class="btn btn-primary">
               <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
             </a>
             <a href="#" class="btn btn-primary">
-              <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
+              <img src="img/icon_google_play.png" alt="Google Play" class="store-badge">
+            </a> -->
+            <a href="#" class="btn btn-primary">
+              <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
             </a>
           </div>
-        </div>
-        <div class="hero-image">
-          <div class="phone-mockup">
-            <img src="../assets/running.jpg" alt="PaceUp App" class="phone-screen">
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Статистика -->
-  <section class="stats">
-    <div class="container">
-      <div class="stats-grid">
-        <div class="stat-item">
-          <div class="stat-number" data-target="10000">0</div>
-          <div class="stat-label">Активных пользователей</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" data-target="50000">0</div>
-          <div class="stat-label">Тренировок</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" data-target="100000">0</div>
-          <div class="stat-label">Километров</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-number" data-target="4.8">0</div>
-          <div class="stat-label">Рейтинг в магазинах</div>
         </div>
       </div>
     </div>
@@ -170,7 +142,7 @@
           <div class="step-content">
             <h3 class="step-title">Скачай приложение</h3>
             <p class="step-description">
-              Установи PaceUp на свой смартфон из App Store или Google Play
+              Установи PaceUp на свой смартфон из App Store, Google Play или RuStore
             </p>
           </div>
         </div>
@@ -344,11 +316,14 @@
         <h2 class="cta-title">Готов начать?</h2>
         <p class="cta-subtitle">Скачай PaceUp прямо сейчас и начни отслеживать свои тренировки</p>
         <div class="cta-buttons">
-          <a href="#" class="btn btn-primary">
+          <!-- <a href="#" class="btn btn-primary">
             <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
           </a>
           <a href="#" class="btn btn-primary">
             <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
+          </a> -->
+          <a href="#" class="btn btn-primary">
+            <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
           </a>
         </div>
       </div>
@@ -406,11 +381,10 @@
   <!-- Футер -->
   <footer class="footer">
     <div class="container">
-      <div class="footer-content">
+      <!-- <div class="footer-content">
         <div class="footer-section">
           <div class="footer-logo">
-            <img src="../assets/logo.png" alt="PaceUp Logo" class="logo-img">
-            <span class="logo-text">PaceUp</span>
+            <img src="img/Logo.png" alt="PaceUp Logo" class="logo-img">
           </div>
           <p class="footer-description">
             Спортивное приложение для трекинга активностей и достижения новых высот.
@@ -441,11 +415,11 @@
             <a href="#" class="social-link" aria-label="Telegram">Telegram</a>
           </div>
         </div>
-      </div>
+      </div> -->
       <div class="footer-bottom">
-        <p>&copy; 2024 PaceUp. Все права защищены.</p>
+        <p>&copy; 2026 PaceUp. Все права защищены.</p>
         <div class="footer-legal">
-          <a href="privacy-policy.html">Политика конфиденциальности</a>
+          <a href="privacy-policy2.html">Политика конфиденциальности</a>
           <a href="user-agreement.html">Пользовательское соглашение</a>
         </div>
       </div>

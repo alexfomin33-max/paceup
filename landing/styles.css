@@ -75,23 +75,25 @@ body {
    ──────────────────────────────────────────────────────────────────────── */
 
 .navbar {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  box-shadow: var(--shadow-sm);
+  background: transparent;
   z-index: 1000;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.navbar .container {
+  box-shadow: none !important;
 }
 
 .nav-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-sm) 0;
+  padding: 12px 0;
 }
 
 .logo {
@@ -100,12 +102,12 @@ body {
   gap: var(--spacing-xs);
   font-weight: 700;
   font-size: 20px;
-  color: var(--text-primary);
+  color: white;
   text-decoration: none;
 }
 
 .logo-img {
-  height: 32px;
+  height: 36px;
   width: auto;
 }
 
@@ -124,7 +126,7 @@ body {
 }
 
 .nav-menu a {
-  color: var(--text-secondary);
+  color: rgba(255, 255, 255, 0.9);
   text-decoration: none;
   font-weight: 500;
   transition: color 0.3s ease;
@@ -132,7 +134,7 @@ body {
 }
 
 .nav-menu a:hover {
-  color: var(--brand-primary);
+  color: white;
 }
 
 .nav-menu a::after {
@@ -163,7 +165,7 @@ body {
 .nav-toggle span {
   width: 24px;
   height: 2px;
-  background: var(--text-primary);
+  background: white;
   transition: all 0.3s ease;
 }
 
@@ -176,7 +178,6 @@ body {
   min-height: 100vh;
   display: flex;
   align-items: center;
-  padding-top: 80px;
   overflow: hidden;
 }
 
@@ -186,33 +187,32 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--gradient-hero);
-  opacity: 0.1;
+  opacity: 1;
   z-index: -1;
 }
 
+/* Градиентное затемнение сверху */
 .hero-background::before {
   content: '';
   position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 800px;
-  height: 800px;
-  background: radial-gradient(circle, rgba(55, 154, 230, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: float 20s ease-in-out infinite;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+  z-index: 2;
 }
 
+/* Overlay для затемнения фона и улучшения читаемости текста */
 .hero-background::after {
   content: '';
   position: absolute;
-  bottom: -30%;
-  left: -10%;
-  width: 600px;
-  height: 600px;
-  background: radial-gradient(circle, rgba(88, 86, 214, 0.3) 0%, transparent 70%);
-  border-radius: 50%;
-  animation: float 15s ease-in-out infinite reverse;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1;
 }
 
 @keyframes float {
@@ -236,37 +236,48 @@ body {
   font-weight: 700;
   line-height: 1.2;
   margin-bottom: var(--spacing-md);
-  color: var(--text-primary);
+  color: #FFFFFF;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .gradient-text {
-  background: var(--gradient-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #FFFFFF;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  white-space: nowrap;
 }
 
 .hero-subtitle {
   font-size: 20px;
-  color: var(--text-secondary);
+  color: #FFFFFF;
   margin-bottom: var(--spacing-lg);
   line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .hero-buttons {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+  width: fit-content;
 }
 
 .store-badge {
   height: 50px;
   width: auto;
+  object-fit: contain;
   transition: transform 0.3s ease;
 }
 
 .store-badge:hover {
   transform: scale(1.05);
+}
+
+.store-badge[src*="rustore"] {
+  border: 0.3px solid rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  padding: 2px;
+  box-sizing: border-box;
+  background-color: #000000;
 }
 
 .hero-image {
@@ -703,6 +714,8 @@ section {
   justify-content: center;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -778,7 +791,7 @@ section {
 .footer {
   background: var(--text-primary);
   color: white;
-  padding: var(--spacing-xl) 0 var(--spacing-md);
+  padding: var(--spacing-md) 0;
 }
 
 .footer-content {
@@ -844,8 +857,8 @@ section {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 0;
+  border-top: none;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
 }
@@ -899,10 +912,10 @@ section {
 @media (max-width: 768px) {
   .nav-menu {
     position: fixed;
-    top: 70px;
+    top: 0;
     left: -100%;
     width: 100%;
-    height: calc(100vh - 70px);
+    height: 100vh;
     background: var(--surface);
     flex-direction: column;
     padding: var(--spacing-lg);

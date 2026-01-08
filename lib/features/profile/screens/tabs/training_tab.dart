@@ -94,8 +94,11 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
             })
             .toList(growable: false);
 
-        // Формируем список пилюль для каждого дня месяца (каждая тренировка — отдельная)
+        // Формируем список пилюль для каждого дня месяца
+        // Группируем тренировки по типу спорта и суммируем дистанции
         final dayBubbles = <int, List<_BubbleData>>{};
+        // Временная структура для группировки: день -> тип спорта -> сумма дистанций
+        final daySportDistances = <int, Map<int, double>>{};
 
         // Проходим по всем тренировкам текущего месяца и выбранным видам спорта
         for (final activity in data.activities) {
@@ -104,21 +107,50 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
               _sports.contains(activity.sportType)) {
             final day = activity.when.day;
 
-            // Значения в пилюлях — только цифры, единицы убираем для всех видов спорта
-            var distanceText = activity.distanceText.trim();
-            distanceText = distanceText
-                .replaceAll(RegExp(r'\s*(км|km)\s*', caseSensitive: false), '')
-                .trim();
+            // Получаем дистанцию в числовом виде для суммирования
+            // Для всех видов спорта дистанция в километрах
+            final distanceValue = activity.distance;
 
-            dayBubbles
-                .putIfAbsent(day, () => <_BubbleData>[])
-                .add(
-                  _BubbleData(
-                    distanceText: distanceText,
-                    sportType: activity.sportType,
-                  ),
+            // Группируем по дню и типу спорта, суммируем дистанции
+            daySportDistances
+                .putIfAbsent(day, () => <int, double>{})
+                .update(
+                  activity.sportType,
+                  (value) => value + distanceValue,
+                  ifAbsent: () => distanceValue,
                 );
           }
+        }
+
+        // Формируем финальные пилюли из сгруппированных данных
+        for (final entry in daySportDistances.entries) {
+          final day = entry.key;
+          final sportDistances = entry.value;
+
+          final bubbles = <_BubbleData>[];
+          for (final sportEntry in sportDistances.entries) {
+            final sportType = sportEntry.key;
+            final totalDistance = sportEntry.value;
+
+            // Форматируем дистанцию в километрах для всех видов спорта
+            final String distanceText;
+            if (totalDistance == totalDistance.roundToDouble()) {
+              distanceText = '${totalDistance.toInt()}';
+            } else {
+              distanceText = totalDistance
+                  .toStringAsFixed(1)
+                  .replaceAll('.', ',');
+            }
+
+            bubbles.add(
+              _BubbleData(
+                distanceText: distanceText,
+                sportType: sportType,
+              ),
+            );
+          }
+
+          dayBubbles[day] = bubbles;
         }
 
         return CustomScrollView(

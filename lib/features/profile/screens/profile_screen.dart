@@ -12,6 +12,7 @@ import '../../../core/widgets/more_menu_hub.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
 import '../../../providers/services/auth_provider.dart';
+import '../../../providers/avatar_version_provider.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../core/services/api_service.dart'; // для ApiException
 import '../../lenta/providers/lenta_provider.dart';
@@ -349,6 +350,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final currentUserIdAsync = ref.watch(currentUserIdProvider);
     final currentUserId = currentUserIdAsync.value;
     final isOwnProfile = currentUserId != null && currentUserId == userId;
+    final avatarVersion = ref.watch(avatarVersionProvider);
 
     // ────────────────────────────────────────────────────────────────
     // Высоты шапки, рассчитанные один раз за build (без повторных MediaQuery).
@@ -508,6 +510,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: _ProfileFlexibleSpace(
                       userId: userId,
                       profileState: profileState,
+                    backgroundUrl: _cacheBustUrl(
+                      profileState.profile?.background,
+                      avatarVersion,
+                    ),
                       coverHeight: coverHeight,
                       containerHeight: headerMetrics.containerHeightHeader,
                       displayName: displayName ?? 'Профиль',
@@ -555,6 +561,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   _HeaderMetrics _headerMetrics(BuildContext context) =>
       _HeaderMetrics.fromContext(context);
+
+  // ────────────────────────────────────────────────────────────────────
+  // Добавляем cache-busting параметр к URL, чтобы сразу подхватывать
+  // новую обложку после сохранения (пробиваем CDN и дисковый кэш).
+  // ────────────────────────────────────────────────────────────────────
+  String? _cacheBustUrl(String? url, int version) {
+    if (url == null || url.isEmpty || version <= 0) return url;
+    final separator = url.contains('?') ? '&' : '?';
+    return '$url${separator}v=$version';
+  }
 
   void _refreshProfileDebounced(int userId) {
     final now = DateTime.now();
@@ -617,6 +633,7 @@ class _ProfileFlexibleSpace extends StatelessWidget {
   final double coverHeight;
   final double containerHeight;
   final String displayName;
+  final String? backgroundUrl;
 
   const _ProfileFlexibleSpace({
     required this.userId,
@@ -625,6 +642,7 @@ class _ProfileFlexibleSpace extends StatelessWidget {
     required this.coverHeight,
     required this.containerHeight,
     required this.displayName,
+    required this.backgroundUrl,
   });
 
   @override
@@ -645,7 +663,7 @@ class _ProfileFlexibleSpace extends StatelessWidget {
     final followers = isValidProfile ? (profile.followers ?? 0) : 0;
     final following = isValidProfile ? (profile.following ?? 0) : 0;
     final avatarUrl = isValidProfile ? profile.avatar : null;
-    final backgroundUrl = isValidProfile ? profile.background : null;
+    final background = isValidProfile ? backgroundUrl : null;
 
     return Container(
       color: surface,
@@ -663,9 +681,13 @@ class _ProfileFlexibleSpace extends StatelessWidget {
               left: 0,
               right: 0,
               height: coverHeight,
-              child: backgroundUrl != null && backgroundUrl.isNotEmpty
+              child: background != null && background.isNotEmpty
                   ? CachedNetworkImage(
-                      imageUrl: backgroundUrl,
+                      // Привязываем ключ к userId + backgroundUrl, чтобы
+                      // принудительно пересоздавать виджет и пробивать кэш
+                      // при смене обложки после сохранения профиля.
+                      key: ValueKey('profile_bg_${userId}_${background}'),
+                      imageUrl: background,
                       width: double.infinity,
                       height: coverHeight,
                       fit: BoxFit.cover,

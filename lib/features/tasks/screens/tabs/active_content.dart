@@ -84,8 +84,8 @@ class ActiveContent extends ConsumerWidget {
                   ],
                   const TaskCard(
                     title: '10 дней активности',
-                    progressText: '6 / 10 дней',
-                    percent: 0.60,
+                    progressText: '10 / 10 дней',
+                    percent: 1.0,
                     image: _RectImage(
                       provider: AssetImage('assets/activity10.png'),
                     ),
@@ -104,8 +104,8 @@ class ActiveContent extends ConsumerWidget {
 
                   const TaskCard(
                     title: '1000 метров набора высоты',
-                    progressText: '537 / 1000 м',
-                    percent: 0.537,
+                    progressText: '243 / 1000 м',
+                    percent: 0.243,
                     image: _RectImage(
                       provider: AssetImage('assets/height1000.jpg'),
                     ),
@@ -114,8 +114,8 @@ class ActiveContent extends ConsumerWidget {
 
                   const TaskCard(
                     title: '1000 минут активности',
-                    progressText: '618 / 1000 мин',
-                    percent: 0.618,
+                    progressText: '486 / 1000 мин',
+                    percent: 0.486,
                     image: _RectImage(
                       provider: AssetImage('assets/activity1000.png'),
                     ),
