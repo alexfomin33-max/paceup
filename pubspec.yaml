@@ -80,6 +80,10 @@ dependencies:
   # ────────────────────────── URL Launcher ──────────────────────────
   url_launcher: ^6.3.1
   
+  # ────────────────────────── Share & Image Generation ──────────────────────────
+  share_plus: ^10.1.2
+  cross_file: ^0.3.4
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:

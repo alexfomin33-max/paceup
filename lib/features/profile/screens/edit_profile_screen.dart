@@ -292,10 +292,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         // Проверяем, есть ли активный фокус на любом поле
         final hasActiveFocus = FocusScope.of(context).focusedChild != null;
         
+        // При первой загрузке данных (previous == null) синхронизируем все поля
+        // независимо от фокуса, чтобы гарантировать установку значений из API
+        final isFirstLoad = previous == null;
+        
         // Синхронизируем контроллеры только если нет активного фокуса
         // или если это первая загрузка данных (previous == null)
         // Также проверяем, что значение действительно отличается от текущего
-        if (previous == null || !hasActiveFocus) {
+        if (isFirstLoad || !hasActiveFocus) {
           if (next.firstName != _firstName.text) {
             _isUserEditingFirstName = false;
             _firstName.text = next.firstName;
@@ -311,7 +315,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
             _nickname.text = next.nickname;
             _isUserEditingNickname = true;
           }
-          if (next.city != _city.text) {
+          // Для города всегда синхронизируем при первой загрузке или если значение изменилось
+          if (isFirstLoad || next.city != _city.text) {
             _isUserEditingCity = false;
             _city.text = next.city;
             _isUserEditingCity = true;

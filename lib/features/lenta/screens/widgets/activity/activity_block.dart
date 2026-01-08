@@ -395,10 +395,12 @@ class ActivityBlock extends ConsumerWidget {
                   padding: const EdgeInsets.only(left: 13, right: 16),
                   child: ActivityActionsRow(
                     activityId: updatedActivity.id,
+                    activityUserId: updatedActivity.userId,
                     currentUserId: currentUserId,
                     initialLikes: updatedActivity.likes,
                     initiallyLiked: updatedActivity.islike,
                     commentsCount: updatedActivity.comments,
+                    activity: updatedActivity,
 
                     // Открываем комментарии — поведение как было
                     onOpenComments: () {

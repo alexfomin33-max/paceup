@@ -2,21 +2,29 @@
 
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../core/services/api_service.dart'; // для ApiException
+import '../../../../../../core/services/share_image_generator.dart';
+import '../../../../../../domain/models/activity_lenta.dart' as al;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'share_image_selector_dialog.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
 /// Комментарии/совместно — пробрасываются наружу колбэками.
 class ActivityActionsRow extends ConsumerStatefulWidget {
   final int activityId;
+  final int activityUserId; // ID владельца тренировки
   final int currentUserId;
   final int initialLikes;
   final bool initiallyLiked;
   final int commentsCount;
   final bool hideRightActions;
+  final al.Activity? activity; // Полный объект Activity для шаринга
 
   final VoidCallback? onOpenComments;
   final VoidCallback? onOpenTogether;
@@ -24,11 +32,13 @@ class ActivityActionsRow extends ConsumerStatefulWidget {
   const ActivityActionsRow({
     super.key,
     required this.activityId,
+    required this.activityUserId,
     required this.currentUserId,
     required this.initialLikes,
     required this.initiallyLiked,
     required this.commentsCount,
     this.hideRightActions = false,
+    this.activity,
     this.onOpenComments,
     this.onOpenTogether,
   });
@@ -133,8 +143,131 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     }
   }
 
+  Future<void> _onShareTap() async {
+    if (widget.activity == null) return;
+    
+    final activity = widget.activity!;
+    final hasPhotos = activity.mediaImages.isNotEmpty;
+    final hasMap = activity.points.isNotEmpty;
+    
+    // Если только карта (нет фото) - сразу репостим карту
+    if (hasMap && !hasPhotos) {
+      await _generateAndShare(
+        activity: activity,
+        useMap: true,
+        selectedPhotoUrl: null,
+      );
+      return;
+    }
+    
+    // Если есть фото (с картой или без) - показываем слайдер выбора
+    if (hasPhotos) {
+      final selection = await ShareImageSelectorDialog.show(
+        context: context,
+        photoUrls: activity.mediaImages,
+        hasMap: hasMap,
+        activity: activity,
+      );
+      
+      if (selection == null || !mounted) return;
+      
+      await _generateAndShare(
+        activity: activity,
+        useMap: selection.type == ShareImageType.map,
+        selectedPhotoUrl: selection.photoUrl,
+      );
+    } else {
+      // Если нет ни фото, ни карты - показываем сообщение
+      if (mounted) {
+        showCupertinoDialog(
+          context: context,
+          builder: (context) => CupertinoAlertDialog(
+            title: const Text('Нет данных для репоста'),
+            content: const Text('Добавьте фото или маршрут к тренировке'),
+            actions: [
+              CupertinoDialogAction(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('ОК'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+  
+  Future<void> _generateAndShare({
+    required al.Activity activity,
+    required bool useMap,
+    String? selectedPhotoUrl,
+  }) async {
+    BuildContext? dialogContext;
+    
+    try {
+      // Показываем индикатор загрузки
+      showCupertinoDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogCtx) {
+          dialogContext = dialogCtx;
+          return const CupertinoAlertDialog(
+            content: Padding(
+              padding: EdgeInsets.all(20),
+              child: CupertinoActivityIndicator(),
+            ),
+          );
+        },
+      );
+      
+      // Генерируем финальное изображение для шаринга
+      final imagePath = await ShareImageGenerator.generateShareImage(
+        activity: activity,
+        context: context,
+        routeImageBytes: null,
+        selectedPhotoUrl: selectedPhotoUrl,
+        useMap: useMap,
+      );
+      
+      // Закрываем индикатор загрузки
+      if (mounted && dialogContext != null) {
+        Navigator.of(dialogContext!).pop();
+        dialogContext = null;
+      }
+      
+      if (!mounted) return;
+      
+      if (imagePath != null) {
+        // Открываем системный share sheet
+        await Share.shareXFiles(
+          [XFile(imagePath)],
+          text: 'Моя тренировка в PaceUp!',
+        );
+      } else {
+        // Если не удалось сгенерировать изображение, делимся текстом
+        await Share.share('Моя тренировка в PaceUp!');
+      }
+    } catch (e) {
+      // Гарантируем закрытие диалога при любой ошибке
+      if (mounted) {
+        if (dialogContext != null) {
+          Navigator.of(dialogContext!).pop();
+        } else {
+          // Пытаемся закрыть через основной контекст
+          try {
+            Navigator.of(context).pop();
+          } catch (_) {
+            // Игнорируем ошибку если диалог уже закрыт
+          }
+        }
+      }
+      debugPrint('Ошибка шаринга: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isOwner = widget.currentUserId == widget.activityUserId;
+    
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -184,7 +317,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
           ],
         ),
 
-        // Правая группа: «совместно» (скрываем для тренировок, добавленных вручную)
+        // Правая группа: «совместно» + шаринг (скрываем для тренировок, добавленных вручную)
         if (!widget.hideRightActions)
           Row(
             children: [
@@ -216,6 +349,18 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
                   color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
+              // Кнопка шаринга в сторис (только для владельца)
+              if (isOwner) ...[
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _onShareTap,
+                  child: const Icon(
+                    CupertinoIcons.square_arrow_up,
+                    size: 20,
+                    color: AppColors.brandPrimary,
+                  ),
+                ),
+              ],
             ],
           ),
       ],

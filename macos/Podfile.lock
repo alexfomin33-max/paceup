@@ -86,6 +86,8 @@ PODS:
     - Flutter
     - FlutterMacOS
   - PromisesObjC (2.4.0)
+  - share_plus (0.0.1):
+    - FlutterMacOS
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
@@ -122,6 +124,7 @@ DEPENDENCIES:
   - FlutterMacOS (from `Flutter/ephemeral`)
   - local_auth_darwin (from `Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
+  - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
   - shared_preferences_foundation (from `Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin`)
   - sqflite_darwin (from `Flutter/ephemeral/.symlinks/plugins/sqflite_darwin/darwin`)
   - sqlite3_flutter_libs (from `Flutter/ephemeral/.symlinks/plugins/sqlite3_flutter_libs/macos`)
@@ -163,6 +166,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/local_auth_darwin/darwin
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
+  share_plus:
+    :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   shared_preferences_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/shared_preferences_foundation/darwin
   sqflite_darwin:
@@ -193,6 +198,7 @@ SPEC CHECKSUMS:
   nanopb: 438bc412db1928dac798aa6fd75726007be04262
   path_provider_foundation: 0b743cbb62d8e47eab856f09262bb8c1ddcfe6ba
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  share_plus: 1fa619de8392a4398bfaf176d441853922614e89
   shared_preferences_foundation: 5086985c1d43c5ba4d5e69a4e8083a389e2909e6
   sqflite_darwin: 5a7236e3b501866c1c9befc6771dfd73ffb8702d
   sqlite3: fd89671d969f3e73efe503ce203e28b016b58f68
