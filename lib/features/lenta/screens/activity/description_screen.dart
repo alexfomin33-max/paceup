@@ -806,11 +806,13 @@ class _ActivityDescriptionPageState
                     ),
                     child: ActivityActionsRow(
                       activityId: a.id,
+                      activityUserId: a.userId,
                       currentUserId: widget.currentUserId,
                       initialLikes: a.likes,
                       initiallyLiked: a.islike,
                       commentsCount: a.comments,
                       hideRightActions: a.points.isEmpty,
+                      activity: a,
                       onOpenComments: () {
                         // ────────────────────────────────────────────────────────────────
                         // 🔹 Открываем комментарии в bottom sheet с плавной анимацией
