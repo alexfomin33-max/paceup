@@ -122,20 +122,29 @@ class ShareImageGenerator {
       if (mapImage != null) {
         debugPrint('Карта загружена из кэша, размер: ${mapImage.width}x${mapImage.height}');
         
-        // Масштабируем до нужного размера для Stories
-        img.Image finalMapImage = mapImage;
-        if (mapImage.width != storyWidth || mapImage.height != storyHeight) {
-          finalMapImage = img.copyResize(
-            mapImage,
-            width: storyWidth,
-            height: storyHeight,
-            interpolation: img.Interpolation.linear,
-          );
-          debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}');
-        }
+        // Масштабируем с сохранением пропорций (BoxFit.contain логика)
+        // Вычисляем масштаб для вписывания в экран
+        final scaleX = storyWidth / mapImage.width;
+        final scaleY = storyHeight / mapImage.height;
+        final scale = scaleX < scaleY ? scaleX : scaleY; // Минимальный масштаб для вписывания
         
-        // Накладываем карту на фон
-        img.compositeImage(shareImage, finalMapImage, dstX: 0, dstY: 0);
+        // Масштабируем изображение с сохранением пропорций
+        final newWidth = (mapImage.width * scale).round();
+        final newHeight = (mapImage.height * scale).round();
+        final finalMapImage = img.copyResize(
+          mapImage,
+          width: newWidth,
+          height: newHeight,
+          interpolation: img.Interpolation.linear,
+        );
+        debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}, scale: $scale');
+        
+        // Центрируем изображение (вписываем полностью, без обрезки)
+        final offsetX = (storyWidth - finalMapImage.width) ~/ 2;
+        final offsetY = (storyHeight - finalMapImage.height) ~/ 2;
+        
+        // Накладываем карту на фон (белые полосы остаются по краям)
+        img.compositeImage(shareImage, finalMapImage, dstX: offsetX, dstY: offsetY);
         debugPrint('Карта успешно наложена на фон');
         return;
       } else {
@@ -175,20 +184,29 @@ class ShareImageGenerator {
           if (mapImage != null) {
             debugPrint('Карта декодирована: ${mapImage.width}x${mapImage.height}');
             
-            // Масштабируем до нужного размера, если нужно
-            img.Image finalMapImage = mapImage;
-            if (mapImage.width != storyWidth || mapImage.height != storyHeight) {
-              finalMapImage = img.copyResize(
-                mapImage,
-                width: storyWidth,
-                height: storyHeight,
-                interpolation: img.Interpolation.linear,
-              );
-              debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}');
-            }
+            // Масштабируем с сохранением пропорций (BoxFit.contain логика)
+            // Вычисляем масштаб для вписывания в экран
+            final scaleX = storyWidth / mapImage.width;
+            final scaleY = storyHeight / mapImage.height;
+            final scale = scaleX < scaleY ? scaleX : scaleY; // Минимальный масштаб для вписывания
             
-            // Накладываем карту на фон
-            img.compositeImage(shareImage, finalMapImage, dstX: 0, dstY: 0);
+            // Масштабируем изображение с сохранением пропорций
+            final newWidth = (mapImage.width * scale).round();
+            final newHeight = (mapImage.height * scale).round();
+            final finalMapImage = img.copyResize(
+              mapImage,
+              width: newWidth,
+              height: newHeight,
+              interpolation: img.Interpolation.linear,
+            );
+            debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}, scale: $scale');
+            
+            // Центрируем изображение (вписываем полностью, без обрезки)
+            final offsetX = (storyWidth - finalMapImage.width) ~/ 2;
+            final offsetY = (storyHeight - finalMapImage.height) ~/ 2;
+            
+            // Накладываем карту на фон (белые полосы остаются по краям)
+            img.compositeImage(shareImage, finalMapImage, dstX: offsetX, dstY: offsetY);
             
             // Затемнение не нужно, так как текст черный
             debugPrint('Карта успешно наложена на фон');
@@ -442,15 +460,13 @@ class ShareImageGenerator {
   ) async {
     try {
       const pixelRatio = 2.0;
-      const labelFontSize = 32.0;
-      const valueFontSize = 48.0;
-      const titleFontSize = 40.0;
+      const labelFontSize = 64.0; // Увеличено в 2 раза (было 32.0)
+      const valueFontSize = 96.0; // Увеличено в 2 раза (было 48.0)
+      const titleFontSize = 80.0; // Увеличено в 2 раза (было 40.0)
       const leftPadding = 50.0;
-      const bottomPadding = 80.0;
-      const lineSpacing = 60.0;
-      const labelValueSpacing = 6.0;
-      const iconSize = 40.0;
-      const titleIconSpacing = 12.0;
+      const bottomPadding = 60.0; // Отступ от нижнего края
+      const lineSpacing = 120.0; // Увеличено в 2 раза (было 60.0)
+      const labelValueSpacing = 12.0; // Увеличено в 2 раза (было 6.0)
       
       // Создаем Canvas для рисования текста и иконки
       final recorder = ui.PictureRecorder();
@@ -480,73 +496,13 @@ class ShareImageGenerator {
         color: Colors.black,
       );
       
-      // Начинаем снизу и идем вверх
+      // Начинаем рисовать снизу вверх: нижний край блока на высоте storyHeight - bottomPadding
+      // textPainter.paint рисует текст от базовой линии вверх, так что базовая линия = нижний край текста
       double currentY = storyHeight - bottomPadding;
       
-      // Рисуем иконку бегущего человека (простая иконка через Canvas)
-      final iconPaint = Paint()
-        ..color = Colors.black
-        ..style = PaintingStyle.fill;
-      
-      // Упрощенная иконка бегущего человека
-      canvas.drawCircle(Offset(leftPadding + iconSize / 2, currentY - iconSize / 2), iconSize / 3, iconPaint);
-      // Тело
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(leftPadding + iconSize / 2 - 4, currentY - iconSize / 2 + iconSize / 3, 8, iconSize / 2),
-          const Radius.circular(4),
-        ),
-        iconPaint,
-      );
-      
-      // Название тренировки (если есть в postContent или используем тип активности)
-      String activityTitle = activity.postContent.isNotEmpty 
-          ? activity.postContent 
-          : _getActivityTypeTitle(activity.type);
-      
-      if (activityTitle.isNotEmpty) {
-        textPainter.text = TextSpan(text: activityTitle, style: titleStyle);
-        textPainter.layout();
-        textPainter.paint(canvas, Offset(leftPadding + iconSize + titleIconSpacing, currentY - iconSize / 2 - titleFontSize / 2));
-        currentY -= (titleFontSize + lineSpacing);
-      } else {
-        currentY -= iconSize;
-      }
-      
-      // Расстояние - самый верхний из параметров (формат: "3,51 км" с запятой)
-      final distanceKm = stats.distance / 1000.0;
-      final distanceValue = '${distanceKm.toStringAsFixed(2).replaceAll('.', ',')} км';
-      
-      // Значение
-      textPainter.text = TextSpan(text: distanceValue, style: valueStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= (valueFontSize + labelValueSpacing);
-      
-      // Метка
-      textPainter.text = TextSpan(text: 'Расстояние', style: labelStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= lineSpacing;
-      
-      // Время (формат: "23мин. 56с." или "1ч. 23мин. 56с.")
-      final timeValue = _formatDurationForShare(stats.duration);
-      
-      // Значение
-      textPainter.text = TextSpan(text: timeValue, style: valueStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= (valueFontSize + labelValueSpacing);
-      
-      // Метка
-      textPainter.text = TextSpan(text: 'Время', style: labelStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= lineSpacing;
-      
-      // Темп (если есть)
+      // Сначала рисуем Темп (самый нижний элемент в списке)
       if (stats.avgPace > 0) {
-        // avgPace в секундах на км, конвертируем в минуты на км для formatPace
+        // avgPace в секундах на км, конвертируем в минуты на км
         double paceMinPerKm;
         if (stats.avgPace < 60) {
           if (stats.distance > 0 && stats.duration > 0) {
@@ -560,16 +516,65 @@ class ShareImageGenerator {
           paceMinPerKm = stats.avgPace / 60.0;
         }
         
+        // Форматируем темп с секундами (мин:сек /км)
         final paceValue = '${formatPace(paceMinPerKm)} /км';
         
-        // Значение
+        // Значение - базовая линия на currentY (текст пойдет вверх)
         textPainter.text = TextSpan(text: paceValue, style: valueStyle);
         textPainter.layout();
         textPainter.paint(canvas, Offset(leftPadding, currentY));
-        currentY -= (valueFontSize + labelValueSpacing);
+        currentY -= textPainter.height;
+        currentY -= labelValueSpacing;
         
         // Метка
         textPainter.text = TextSpan(text: 'Темп', style: labelStyle);
+        textPainter.layout();
+        textPainter.paint(canvas, Offset(leftPadding, currentY));
+        currentY -= textPainter.height;
+        currentY -= lineSpacing;
+      }
+      
+      // Время (формат: "23мин." или "1ч. 23мин." - без секунд)
+      final timeValue = _formatDurationForShare(stats.duration);
+      
+      // Значение
+      textPainter.text = TextSpan(text: timeValue, style: valueStyle);
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftPadding, currentY));
+      currentY -= textPainter.height;
+      currentY -= labelValueSpacing;
+      
+      // Метка
+      textPainter.text = TextSpan(text: 'Время', style: labelStyle);
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftPadding, currentY));
+      currentY -= textPainter.height;
+      currentY -= lineSpacing;
+      
+      // Расстояние (формат: "3,51 км" с запятой)
+      final distanceKm = stats.distance / 1000.0;
+      final distanceValue = '${distanceKm.toStringAsFixed(2).replaceAll('.', ',')} км';
+      
+      // Значение
+      textPainter.text = TextSpan(text: distanceValue, style: valueStyle);
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftPadding, currentY));
+      currentY -= textPainter.height;
+      currentY -= labelValueSpacing;
+      
+      // Метка
+      textPainter.text = TextSpan(text: 'Расстояние', style: labelStyle);
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(leftPadding, currentY));
+      currentY -= textPainter.height;
+      currentY -= lineSpacing;
+      
+      // Тип тренировки - ПЕРВЫЙ в списке (рисуем последним, чтобы он был сверху)
+      // БЕЗ ИКОНКИ - только текст
+      String activityTypeTitle = _getActivityTypeTitle(activity.type);
+      
+      if (activityTypeTitle.isNotEmpty) {
+        textPainter.text = TextSpan(text: activityTypeTitle, style: titleStyle);
         textPainter.layout();
         textPainter.paint(canvas, Offset(leftPadding, currentY));
       }
@@ -602,13 +607,13 @@ class ShareImageGenerator {
     switch (typeLower) {
       case 'running':
       case 'run':
-        return 'Lunch Run';
+        return 'Забег';
       case 'walking':
       case 'walk':
         return 'Прогулка';
       case 'cycling':
       case 'bike':
-        return 'Велосипед';
+        return 'Велозаезд';
       case 'swimming':
       case 'swim':
         return 'Плавание';
@@ -620,24 +625,22 @@ class ShareImageGenerator {
     }
   }
   
-  /// Форматирует длительность для репоста (формат: "23мин. 56с." или "1ч. 23мин. 56с.")
+  /// Форматирует длительность для репоста (формат: "23мин." или "1ч. 0мин." - всегда с минутами, без секунд)
   static String _formatDurationForShare(num? seconds) {
-    if (seconds == null || seconds <= 0) return '0с.';
+    if (seconds == null || seconds <= 0) return '0мин.';
     
     final total = seconds.toInt();
     final hours = total ~/ 3600;
     final minutes = (total % 3600) ~/ 60;
-    final secs = total % 60;
     
     final parts = <String>[];
     if (hours > 0) {
       parts.add('${hours}ч.');
-    }
-    if (minutes > 0) {
+      // Всегда добавляем минуты, даже если 0
       parts.add('${minutes}мин.');
-    }
-    if (secs > 0 || parts.isEmpty) {
-      parts.add('${secs}с.');
+    } else {
+      // Если нет часов, просто минуты
+      parts.add('${minutes}мин.');
     }
     
     return parts.join(' ');

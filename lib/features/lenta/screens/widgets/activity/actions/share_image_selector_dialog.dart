@@ -129,6 +129,8 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 Row(
@@ -160,6 +162,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                       child: const Icon(
                         CupertinoIcons.xmark,
                         size: 20,
+                        color: Colors.black,
                       ),
                     ),
                   ],
