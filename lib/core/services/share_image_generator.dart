@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import '../../domain/models/activity_lenta.dart';
 import '../config/app_config.dart';
 import '../utils/activity_format.dart';
+import '../utils/static_map_url_builder.dart';
 
 /// Сервис для генерации изображения тренировки для шаринга в Instagram Stories
 class ShareImageGenerator {
@@ -34,7 +35,11 @@ class ShareImageGenerator {
   }) async {
     try {
       // Создаем изображение для Instagram Stories
+      // Сначала заливаем белым фоном, чтобы не было черного экрана
       final shareImage = img.Image(width: storyWidth, height: storyHeight);
+      _fillRectWithColor(shareImage, 
+        x1: 0, y1: 0, x2: storyWidth, y2: storyHeight,
+        color: img.ColorRgb8(255, 255, 255));
       
       // Определяем, что использовать как фон
       bool shouldUseMap = useMap || activity.mediaImages.isEmpty;
@@ -45,33 +50,46 @@ class ShareImageGenerator {
       } else {
         // Используем выбранное фото или первое доступное
         final photoUrl = selectedPhotoUrl ?? activity.mediaImages.first;
+        debugPrint('Загружаем фото для репоста: $photoUrl');
         final backgroundImage = await _loadNetworkImage(photoUrl);
         if (backgroundImage != null) {
-          // Вычисляем масштаб для покрытия всего экрана
+          debugPrint('Фото загружено: ${backgroundImage.width}x${backgroundImage.height}');
+          
+          // Вычисляем масштаб для вписывания в экран (BoxFit.contain логика)
+          // Берем минимальный масштаб, чтобы изображение полностью вписывалось в экран
           final scaleX = storyWidth / backgroundImage.width;
           final scaleY = storyHeight / backgroundImage.height;
-          final scale = scaleX > scaleY ? scaleX : scaleY;
+          final scale = scaleX < scaleY ? scaleX : scaleY; // Минимальный масштаб для вписывания
           
+          // Масштабируем изображение
+          final newWidth = (backgroundImage.width * scale).round();
+          final newHeight = (backgroundImage.height * scale).round();
           final resized = img.copyResize(
             backgroundImage,
-            width: (backgroundImage.width * scale).round(),
-            height: (backgroundImage.height * scale).round(),
+            width: newWidth,
+            height: newHeight,
+            interpolation: img.Interpolation.linear,
           );
           
-          // Центрируем изображение
+          debugPrint('Масштабированное фото: ${resized.width}x${resized.height}, scale: $scale');
+          
+          // Центрируем изображение (вписываем полностью, без обрезки)
           final offsetX = (storyWidth - resized.width) ~/ 2;
           final offsetY = (storyHeight - resized.height) ~/ 2;
+          
+          // Накладываем изображение на фон
           img.compositeImage(shareImage, resized, dstX: offsetX, dstY: offsetY);
           
-          // Добавляем затемнение для читаемости текста
-          _fillRectWithColor(shareImage, 
-            x1: 0, y1: 0, x2: storyWidth, y2: storyHeight,
-            color: img.ColorRgba8(0, 0, 0, 120));
+          // Затемнение не нужно, так как текст черный
         } else {
+          debugPrint('Не удалось загрузить фото, используем карту или градиент');
           // Если не удалось загрузить фото - используем карту или градиент
           await _drawBackground(shareImage, activity);
         }
       }
+      
+      // Добавляем логотип PaceUp сверху
+      await _drawLogo(shareImage);
       
       // Рисуем параметры тренировки слева внизу (как на скриншотах)
       if (activity.stats != null) {
@@ -94,31 +112,69 @@ class ShareImageGenerator {
   static Future<void> _drawBackground(img.Image shareImage, Activity activity) async {
     // Генерируем карту с треком (если есть точки)
     if (activity.points.isNotEmpty) {
-      final mapImageBytes = await _generateMapImage(activity.points);
-      if (mapImageBytes != null && mapImageBytes.isNotEmpty) {
-        try {
-          final mapImage = img.decodeImage(mapImageBytes);
+      debugPrint('Генерируем карту для репоста, точек: ${activity.points.length}');
+      
+      try {
+        // Используем StaticMapUrlBuilder для генерации правильной карты (как на экране тренировки)
+        final points = activity.points.map((c) => LatLng(c.lat, c.lng)).toList();
+        final mapUrl = StaticMapUrlBuilder.fromPoints(
+          points: points,
+          widthPx: storyWidth.toDouble(),
+          heightPx: storyHeight.toDouble(),
+          strokeWidth: 3.0,
+          padding: 12.0,
+          maxWidth: 1280.0, // Ограничение Mapbox API
+          maxHeight: 1280.0,
+        );
+        
+        debugPrint('Загружаем карту: $mapUrl');
+        final response = await http.get(Uri.parse(mapUrl)).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            debugPrint('Таймаут загрузки карты');
+            return http.Response('Timeout', 408);
+          },
+        );
+        
+        if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+          debugPrint('Карта загружена, размер: ${response.bodyBytes.length} байт');
+          final mapImage = img.decodeImage(response.bodyBytes);
           if (mapImage != null) {
-            final resizedMap = img.copyResize(
-              mapImage,
-              width: storyWidth,
-              height: storyHeight,
-            );
-            img.compositeImage(shareImage, resizedMap);
+            debugPrint('Карта декодирована: ${mapImage.width}x${mapImage.height}');
             
-            // Добавляем легкое затемнение для читаемости текста
-            _fillRectWithColor(shareImage, 
-              x1: 0, y1: 0, x2: storyWidth, y2: storyHeight,
-              color: img.ColorRgba8(0, 0, 0, 80));
+            // Масштабируем до нужного размера, если нужно
+            img.Image finalMapImage = mapImage;
+            if (mapImage.width != storyWidth || mapImage.height != storyHeight) {
+              finalMapImage = img.copyResize(
+                mapImage,
+                width: storyWidth,
+                height: storyHeight,
+                interpolation: img.Interpolation.linear,
+              );
+              debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}');
+            }
+            
+            // Накладываем карту на фон
+            img.compositeImage(shareImage, finalMapImage, dstX: 0, dstY: 0);
+            
+            // Затемнение не нужно, так как текст черный
+            debugPrint('Карта успешно наложена на фон');
             return;
+          } else {
+            debugPrint('Ошибка: карта не декодирована (mapImage == null)');
           }
-        } catch (e) {
-          debugPrint('Ошибка декодирования карты: $e');
+        } else {
+          debugPrint('Ошибка загрузки карты: ${response.statusCode}');
         }
+      } catch (e) {
+        debugPrint('Ошибка генерации карты: $e');
       }
+    } else {
+      debugPrint('Нет точек маршрута для генерации карты');
     }
     
     // Если карту не удалось сгенерировать - градиентный фон
+    debugPrint('Используем градиентный фон вместо карты');
     _drawGradientBackground(shareImage);
   }
   
@@ -206,21 +262,34 @@ class ShareImageGenerator {
         debugPrint('Карта успешно загружена, размер: ${response.bodyBytes.length} байт');
         final mapImageBytes = response.bodyBytes;
         
+        if (mapImageBytes.isEmpty) {
+          debugPrint('Ошибка: карта загружена, но пуста');
+          return null;
+        }
+        
         // Декодируем изображение и масштабируем до нужного размера
         final mapImage = img.decodeImage(mapImageBytes);
         if (mapImage != null) {
+          debugPrint('Карта декодирована из ответа: ${mapImage.width}x${mapImage.height}');
           // Масштабируем до размера Stories, если нужно
           if (mapImage.width != storyWidth || mapImage.height != storyHeight) {
             final scaledImage = img.copyResize(
               mapImage,
               width: storyWidth,
               height: storyHeight,
+              interpolation: img.Interpolation.linear,
             );
-            return img.encodePng(scaledImage);
+            debugPrint('Карта масштабирована до: ${scaledImage.width}x${scaledImage.height}');
+            final encoded = img.encodePng(scaledImage);
+            debugPrint('Карта закодирована в PNG, размер: ${encoded.length} байт');
+            return encoded;
           }
+          debugPrint('Карта не требует масштабирования');
           return mapImageBytes;
+        } else {
+          debugPrint('Ошибка: не удалось декодировать карту из ответа');
+          return null;
         }
-        return mapImageBytes;
       } else {
         debugPrint('Ошибка загрузки карты: ${response.statusCode} - ${response.body}');
         return null;
@@ -274,6 +343,46 @@ class ShareImageGenerator {
     }
   }
   
+  /// Добавляет логотип PaceUp в верхнюю часть изображения
+  static Future<void> _drawLogo(img.Image shareImage) async {
+    try {
+      // Загружаем логотип из assets
+      final ByteData logoData = await rootBundle.load('assets/logo.png');
+      final Uint8List logoBytes = logoData.buffer.asUint8List();
+      
+      // Декодируем логотип
+      final logoImage = img.decodeImage(logoBytes);
+      if (logoImage == null) {
+        debugPrint('Не удалось декодировать логотип');
+        return;
+      }
+      
+      // Масштабируем логотип до нужного размера (примерно 15% от ширины экрана)
+      final logoWidth = (storyWidth * 0.15).round(); // 15% от ширины
+      final logoHeight = (logoImage.height * logoWidth / logoImage.width).round();
+      
+      final resizedLogo = img.copyResize(
+        logoImage,
+        width: logoWidth,
+        height: logoHeight,
+        interpolation: img.Interpolation.linear,
+      );
+      
+      // Позиционируем логотип сверху по центру с отступом
+      const topPadding = 60.0;
+      final logoX = (storyWidth - resizedLogo.width) ~/ 2; // Центрируем по горизонтали
+      final logoY = topPadding.round();
+      
+      // Накладываем логотип на изображение
+      img.compositeImage(shareImage, resizedLogo, dstX: logoX, dstY: logoY);
+      
+      debugPrint('Логотип добавлен: ${resizedLogo.width}x${resizedLogo.height} в позиции ($logoX, $logoY)');
+    } catch (e) {
+      debugPrint('Ошибка добавления логотипа: $e');
+      // Игнорируем ошибку, чтобы не ломать генерацию изображения
+    }
+  }
+  
   /// Рисует параметры тренировки напрямую на изображении (слева внизу, как на скриншотах)
   static Future<void> _drawStatsOnImage(
     img.Image shareImage,
@@ -306,19 +415,19 @@ class ShareImageGenerator {
         fontFamily: 'Inter',
         fontSize: labelFontSize,
         fontWeight: FontWeight.w500,
-        color: Colors.white,
+        color: Colors.black,
       );
       const valueStyle = TextStyle(
         fontFamily: 'Inter',
         fontSize: valueFontSize,
         fontWeight: FontWeight.w700,
-        color: Colors.white,
+        color: Colors.black,
       );
       const titleStyle = TextStyle(
         fontFamily: 'Inter',
         fontSize: titleFontSize,
         fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: Colors.black,
       );
       
       // Начинаем снизу и идем вверх
@@ -326,7 +435,7 @@ class ShareImageGenerator {
       
       // Рисуем иконку бегущего человека (простая иконка через Canvas)
       final iconPaint = Paint()
-        ..color = Colors.white
+        ..color = Colors.black
         ..style = PaintingStyle.fill;
       
       // Упрощенная иконка бегущего человека

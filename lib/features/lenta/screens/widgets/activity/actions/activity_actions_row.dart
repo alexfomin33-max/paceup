@@ -150,12 +150,23 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     final hasPhotos = activity.mediaImages.isNotEmpty;
     final hasMap = activity.points.isNotEmpty;
     
-    // Если есть и фото, и карта - показываем диалог выбора
-    if (hasPhotos && hasMap) {
+    // Если только карта (нет фото) - сразу репостим карту
+    if (hasMap && !hasPhotos) {
+      await _generateAndShare(
+        activity: activity,
+        useMap: true,
+        selectedPhotoUrl: null,
+      );
+      return;
+    }
+    
+    // Если есть фото (с картой или без) - показываем слайдер выбора
+    if (hasPhotos) {
       final selection = await ShareImageSelectorDialog.show(
         context: context,
         photoUrls: activity.mediaImages,
         hasMap: hasMap,
+        activity: activity,
       );
       
       if (selection == null || !mounted) return;
@@ -164,20 +175,6 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         activity: activity,
         useMap: selection.type == ShareImageType.map,
         selectedPhotoUrl: selection.photoUrl,
-      );
-    } else if (hasPhotos) {
-      // Если есть только фото - используем первое фото
-      await _generateAndShare(
-        activity: activity,
-        useMap: false,
-        selectedPhotoUrl: activity.mediaImages.first,
-      );
-    } else if (hasMap) {
-      // Если есть только карта - используем карту
-      await _generateAndShare(
-        activity: activity,
-        useMap: true,
-        selectedPhotoUrl: null,
       );
     } else {
       // Если нет ни фото, ни карты - показываем сообщение
