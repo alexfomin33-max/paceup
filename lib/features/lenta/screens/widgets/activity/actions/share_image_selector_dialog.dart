@@ -18,10 +18,12 @@ enum ShareImageType {
 class ShareImageSelection {
   final ShareImageType type;
   final String? photoUrl; // URL выбранного фото (если type == photo)
+  final String? mapImageUrl; // URL изображения карты (если type == map)
 
   const ShareImageSelection({
     required this.type,
     this.photoUrl,
+    this.mapImageUrl,
   });
 }
 
@@ -62,6 +64,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
   late PageController _pageController;
   int _currentIndex = 0;
   late List<_ShareOption> _items;
+  String? _currentMapUrl; // Сохраняем URL текущей карты
 
   @override
   void initState() {
@@ -122,7 +125,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Выберите изображение для репоста',
+                  'Поделиться тренировкой',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -138,6 +141,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                         Navigator.of(context).pop(ShareImageSelection(
                           type: currentItem.type,
                           photoUrl: currentItem.photoUrl,
+                          mapImageUrl: currentItem.type == ShareImageType.map ? _currentMapUrl : null,
                         ));
                       },
                       child: const Text(
@@ -234,6 +238,17 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
             strokeWidth: 3.0,
             padding: 12.0,
           );
+          
+          // Сохраняем URL карты для использования при репосте
+          if (_currentMapUrl != mapUrl) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                setState(() {
+                  _currentMapUrl = mapUrl;
+                });
+              }
+            });
+          }
 
           return CachedNetworkImage(
             imageUrl: mapUrl,

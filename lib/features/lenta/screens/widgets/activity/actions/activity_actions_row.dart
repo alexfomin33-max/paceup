@@ -12,6 +12,8 @@ import '../../../../../../core/services/share_image_generator.dart';
 import '../../../../../../domain/models/activity_lenta.dart' as al;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'share_image_selector_dialog.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../../../../core/utils/static_map_url_builder.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
@@ -152,10 +154,23 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     
     // Если только карта (нет фото) - сразу репостим карту
     if (hasMap && !hasPhotos) {
+      // Генерируем URL карты с размерами для Stories (чтобы использовать кэш)
+      final points = activity.points.map((c) => LatLng(c.lat, c.lng)).toList();
+      final mapUrl = StaticMapUrlBuilder.fromPoints(
+        points: points,
+        widthPx: ShareImageGenerator.storyWidth.toDouble(),
+        heightPx: ShareImageGenerator.storyHeight.toDouble(),
+        strokeWidth: 3.0,
+        padding: 12.0,
+        maxWidth: 1280.0,
+        maxHeight: 1280.0,
+      );
+      
       await _generateAndShare(
         activity: activity,
         useMap: true,
         selectedPhotoUrl: null,
+        mapImageUrl: mapUrl,
       );
       return;
     }
@@ -175,6 +190,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         activity: activity,
         useMap: selection.type == ShareImageType.map,
         selectedPhotoUrl: selection.photoUrl,
+        mapImageUrl: selection.mapImageUrl,
       );
     } else {
       // Если нет ни фото, ни карты - показываем сообщение
@@ -200,6 +216,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     required al.Activity activity,
     required bool useMap,
     String? selectedPhotoUrl,
+    String? mapImageUrl,
   }) async {
     BuildContext? dialogContext;
     
@@ -226,6 +243,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         routeImageBytes: null,
         selectedPhotoUrl: selectedPhotoUrl,
         useMap: useMap,
+        mapImageUrl: mapImageUrl,
       );
       
       // Закрываем индикатор загрузки

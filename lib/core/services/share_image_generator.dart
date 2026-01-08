@@ -1,4 +1,5 @@
 // lib/core/services/share_image_generator.dart
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -9,6 +10,7 @@ import 'package:image/image.dart' as img;
 import 'package:latlong2/latlong.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../domain/models/activity_lenta.dart';
 import '../config/app_config.dart';
 import '../utils/activity_format.dart';
@@ -24,6 +26,7 @@ class ShareImageGenerator {
   /// 
   /// [selectedPhotoUrl] - URL выбранного фото (если null и есть фото, используется первое)
   /// [useMap] - использовать карту вместо фото (если true, игнорируется selectedPhotoUrl)
+  /// [mapImageUrl] - URL уже загруженного изображения карты (если передан, используется вместо генерации нового)
   /// 
   /// Возвращает путь к сохраненному файлу изображения
   static Future<String?> generateShareImage({
@@ -32,6 +35,7 @@ class ShareImageGenerator {
     Uint8List? routeImageBytes,
     String? selectedPhotoUrl,
     bool useMap = false,
+    String? mapImageUrl,
   }) async {
     try {
       // Создаем изображение для Instagram Stories
@@ -46,7 +50,7 @@ class ShareImageGenerator {
       
       if (shouldUseMap) {
         // Используем карту с треком
-        await _drawBackground(shareImage, activity);
+        await _drawBackground(shareImage, activity, mapImageUrl: mapImageUrl);
       } else {
         // Используем выбранное фото или первое доступное
         final photoUrl = selectedPhotoUrl ?? activity.mediaImages.first;
@@ -84,7 +88,7 @@ class ShareImageGenerator {
         } else {
           debugPrint('Не удалось загрузить фото, используем карту или градиент');
           // Если не удалось загрузить фото - используем карту или градиент
-          await _drawBackground(shareImage, activity);
+          await _drawBackground(shareImage, activity, mapImageUrl: mapImageUrl);
         }
       }
       
@@ -109,7 +113,36 @@ class ShareImageGenerator {
   }
   
   /// Рисует фон: карту с треком или градиент
-  static Future<void> _drawBackground(img.Image shareImage, Activity activity) async {
+  /// [mapImageUrl] - URL уже загруженного изображения карты (если передан, используется вместо генерации нового)
+  static Future<void> _drawBackground(img.Image shareImage, Activity activity, {String? mapImageUrl}) async {
+    // Если передан URL уже загруженного изображения карты, используем его
+    if (mapImageUrl != null) {
+      debugPrint('Используем уже загруженное изображение карты: $mapImageUrl');
+      final mapImage = await _loadNetworkImage(mapImageUrl);
+      if (mapImage != null) {
+        debugPrint('Карта загружена из кэша, размер: ${mapImage.width}x${mapImage.height}');
+        
+        // Масштабируем до нужного размера для Stories
+        img.Image finalMapImage = mapImage;
+        if (mapImage.width != storyWidth || mapImage.height != storyHeight) {
+          finalMapImage = img.copyResize(
+            mapImage,
+            width: storyWidth,
+            height: storyHeight,
+            interpolation: img.Interpolation.linear,
+          );
+          debugPrint('Карта масштабирована до: ${finalMapImage.width}x${finalMapImage.height}');
+        }
+        
+        // Накладываем карту на фон
+        img.compositeImage(shareImage, finalMapImage, dstX: 0, dstY: 0);
+        debugPrint('Карта успешно наложена на фон');
+        return;
+      } else {
+        debugPrint('Не удалось загрузить карту по URL, генерируем новую');
+      }
+    }
+    
     // Генерируем карту с треком (если есть точки)
     if (activity.points.isNotEmpty) {
       debugPrint('Генерируем карту для репоста, точек: ${activity.points.length}');
@@ -300,13 +333,30 @@ class ShareImageGenerator {
     }
   }
   
-  /// Загружает изображение по URL
+  /// Загружает изображение по URL с использованием кэша CachedNetworkImage
   static Future<img.Image?> _loadNetworkImage(String url) async {
     try {
-      final response = await http.get(Uri.parse(url)).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        return img.decodeImage(response.bodyBytes);
+      // Используем DefaultCacheManager для доступа к кэшу CachedNetworkImage
+      // Это позволяет использовать уже загруженные изображения без повторных запросов
+      final cacheManager = DefaultCacheManager();
+      final file = await cacheManager.getSingleFile(url).timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          debugPrint('Таймаут загрузки изображения из кэша: $url');
+          throw TimeoutException('Timeout loading image');
+        },
+      );
+      
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+        if (bytes.isNotEmpty) {
+          debugPrint('Изображение загружено из кэша: $url, размер: ${bytes.length} байт');
+          return img.decodeImage(bytes);
+        }
       }
+      return null;
+    } on TimeoutException {
+      debugPrint('Таймаут загрузки изображения: $url');
       return null;
     } catch (e) {
       debugPrint('Ошибка загрузки изображения: $e');
