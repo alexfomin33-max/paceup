@@ -9,6 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .slot-image {
+      transition: transform 0.3s ease;
+    }
+    .slot-image:hover {
+      transform: scale(1.1);
+    }
+  </style>
 </head>
 <body>
   <!-- Hero секция -->
@@ -136,43 +144,8 @@
         <h2 class="section-title">Как это работает</h2>
         <p class="section-subtitle">Всего несколько шагов до начала тренировок</p>
       </div>
-      <div class="steps">
-        <div class="step-item">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h3 class="step-title">Скачай приложение</h3>
-            <p class="step-description">
-              Установи PaceUp на свой смартфон из App Store, Google Play или RuStore
-            </p>
-          </div>
-        </div>
-        <div class="step-item">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h3 class="step-title">Выбери активность</h3>
-            <p class="step-description">
-              Выбери вид спорта: бег, велосипед, лыжи, плавание или ходьба
-            </p>
-          </div>
-        </div>
-        <div class="step-item">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h3 class="step-title">Начни тренировку</h3>
-            <p class="step-description">
-              Нажми "Старт" и приложение автоматически начнет отслеживать твою активность
-            </p>
-          </div>
-        </div>
-        <div class="step-item">
-          <div class="step-number">4</div>
-          <div class="step-content">
-            <h3 class="step-title">Анализируй результаты</h3>
-            <p class="step-description">
-              Просматривай детальную статистику, маршруты и достижения
-            </p>
-          </div>
-        </div>
+      <div style="display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
+        <img src="img/slot.png" alt="Как это работает" class="slot-image" style="max-width: 20%; height: auto;">
       </div>
     </div>
   </section>

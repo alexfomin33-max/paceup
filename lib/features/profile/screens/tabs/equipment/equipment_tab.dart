@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -350,8 +351,8 @@ class _GearTabState extends ConsumerState<GearTab>
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () async {
-                await Navigator.of(context).push(
-                  CupertinoPageRoute(
+                await Navigator.of(context, rootNavigator: true).push(
+                  TransparentPageRoute(
                     builder: (_) => ViewingEquipmentScreen(
                       initialSegment: 0,
                       userId: widget.userId,
@@ -402,8 +403,8 @@ class _GearTabState extends ConsumerState<GearTab>
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () async {
-                await Navigator.of(context).push(
-                  CupertinoPageRoute(
+                await Navigator.of(context, rootNavigator: true).push(
+                  TransparentPageRoute(
                     builder: (_) => ViewingEquipmentScreen(
                       initialSegment: 1,
                       userId: widget.userId,

@@ -17,6 +17,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/widgets/transparent_route.dart';
 import '../equipment/viewing/viewing_equipment_screen.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
@@ -119,9 +120,8 @@ class _MainTabState extends MainTabState
   }
 
   void _openShoesView() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
+    await Navigator.of(context, rootNavigator: true).push(
+      TransparentPageRoute(
         builder: (_) =>
             ViewingEquipmentScreen(initialSegment: 0, userId: widget.userId),
       ),
@@ -133,9 +133,8 @@ class _MainTabState extends MainTabState
   }
 
   void _openBikesView() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
+    await Navigator.of(context, rootNavigator: true).push(
+      TransparentPageRoute(
         builder: (_) =>
             ViewingEquipmentScreen(initialSegment: 1, userId: widget.userId),
       ),
