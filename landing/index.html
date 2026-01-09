@@ -10,11 +10,149 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
+    @font-face {
+      font-family: 'Oxanium';
+      src: url('fonts/Oxanium-Bold.ttf') format('truetype');
+      font-weight: 700;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Oxanium';
+      src: url('fonts/Oxanium-SemiBold.ttf') format('truetype');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Oxanium';
+      src: url('fonts/Oxanium-Medium.ttf') format('truetype');
+      font-weight: 500;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Oxanium';
+      src: url('fonts/Oxanium-Regular.ttf') format('truetype');
+      font-weight: 400;
+      font-style: normal;
+    }
     .slot-image {
       transition: transform 0.3s ease;
     }
     .slot-image:hover {
       transform: scale(1.1);
+    }
+    .stats-image {
+      transition: transform 0.3s ease;
+    }
+    .stats-image:hover {
+      transform: scale(1.1);
+    }
+    .carousel-btn:hover {
+      transform: scale(1.1);
+    }
+    .carousel-btn:active {
+      transform: scale(0.95);
+    }
+    .carousel-dot:hover {
+      transform: scale(1.2);
+    }
+    /* ────────────────────────────────────────────────────────────────────────
+       FAQ - Белые блоки с тенью
+       ──────────────────────────────────────────────────────────────────────── */
+    .faq {
+      background: #ffffff;
+      padding: 4rem 0;
+    }
+    .faq .section-header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+    .faq .section-title {
+      font-size: 40px;
+      color: #333;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    .faq-list {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .faq-item {
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 0;
+      transition: box-shadow 0.3s ease;
+    }
+    .faq-item:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    }
+    .faq-question {
+      width: 100%;
+      padding: 1.5rem;
+      background: none;
+      border: none;
+      text-align: left;
+      font-size: 18px;
+      font-weight: 500;
+      color: #111827;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: color 0.3s ease;
+      font-family: 'Inter', sans-serif;
+      border-radius: 12px 12px 0 0;
+    }
+    .faq-question:hover {
+      color: #379AE6;
+    }
+    .faq-item.active .faq-question {
+      color: #379AE6;
+      border-radius: 12px 12px 0 0;
+    }
+    .faq-icon {
+      font-size: 24px;
+      font-weight: 300;
+      color: #6b7280;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+    .faq-question:hover .faq-icon {
+      color: #379AE6;
+    }
+    .faq-item.active .faq-icon {
+      transform: rotate(45deg);
+      color: #379AE6;
+    }
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), 
+                  opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                  padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0 1.5rem;
+    }
+    .faq-item.active .faq-answer {
+      max-height: 500px;
+      opacity: 1;
+      padding: 0 1.5rem 1.5rem 1.5rem;
+    }
+    .faq-answer p {
+      color: #374151;
+      line-height: 1.7;
+      font-size: 16px;
+      margin: 0;
+      font-family: 'Inter', sans-serif;
     }
   </style>
 </head>
@@ -30,10 +168,9 @@
             <img src="img/Logo.png" alt="PaceUp Logo" class="logo-img">
           </div>
           <ul class="nav-menu" id="navMenu">
+            <li><a href="#feed">Лента</a></li>
             <li><a href="#features">Возможности</a></li>
-            <li><a href="#how-it-works">Как работает</a></li>
-            <li><a href="#screenshots">Скриншоты</a></li>
-            <li><a href="#testimonials">Отзывы</a></li>
+            <li><a href="#analytics">Аналитика</a></li>
             <li><a href="#faq">FAQ</a></li>
           </ul>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
@@ -71,158 +208,106 @@
     </div>
   </section>
 
+  <!-- Лента -->
+  <section class="feed-section" id="feed" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
+    <div class="container">
+      <div style="display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
+          <img src="img/lenta2.png" alt="Лента активностей" class="slot-image" style="width: 18vw; max-width: 18vw; height: auto;">
+        </div>
+        <div style="flex: 1; min-width: 300px;">
+          <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Лента активностей</h2>
+          <ul style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.8rem;"><strong>Делись своими тренировками с друзьями;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Добавляй различные фотографии и описание;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Выкладывай посты о своих достижениях;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Вдохновляй других спортсменов и получай поддержку от единомышленников;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Общайся в чатах, комментируй активности, ставь лайки и следи за прогрессом друзей.</strong></li>
+          </ul>
+        
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Блок с фоновой картинкой (parallax) -->
+  <section class="parallax-image-section" style="position: relative; height: 300px; width: 100%; overflow: hidden; z-index: 1;">
+    <div class="parallax-image-bg" style="position: absolute; top: -70%; left: 0; width: 100%; height: 260%; background-image: url('img/run.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
+  </section>
+
   <!-- Возможности -->
-  <section class="features" id="features">
+  <section class="features" id="features" style="position: relative; z-index: 2; background-color: #ffffff;">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Все возможности в одном приложении</h2>
-        <p class="section-subtitle">Отслеживай любую активность и достигай новых высот</p>
+        <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Все возможности в одном приложении</h2>
+       
       </div>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/running.jpg" alt="Бег">
+      <div class="carousel-container" style="position: relative; max-width: 100%; margin: 0 auto; padding: 2rem 0;">
+        <div class="carousel-wrapper" style="position: relative; overflow: hidden; display: flex; align-items: center;">
+          <button class="carousel-btn carousel-prev" onclick="prevSlide()" style="background: none; border: none; color: #379AE6; cursor: pointer; font-size: 56px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease; flex-shrink: 0; z-index: 2; margin-right: 1rem; padding: 0; line-height: 1;">‹</button>
+          <div style="flex: 1; overflow: hidden;">
+            <div class="carousel-track" id="featuresCarousel" style="display: flex; transition: transform 0.5s ease-in-out; gap: 1rem;">
+              <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+                <img src="img/clubs.png" alt="Клубы" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Клубы</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Вступай в спортивые сообщества и общайся с единомышленниками</p>
+              </div>
+              <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+                <img src="img/market.png" alt="Маркет" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Маркет</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Покупай и продавай слоты на соревнования и спортивные вещи</p>
+              </div>
+              <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+                <img src="img/event.png" alt="События" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">События</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Участвуй в спортивных событиях или создавай собственные</p>
+              </div>
+              <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+                <img src="img/task.png" alt="Задачи" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Задачи</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Выполняй челленджи, получай награды и ставь новые рекорды</p>
+              </div>
+              <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
+                <img src="img/leaderboard.png" alt="Лидерборд" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Лидерборд</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Соревнуйся с другими и попадай в топ рейтинга спортсменов</p>
+              </div>
+            </div>
           </div>
-          <h3 class="feature-title">Трекинг активностей</h3>
-          <p class="feature-description">
-            Бег, велосипед, лыжи, плавание, ходьба — все виды спорта в одном месте
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/training_map.png" alt="Карты">
-          </div>
-          <h3 class="feature-title">Карты и маршруты</h3>
-          <p class="feature-description">
-            Точное GPS-отслеживание с визуализацией маршрутов на карте
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/card200run.jpg" alt="Лента">
-          </div>
-          <h3 class="feature-title">Лента активностей</h3>
-          <p class="feature-description">
-            Делись тренировками, следи за друзьями, вдохновляйся достижениями
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/race_moscow.png" alt="События">
-          </div>
-          <h3 class="feature-title">Клубы и события</h3>
-          <p class="feature-description">
-            Присоединяйся к клубам, участвуй в событиях и соревнованиях
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/achive_1.png" alt="Достижения">
-          </div>
-          <h3 class="feature-title">Достижения</h3>
-          <p class="feature-description">
-            Получай награды, ставь рекорды и отслеживай свой прогресс
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <img src="../assets/pacepro.png" alt="Аналитика">
-          </div>
-          <h3 class="feature-title">Аналитика</h3>
-          <p class="feature-description">
-            Детальная статистика тренировок и интеграция с Health
-          </p>
+          <button class="carousel-btn carousel-next" onclick="nextSlide()" style="background: none; border: none; color: #379AE6; cursor: pointer; font-size: 56px; font-weight: bold; display: flex; align-items: center; justify-content: center; transition: transform 0.2s ease; flex-shrink: 0; z-index: 2; margin-left: 1rem; padding: 0; line-height: 1;">›</button>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Как это работает -->
-  <section class="how-it-works" id="how-it-works">
-    <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Как это работает</h2>
-        <p class="section-subtitle">Всего несколько шагов до начала тренировок</p>
-      </div>
-      <div style="display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
-        <img src="img/slot.png" alt="Как это работает" class="slot-image" style="max-width: 20%; height: auto;">
-      </div>
-    </div>
+  <!-- Блок с фоновой картинкой (parallax) -->
+  <section class="parallax-image-section" style="position: relative; height: 300px; width: 100%; overflow: hidden; z-index: 1;">
+    <div class="parallax-image-bg" style="position: absolute; top: -60%; left: 0; width: 100%; height: 260%; background-image: url('img/run2.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
   </section>
 
-  <!-- Скриншоты -->
-  <section class="screenshots" id="screenshots">
+  <!-- Подробная статистика -->
+  <section class="stats-section" id="analytics" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
     <div class="container">
-      <div class="section-header">
-        <h2 class="section-title">Посмотри, как это выглядит</h2>
-        <p class="section-subtitle">Красивый и интуитивный интерфейс</p>
-      </div>
-      <div class="screenshots-grid">
-        <div class="screenshot-item">
-          <img src="../assets/training_map.png" alt="Карта тренировки">
-          <p class="screenshot-caption">Карта маршрута</p>
+      <div style="display: flex; align-items: center; gap: 5rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
+          <img src="img/stats.png" alt="Подробная статистика" class="stats-image" style="width: 32vw; max-width: 32vw; height: auto;">
         </div>
-        <div class="screenshot-item">
-          <img src="../assets/card200run.jpg" alt="Активность">
-          <p class="screenshot-caption">Детали тренировки</p>
-        </div>
-        <div class="screenshot-item">
-          <img src="../assets/pacepro.png" alt="Статистика">
-          <p class="screenshot-caption">Аналитика</p>
-        </div>
-        <div class="screenshot-item">
-          <img src="../assets/achive_1.png" alt="Достижения">
-          <p class="screenshot-caption">Достижения</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Преимущества -->
-  <section class="benefits">
-    <div class="container">
-      <div class="benefits-content">
-        <div class="benefits-text">
-          <h2 class="section-title">Почему выбирают PaceUp</h2>
-          <div class="benefits-list">
-            <div class="benefit-item">
-              <div class="benefit-icon">✓</div>
-              <div class="benefit-content">
-                <h3>Офлайн-режим</h3>
-                <p>Работает без интернета — все данные сохраняются локально</p>
-              </div>
-            </div>
-            <div class="benefit-item">
-              <div class="benefit-icon">✓</div>
-              <div class="benefit-content">
-                <h3>Точное GPS</h3>
-                <p>Высокая точность отслеживания маршрутов и расстояний</p>
-              </div>
-            </div>
-            <div class="benefit-item">
-              <div class="benefit-icon">✓</div>
-              <div class="benefit-content">
-                <h3>Социальные функции</h3>
-                <p>Делись тренировками, находи друзей, участвуй в клубах</p>
-              </div>
-            </div>
-            <div class="benefit-item">
-              <div class="benefit-icon">✓</div>
-              <div class="benefit-content">
-                <h3>Интеграция с Health</h3>
-                <p>Синхронизация с Apple Health и Google Fit</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="benefits-image">
-          <img src="../assets/cycling.jpg" alt="Преимущества PaceUp">
+        <div style="flex: 1; min-width: 300px; padding-left: 2rem;">
+          <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Детальная аналитика</h2>
+          <ul style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
+            <li style="margin-bottom: 0.8rem;"><strong>Получай детальную информацию о каждой тренировке;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Отслеживай тренировочный процесс по каждому виду спорта с помощью календаря;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Анализируй свой прогресс с помощью графиков и диаграмм;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Смотри подробную статистику за разные периоды;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong>Сравнивай результаты и ставь новые цели.</strong></li></ul>      
+          </ul>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Отзывы -->
+  <!--
   <section class="testimonials" id="testimonials">
     <div class="container">
       <div class="section-header">
@@ -281,23 +366,30 @@
       </div>
     </div>
   </section>
+  -->
 
   <!-- CTA секция -->
-  <section class="cta">
+  <section class="cta" style="padding: var(--spacing-2xl) 0 0 0; background: #1a1a1a;">
     <div class="container">
-      <div class="cta-content">
-        <h2 class="cta-title">Готов начать?</h2>
-        <p class="cta-subtitle">Скачай PaceUp прямо сейчас и начни отслеживать свои тренировки</p>
-        <div class="cta-buttons">
-          <!-- <a href="#" class="btn btn-primary">
-            <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
-          </a>
-          <a href="#" class="btn btn-primary">
-            <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
-          </a> -->
-          <a href="#" class="btn btn-primary">
-            <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
-          </a>
+      <div style="display: flex; align-items: stretch; gap: 3rem; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; display: flex; align-items: flex-start; align-self: stretch;">
+          <div class="cta-content" style="width: 100%; margin-top: 2rem;">
+            <h3 class="cta-title" style="font-size: 32px;"><span style="font-family: 'Oxanium', sans-serif; font-weight: 700;">PACE</span><span style="font-family: 'Oxanium', sans-serif; font-weight: 700; color: #9bec28;">UP</span> — твоё окно в мир спортивного сообщества</h3>
+                        <div class="cta-buttons" style="margin-top: 2rem;">
+              <!-- <a href="#" class="btn btn-primary">
+                <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
+              </a>
+              <a href="#" class="btn btn-primary">
+                <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
+              </a> -->
+              <a href="#" class="btn btn-primary">
+                <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
+              </a>
+            </div>
+          </div>
+        </div>
+        <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; align-self: stretch;">
+          <img src="img/paceup.png" alt="PaceUp" style="width: 25vw; max-width: 375px; height: auto;">
         </div>
       </div>
     </div>
@@ -307,8 +399,8 @@
   <section class="faq" id="faq">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Часто задаваемые вопросы</h2>
-        <p class="section-subtitle">Все, что нужно знать о PaceUp</p>
+        <h2 class="section-title">Частые вопросы</h2>
+     
       </div>
       <div class="faq-list">
         <div class="faq-item">
@@ -317,7 +409,7 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, базовые функции PaceUp полностью бесплатны. Доступны все виды трекинга, карты, лента активностей и социальные функции.</p>
+            <p>Да, весь функционал мобильного приложения PaceUp полностью бесплатен.</p>
           </div>
         </div>
         <div class="faq-item">
@@ -326,7 +418,7 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, PaceUp работает в офлайн-режиме. Все данные сохраняются локально и синхронизируются при подключении к интернету.</p>
+            <p>Да, приложение работает в офлайн-режиме. Все данные сохраняются локально и синхронизируются при подключении к интернету.</p>
           </div>
         </div>
         <div class="faq-item">
@@ -335,16 +427,16 @@
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>PaceUp поддерживает бег, велосипед, лыжи, плавание, ходьбу и другие виды активности. Также можно добавлять тренировки вручную.</p>
+            <p>На данный момент приложение поддерживает бег, велосипед, плавание и лыжи. В дальнейшем будут добавлены другие виды спорта.</p>
           </div>
         </div>
         <div class="faq-item">
           <button class="faq-question">
-            <span>Интегрируется ли с Apple Health / Google Fit?</span>
+            <span>Интегрируется ли с Apple Health / Health Connect?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, PaceUp полностью интегрируется с Apple Health на iOS и Google Fit на Android для синхронизации данных о здоровье.</p>
+            <p>Да, PaceUp полностью интегрируется с Apple Health на iOS и Health Connect на Android. В ближайшее время будет добавлена синхронизация с устройствами Garmin.</p>
           </div>
         </div>
       </div>
@@ -368,7 +460,6 @@
           <ul class="footer-links">
             <li><a href="#features">Возможности</a></li>
             <li><a href="#how-it-works">Как работает</a></li>
-            <li><a href="#screenshots">Скриншоты</a></li>
             <li><a href="#faq">FAQ</a></li>
           </ul>
         </div>
@@ -392,7 +483,7 @@
       <div class="footer-bottom">
         <p>&copy; 2026 PaceUp. Все права защищены.</p>
         <div class="footer-legal">
-          <a href="privacy-policy2.html">Политика конфиденциальности</a>
+          <a href="privacy-policy.html">Политика конфиденциальности</a>
           <a href="user-agreement.html">Пользовательское соглашение</a>
         </div>
       </div>

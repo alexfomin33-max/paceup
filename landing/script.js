@@ -87,7 +87,7 @@ document.querySelectorAll('.stat-item').forEach(item => {
 });
 
 // ────────────────────────────────────────────────────────────────────────
-// FAQ аккордеон
+// FAQ аккордеон (независимое открытие блоков)
 // ────────────────────────────────────────────────────────────────────────
 
 const faqItems = document.querySelectorAll('.faq-item');
@@ -96,17 +96,8 @@ faqItems.forEach(item => {
   const question = item.querySelector('.faq-question');
   
   question.addEventListener('click', () => {
-    const isActive = item.classList.contains('active');
-    
-    // Закрываем все остальные
-    faqItems.forEach(otherItem => {
-      if (otherItem !== item) {
-        otherItem.classList.remove('active');
-      }
-    });
-    
-    // Переключаем текущий
-    item.classList.toggle('active', !isActive);
+    // Переключаем только текущий блок, не закрывая другие
+    item.classList.toggle('active');
   });
 });
 
@@ -170,3 +161,168 @@ window.addEventListener('scroll', () => {
   lastScroll = currentScroll;
 });
 
+// ────────────────────────────────────────────────────────────────────────
+// Parallax эффект для фоновой картинки между блоками
+// ────────────────────────────────────────────────────────────────────────
+
+window.addEventListener('scroll', () => {
+  const parallaxSections = document.querySelectorAll('.parallax-image-section');
+  
+  parallaxSections.forEach(parallaxSection => {
+    const parallaxBg = parallaxSection.querySelector('.parallax-image-bg');
+    
+    if (parallaxBg) {
+      const rect = parallaxSection.getBoundingClientRect();
+      const scrolled = window.pageYOffset;
+      const sectionTop = parallaxSection.offsetTop;
+      
+      // Вычисляем, находится ли секция в viewport
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        // Вычисляем скорость движения картинки (parallax скорость)
+        // Картинка двигается медленнее контента для эффекта глубины
+        const parallaxSpeed = 0.4;
+        // Вычисляем смещение относительно начала секции
+        const sectionOffset = scrolled - sectionTop;
+        // Применяем parallax с учетом начальной позиции (-50%)
+        const yPos = sectionOffset * parallaxSpeed;
+        
+        // Применяем transform для движения картинки
+        parallaxBg.style.transform = `translate3d(0, ${yPos}px, 0)`;
+      }
+    }
+  });
+}, { passive: true });
+
+// ────────────────────────────────────────────────────────────────────────
+// Карусель для блока "Все возможности в одном приложении"
+// ────────────────────────────────────────────────────────────────────────
+
+let currentSlide = 0;
+const totalSlides = 5;
+const visibleSlides = 3;
+const maxSlide = totalSlides - visibleSlides; // Максимальная позиция: 2 (чтобы показывать слайды 0-1-2, 1-2-3, 2-3-4)
+
+function updateCarousel() {
+  const track = document.getElementById('featuresCarousel');
+  
+  if (track) {
+    track.style.transition = 'transform 0.5s ease-in-out';
+    
+    // Сдвигаем на один слайд (33.333% с учетом gap)
+    const slideWidth = 100 / visibleSlides; // ~33.333%
+    track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+  }
+  
+  // Обновляем изображение "Маркет" в зависимости от позиции
+  updateMarketImage();
+  // Обновляем изображение "Задачи" в зависимости от позиции
+  updateTaskImage();
+}
+
+function updateMarketImage() {
+  // Центральный слайд = currentSlide + 1 (так как видно 3 слайда, центральный - средний)
+  const centerSlideIndex = currentSlide + 1;
+  
+  // Находим все слайды в карусели
+  const slides = document.querySelectorAll('#featuresCarousel .carousel-slide');
+  
+  slides.forEach((slide, index) => {
+    const marketImg = slide.querySelector('img[alt="Маркет"]');
+    if (marketImg) {
+      const isCenter = index === centerSlideIndex;
+      
+      if (isCenter) {
+        // Когда слайд в центре - показываем market.png
+        if (!marketImg.src.includes('market.png')) {
+          marketImg.style.transition = 'opacity 0.5s ease-in-out';
+          marketImg.style.opacity = '0';
+          setTimeout(() => {
+            marketImg.src = 'img/market.png';
+            marketImg.style.opacity = '1';
+          }, 250);
+        }
+      } else {
+        // Когда слайд уходит из центра - показываем goods.png
+        if (!marketImg.src.includes('goods.png')) {
+          marketImg.style.transition = 'opacity 0.5s ease-in-out';
+          marketImg.style.opacity = '0';
+          setTimeout(() => {
+            marketImg.src = 'img/goods.png';
+            marketImg.style.opacity = '1';
+          }, 250);
+        }
+      }
+    }
+  });
+}
+
+function updateTaskImage() {
+  // Центральный слайд = currentSlide + 1 (так как видно 3 слайда, центральный - средний)
+  const centerSlideIndex = currentSlide + 1;
+  
+  // Находим все слайды в карусели
+  const slides = document.querySelectorAll('#featuresCarousel .carousel-slide');
+  
+  slides.forEach((slide, index) => {
+    const taskImg = slide.querySelector('img[alt="Задачи"]');
+    if (taskImg) {
+      const isCenter = index === centerSlideIndex;
+      
+      if (isCenter) {
+        // Когда слайд в центре - показываем rewards.png
+        if (!taskImg.src.includes('rewards.png')) {
+          taskImg.style.transition = 'opacity 0.5s ease-in-out';
+          taskImg.style.opacity = '0';
+          setTimeout(() => {
+            taskImg.src = 'img/rewards.png';
+            taskImg.style.opacity = '1';
+          }, 250);
+        }
+      } else {
+        // Когда слайд уходит из центра - показываем task.png
+        if (!taskImg.src.includes('task.png')) {
+          taskImg.style.transition = 'opacity 0.5s ease-in-out';
+          taskImg.style.opacity = '0';
+          setTimeout(() => {
+            taskImg.src = 'img/task.png';
+            taskImg.style.opacity = '1';
+          }, 250);
+        }
+      }
+    }
+  });
+}
+
+function nextSlide() {
+  if (currentSlide < maxSlide) {
+    currentSlide++;
+  } else {
+    currentSlide = 0; // Зацикливаем в начало
+  }
+  updateCarousel();
+}
+
+function prevSlide() {
+  if (currentSlide > 0) {
+    currentSlide--;
+  } else {
+    currentSlide = maxSlide; // Зацикливаем в конец
+  }
+  updateCarousel();
+}
+
+function goToSlide(index) {
+  if (index >= 0 && index <= maxSlide) {
+    currentSlide = index;
+    updateCarousel();
+  }
+}
+
+// Инициализация изображений при загрузке
+updateMarketImage();
+updateTaskImage();
+
+// Автоматическое переключение слайдов каждые 5 секунд
+setInterval(() => {
+  nextSlide();
+}, 6000);
