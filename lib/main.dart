@@ -95,7 +95,7 @@ void main() async {
         if (kDebugMode) {
           debugPrint('🔔 [FCM] Начинаем регистрацию токена при запуске...');
         }
-        
+
         final auth = container.read(authServiceProvider);
         final userId = await auth.getUserId();
         if (kDebugMode) {
@@ -134,7 +134,9 @@ void main() async {
     });
   } else if (!Platform.isMacOS && !firebaseInitialized) {
     if (kDebugMode) {
-      debugPrint('⚠️ [FCM] Firebase не инициализирован, пропускаем регистрацию FCM токена');
+      debugPrint(
+        '⚠️ [FCM] Firebase не инициализирован, пропускаем регистрацию FCM токена',
+      );
     }
   }
 
@@ -176,7 +178,7 @@ void main() async {
   // Включаем Device Preview только в debug-режиме для тестирования адаптивности
   runApp(
     DevicePreview(
-      enabled: kDebugMode,
+      enabled: false, //kDebugMode false
       builder: (context) => UncontrolledProviderScope(
         container: container,
         child: const PaceUpApp(),
@@ -299,7 +301,7 @@ class _PaceUpAppState extends State<PaceUpApp> {
           builder: (context, child) {
             // Сначала применяем DevicePreview.appBuilder
             final devicePreviewChild = DevicePreview.appBuilder(context, child);
-            
+
             // Настраиваем unified image cache после первого билда
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ImageCacheManager.configure(context);
