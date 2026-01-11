@@ -8,6 +8,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:device_preview/device_preview.dart';
 
 import '../../core/theme/app_theme.dart';
 import 'routes.dart';
@@ -170,8 +171,17 @@ void main() async {
 
   // ────────────────────────── Riverpod ──────────────────────────
   // ProviderScope обеспечивает доступ к провайдерам во всём приложении
+
+  // ────────────────────────── Device Preview ──────────────────────────
+  // Включаем Device Preview только в debug-режиме для тестирования адаптивности
   runApp(
-    UncontrolledProviderScope(container: container, child: const PaceUpApp()),
+    DevicePreview(
+      enabled: kDebugMode,
+      builder: (context) => UncontrolledProviderScope(
+        container: container,
+        child: const PaceUpApp(),
+      ),
+    ),
   );
 }
 
@@ -282,21 +292,14 @@ class _PaceUpAppState extends State<PaceUpApp> {
         );
 
         return MaterialApp(
-          title: 'PaceUp',
-          debugShowCheckedModeBanner: false,
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          themeMode: themeMode, // ← используем провайдер
-          navigatorKey: _navigatorKey,
-          initialRoute: '/splash',
-          onGenerateRoute: onGenerateRoute,
-          supportedLocales: const [Locale('ru'), Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
+          // ────────────────────────── Device Preview Integration ──────────────────────────
+          // Локализация из DevicePreview (если включен) или дефолтная
+          locale: DevicePreview.locale(context),
+          // Объединяем DevicePreview.appBuilder с нашим существующим builder
           builder: (context, child) {
+            // Сначала применяем DevicePreview.appBuilder
+            final devicePreviewChild = DevicePreview.appBuilder(context, child);
+            
             // Настраиваем unified image cache после первого билда
             WidgetsBinding.instance.addPostFrameCallback((_) {
               ImageCacheManager.configure(context);
@@ -315,9 +318,24 @@ class _PaceUpAppState extends State<PaceUpApp> {
                   textStyle: TextStyle(fontFamily: 'Inter'),
                 ),
               ),
-              child: child!,
+              child: devicePreviewChild,
             );
           },
+          // ────────────────────────── MaterialApp Settings ──────────────────────────
+          title: 'PaceUp',
+          debugShowCheckedModeBanner: false,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeMode, // ← используем провайдер
+          navigatorKey: _navigatorKey,
+          initialRoute: '/splash',
+          onGenerateRoute: onGenerateRoute,
+          supportedLocales: const [Locale('ru'), Locale('en')],
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
         );
       },
     );

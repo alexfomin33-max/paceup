@@ -103,6 +103,8 @@ dev_dependencies:
   # ────────────────────────── Investor PDF generation ──────────────────────────
   pdf: ^3.11.3
   docs_gee: ^1.0.1
+  # ────────────────────────── Device Preview (для тестирования адаптивности) ──────────────────────────
+  device_preview: ^1.1.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
