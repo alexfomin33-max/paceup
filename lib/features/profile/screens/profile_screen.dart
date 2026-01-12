@@ -1075,6 +1075,7 @@ Future<void> _showUserMenu({
   // для избежания использования BuildContext после async gap
   // ──────────────────────────────────────────────
   final iconPrimaryColor = AppColors.getIconPrimaryColor(context);
+  final textPrimaryColor = AppColors.getTextPrimaryColor(context);
 
   // Получаем статусы пользователя с сервера
   final api = ref.read(apiServiceProvider);
@@ -1116,8 +1117,8 @@ Future<void> _showUserMenu({
       icon: isSubscribed
           ? CupertinoIcons.person_badge_minus
           : CupertinoIcons.person_badge_plus,
-      textStyle: isSubscribed ? const TextStyle(color: AppColors.error) : null,
-      iconColor: isSubscribed ? AppColors.error : null,
+      textStyle: isSubscribed ? TextStyle(color: textPrimaryColor) : null,
+      iconColor: isSubscribed ? AppColors.error : AppColors.brandPrimary,
       onTap: () async {
         MoreMenuHub.hide();
         await _handleSubscribe(
@@ -1137,7 +1138,7 @@ Future<void> _showUserMenu({
       iconColor: arePostsHidden ? iconPrimaryColor : AppColors.error,
       textStyle: arePostsHidden
           ? null
-          : const TextStyle(color: AppColors.error),
+          : TextStyle(color: textPrimaryColor),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleHidePosts(
@@ -1157,7 +1158,7 @@ Future<void> _showUserMenu({
       iconColor: areActivitiesHidden ? iconPrimaryColor : AppColors.error,
       textStyle: areActivitiesHidden
           ? null
-          : const TextStyle(color: AppColors.error),
+          : TextStyle(color: textPrimaryColor),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleHideActivities(
@@ -1173,9 +1174,9 @@ Future<void> _showUserMenu({
     // 4) Заблокировать / Разблокировать
     MoreMenuItem(
       text: isBlocked ? 'Разблокировать' : 'Заблокировать',
-      icon: CupertinoIcons.exclamationmark_octagon,
+      icon: CupertinoIcons.xmark_circle,
       iconColor: AppColors.error,
-      textStyle: const TextStyle(color: AppColors.error),
+      textStyle: TextStyle(color: textPrimaryColor),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleBlock(

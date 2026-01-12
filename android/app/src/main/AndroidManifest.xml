@@ -28,6 +28,20 @@
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED" />
 
+    <!-- ────────────────────────────────────────────────────────────────────
+         ОГРАНИЧЕНИЕ ПОДДЕРЖКИ УСТРОЙСТВ
+         Приложение оптимизировано только для телефонов (не для планшетов).
+         smallScreens и normalScreens = телефоны (до ~7 дюймов)
+         largeScreens и xlargeScreens = планшеты (от 7+ дюймов) - отключены
+         requiresSmallestWidthDp = 320dp (минимальная ширина для телефонов)
+       ──────────────────────────────────────────────────────────────────── -->
+    <supports-screens
+        android:smallScreens="true"
+        android:normalScreens="true"
+        android:largeScreens="false"
+        android:xlargeScreens="false"
+        android:requiresSmallestWidthDp="320" />
+
     <application
         android:label="PaceUp"
         android:name="${applicationName}"
