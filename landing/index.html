@@ -155,6 +155,173 @@
       margin: 0;
       font-family: 'Inter', sans-serif;
     }
+    /* ────────────────────────────────────────────────────────────────────────
+       Адаптивность для мобильных устройств
+       ──────────────────────────────────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      /* Выравниваем кнопку в hero секции по центру на мобильных */
+      .hero-buttons {
+        justify-content: center !important;
+        width: 100% !important;
+      }
+      /* Увеличиваем картинку в блоке "Лента активностей" на мобильных */
+      .feed-section .slot-image {
+        width: 50vw !important;
+        max-width: 50vw !important;
+      }
+      /* Уменьшаем отступ между картинкой и заголовком в блоке "Лента активностей" */
+      .feed-content-wrapper {
+        gap: 2rem !important;
+      }
+      .feed-image-container {
+        padding: 1rem 0 !important;
+      }
+      .feed-text-container .section-title {
+        margin-bottom: 1rem !important;
+        text-align: center !important;
+      }
+      /* Увеличиваем картинку в блоке "Детальная аналитика" на мобильных */
+      .stats-section .stats-image {
+        width: 60vw !important;
+        max-width: 60vw !important;
+      }
+      /* Убираем padding-left в блоке "Детальная аналитика" на мобильных */
+      .stats-text-container {
+        padding-left: 0 !important;
+      }
+      /* Уменьшаем отступ между картинкой и заголовком в блоке "Детальная аналитика" */
+      .stats-content-wrapper {
+        gap: 2rem !important;
+      }
+      .stats-image-container {
+        padding: 1rem 0 !important;
+      }
+      .stats-text-container .section-title {
+        margin-bottom: 1rem !important;
+        text-align: center !important;
+      }
+      /* Увеличиваем картинки в карусели "Все возможности в одном приложении" */
+      .features .carousel-slide img {
+        width: 30vw !important;
+        max-width: 30vw !important;
+      }
+      /* Уменьшаем отступ между заголовком и каруселью в блоке "Все возможности в одном приложении" */
+      .features .section-header .section-title {
+        margin-bottom: 0rem !important;
+      }
+      .features .carousel-container {
+        padding: 1rem 0 !important;
+      }
+      /* На мобильных показываем только один слайд по центру */
+      .features .carousel-slide {
+        min-width: 100% !important;
+      }
+      /* Уменьшаем gap между слайдами на мобильных */
+      .features .carousel-track {
+        gap: 0.5rem !important;
+      }
+      /* Уменьшаем размер шрифта заголовков на мобильных */
+      .feed-section .section-title,
+      .features .section-title,
+      .stats-section .section-title,
+      .faq .section-title {
+        font-size: 32px !important;
+      }
+      /* Уменьшаем размер шрифта в FAQ на мобильных */
+      .faq-question {
+        font-size: 16px !important;
+      }
+      .faq-answer p {
+        font-size: 14px !important;
+      }
+      /* Уменьшаем размер шрифта списков на мобильных */
+      .feed-list,
+      .stats-list {
+        font-size: 0.95rem !important;
+      }
+      /* Уменьшаем размер шрифта заголовка CTA на мобильных */
+      .cta-title {
+        font-size: 24px !important;
+      }
+      /* Сдвигаем фоновую картинку в parallax секции правее и ниже на мобильных */
+      .parallax-bg-1 {
+        background-position: 30% 30% !important;
+        top: -60% !important;
+      }
+      .parallax-bg-2 {
+        background-position: 70% 60% !important;
+        top: -60% !important;
+      }
+      /* Уменьшаем размер шрифта в футере на мобильных */
+      .footer-bottom p,
+      .footer-legal a {
+        font-size: 0.95rem !important;
+      }
+      /* Убираем отступ между элементами в CTA секции на мобильных */
+      .cta-content-wrapper {
+        gap: 0 !important;
+      }
+      /* Увеличиваем картинку в CTA секции и размещаем правее на мобильных */
+      .cta-image-container {
+        align-items: flex-end !important;
+      }
+      .cta-image {
+        width: 40vw !important;
+        max-width: 40vw !important;
+      }
+    }
+    @media (max-width: 480px) {
+      /* Еще больше увеличиваем на очень маленьких экранах */
+      .feed-section .slot-image {
+        width: 65vw !important;
+        max-width: 65vw !important;
+      }
+      .stats-section .stats-image {
+        width: 80vw !important;
+        max-width: 80vw !important;
+      }
+      .features .carousel-slide img {
+        width: 50vw !important;
+        max-width: 50vw !important;
+      }
+      /* На маленьких экранах тоже один слайд */
+      .features .carousel-slide {
+        min-width: 100% !important;
+      }
+      /* Еще больше уменьшаем размер шрифта заголовков на очень маленьких экранах */
+      .feed-section .section-title,
+      .features .section-title,
+      .stats-section .section-title,
+      .faq .section-title {
+        font-size: 32px !important;
+      }
+      /* Уменьшаем размер шрифта в FAQ на очень маленьких экранах */
+      .faq-question {
+        font-size: 15px !important;
+      }
+      .faq-answer p {
+        font-size: 14px !important;
+      }
+      /* Еще больше уменьшаем размер шрифта списков на очень маленьких экранах */
+      .feed-list,
+      .stats-list {
+        font-size: 0.9rem !important;
+      }
+      /* Уменьшаем размер шрифта заголовка CTA на очень маленьких экранах */
+      .cta-title {
+        font-size: 22px !important;
+      }
+      /* Еще больше увеличиваем картинку в CTA секции на очень маленьких экранах */
+      .cta-image {
+        width: 50vw !important;
+        max-width: 50vw !important;
+      }
+      /* Еще больше уменьшаем размер шрифта в футере на очень маленьких экранах */
+      .footer-bottom p,
+      .footer-legal a {
+        font-size: 0.9rem !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -212,13 +379,13 @@
   <!-- Лента -->
   <section class="feed-section" id="feed" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
     <div class="container">
-      <div style="display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
+      <div class="feed-content-wrapper" style="display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;">
+        <div class="feed-image-container" style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
           <img src="img/lenta2.png" alt="Лента активностей" class="slot-image" style="width: 18vw; max-width: 18vw; height: auto;">
         </div>
-        <div style="flex: 1; min-width: 300px;">
+        <div class="feed-text-container" style="flex: 1; min-width: 300px;">
           <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Лента активностей</h2>
-          <ul style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
+          <ul class="feed-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
             <li style="margin-bottom: 0.8rem;"><strong>Делись своими тренировками с друзьями;</strong></li>
             <li style="margin-bottom: 0.8rem;"><strong>Добавляй различные фотографии и описание;</strong></li>
             <li style="margin-bottom: 0.8rem;"><strong>Выкладывай посты о своих достижениях;</strong></li>
@@ -233,7 +400,7 @@
 
   <!-- Блок с фоновой картинкой (parallax) -->
   <section class="parallax-image-section" style="position: relative; height: 300px; width: 100%; overflow: hidden; z-index: 1;">
-    <div class="parallax-image-bg" style="position: absolute; top: -70%; left: 0; width: 100%; height: 260%; background-image: url('img/run.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
+    <div class="parallax-image-bg parallax-bg-1" style="position: absolute; top: -55%; left: 0; width: 100%; height: 260%; background-image: url('img/run.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
   </section>
 
   <!-- Возможности -->
@@ -283,19 +450,19 @@
 
   <!-- Блок с фоновой картинкой (parallax) -->
   <section class="parallax-image-section" style="position: relative; height: 300px; width: 100%; overflow: hidden; z-index: 1;">
-    <div class="parallax-image-bg" style="position: absolute; top: -60%; left: 0; width: 100%; height: 260%; background-image: url('img/run2.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
+    <div class="parallax-image-bg parallax-bg-2" style="position: absolute; top: -60%; left: 0; width: 100%; height: 260%; background-image: url('img/run2.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; will-change: transform;"></div>
   </section>
 
   <!-- Подробная статистика -->
   <section class="stats-section" id="analytics" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
     <div class="container">
-      <div style="display: flex; align-items: center; gap: 5rem; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
+      <div class="stats-content-wrapper" style="display: flex; align-items: center; gap: 5rem; flex-wrap: wrap;">
+        <div class="stats-image-container" style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
           <img src="img/stats.png" alt="Подробная статистика" class="stats-image" style="width: 32vw; max-width: 32vw; height: auto;">
         </div>
-        <div style="flex: 1; min-width: 300px; padding-left: 2rem;">
+        <div class="stats-text-container" style="flex: 1; min-width: 300px; padding-left: 2rem;">
           <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Детальная аналитика</h2>
-          <ul style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
+          <ul class="stats-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
             <li style="margin-bottom: 0.8rem;"><strong>Получай детальную информацию о каждой тренировке;</strong></li>
             <li style="margin-bottom: 0.8rem;"><strong>Отслеживай тренировочный процесс по каждому виду спорта с помощью календаря;</strong></li>
             <li style="margin-bottom: 0.8rem;"><strong>Анализируй свой прогресс с помощью графиков и диаграмм;</strong></li>
@@ -372,7 +539,7 @@
   <!-- CTA секция -->
   <section class="cta" style="padding: var(--spacing-2xl) 0 0 0; background: #1a1a1a;">
     <div class="container">
-      <div style="display: flex; align-items: stretch; gap: 3rem; flex-wrap: wrap;">
+      <div class="cta-content-wrapper" style="display: flex; align-items: stretch; gap: 3rem; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 300px; display: flex; align-items: flex-start; align-self: stretch;">
           <div class="cta-content" style="width: 100%; margin-top: 2rem;">
             <h3 class="cta-title" style="font-size: 32px;"><span style="font-family: 'Oxanium', sans-serif; font-weight: 700;">PACE</span><span style="font-family: 'Oxanium', sans-serif; font-weight: 700; color: #9bec28;">UP</span> — твоё окно в мир спортивного сообщества</h3>
@@ -389,8 +556,8 @@
             </div>
           </div>
         </div>
-        <div style="flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; align-self: stretch;">
-          <img src="img/paceup.png" alt="PaceUp" style="width: 25vw; max-width: 375px; height: auto;">
+        <div class="cta-image-container" style="flex: 1; min-width: 300px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; align-self: stretch;">
+          <img src="img/paceup.png" alt="PaceUp" class="cta-image" style="width: 25vw; max-width: 375px; height: auto;">
         </div>
       </div>
     </div>

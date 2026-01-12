@@ -199,8 +199,17 @@ window.addEventListener('scroll', () => {
 
 let currentSlide = 0;
 const totalSlides = 5;
-const visibleSlides = 3;
-const maxSlide = totalSlides - visibleSlides; // Максимальная позиция: 2 (чтобы показывать слайды 0-1-2, 1-2-3, 2-3-4)
+
+// Функция для определения количества видимых слайдов в зависимости от ширины экрана
+function getVisibleSlides() {
+  return window.innerWidth <= 768 ? 1 : 3;
+}
+
+// Функция для получения максимальной позиции слайда
+function getMaxSlide() {
+  const visibleSlides = getVisibleSlides();
+  return Math.max(0, totalSlides - visibleSlides);
+}
 
 function updateCarousel() {
   const track = document.getElementById('featuresCarousel');
@@ -208,9 +217,32 @@ function updateCarousel() {
   if (track) {
     track.style.transition = 'transform 0.5s ease-in-out';
     
-    // Сдвигаем на один слайд (33.333% с учетом gap)
-    const slideWidth = 100 / visibleSlides; // ~33.333%
-    track.style.transform = `translateX(-${currentSlide * slideWidth}%)`;
+    // Получаем первый слайд для расчета его ширины
+    const slides = track.querySelectorAll('.carousel-slide');
+    if (slides.length > 0) {
+      const firstSlide = slides[0];
+      const slideWidth = firstSlide.offsetWidth;
+      
+      // Получаем gap из computed style и конвертируем в пиксели
+      const trackStyle = window.getComputedStyle(track);
+      const gapValue = trackStyle.gap;
+      let gap = 0;
+      
+      if (gapValue) {
+        // Если gap в rem, конвертируем в px
+        if (gapValue.includes('rem')) {
+          const remValue = parseFloat(gapValue);
+          gap = remValue * parseFloat(getComputedStyle(document.documentElement).fontSize);
+        } else {
+          // Если gap в px или других единицах, просто парсим число
+          gap = parseFloat(gapValue) || 0;
+        }
+      }
+      
+      // Вычисляем смещение: ширина слайда + gap
+      const offset = currentSlide * (slideWidth + gap);
+      track.style.transform = `translateX(-${offset}px)`;
+    }
   }
   
   // Обновляем изображение "Маркет" в зависимости от позиции
@@ -220,7 +252,14 @@ function updateCarousel() {
 }
 
 function updateMarketImage() {
-  // Центральный слайд = currentSlide + 1 (так как видно 3 слайда, центральный - средний)
+  const visibleSlides = getVisibleSlides();
+  
+  // На мобильных устройствах не меняем изображения
+  if (visibleSlides === 1) {
+    return;
+  }
+  
+  // Центральный слайд: для десктопа (3 слайда) = currentSlide + 1
   const centerSlideIndex = currentSlide + 1;
   
   // Находим все слайды в карусели
@@ -257,7 +296,14 @@ function updateMarketImage() {
 }
 
 function updateTaskImage() {
-  // Центральный слайд = currentSlide + 1 (так как видно 3 слайда, центральный - средний)
+  const visibleSlides = getVisibleSlides();
+  
+  // На мобильных устройствах не меняем изображения
+  if (visibleSlides === 1) {
+    return;
+  }
+  
+  // Центральный слайд: для десктопа (3 слайда) = currentSlide + 1
   const centerSlideIndex = currentSlide + 1;
   
   // Находим все слайды в карусели
@@ -294,6 +340,7 @@ function updateTaskImage() {
 }
 
 function nextSlide() {
+  const maxSlide = getMaxSlide();
   if (currentSlide < maxSlide) {
     currentSlide++;
   } else {
@@ -303,6 +350,7 @@ function nextSlide() {
 }
 
 function prevSlide() {
+  const maxSlide = getMaxSlide();
   if (currentSlide > 0) {
     currentSlide--;
   } else {
@@ -312,6 +360,7 @@ function prevSlide() {
 }
 
 function goToSlide(index) {
+  const maxSlide = getMaxSlide();
   if (index >= 0 && index <= maxSlide) {
     currentSlide = index;
     updateCarousel();
@@ -321,6 +370,16 @@ function goToSlide(index) {
 // Инициализация изображений при загрузке
 updateMarketImage();
 updateTaskImage();
+
+// Обработчик изменения размера окна для адаптивности карусели
+window.addEventListener('resize', () => {
+  const maxSlide = getMaxSlide();
+  // Если текущая позиция больше максимальной после изменения размера, сбрасываем на максимум
+  if (currentSlide > maxSlide) {
+    currentSlide = maxSlide;
+  }
+  updateCarousel();
+});
 
 // Автоматическое переключение слайдов каждые 5 секунд
 setInterval(() => {
