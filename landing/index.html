@@ -174,6 +174,9 @@
         gap: 1rem !important;
         flex-direction: column !important;
       }
+      .feed-text-container {
+        display: contents !important;
+      }
       .feed-title-container {
         order: 1 !important;
         width: 100% !important;
@@ -183,7 +186,7 @@
         padding: 1rem 0 !important;
         width: 100% !important;
       }
-      .feed-text-container {
+      .feed-list-container {
         order: 3 !important;
         width: 100% !important;
       }
@@ -205,6 +208,9 @@
         gap: 1rem !important;
         flex-direction: column !important;
       }
+      .stats-text-container {
+        display: contents !important;
+      }
       .stats-title-container {
         order: 1 !important;
         width: 100% !important;
@@ -215,7 +221,7 @@
         padding: 1rem 0 !important;
         width: 100% !important;
       }
-      .stats-text-container {
+      .stats-list-container {
         order: 3 !important;
         width: 100% !important;
         padding-left: 0 !important;
@@ -433,13 +439,13 @@
   <section class="feed-section" id="feed" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
     <div class="container">
       <div class="feed-content-wrapper" style="display: flex; align-items: center; gap: 3rem; flex-wrap: wrap;">
-        <div class="feed-title-container" style="flex: 1; min-width: 300px;">
-          <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Лента активностей</h2>
-        </div>
         <div class="feed-image-container" style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
           <img src="img/lenta2.png" alt="Лента активностей" class="slot-image" style="width: 18vw; max-width: 18vw; height: auto;">
         </div>
         <div class="feed-text-container" style="flex: 1; min-width: 300px;">
+          <div class="feed-title-container">
+            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Лента активностей</h2>
+          </div>
           <div class="feed-list-container">
             <ul class="feed-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
             <li style="margin-bottom: 0.8rem;"><strong>Делись своими тренировками с друзьями;</strong></li>
@@ -513,13 +519,13 @@
   <section class="stats-section" id="analytics" style="background-color: #ffffff; padding: 4rem 0; position: relative; z-index: 2;">
     <div class="container">
       <div class="stats-content-wrapper" style="display: flex; align-items: center; gap: 5rem; flex-wrap: wrap;">
-        <div class="stats-title-container" style="flex: 1; min-width: 300px; padding-left: 2rem;">
-          <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Детальная аналитика</h2>
-        </div>
         <div class="stats-image-container" style="flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; padding: 2rem 0;">
           <img src="img/stats.png" alt="Подробная статистика" class="stats-image" style="width: 32vw; max-width: 32vw; height: auto;">
         </div>
         <div class="stats-text-container" style="flex: 1; min-width: 300px; padding-left: 2rem;">
+          <div class="stats-title-container">
+            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Детальная аналитика</h2>
+          </div>
           <div class="stats-list-container">
             <ul class="stats-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
             <li style="margin-bottom: 0.8rem;"><strong>Получай детальную информацию о каждой тренировке;</strong></li>
