@@ -69,12 +69,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // ФОРМАТИРОВАНИЕ ТЕКСТА УВЕДОМЛЕНИЯ: для забегов и заездов — 2 знака после запятой,
+  // ФОРМАТИРОВАНИЕ ТЕКСТА УВЕДОМЛЕНИЯ: для забегов и заездов — точное значение без округления,
   // для заплывов — конвертация в метры без десятичных значений
   // ─────────────────────────────────────────────────────────────────────────────
   String _formatNotificationText(String text) {
     // Паттерн для забегов: "закончил забег X км." или "закончил забег X.XX км."
-    // Заменяем на формат с 2 знаками после запятой: "закончил забег X,XX км"
+    // Заменяем точку на запятую, сохраняя точное значение без округления
     final runPattern = RegExp(
       r'закончил забег\s+(\d+(?:\.\d+)?)\s*км\.?',
       caseSensitive: false,
@@ -82,15 +82,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     text = text.replaceAllMapped(runPattern, (match) {
       final distanceStr = match.group(1) ?? '0';
-      final distance = double.tryParse(distanceStr) ?? 0.0;
-      final formattedDistance = distance
-          .toStringAsFixed(2)
-          .replaceAll('.', ',');
+      // Просто заменяем точку на запятую, не округляя значение
+      final formattedDistance = distanceStr.replaceAll('.', ',');
       return 'закончил забег $formattedDistance км';
     });
 
     // Паттерн для заездов: "закончил заезд X км." или "закончил заезд X.XX км."
-    // Заменяем на формат с 2 знаками после запятой: "закончил заезд X,XX км"
+    // Заменяем точку на запятую, сохраняя точное значение без округления
     final ridePattern = RegExp(
       r'закончил заезд\s+(\d+(?:\.\d+)?)\s*км\.?',
       caseSensitive: false,
@@ -98,10 +96,8 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
 
     text = text.replaceAllMapped(ridePattern, (match) {
       final distanceStr = match.group(1) ?? '0';
-      final distance = double.tryParse(distanceStr) ?? 0.0;
-      final formattedDistance = distance
-          .toStringAsFixed(2)
-          .replaceAll('.', ',');
+      // Просто заменяем точку на запятую, не округляя значение
+      final formattedDistance = distanceStr.replaceAll('.', ',');
       return 'закончил заезд $formattedDistance км';
     });
 
