@@ -83,7 +83,32 @@ open ios/Runner.xcworkspace
 **Важно:** Bundle Identifier должен быть уникальным. Текущий: `com.example.paceup`
 - Если нужно изменить: в поле **Bundle Identifier** введите уникальный ID (например, `com.yourname.paceup`)
 
-#### Шаг 3: Подключение iPhone
+#### Шаг 3: Подключение и регистрация iPhone
+
+**КРИТИЧЕСКИ ВАЖНО:** Перед настройкой подписи нужно зарегистрировать iPhone в Xcode!
+
+1. **Подключите iPhone к Mac через USB кабель**
+2. **На iPhone:**
+   - Разблокируйте устройство
+   - Если появится запрос "Доверять этому компьютеру?" → нажмите **"Доверять"**
+   - Перейдите: **Настройки → Конфиденциальность и безопасность → Режим разработчика** (включите, если доступно)
+3. **В Xcode зарегистрируйте устройство:**
+   - Откройте: **Window → Devices and Simulators** (или `Cmd + Shift + 2`)
+   - В левой панели выберите ваш **iPhone**
+   - Если iPhone виден, но показывает "Unpaired" или требует регистрации:
+     - Нажмите кнопку **"Use for Development"** или **"Register Device"**
+     - Следуйте инструкциям на экране
+   - Убедитесь, что статус устройства: **"Ready for development"** или **"Connected"**
+4. **Вернитесь к Signing & Capabilities:**
+   - Вернитесь в настройки проекта (Runner → Signing & Capabilities)
+   - Нажмите кнопку **"Try Again"** (если она есть)
+   - Или просто подождите несколько секунд — Xcode должен автоматически создать профиль
+
+**Если ошибка "No devices found" все еще появляется:**
+- Убедитесь, что iPhone разблокирован и подключен
+- Перезапустите Xcode
+- Попробуйте отключить и подключить кабель заново
+- Проверьте, что кабель поддерживает передачу данных (не только зарядку)
 
 1. Подключите iPhone к Mac через USB кабель
 2. На iPhone: **Настройки → Основные → VPN и управление устройством**
@@ -292,6 +317,66 @@ open ios/Runner.xcworkspace
 ```
 
 ### Проблема: Ошибка подписи кода (Code Signing Error)
+
+#### Ошибка: "Communication with Apple failed" / "No devices found"
+
+**Причина:** Xcode не видит подключенное устройство для создания provisioning profile.
+
+**Решение:**
+
+1. **Зарегистрируйте iPhone в Xcode:**
+   ```bash
+   # Откройте Xcode
+   open ios/Runner.xcworkspace
+   ```
+   - В Xcode: **Window → Devices and Simulators** (`Cmd + Shift + 2`)
+   - Убедитесь, что iPhone подключен и виден в списке
+   - Если устройство не зарегистрировано:
+     - Выберите iPhone в списке
+     - Нажмите **"Use for Development"** или **"Register Device"**
+     - Следуйте инструкциям
+
+2. **Убедитесь, что iPhone доверен:**
+   - iPhone должен быть разблокирован
+   - На iPhone: **Настройки → Основные → VPN и управление устройством**
+   - Должен быть профиль вашего компьютера (если нет — подключите кабель заново)
+
+3. **Обновите подпись в Xcode:**
+   - Вернитесь в **Runner → Signing & Capabilities**
+   - Нажмите **"Try Again"** (если доступно)
+   - Или временно снимите и снова включите **"Automatically manage signing"**
+
+4. **Если проблема сохраняется:**
+   ```bash
+   # Очистите кэш Xcode
+   rm -rf ~/Library/Developer/Xcode/DerivedData
+   rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*
+   
+   # Перезапустите Xcode и попробуйте снова
+   ```
+
+#### Ошибка: "No profiles for 'com.leetero.paceup' were found"
+
+**Решение:**
+
+1. **Убедитесь, что устройство зарегистрировано** (см. выше)
+
+2. **Проверьте Bundle Identifier:**
+   - В Xcode: **Runner → Signing & Capabilities**
+   - Убедитесь, что Bundle Identifier уникален (например, `com.yourname.paceup`)
+   - Если нужно изменить — измените и попробуйте снова
+
+3. **Создайте профиль вручную (если автоматическое не работает):**
+   - Откройте: https://developer.apple.com/account/
+   - Войдите со своим Apple ID
+   - **Certificates, Identifiers & Profiles**
+   - **Devices** → добавьте ваш iPhone (UDID можно найти в Xcode → Devices)
+   - **Profiles** → создайте новый Development профиль
+   - Выберите ваш App ID и устройство
+   - Скачайте и установите профиль
+
+#### Общее решение для ошибок подписи
+
 ```bash
 # 1. Откройте проект в Xcode
 open ios/Runner.xcworkspace
@@ -302,6 +387,7 @@ open ios/Runner.xcworkspace
 # - Включите "Automatically manage signing"
 # - Выберите правильную Team
 # - Убедитесь, что Bundle Identifier уникален
+# - Убедитесь, что iPhone зарегистрирован (Window → Devices)
 
 # 3. Очистите и пересоберите проект
 cd /Users/alexeyfomin/Documents/paceup/app/paceup
@@ -312,8 +398,9 @@ flutter build ios --debug
 
 # 4. Если проблема сохраняется:
 # - Удалите старые provisioning profiles:
-#   ~/Library/MobileDevice/Provisioning Profiles/
+rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/*
 # - В Xcode: Product → Clean Build Folder (Cmd + Shift + K)
+# - Перезапустите Xcode
 # - Попробуйте снова
 ```
 
