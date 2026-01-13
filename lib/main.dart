@@ -178,7 +178,7 @@ void main() async {
   // Включаем Device Preview только в debug-режиме для тестирования адаптивности
   runApp(
     DevicePreview(
-      enabled: false, //kDebugMode false
+      enabled: kDebugMode, //kDebugMode false
       builder: (context) => UncontrolledProviderScope(
         container: container,
         child: const PaceUpApp(),

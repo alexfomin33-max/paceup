@@ -19,6 +19,8 @@ class CityAutocompleteField extends StatefulWidget {
   final bool hasError; // Показывать ли ошибку
   final String? errorText; // Текст ошибки
   final String? hintText; // Подсказка
+  final bool showBorder; // Показывать ли обводку поля
+  final EdgeInsetsGeometry? contentPadding; // Паддинг внутри поля ввода
 
   const CityAutocompleteField({
     super.key,
@@ -29,6 +31,8 @@ class CityAutocompleteField extends StatefulWidget {
     this.hasError = false,
     this.errorText,
     this.hintText,
+    this.showBorder = true,
+    this.contentPadding,
   });
 
   @override
@@ -49,10 +53,10 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
         _selectedCity = city;
       }
     }
-    
+
     // Слушаем изменения в контроллере
     widget.controller.addListener(_onControllerChanged);
-    
+
     // Слушаем потерю фокуса для валидации
     _focusNode.addListener(_onFocusChanged);
   }
@@ -156,22 +160,27 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
                   hintStyle: AppTextStyles.h14w4Place,
                   filled: true,
                   fillColor: AppColors.getSurfaceColor(context),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 17,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: borderColor, width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: borderColor, width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    borderSide: BorderSide(color: borderColor, width: 1),
-                  ),
+                  contentPadding:
+                      widget.contentPadding ??
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
+                  border: widget.showBorder
+                      ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(color: borderColor, width: 1),
+                        )
+                      : InputBorder.none,
+                  enabledBorder: widget.showBorder
+                      ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(color: borderColor, width: 1),
+                        )
+                      : InputBorder.none,
+                  focusedBorder: widget.showBorder
+                      ? OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide(color: borderColor, width: 1),
+                        )
+                      : InputBorder.none,
                   errorText: widget.hasError
                       ? (widget.errorText ?? 'Выберите город из списка')
                       : null,
@@ -226,4 +235,3 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
     );
   }
 }
-

@@ -53,7 +53,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                 Tab(
                   child: _TabLabel(
                     icon: CupertinoIcons.calendar,
-                    text: 'Мои события',
+                    text: 'События',
                   ),
                 ),
                 Tab(
@@ -72,7 +72,9 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
             child: Padding(
               // Добавляем padding снизу, чтобы контент не перекрывал нижнее меню
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).padding.bottom + 60, // высота нижнего меню + системный отступ
+                bottom:
+                    MediaQuery.of(context).padding.bottom +
+                    60, // высота нижнего меню + системный отступ
               ),
               child: TabBarView(
                 controller: _tab,
@@ -102,7 +104,7 @@ class _TabLabel extends StatelessWidget {
     // ── через DefaultTextStyle, получаем цвет для иконки и текста
     final textStyle = DefaultTextStyle.of(context).style;
     final iconColor = textStyle.color;
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,

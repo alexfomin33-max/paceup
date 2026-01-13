@@ -549,7 +549,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         fields['event_date'] = _fmtDate(date!);
         fields['event_time'] = _fmtTime(time!);
         fields['description'] = descCtrl.text.trim();
-        
+
         // Добавляем дистанции "от" и "до" (только если заполнены)
         if (distanceCtrl1.text.trim().isNotEmpty) {
           fields['distances[0]'] = distanceCtrl1.text.trim(); // дистанция "от"
@@ -557,7 +557,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
         if (distanceCtrl2.text.trim().isNotEmpty) {
           fields['distances[1]'] = distanceCtrl2.text.trim(); // дистанция "до"
         }
-        
+
         if (createFromClub && selectedClub != null) {
           fields['club_name'] = selectedClub!;
         }
@@ -830,7 +830,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                               onPick: _pickBackground,
                               onRemove: () =>
                                   setState(() => backgroundFile = null),
-                              width: 189, // Ширина для соотношения 2.1:1 (90 * 2.1)
+                              width:
+                                  189, // Ширина для соотношения 2.1:1 (90 * 2.1)
                               height: 90,
                             ),
                           ],
@@ -955,23 +956,23 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                           style: AppTextStyles.h14w4.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
-                          items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
-                            option,
-                          ) {
-                            return DropdownMenuItem<String>(
-                              value: option,
-                              child: Builder(
-                                builder: (context) => Text(
-                                  option,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
+                          items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи']
+                              .map((option) {
+                                return DropdownMenuItem<String>(
+                                  value: option,
+                                  child: Builder(
+                                    builder: (context) => Text(
+                                      option,
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
+                                );
+                              })
+                              .toList(),
                         ),
                       ),
                     ),
@@ -1182,6 +1183,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                                                   ),
                                             )
                                           : AppTextStyles.h14w4Place,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
@@ -1283,6 +1286,8 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                                                   ),
                                             )
                                           : AppTextStyles.h14w4Place,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ),
@@ -1781,102 +1786,102 @@ class _MediaTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tileWidth = width ?? 90;
     final tileHeight = height ?? 90;
-    
+
     // 📌 Если фото ещё нет — плитка с иконкой и рамкой
     if (file == null) {
       return GestureDetector(
         onTap: onPick,
         child: Container(
-            width: tileWidth,
-            height: tileHeight,
-            decoration: BoxDecoration(
-              shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: isCircular
-                  ? null
-                  : BorderRadius.circular(AppRadius.sm),
-              color: AppColors.getSurfaceColor(context),
-              border: Border.all(color: AppColors.getBorderColor(context)),
-            ),
-            child: Center(
-              child: Icon(
-                CupertinoIcons.photo,
-                size: 28,
-                color: AppColors.getIconSecondaryColor(context),
-              ),
+          width: tileWidth,
+          height: tileHeight,
+          decoration: BoxDecoration(
+            shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: isCircular
+                ? null
+                : BorderRadius.circular(AppRadius.sm),
+            color: AppColors.getSurfaceColor(context),
+            border: Border.all(color: AppColors.getBorderColor(context)),
+          ),
+          child: Center(
+            child: Icon(
+              CupertinoIcons.photo,
+              size: 28,
+              color: AppColors.getIconSecondaryColor(context),
             ),
           ),
-        );
+        ),
+      );
     }
 
     // 📌 Если фото выбрано — превью без рамки
     return Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: onPick,
-            child: isCircular
-                ? ClipOval(
-                    child: Image.file(
-                      file!,
-                      fit: BoxFit.cover,
+      clipBehavior: Clip.none,
+      children: [
+        GestureDetector(
+          onTap: onPick,
+          child: isCircular
+              ? ClipOval(
+                  child: Image.file(
+                    file!,
+                    fit: BoxFit.cover,
+                    width: tileWidth,
+                    height: tileHeight,
+                    errorBuilder: (context, error, stackTrace) => Container(
                       width: tileWidth,
                       height: tileHeight,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: tileWidth,
-                        height: tileHeight,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
-                      ),
-                    ),
-                  )
-                : ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Image.file(
-                      file!,
-                      fit: BoxFit.cover,
-                      width: tileWidth,
-                      height: tileHeight,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        width: tileWidth,
-                        height: tileHeight,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
+                      color: AppColors.getBackgroundColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
                       ),
                     ),
                   ),
-          ),
-          Positioned(
-            right: -6,
-            top: -6,
-            child: Builder(
-              builder: (context) => GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.getBorderColor(context)),
+                )
+              : ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  child: Image.file(
+                    file!,
+                    fit: BoxFit.cover,
+                    width: tileWidth,
+                    height: tileHeight,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: tileWidth,
+                      height: tileHeight,
+                      color: AppColors.getBackgroundColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 24,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
                   ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
-                  ),
+                ),
+        ),
+        Positioned(
+          right: -6,
+          top: -6,
+          child: Builder(
+            builder: (context) => GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
                 ),
               ),
             ),
           ),
-        ],
-      );
+        ),
+      ],
+    );
   }
 }

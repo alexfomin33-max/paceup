@@ -151,6 +151,9 @@ class StatsRow extends StatelessWidget {
         activityType?.toLowerCase() == 'bike' ||
         activityType?.toLowerCase() == 'bicycle' ||
         activityType?.toLowerCase() == 'cycling';
+    final isRun =
+        activityType?.toLowerCase() == 'run' ||
+        activityType?.toLowerCase() == 'running';
     // ──────────────────────────────────────────────────────────────
     // 📏 ФОРМАТИРОВАНИЕ ДИСТАНЦИИ ДЛЯ ПЛАВАНИЯ: добавляем пробел после каждых 3 цифр
     // ──────────────────────────────────────────────────────────────
@@ -519,7 +522,7 @@ class StatsRow extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Ср. пульс',
+                            'Пульс',
                             style: AppTextStyles.h11w4Sec.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
@@ -551,7 +554,7 @@ class StatsRow extends StatelessWidget {
               // ──────────────────────────────────────────────────────────────
               // ТРЕТЬЯ СТРОКА: Калории | Шаги | Скорость
               // 🏊 ДЛЯ ПЛАВАНИЯ: показываем третью строку метрик (как на скриншоте)
-              // 🏃 ДЛЯ БЕГА: показываем третью строку метрик (как на скриншоте)
+              // 🏃 ДЛЯ БЕГА: показываем третью строку метрик (Скорость | Калории | Шаги)
               // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем третью строку метрик (как на скриншоте)
               // Скорость всегда доступна (рассчитывается из расстояния и времени)
               // ──────────────────────────────────────────────────────────────
@@ -561,105 +564,214 @@ class StatsRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 140,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    // ──────────────────────────────────────────────────────────────
+                    // 🏃 ДЛЯ БЕГА: первая колонка — Скорость
+                    // Для других типов: первая колонка — Калории/Каденс
+                    // ──────────────────────────────────────────────────────────────
+                    if (isRun)
+                      SizedBox(
+                        width: 140,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Скорость',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
                             // ──────────────────────────────────────────────────────────────
-                            // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем "Каденс" вместо "Калории" в третьей строке
-                            // 🏊 ДЛЯ ПЛАВАНИЯ: показываем "Каденс" вместо "Калории" в третьей строке
+                            // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "км/ч" на 1
                             // ──────────────────────────────────────────────────────────────
-                            (isBike || isSwim) ? 'Каденс' : 'Калории',
-                            style: AppTextStyles.h11w4Sec.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            // ──────────────────────────────────────────────────────────────
-                            // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем cadenceText вместо caloriesText
-                            // 🏊 ДЛЯ ПЛАВАНИЯ: показываем cadenceText вместо caloriesText
-                            // ──────────────────────────────────────────────────────────────
-                            (isBike || isSwim) ? cadenceText : caloriesText,
-                            style: AppTextStyles.h16w6.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    SizedBox(
-                      width: 110,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Шаги',
-                            style: AppTextStyles.h11w4Sec.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            stepsText,
-                            style: AppTextStyles.h16w6.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Скорость',
-                            style: AppTextStyles.h11w4Sec.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          // ──────────────────────────────────────────────────────────────
-                          // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "км/ч" на 1
-                          // ──────────────────────────────────────────────────────────────
-                          speedText == '—'
-                              ? Text(
-                                  speedText,
-                                  style: AppTextStyles.h16w6.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
+                            speedText == '—'
+                                ? Text(
+                                    speedText,
+                                    style: AppTextStyles.h16w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  )
+                                : Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: speedText.replaceAll(' км/ч', ''),
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: ' км/ч',
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            fontSize: 15,
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                )
-                              : Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: speedText.replaceAll(' км/ч', ''),
-                                        style: AppTextStyles.h16w6.copyWith(
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: ' км/ч',
-                                        style: AppTextStyles.h16w6.copyWith(
-                                          fontSize: 15,
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                        ],
+                          ],
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width: 140,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              // ──────────────────────────────────────────────────────────────
+                              // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем "Каденс" вместо "Калории" в третьей строке
+                              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем "Каденс" вместо "Калории" в третьей строке
+                              // ──────────────────────────────────────────────────────────────
+                              (isBike || isSwim) ? 'Каденс' : 'Калории',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              // ──────────────────────────────────────────────────────────────
+                              // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем cadenceText вместо caloriesText
+                              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем cadenceText вместо caloriesText
+                              // ──────────────────────────────────────────────────────────────
+                              (isBike || isSwim) ? cadenceText : caloriesText,
+                              style: AppTextStyles.h16w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
+                    // ──────────────────────────────────────────────────────────────
+                    // 🏃 ДЛЯ БЕГА: вторая колонка — Калории
+                    // Для других типов: вторая колонка — Шаги
+                    // ──────────────────────────────────────────────────────────────
+                    if (isRun)
+                      SizedBox(
+                        width: 110,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Калории',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              caloriesText,
+                              style: AppTextStyles.h16w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width: 110,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Шаги',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              stepsText,
+                              style: AppTextStyles.h16w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // ──────────────────────────────────────────────────────────────
+                    // 🏃 ДЛЯ БЕГА: третья колонка — Шаги
+                    // Для других типов: третья колонка — Скорость
+                    // ──────────────────────────────────────────────────────────────
+                    if (isRun)
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Шаги',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              stepsText,
+                              style: AppTextStyles.h16w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Скорость',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(height: 1),
+                            // ──────────────────────────────────────────────────────────────
+                            // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "км/ч" на 1
+                            // ──────────────────────────────────────────────────────────────
+                            speedText == '—'
+                                ? Text(
+                                    speedText,
+                                    style: AppTextStyles.h16w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  )
+                                : Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: speedText.replaceAll(' км/ч', ''),
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: ' км/ч',
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            fontSize: 15,
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ],

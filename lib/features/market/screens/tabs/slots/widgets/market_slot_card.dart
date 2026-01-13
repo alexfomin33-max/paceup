@@ -387,10 +387,6 @@ class _BuyButtonText extends StatelessWidget {
       ),
     );
 
-    // ── Фиксированная ширина для кнопок "В чат", "Купить" и "Изменить"
-    final isFixedWidthButton =
-        text == 'В чат' || text == 'Купить' || text == 'Изменить';
-
     final button = showIcon
         ? ElevatedButton.icon(
             onPressed: enabled ? onPressed : null,
@@ -404,13 +400,12 @@ class _BuyButtonText extends StatelessWidget {
             child: textWidget,
           );
 
-    if (isFixedWidthButton) {
-      return SizedBox(width: 80, height: 28, child: button);
-    }
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minWidth: 72),
-      child: SizedBox(height: 28, child: button),
+    // Кнопка "Купить" имеет фиксированную ширину 70 пикселей
+    // Остальные кнопки имеют ширину по содержимому
+    return SizedBox(
+      height: 28,
+      width: text == 'Купить' ? 70 : null,
+      child: button,
     );
   }
 }

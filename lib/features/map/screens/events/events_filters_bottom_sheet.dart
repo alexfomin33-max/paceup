@@ -58,7 +58,12 @@ class _EventsFiltersBottomSheetState extends State<EventsFiltersBottomSheet> {
       _endDate = widget.initialParams!.endDate;
     } else {
       // Устанавливаем дефолтные значения
-      _selectedSports = {SportType.run, SportType.bike, SportType.swim};
+      _selectedSports = {
+        SportType.run,
+        SportType.bike,
+        SportType.ski,
+        SportType.swim,
+      };
       _selectedEventTypes = {EventType.official, EventType.amateur};
       // Устанавливаем дефолтные даты: сегодня и сегодня + 1 год
       final today = DateTime.now();
@@ -545,7 +550,7 @@ class EventsFilterParams {
 }
 
 /// Виды спорта для фильтра
-enum SportType { run, bike, swim, ski }
+enum SportType { run, bike, ski, swim }
 
 extension SportTypeExtension on SportType {
   String get label {

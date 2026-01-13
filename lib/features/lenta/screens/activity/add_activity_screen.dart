@@ -756,6 +756,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               style: _activityDate != null
                   ? AppTextStyles.h14w4
                   : AppTextStyles.h14w4Place,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -818,6 +820,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               style: _startTime != null
                   ? AppTextStyles.h14w4
                   : AppTextStyles.h14w4Place,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),

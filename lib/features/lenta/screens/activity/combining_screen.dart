@@ -277,7 +277,7 @@ class _TrainingCard extends StatelessWidget {
                       child: _MetricColumn(
                         topTitle: 'Время',
                         topValue: time,
-                        bottomTitle: 'Ср. пульс',
+                        bottomTitle: 'Пульс',
                         bottomValue: hr,
                       ),
                     ),
@@ -327,8 +327,8 @@ class _MetricColumn extends StatelessWidget {
         const SizedBox(height: 10),
         Text(bottomTitle, style: label),
         const SizedBox(height: 1),
-        // Для "Ср. пульс" добавляем красное сердечко после числа
-        bottomTitle == 'Ср. пульс'
+        // Для "Пульс" добавляем красное сердечко после числа
+        bottomTitle == 'Пульс'
             ? Row(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,

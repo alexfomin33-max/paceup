@@ -17,7 +17,7 @@ class DistancePill extends StatelessWidget {
         : AppColors.getSurfaceMutedColor(context);
 
     return Container(
-      width: 70,
+      width: 64,
       height: 28,
       decoration: BoxDecoration(
         color: bgColor,
@@ -89,7 +89,7 @@ class PricePill extends StatelessWidget {
         : AppColors.getTextPrimaryColor(context);
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 76),
+      constraints: const BoxConstraints(minWidth: 70),
       height: 28,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(

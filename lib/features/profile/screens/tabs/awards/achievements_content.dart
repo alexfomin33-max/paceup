@@ -217,10 +217,10 @@ class _BadgeTile extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Изображение занимает 2/3 высоты карточки
-          Expanded(flex: 2, child: image),
+          Expanded(flex: 7, child: image),
           // Текст занимает 1/3 высоты карточки
           Expanded(
-            flex: 1,
+            flex: 4,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
               child: Center(

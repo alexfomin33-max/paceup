@@ -141,12 +141,19 @@ class EditProfilePersonalInfoSection extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 4),
                   Expanded(
                     child: CityAutocompleteField(
                       controller: city,
                       suggestions: cities,
                       hintText: 'Город',
+                      showBorder: false,
+                      contentPadding: const EdgeInsets.only(
+                        left: 0,
+                        right: 12,
+                        top: 17,
+                        bottom: 17,
+                      ),
                       onSelected: (selectedCity) {
                         city.text = selectedCity;
                         if (onCitySelected != null) {

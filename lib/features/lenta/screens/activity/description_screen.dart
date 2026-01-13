@@ -340,9 +340,7 @@ class _ActivityDescriptionPageState
           text: 'Пожаловаться',
           icon: CupertinoIcons.exclamationmark_circle,
           iconColor: AppColors.orange,
-          textStyle: const TextStyle(
-            color: AppColors.orange,
-          ),
+          textStyle: const TextStyle(color: AppColors.orange),
           onTap: () {
             MoreMenuHub.hide();
             // Функционал будет добавлен позже
@@ -2387,7 +2385,7 @@ class _ChartMetricsHeader extends StatelessWidget {
             children: [
               metricItem(
                 '—',
-                'Ср. пульс',
+                'Пульс',
                 icon: const Icon(
                   CupertinoIcons.heart_fill,
                   size: 16,
@@ -2450,7 +2448,7 @@ class _ChartMetricsHeader extends StatelessWidget {
           ],
         );
       } else if (mode == 1) {
-        // Пульс: Ср. пульс и Макс. пульс
+        // Пульс: Пульс и Макс. пульс
         final hrSummary = summary!['heartRate'] as Map<String, dynamic>?;
         final heartIcon = const Icon(
           CupertinoIcons.heart_fill,
@@ -2461,7 +2459,7 @@ class _ChartMetricsHeader extends StatelessWidget {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              metricItem('—', 'Ср. пульс', icon: heartIcon),
+              metricItem('—', 'Пульс', icon: heartIcon),
               const SizedBox(width: 64),
               metricItem('—', 'Макс. пульс', icon: heartIcon),
             ],

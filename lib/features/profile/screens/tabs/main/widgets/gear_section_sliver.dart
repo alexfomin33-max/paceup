@@ -56,7 +56,7 @@ class GearSectionSliver extends StatelessWidget {
               isOwnProfile: isOwnProfile,
               stat1Label: 'Пробег:',
               stat1Value: g.mileage,
-              stat2Label: isBike ? 'Скорость:' : 'Темп:',
+              stat2Label: isBike ? 'Скор:' : 'Темп:',
               stat2Value: g.paceOrSpeed,
             ),
           ),
@@ -102,7 +102,8 @@ class _AdaptiveGearImage extends StatefulWidget {
 }
 
 class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
-  BoxFit _fit = BoxFit.contain; // По умолчанию contain для вписывания по длинной стороне
+  BoxFit _fit =
+      BoxFit.contain; // По умолчанию contain для вписывания по длинной стороне
   ImageStreamListener? _listener;
   ImageStream? _imageStream;
 
@@ -161,16 +162,16 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
         final image = imageInfo.image;
         final imageWidth = image.width.toDouble();
         final imageHeight = image.height.toDouble();
-        
+
         // Размеры контейнера
         const containerWidth = 66.0;
         const containerHeight = 44.0;
-        
+
         // Определяем, какая сторона у изображения длиннее
         final imageIsWider = imageWidth > imageHeight;
         // Определяем, какая сторона у контейнера длиннее
         final containerIsWider = containerWidth > containerHeight;
-        
+
         // Если длинная сторона изображения соответствует длинной стороне контейнера,
         // используем fit по длинной стороне
         if (imageIsWider && containerIsWider) {
@@ -238,9 +239,7 @@ class _AdaptiveGearImageState extends State<_AdaptiveGearImage> {
               height: 44,
               fit: BoxFit.contain,
             );
-            return widget.isBike
-                ? image
-                : Opacity(opacity: 0.9, child: image);
+            return widget.isBike ? image : Opacity(opacity: 0.9, child: image);
           },
         ),
       );
@@ -336,7 +335,8 @@ class _GearCard extends StatelessWidget {
                           width: 20,
                           height: 20,
                           decoration: BoxDecoration(
-                            color: Theme.of(context).brightness == Brightness.dark
+                            color:
+                                Theme.of(context).brightness == Brightness.dark
                                 ? AppColors.darkSurfaceMuted
                                 : AppColors.skeletonBase,
                             borderRadius: BorderRadius.circular(AppRadius.xl),

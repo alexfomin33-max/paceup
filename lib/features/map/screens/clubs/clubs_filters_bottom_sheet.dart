@@ -49,6 +49,7 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
       _selectedSports = {
         SportType.run,
         SportType.bike,
+        SportType.ski,
         SportType.swim,
       };
       _selectedClubTypes = {ClubType.open, ClubType.closed};
@@ -347,7 +348,7 @@ class ClubsFilterParams {
 }
 
 /// Виды спорта для фильтра
-enum SportType { run, bike, swim, ski }
+enum SportType { run, bike, ski, swim }
 
 extension SportTypeExtension on SportType {
   String get label {

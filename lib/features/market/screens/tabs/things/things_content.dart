@@ -189,7 +189,7 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final dropdownWidth = screenWidth * 0.3;
+    final dropdownWidth = screenWidth * 0.35;
 
     return Align(
       alignment: Alignment.centerLeft,
