@@ -1000,6 +1000,76 @@ class _CircleAppIcon extends StatelessWidget {
   }
 }
 
+/// Показывает информационное сообщение снизу экрана в Cupertino стиле
+/// Автоматически исчезает через указанное время
+void _showInfoMessage(BuildContext context, String message) {
+  if (!context.mounted) return;
+
+  final overlay = Overlay.of(context, rootOverlay: true);
+  late OverlayEntry overlayEntry;
+
+  overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      bottom: MediaQuery.of(context).padding.bottom + 16,
+      left: 16,
+      right: 16,
+      child: Material(
+        color: Colors.transparent,
+        child: TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 300),
+          tween: Tween(begin: 0.0, end: 1.0),
+          builder: (context, opacity, child) {
+            return Opacity(
+              opacity: opacity,
+              child: Transform.translate(
+                offset: Offset(0, 20 * (1 - opacity)),
+                child: child,
+              ),
+            );
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Expanded(
+                  child: Text(
+                    message,
+                    style: AppTextStyles.h15w5.copyWith(
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay.insert(overlayEntry);
+
+  // Автоматически скрываем через 2 секунды
+  Future.delayed(const Duration(seconds: 2), () {
+    if (overlayEntry.mounted) {
+      overlayEntry.remove();
+    }
+  });
+}
+
 /// Показывает всплывающее меню для действий со своим профилем
 /// (редактирование профиля, поиск людей, настройки).
 Future<void> _showOwnProfileMenu({
@@ -1016,6 +1086,7 @@ Future<void> _showOwnProfileMenu({
     MoreMenuItem(
       text: 'Редактировать',
       icon: CupertinoIcons.pencil,
+      iconColor: AppColors.brandPrimary,
       onTap: () async {
         MoreMenuHub.hide();
         if (!context.mounted) return;
@@ -1035,6 +1106,7 @@ Future<void> _showOwnProfileMenu({
     MoreMenuItem(
       text: 'Поиск людей',
       icon: CupertinoIcons.person_badge_plus,
+      iconColor: AppColors.brandPrimary,
       onTap: () {
         MoreMenuHub.hide();
         if (!context.mounted) return;
@@ -1050,6 +1122,7 @@ Future<void> _showOwnProfileMenu({
     MoreMenuItem(
       text: 'Настройки',
       icon: CupertinoIcons.gear,
+      iconColor: AppColors.brandPrimary,
       onTap: () {
         MoreMenuHub.hide();
         if (!context.mounted) return;
@@ -1076,7 +1149,6 @@ Future<void> _showUserMenu({
   // Сохраняем значения цветов до async-операции
   // для избежания использования BuildContext после async gap
   // ──────────────────────────────────────────────
-  final iconPrimaryColor = AppColors.getIconPrimaryColor(context);
   final textPrimaryColor = AppColors.getTextPrimaryColor(context);
 
   // Получаем статусы пользователя с сервера
@@ -1123,6 +1195,12 @@ Future<void> _showUserMenu({
       iconColor: isSubscribed ? AppColors.error : AppColors.brandPrimary,
       onTap: () async {
         MoreMenuHub.hide();
+        _showInfoMessage(
+          context,
+          isSubscribed
+              ? 'Вы отписались от пользователя'
+              : 'Вы подписались на пользователя',
+        );
         await _handleSubscribe(
           context: context,
           ref: ref,
@@ -1133,52 +1211,85 @@ Future<void> _showUserMenu({
       },
     ),
 
-    // 2) Скрыть посты / Показать посты
+    // 2) Скрыть посты / Показать посты (только для подписанных)
+    if (isSubscribed)
+      MoreMenuItem(
+        text: arePostsHidden ? 'Показать посты' : 'Скрыть посты',
+        icon: CupertinoIcons.text_bubble,
+        iconColor: arePostsHidden ? AppColors.brandPrimary : AppColors.error,
+        textStyle: arePostsHidden ? null : TextStyle(color: textPrimaryColor),
+        onTap: () async {
+          MoreMenuHub.hide();
+          _showInfoMessage(
+            context,
+            arePostsHidden
+                ? 'Посты пользователя показаны'
+                : 'Посты пользователя скрыты',
+          );
+          await _handleHidePosts(
+            context: context,
+            ref: ref,
+            userId: userId,
+            currentUserId: currentUserId,
+            arePostsHidden: arePostsHidden,
+          );
+        },
+      ),
+
+    // 3) Скрыть тренировки / Показать тренировки (только для подписанных)
+    if (isSubscribed)
+      MoreMenuItem(
+        text: areActivitiesHidden ? 'Показать тренировки' : 'Скрыть тренировки',
+        icon: CupertinoIcons.flame,
+        iconColor: areActivitiesHidden ? AppColors.brandPrimary : AppColors.error,
+        textStyle: areActivitiesHidden
+            ? null
+            : TextStyle(color: textPrimaryColor),
+        onTap: () async {
+          MoreMenuHub.hide();
+          _showInfoMessage(
+            context,
+            areActivitiesHidden
+                ? 'Тренировки пользователя показаны'
+                : 'Тренировки пользователя скрыты',
+          );
+          await _handleHideActivities(
+            context: context,
+            ref: ref,
+            userId: userId,
+            currentUserId: currentUserId,
+            areActivitiesHidden: areActivitiesHidden,
+          );
+        },
+      ),
+
+    // 4) Пожаловаться
     MoreMenuItem(
-      text: arePostsHidden ? 'Показать посты' : 'Скрыть посты',
-      icon: CupertinoIcons.text_bubble,
-      iconColor: arePostsHidden ? iconPrimaryColor : AppColors.error,
-      textStyle: arePostsHidden ? null : TextStyle(color: textPrimaryColor),
-      onTap: () async {
+      text: 'Пожаловаться',
+      icon: CupertinoIcons.exclamationmark_circle,
+      iconColor: AppColors.error,
+      textStyle: TextStyle(color: textPrimaryColor),
+      onTap: () {
         MoreMenuHub.hide();
-        await _handleHidePosts(
-          context: context,
-          ref: ref,
-          userId: userId,
-          currentUserId: currentUserId,
-          arePostsHidden: arePostsHidden,
-        );
+        _showInfoMessage(context, 'Жалоба отправлена');
+        // TODO: Реализовать функционал жалобы
       },
     ),
 
-    // 3) Скрыть тренировки / Показать тренировки
-    MoreMenuItem(
-      text: areActivitiesHidden ? 'Показать тренировки' : 'Скрыть тренировки',
-      icon: CupertinoIcons.flame,
-      iconColor: areActivitiesHidden ? iconPrimaryColor : AppColors.error,
-      textStyle: areActivitiesHidden
-          ? null
-          : TextStyle(color: textPrimaryColor),
-      onTap: () async {
-        MoreMenuHub.hide();
-        await _handleHideActivities(
-          context: context,
-          ref: ref,
-          userId: userId,
-          currentUserId: currentUserId,
-          areActivitiesHidden: areActivitiesHidden,
-        );
-      },
-    ),
-
-    // 4) Заблокировать / Разблокировать
+    // 5) Заблокировать / Разблокировать
     MoreMenuItem(
       text: isBlocked ? 'Разблокировать' : 'Заблокировать',
-      icon: CupertinoIcons.xmark_circle,
-      iconColor: AppColors.error,
+      icon: CupertinoIcons.nosign,
+      iconColor: isBlocked ? AppColors.brandPrimary : AppColors.error,
       textStyle: TextStyle(color: textPrimaryColor),
       onTap: () async {
         MoreMenuHub.hide();
+        _showInfoMessage(
+          context,
+          isBlocked
+              ? 'Пользователь разблокирован'
+              : 'Пользователь заблокирован',
+        );
         await _handleBlock(
           context: context,
           ref: ref,

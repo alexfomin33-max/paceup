@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
+import '../../../../core/widgets/more_menu_overlay.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -86,6 +87,7 @@ class ApiConfig {
 /// Модель комментария
 class CommentItem {
   final int id;
+  final int userId; // ID автора комментария
   final String userName;
   final String? userAvatar;
   final String text;
@@ -93,6 +95,7 @@ class CommentItem {
 
   CommentItem({
     required this.id,
+    required this.userId,
     required this.userName,
     required this.text,
     required this.createdAt,
@@ -102,6 +105,7 @@ class CommentItem {
   factory CommentItem.fromApi(Map<String, dynamic> json) {
     return CommentItem(
       id: int.tryParse('${json['id']}') ?? 0,
+      userId: int.tryParse('${json['user_id']}') ?? 0,
       userName: (json['user_name'] ?? '').toString(),
       userAvatar: (json['user_avatar']?.toString().isNotEmpty ?? false)
           ? json['user_avatar'].toString()
@@ -306,6 +310,54 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
     });
   }
 
+  /// ────────────────────────────────────────────────────────────────
+  /// 🔹 ПОКАЗ МЕНЮ КОММЕНТАРИЯ: показывает меню с действиями
+  /// ────────────────────────────────────────────────────────────────
+  void _showCommentMenu({
+    required BuildContext context,
+    required CommentItem comment,
+    required GlobalKey menuKey,
+  }) {
+    final items = <MoreMenuItem>[];
+    final isOwnComment = comment.userId == widget.currentUserId;
+
+    if (isOwnComment) {
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 МЕНЮ ДЛЯ СВОЕГО КОММЕНТАРИЯ: удаление
+      // ────────────────────────────────────────────────────────────────
+      items.add(
+        MoreMenuItem(
+          text: 'Удалить комментарий',
+          icon: CupertinoIcons.minus_circle,
+          iconColor: AppColors.error,
+          textStyle: const TextStyle(color: AppColors.error),
+          onTap: () {
+            // Функционал будет добавлен позже
+          },
+        ),
+      );
+    } else {
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 МЕНЮ ДЛЯ ЧУЖОГО КОММЕНТАРИЯ: пожаловаться
+      // ────────────────────────────────────────────────────────────────
+      items.add(
+        MoreMenuItem(
+          text: 'Пожаловаться',
+          icon: CupertinoIcons.exclamationmark_circle,
+          iconColor: AppColors.orange,
+          textStyle: const TextStyle(
+            color: AppColors.orange,
+          ),
+          onTap: () {
+            // Функционал будет добавлен позже
+          },
+        ),
+      );
+    }
+
+    MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     // Верстка как в твоем примере: белая карточка, радиус 20, maxHeight = 60% экрана.
@@ -479,26 +531,55 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Имя пользователя и дата
+                    // Имя пользователя, дата и иконка меню
                     Row(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: Text(
-                            c.userName,
-                            style: AppTextStyles.h14w6.copyWith(
-                              letterSpacing: 0,
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                        Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  c.userName,
+                                  style: AppTextStyles.h14w6.copyWith(
+                                    letterSpacing: 0,
+                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '· $humanDate',
+                                style: AppTextStyles.h12w4Ter.copyWith(
+                                  color: AppColors.getTextTertiaryColor(context),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '· $humanDate',
-                          style: AppTextStyles.h12w4Ter.copyWith(
-                            color: AppColors.getTextTertiaryColor(context),
-                          ),
+                        // ──── Иконка меню с тремя точками (у правого края) ────
+                        Builder(
+                          builder: (context) {
+                            final menuKey = GlobalKey();
+                            return GestureDetector(
+                              key: menuKey,
+                              onTap: () => _showCommentMenu(
+                                context: context,
+                                comment: c,
+                                menuKey: menuKey,
+                              ),
+                              behavior: HitTestBehavior.opaque,
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                child: Icon(
+                                  CupertinoIcons.ellipsis_vertical,
+                                  size: 16,
+                                  color: AppColors.getIconSecondaryColor(context),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
                     ),

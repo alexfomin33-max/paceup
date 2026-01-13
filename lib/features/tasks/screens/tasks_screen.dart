@@ -68,14 +68,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                   icon: CupertinoIcons.add_circled,
                   onPressed: () async {
                     // ── открываем экран создания задачи с прозрачным переходом
-                    final result = await Navigator.of(
-                      context,
-                      rootNavigator: true,
-                    ).push<String>(
-                      TransparentPageRoute(
-                        builder: (_) => const AddTaskScreen(),
-                      ),
-                    );
+                    final result =
+                        await Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).push<String>(
+                          TransparentPageRoute(
+                            builder: (_) => const AddTaskScreen(),
+                          ),
+                        );
 
                     // ── если задача была успешно создана, можно обновить список
                     if (result == 'created' && mounted) {
@@ -174,7 +175,7 @@ class _NavIcon extends StatelessWidget {
           minWidth: _kAppBarTapTarget,
           minHeight: _kAppBarTapTarget,
         ),
-        icon: Icon(icon, size: _kAppBarIconSize),
+        icon: Icon(icon, size: _kAppBarIconSize, color: AppColors.brandPrimary),
         splashRadius: 22,
       ),
     );

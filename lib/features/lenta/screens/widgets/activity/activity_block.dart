@@ -166,7 +166,7 @@ class ActivityBlock extends ConsumerWidget {
                 children: [
                   // Хэдер с отступами
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
                     child: ActivityHeader(
                       userId: updatedActivity.userId,
                       userName: updatedActivity.userName,
@@ -187,7 +187,7 @@ class ActivityBlock extends ConsumerWidget {
                       trailing: IconButton(
                         key: menuKey,
                         icon: Icon(
-                          CupertinoIcons.ellipsis,
+                          CupertinoIcons.ellipsis_vertical,
                           color: AppColors.getIconPrimaryColor(context),
                         ),
                         onPressed: () {
@@ -201,6 +201,7 @@ class ActivityBlock extends ConsumerWidget {
                               MoreMenuItem(
                                 text: 'Редактировать',
                                 icon: CupertinoIcons.pencil,
+                                iconColor: AppColors.brandPrimary,
                                 onTap: () {
                                   Navigator.of(context)
                                       .push(
@@ -228,6 +229,7 @@ class ActivityBlock extends ConsumerWidget {
                               MoreMenuItem(
                                 text: 'Добавить фотографии',
                                 icon: CupertinoIcons.photo_on_rectangle,
+                                iconColor: AppColors.brandPrimary,
                                 onTap: () {
                                   _handleAddPhotos(
                                     context: context,
@@ -257,9 +259,20 @@ class ActivityBlock extends ConsumerWidget {
                             ]);
                           } else {
                             // ────────────────────────────────────────────────────────────────
-                            // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: только "Скрыть тренировки"
+                            // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: "Пожаловаться" и "Скрыть тренировки"
                             // ────────────────────────────────────────────────────────────────
-                            items.add(
+                            items.addAll([
+                              MoreMenuItem(
+                                text: 'Пожаловаться',
+                                icon: CupertinoIcons.exclamationmark_circle,
+                                iconColor: AppColors.orange,
+                                textStyle: const TextStyle(
+                                  color: AppColors.orange,
+                                ),
+                                onTap: () {
+                                  // Функционал будет добавлен позже
+                                },
+                              ),
                               MoreMenuItem(
                                 text: 'Скрыть тренировки',
                                 icon: CupertinoIcons.eye_slash,
@@ -276,7 +289,7 @@ class ActivityBlock extends ConsumerWidget {
                                   );
                                 },
                               ),
-                            );
+                            ]);
                           }
 
                           MoreMenuOverlay(

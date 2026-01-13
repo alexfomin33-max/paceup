@@ -277,6 +277,7 @@ class _ActivityDescriptionPageState
         MoreMenuItem(
           text: 'Редактировать',
           icon: CupertinoIcons.pencil,
+          iconColor: AppColors.brandPrimary,
           onTap: () {
             MoreMenuHub.hide();
             Navigator.of(context)
@@ -299,6 +300,7 @@ class _ActivityDescriptionPageState
         MoreMenuItem(
           text: 'Добавить фотографии',
           icon: CupertinoIcons.photo_on_rectangle,
+          iconColor: AppColors.brandPrimary,
           onTap: () {
             MoreMenuHub.hide();
             _handleAddPhotos(
@@ -331,9 +333,21 @@ class _ActivityDescriptionPageState
       ]);
     } else {
       // ────────────────────────────────────────────────────────────────
-      // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: только "Скрыть тренировки"
+      // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: "Пожаловаться" и "Скрыть тренировки"
       // ────────────────────────────────────────────────────────────────
-      items.add(
+      items.addAll([
+        MoreMenuItem(
+          text: 'Пожаловаться',
+          icon: CupertinoIcons.exclamationmark_circle,
+          iconColor: AppColors.orange,
+          textStyle: const TextStyle(
+            color: AppColors.orange,
+          ),
+          onTap: () {
+            MoreMenuHub.hide();
+            // Функционал будет добавлен позже
+          },
+        ),
         MoreMenuItem(
           text: 'Скрыть тренировки',
           icon: CupertinoIcons.eye_slash,
@@ -344,7 +358,7 @@ class _ActivityDescriptionPageState
             _handleHideActivities(context: context, activity: a);
           },
         ),
-      );
+      ]);
     }
 
     MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);

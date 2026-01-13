@@ -312,7 +312,7 @@ class _PostCardState extends ConsumerState<PostCard> {
           // ШАПКА: единый UserHeader (аватар, имя, дата, trailing-меню)
           // ──────────────────────────────────────────────────────────────
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
             child: UserHeader(
               userName: post.userName,
               userAvatar: post.userAvatar,
@@ -347,7 +347,7 @@ class _PostCardState extends ConsumerState<PostCard> {
               trailing: IconButton(
                 key: menuKey,
                 icon: Icon(
-                  CupertinoIcons.ellipsis,
+                  CupertinoIcons.ellipsis_vertical,
                   color: AppColors.getIconPrimaryColor(context),
                 ),
                 onPressed: () {
@@ -397,9 +397,18 @@ class _PostCardState extends ConsumerState<PostCard> {
                     ]);
                   } else {
                     // ──────────────────────────────────────────────────────────────
-                    // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: только "Скрыть посты"
+                    // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: "Пожаловаться" и "Скрыть посты"
                     // ──────────────────────────────────────────────────────────────
-                    items.add(
+                    items.addAll([
+                      MoreMenuItem(
+                        text: 'Пожаловаться',
+                        icon: CupertinoIcons.exclamationmark_circle,
+                        iconColor: AppColors.orange,
+                        textStyle: const TextStyle(color: AppColors.orange),
+                        onTap: () {
+                          // Функционал будет добавлен позже
+                        },
+                      ),
                       MoreMenuItem(
                         text: 'Скрыть посты',
                         icon: CupertinoIcons.eye_slash,
@@ -413,7 +422,7 @@ class _PostCardState extends ConsumerState<PostCard> {
                           );
                         },
                       ),
-                    );
+                    ]);
                   }
 
                   MoreMenuOverlay(
