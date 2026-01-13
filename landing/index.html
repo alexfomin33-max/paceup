@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,6 +56,33 @@
     }
     .carousel-dot:hover {
       transform: scale(1.2);
+    }
+    /* ────────────────────────────────────────────────────────────────────────
+       Стили для disabled состояния RuStore badge
+       ──────────────────────────────────────────────────────────────────────── */
+    .store-badge-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .store-badge-soon {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.85);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'Inter', sans-serif;
+    }
+    .store-badge.disabled {
+      opacity: 0.5;
+      filter: grayscale(100%);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .btn-primary.disabled {
+      cursor: not-allowed;
+      pointer-events: none;
     }
     /* ────────────────────────────────────────────────────────────────────────
        FAQ - Белые блоки с тенью
@@ -297,6 +324,10 @@
       .cta-title {
         font-size: 24px !important;
       }
+      /* Уменьшаем размер надписи "Скоро" на мобильных */
+      .store-badge-soon {
+        font-size: 13px !important;
+      }
       /* Сдвигаем фоновую картинку в parallax секции правее и ниже на мобильных */
       .parallax-bg-1 {
         background-position: 30% 30% !important;
@@ -371,6 +402,10 @@
       .cta-title {
         font-size: 22px !important;
       }
+      /* Уменьшаем размер надписи "Скоро" на очень маленьких экранах */
+      .store-badge-soon {
+        font-size: 12px !important;
+      }
       /* Еще больше увеличиваем картинку в CTA секции на очень маленьких экранах */
       .cta-image {
         width: 50vw !important;
@@ -396,11 +431,19 @@
             <img src="img/Logo.png" alt="PaceUp Logo" class="logo-img">
           </div>
           <ul class="nav-menu" id="navMenu">
-            <li><a href="#feed">Лента</a></li>
-            <li><a href="#features">Возможности</a></li>
-            <li><a href="#analytics">Аналитика</a></li>
-            <li><a href="#faq">FAQ</a></li>
+            <li><a href="#feed" data-i18n="nav.feed">Лента</a></li>
+            <li><a href="#features" data-i18n="nav.features">Возможности</a></li>
+            <li><a href="#analytics" data-i18n="nav.analytics">Аналитика</a></li>
+            <li><a href="#faq" data-i18n="nav.faq">FAQ</a></li>
           </ul>
+          <div class="language-switcher">
+            <button class="lang-btn" data-lang="ru" aria-label="Русский язык">
+              <img src="img/russia.webp" alt="Русский язык" class="flag-icon">
+            </button>
+            <button class="lang-btn active" data-lang="en" aria-label="English">
+              <img src="img/GB.png" alt="English" class="flag-icon">
+            </button>
+          </div>
           <button class="nav-toggle" id="navToggle" aria-label="Toggle menu">
             <span></span>
             <span></span>
@@ -413,10 +456,10 @@
       <div class="hero-content">
         <div class="hero-text">
           <h1 class="hero-title">
-            Твой спорт —<br>
-            <span class="gradient-text">твои достижения</span>
+            <span data-i18n="hero.title.line1">Твой спорт —</span><br>
+            <span class="gradient-text" data-i18n="hero.title.line2">твои достижения</span>
           </h1>
-          <p class="hero-subtitle">
+          <p class="hero-subtitle" data-i18n="hero.subtitle">
             Отслеживай тренировки, ставь рекорды, делись успехами. 
             Все виды активности в одном приложении.
           </p>
@@ -427,9 +470,12 @@
             <a href="#" class="btn btn-primary">
               <img src="img/icon_google_play.png" alt="Google Play" class="store-badge">
             </a> -->
-            <a href="#" class="btn btn-primary">
-              <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
-            </a>
+            <div class="store-badge-wrapper">
+              <span class="store-badge-soon" data-i18n="store.soon">Скоро</span>
+              <a href="#" class="btn btn-primary disabled">
+                <img src="img/rustore-1.png" alt="RuStore" class="store-badge disabled" data-store-badge>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -445,15 +491,15 @@
         </div>
         <div class="feed-text-container" style="flex: 1; min-width: 300px;">
           <div class="feed-title-container">
-            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Лента активностей</h2>
+            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;" data-i18n="feed.title">Лента активностей</h2>
           </div>
           <div class="feed-list-container">
             <ul class="feed-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.8rem;"><strong>Делись своими тренировками с друзьями;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Добавляй различные фотографии и описание;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Выкладывай посты о своих достижениях;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Вдохновляй других спортсменов и получай поддержку от единомышленников;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Общайся в чатах, комментируй активности, ставь лайки и следи за прогрессом друзей.</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="feed.item1">Делись своими тренировками с друзьями;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="feed.item2">Добавляй различные фотографии и описание;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="feed.item3">Выкладывай посты о своих достижениях;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="feed.item4">Вдохновляй других спортсменов и получай поддержку от единомышленников;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="feed.item5">Общайся в чатах, комментируй активности, ставь лайки и следи за прогрессом друзей.</strong></li>
             </ul>
           </div>
         </div>
@@ -470,7 +516,7 @@
   <section class="features" id="features" style="position: relative; z-index: 2; background-color: #ffffff;">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Все возможности в одном приложении</h2>
+        <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;" data-i18n="features.title">Все возможности в одном приложении</h2>
        
       </div>
       <div class="carousel-container" style="position: relative; max-width: 100%; margin: 0 auto; padding: 2rem 0;">
@@ -480,28 +526,28 @@
             <div class="carousel-track" id="featuresCarousel" style="display: flex; transition: transform 0.5s ease-in-out; gap: 1rem;">
               <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
                 <img src="img/clubs.png" alt="Клубы" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
-                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Клубы</h3>
-                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Вступай в спортивые сообщества и общайся с единомышленниками</p>
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;" data-i18n="features.clubs.title">Клубы</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;" data-i18n="features.clubs.desc">Вступай в спортивые сообщества и общайся с единомышленниками</p>
               </div>
               <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
                 <img src="img/market.png" alt="Маркет" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
-                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Маркет</h3>
-                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Покупай и продавай слоты на соревнования и спортивные вещи</p>
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;" data-i18n="features.market.title">Маркет</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;" data-i18n="features.market.desc">Покупай и продавай слоты на соревнования и спортивные вещи</p>
               </div>
               <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
                 <img src="img/event.png" alt="События" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
-                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">События</h3>
-                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Участвуй в спортивных событиях или создавай собственные</p>
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;" data-i18n="features.events.title">События</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;" data-i18n="features.events.desc">Участвуй в спортивных событиях или создавай собственные</p>
               </div>
               <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
                 <img src="img/task.png" alt="Задачи" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
-                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Задачи</h3>
-                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Выполняй челленджи, получай награды и ставь новые рекорды</p>
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;" data-i18n="features.tasks.title">Задачи</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;" data-i18n="features.tasks.desc">Выполняй челленджи, получай награды и ставь новые рекорды</p>
               </div>
               <div class="carousel-slide" style="min-width: calc(33.333% - 0.67rem); flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 1rem;">
                 <img src="img/leaderboard.png" alt="Лидерборд" style="width: 12vw; max-width: 12vw; height: auto; border-radius: 12px;">
-                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;">Лидерборд</h3>
-                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;">Соревнуйся с другими и попадай в топ рейтинга спортсменов</p>
+                <h3 style="text-align: center; color: #333; font-size: 1.1rem; font-weight: 600; margin: 0;" data-i18n="features.leaderboard.title">Лидерборд</h3>
+                <p style="text-align: center; color: #000; font-size: 0.85rem; margin: -0.5rem 0 0 0; max-width: 200px; line-height: 1.4;" data-i18n="features.leaderboard.desc">Соревнуйся с другими и попадай в топ рейтинга спортсменов</p>
               </div>
             </div>
           </div>
@@ -525,15 +571,15 @@
         </div>
         <div class="stats-text-container" style="flex: 1; min-width: 300px; padding-left: 2rem;">
           <div class="stats-title-container">
-            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;">Детальная аналитика</h2>
+            <h2 class="section-title" style="margin-bottom: 1.5rem; font-size: 40px; color: #333;" data-i18n="analytics.title">Детальная аналитика</h2>
           </div>
           <div class="stats-list-container">
             <ul class="stats-list" style="font-size: 1.1rem; line-height: 1.8; color: #333; margin-bottom: 1rem; padding-left: 1.5rem;">
-            <li style="margin-bottom: 0.8rem;"><strong>Получай детальную информацию о каждой тренировке;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Отслеживай тренировочный процесс по каждому виду спорта с помощью календаря;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Анализируй свой прогресс с помощью графиков и диаграмм;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Смотри подробную статистику за разные периоды;</strong></li>
-            <li style="margin-bottom: 0.8rem;"><strong>Сравнивай результаты и ставь новые цели.</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="analytics.item1">Получай детальную информацию о каждой тренировке;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="analytics.item2">Отслеживай тренировочный процесс по каждому виду спорта с помощью календаря;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="analytics.item3">Анализируй свой прогресс с помощью графиков и диаграмм;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="analytics.item4">Смотри подробную статистику за разные периоды;</strong></li>
+            <li style="margin-bottom: 0.8rem;"><strong data-i18n="analytics.item5">Сравнивай результаты и ставь новые цели.</strong></li>
             </ul>
           </div>
         </div>
@@ -609,7 +655,7 @@
       <div class="cta-content-wrapper" style="display: flex; align-items: stretch; gap: 3rem; flex-wrap: wrap;">
         <div style="flex: 1; min-width: 300px; display: flex; align-items: flex-start; align-self: stretch;">
           <div class="cta-content" style="width: 100%; margin-top: 2rem;">
-            <h3 class="cta-title" style="font-size: 32px;"><span style="font-family: 'Oxanium', sans-serif; font-weight: 700;">PACE</span><span style="font-family: 'Oxanium', sans-serif; font-weight: 700; color: #9bec28;">UP</span> — твоё окно в мир спортивного сообщества</h3>
+            <h3 class="cta-title" style="font-size: 32px;"><span style="font-family: 'Oxanium', sans-serif; font-weight: 700;">PACE</span><span style="font-family: 'Oxanium', sans-serif; font-weight: 700; color: #9bec28;">UP</span> <span data-i18n="cta.title">— твоё окно в мир спортивного сообщества</span></h3>
                         <div class="cta-buttons" style="margin-top: 2rem;">
               <!-- <a href="#" class="btn btn-primary">
                 <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store" class="store-badge">
@@ -617,9 +663,12 @@
               <a href="#" class="btn btn-primary">
                 <img src="https://play.google.com/intl/en_us/badges/static/images/badges/ru_badge_web_generic.png" alt="Google Play" class="store-badge">
               </a> -->
-              <a href="#" class="btn btn-primary">
-                <img src="img/rustore-1.png" alt="RuStore" class="store-badge">
-              </a>
+              <div class="store-badge-wrapper">
+                <span class="store-badge-soon" data-i18n="store.soon">Скоро</span>
+                <a href="#" class="btn btn-primary disabled">
+                  <img src="img/rustore-1.png" alt="RuStore" class="store-badge disabled" data-store-badge>
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -634,44 +683,44 @@
   <section class="faq" id="faq">
     <div class="container">
       <div class="section-header">
-        <h2 class="section-title">Частые вопросы</h2>
+        <h2 class="section-title" data-i18n="faq.title">Частые вопросы</h2>
      
       </div>
       <div class="faq-list">
         <div class="faq-item">
           <button class="faq-question">
-            <span>Бесплатно ли приложение?</span>
+            <span data-i18n="faq.q1">Бесплатно ли приложение?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, весь функционал мобильного приложения PaceUp полностью бесплатен.</p>
+            <p data-i18n="faq.a1">Да, весь функционал мобильного приложения PaceUp полностью бесплатен.</p>
           </div>
         </div>
         <div class="faq-item">
           <button class="faq-question">
-            <span>Работает ли приложение без интернета?</span>
+            <span data-i18n="faq.q2">Работает ли приложение без интернета?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, приложение работает в офлайн-режиме. Все данные сохраняются локально и синхронизируются при подключении к интернету.</p>
+            <p data-i18n="faq.a2">Да, приложение работает в офлайн-режиме. Все данные сохраняются локально и синхронизируются при подключении к интернету.</p>
           </div>
         </div>
         <div class="faq-item">
           <button class="faq-question">
-            <span>Какие виды спорта поддерживаются?</span>
+            <span data-i18n="faq.q3">Какие виды спорта поддерживаются?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>На данный момент приложение поддерживает бег, велосипед, плавание и лыжи. В дальнейшем будут добавлены другие виды спорта.</p>
+            <p data-i18n="faq.a3">На данный момент приложение поддерживает бег, велосипед, плавание и лыжи. В дальнейшем будут добавлены другие виды спорта.</p>
           </div>
         </div>
         <div class="faq-item">
           <button class="faq-question">
-            <span>Интегрируется ли с Apple Health / Health Connect?</span>
+            <span data-i18n="faq.q4">Интегрируется ли с Apple Health / Health Connect?</span>
             <span class="faq-icon">+</span>
           </button>
           <div class="faq-answer">
-            <p>Да, PaceUp полностью интегрируется с Apple Health на iOS и Health Connect на Android. В ближайшее время будет добавлена синхронизация с устройствами Garmin.</p>
+            <p data-i18n="faq.a4">Да, PaceUp полностью интегрируется с Apple Health на iOS и Health Connect на Android. В ближайшее время будет добавлена синхронизация с устройствами Garmin.</p>
           </div>
         </div>
       </div>
@@ -716,10 +765,10 @@
         </div>
       </div> -->
       <div class="footer-bottom">
-        <p>&copy; 2026 PaceUp. Все права защищены.</p>
+        <p data-i18n="footer.copyright">&copy; 2026 PaceUp. Все права защищены.</p>
         <div class="footer-legal">
-          <a href="privacy-policy.html">Политика конфиденциальности</a>
-          <a href="user-agreement.html">Пользовательское соглашение</a>
+          <a href="privacy-policy.html" data-i18n="footer.privacy">Политика конфиденциальности</a>
+          <a href="user-agreement.html" data-i18n="footer.agreement">Пользовательское соглашение</a>
         </div>
       </div>
     </div>
