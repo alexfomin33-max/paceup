@@ -47,11 +47,11 @@ class FCMService {
       return;
     }
 
-    // На macOS FCM не поддерживается, пропускаем инициализацию
-    if (Platform.isMacOS) {
+    // На macOS и iOS FCM временно отключен (проблемы с модульными заголовками)
+    if (Platform.isMacOS || Platform.isIOS) {
       if (kDebugMode) {
         debugPrint(
-          '⚠️ [FCM] Не поддерживается на macOS, пропускаем инициализацию',
+          '⚠️ [FCM] Временно отключен на ${Platform.isMacOS ? "macOS" : "iOS"}, пропускаем инициализацию',
         );
       }
       return;

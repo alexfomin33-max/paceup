@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -24,6 +26,16 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>MGLMapboxAccessToken</key>
+	<string>pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Приложению нужен доступ к контактам для поиска друзей по номеру телефона из вашей телефонной книги.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Приложению нужен доступ к данным о здоровье для синхронизации тренировок, шагов, пульса и калорий из приложения Здоровье.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Приложению нужен доступ для записи данных о тренировках в приложение Здоровье.</string>
+	<key>UIApplicationSupportsIndirectInputEvents</key>
+	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -34,13 +46,5 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-	<key>UIApplicationSupportsIndirectInputEvents</key>
-	<true/>
-	<key>NSContactsUsageDescription</key>
-	<string>Приложению нужен доступ к контактам для поиска друзей по номеру телефона из вашей телефонной книги.</string>
-	<key>MGLMapboxAccessToken</key>
-	<string>pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ</string>
 </dict>
 </plist>

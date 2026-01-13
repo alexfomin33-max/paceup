@@ -30,7 +30,8 @@ flutter_ios_podfile_setup
 platform :ios, '14.0'
 
 target 'Runner' do
-  use_frameworks!
+  # Используем статическую линковку для Firebase
+  use_frameworks! :linkage => :static
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -41,5 +42,24 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
+    # Исправление проблемы с модульными заголовками Firebase
+    target.build_configurations.each do |config|
+      # Разрешаем включение не-модульных заголовков в модулях фреймворков
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      config.build_settings['DEFINES_MODULE'] = 'YES'
+      
+      # Минимальная версия iOS
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+    end
+  end
+  
+  # Исправление для Runner таргета - разрешаем не-модульные заголовки
+  runner_target = installer.pods_project.targets.find { |t| t.name == 'Runner' }
+  if runner_target.nil?
+    # Если Runner не найден, применяем к основному проекту
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    end
   end
 end
