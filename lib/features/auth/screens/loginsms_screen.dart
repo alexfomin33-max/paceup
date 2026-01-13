@@ -119,8 +119,8 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
         // 🔹 Если код валиден и виджет всё ещё в дереве
         if (codeValue > 0 && mounted) {
-          // Регистрируем FCM токен после успешного входа (только на мобильных устройствах)
-          if (!Platform.isMacOS) {
+          // Регистрируем FCM токен после успешного входа (только на Android, временно отключено для iOS)
+          if (!Platform.isMacOS && !Platform.isIOS) {
             try {
               final fcmService = ref.read(fcmServiceProvider);
               await fcmService.initialize();

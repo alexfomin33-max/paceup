@@ -96,8 +96,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final int? userId = await auth.getUserId();
       if (!mounted) return;
 
-      // Инициализируем FCM для авторизованного пользователя (только на мобильных устройствах)
-      if (!Platform.isMacOS) {
+      // Инициализируем FCM для авторизованного пользователя (только на Android, временно отключено для iOS)
+      if (!Platform.isMacOS && !Platform.isIOS) {
         try {
           final fcmService = ref.read(fcmServiceProvider);
           await fcmService.initialize();

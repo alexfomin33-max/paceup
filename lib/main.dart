@@ -26,9 +26,9 @@ void main() async {
   // ────────────────────────── Firebase инициализация ──────────────────────────
   // ВАЖНО: Перед запуском выполните: flutter pub get
   // Ошибки компиляции исчезнут после установки пакетов firebase_core и firebase_messaging
-  // На macOS Firebase не инициализируем (FCM не поддерживается)
+  // На macOS и iOS Firebase временно отключен (проблемы с модульными заголовками на iOS)
   bool firebaseInitialized = false;
-  if (!Platform.isMacOS) {
+  if (!Platform.isMacOS && !Platform.isIOS) {
     try {
       await Firebase.initializeApp();
       firebaseInitialized = true;
@@ -46,7 +46,7 @@ void main() async {
     }
   } else {
     if (kDebugMode) {
-      debugPrint('⚠️ Firebase пропущен на macOS (FCM не поддерживается)');
+      debugPrint('⚠️ Firebase пропущен на ${Platform.isMacOS ? "macOS" : "iOS"} (FCM временно отключен)');
     }
   }
 
@@ -88,7 +88,8 @@ void main() async {
   // ────────────────────────── Автоматическая регистрация FCM токена (для тестирования) ──────────────────────────
   // Регистрируем FCM токен при запуске (dev/test), даже если check_token не проходит.
   // Это удобно для тестирования, когда авторизация жестко задана в auth_service.dart
-  if (!Platform.isMacOS && firebaseInitialized) {
+  // Временно отключено для iOS из-за проблем с модульными заголовками
+  if (!Platform.isMacOS && !Platform.isIOS && firebaseInitialized) {
     // Ждем небольшую задержку, чтобы Firebase точно инициализировался
     Future.delayed(const Duration(milliseconds: 1000), () async {
       try {

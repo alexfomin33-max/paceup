@@ -40,6 +40,10 @@
 	<true/>
 	<key>NSContactsUsageDescription</key>
 	<string>Приложению нужен доступ к контактам для поиска друзей по номеру телефона из вашей телефонной книги.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Приложению нужен доступ к данным о здоровье для синхронизации тренировок, шагов, пульса и калорий из приложения Здоровье.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Приложению нужен доступ для записи данных о тренировках в приложение Здоровье.</string>
 	<key>MGLMapboxAccessToken</key>
 	<string>pk.eyJ1IjoiZXVnZW5lMzMiLCJhIjoiY21pZWJrdm52MDB5ejNkcjEwZXpkZGUzNyJ9.aoqNzvDocd0EVOBp20rBBQ</string>
 </dict>
