@@ -46,7 +46,9 @@ void main() async {
     }
   } else {
     if (kDebugMode) {
-      debugPrint('⚠️ Firebase пропущен на ${Platform.isMacOS ? "macOS" : "iOS"} (FCM временно отключен)');
+      debugPrint(
+        '⚠️ Firebase пропущен на ${Platform.isMacOS ? "macOS" : "iOS"} (FCM временно отключен)',
+      );
     }
   }
 
@@ -179,7 +181,7 @@ void main() async {
   // Включаем Device Preview только в debug-режиме для тестирования адаптивности
   runApp(
     DevicePreview(
-      enabled: kDebugMode, //kDebugMode false
+      enabled: false, //kDebugMode false
       builder: (context) => UncontrolledProviderScope(
         container: container,
         child: const PaceUpApp(),

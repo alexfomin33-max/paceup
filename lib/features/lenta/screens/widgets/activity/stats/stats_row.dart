@@ -425,7 +425,7 @@ class StatsRow extends StatelessWidget {
               ),
               // ──────────────────────────────────────────────────────────────
               // ВТОРАЯ СТРОКА: Набор высоты | Каденс | Пульс
-              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем вторую строку метрик (как на скриншоте)
+              // 🏊 ДЛЯ ПЛАВАНИЯ: показываем вторую строку метрик БЕЗ "Набора высоты"
               // 🏃 ДЛЯ БЕГА: показываем вторую строку метрик (как на скриншоте)
               // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем вторую строку метрик (как на скриншоте)
               // ──────────────────────────────────────────────────────────────
@@ -435,59 +435,68 @@ class StatsRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(
-                      width: 140,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Набор высоты',
-                            style: AppTextStyles.h11w4Sec.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
+                    // ──────────────────────────────────────────────────────────────
+                    // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем метрику "Набор высоты", но оставляем пустое место
+                    // ──────────────────────────────────────────────────────────────
+                    if (!isSwim)
+                      SizedBox(
+                        width: 140,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Набор высоты',
+                              style: AppTextStyles.h11w4Sec.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 1),
-                          // ──────────────────────────────────────────────────────────────
-                          // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "м" на 1
-                          // ──────────────────────────────────────────────────────────────
-                          elevationText == '—'
-                              ? Text(
-                                  elevationText,
-                                  style: AppTextStyles.h16w6.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
+                            const SizedBox(height: 1),
+                            // ──────────────────────────────────────────────────────────────
+                            // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "м" на 1
+                            // ──────────────────────────────────────────────────────────────
+                            elevationText == '—'
+                                ? Text(
+                                    elevationText,
+                                    style: AppTextStyles.h16w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  )
+                                : Text.rich(
+                                    TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: elevationText.replaceAll(
+                                            ' м',
+                                            '',
+                                          ),
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: ' м',
+                                          style: AppTextStyles.h16w6.copyWith(
+                                            fontSize: 15,
+                                            color: AppColors.getTextPrimaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                )
-                              : Text.rich(
-                                  TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: elevationText.replaceAll(
-                                          ' м',
-                                          '',
-                                        ),
-                                        style: AppTextStyles.h16w6.copyWith(
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                      TextSpan(
-                                        text: ' м',
-                                        style: AppTextStyles.h16w6.copyWith(
-                                          fontSize: 15,
-                                          color: AppColors.getTextPrimaryColor(
-                                            context,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                        ],
-                      ),
-                    ),
+                          ],
+                        ),
+                      )
+                    else
+                      // ──────────────────────────────────────────────────────────────
+                      // 🏊 ДЛЯ ПЛАВАНИЯ: пустое место вместо "Набора высоты" для сохранения позиций
+                      // ──────────────────────────────────────────────────────────────
+                      const SizedBox(width: 140),
                     SizedBox(
                       width: 110,
                       child: Column(
