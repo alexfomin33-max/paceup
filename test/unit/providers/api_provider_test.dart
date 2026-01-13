@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:paceup/providers/services/api_provider.dart';
 import 'package:paceup/core/services/api_service.dart';
 import '../../helpers/provider_helpers.dart';
@@ -46,10 +46,7 @@ void main() {
       final container = ProviderTestHelpers.createTestContainer();
 
       // Act & Assert
-      expect(
-        () => container.read(apiServiceProvider),
-        returnsNormally,
-      );
+      expect(() => container.read(apiServiceProvider), returnsNormally);
 
       container.dispose();
     });

@@ -24,12 +24,8 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay(
-              error: errorMessage,
-            ),
-          ),
+        const MaterialApp(
+          home: Scaffold(body: ErrorDisplay(error: errorMessage)),
         ),
       );
 
@@ -43,7 +39,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ErrorDisplay(
               error: 'Оригинальная ошибка',
@@ -58,23 +54,26 @@ void main() {
       expect(find.text('Оригинальная ошибка'), findsNothing);
     });
 
-    testWidgets('отображает кнопку повтора когда onRetry передан и alwaysShowRetry=true', (tester) async {
-      // Act
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay(
-              error: 'Ошибка',
-              onRetry: () {},
-              alwaysShowRetry: true,
+    testWidgets(
+      'отображает кнопку повтора когда onRetry передан и alwaysShowRetry=true',
+      (tester) async {
+        // Act
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: ErrorDisplay(
+                error: 'Ошибка',
+                onRetry: () {},
+                alwaysShowRetry: true,
+              ),
             ),
           ),
-        ),
-      );
+        );
 
-      // Assert
-      expect(find.text('Повторить'), findsOneWidget);
-    });
+        // Assert
+        expect(find.text('Повторить'), findsOneWidget);
+      },
+    );
 
     testWidgets('вызывает onRetry при нажатии на кнопку', (tester) async {
       // Arrange
@@ -108,11 +107,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay.centered(
-              error: 'Ошибка',
-            ),
-          ),
+          home: Scaffold(body: ErrorDisplay.centered(error: 'Ошибка')),
         ),
       );
 
@@ -124,11 +119,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay.inline(
-              error: 'Ошибка валидации',
-            ),
-          ),
+          home: Scaffold(body: ErrorDisplay.inline(error: 'Ошибка валидации')),
         ),
       );
 
@@ -139,13 +130,7 @@ void main() {
     testWidgets('ErrorDisplayForm скрывается когда error null', (tester) async {
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplayForm(
-              error: null,
-            ),
-          ),
-        ),
+        const MaterialApp(home: Scaffold(body: ErrorDisplayForm(error: null))),
       );
 
       // Assert
@@ -159,12 +144,8 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplayForm(
-              error: errorMessage,
-            ),
-          ),
+        const MaterialApp(
+          home: Scaffold(body: ErrorDisplayForm(error: errorMessage)),
         ),
       );
 
@@ -183,11 +164,7 @@ void main() {
       // Act
       await tester.pumpWidget(
         MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay(
-              error: apiException,
-            ),
-          ),
+          home: Scaffold(body: ErrorDisplay(error: apiException)),
         ),
       );
 
@@ -201,12 +178,8 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ErrorDisplay(
-              error: errorMessage,
-            ),
-          ),
+        const MaterialApp(
+          home: Scaffold(body: ErrorDisplay(error: errorMessage)),
         ),
       );
 
@@ -224,7 +197,7 @@ void main() {
 
       // Act
       await tester.pumpWidget(
-        MaterialApp(
+        const MaterialApp(
           home: Scaffold(
             body: ErrorDisplay(
               error: 'Ошибка',

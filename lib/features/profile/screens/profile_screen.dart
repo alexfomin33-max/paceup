@@ -510,10 +510,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     child: _ProfileFlexibleSpace(
                       userId: userId,
                       profileState: profileState,
-                    backgroundUrl: _cacheBustUrl(
-                      profileState.profile?.background,
-                      avatarVersion,
-                    ),
+                      backgroundUrl: _cacheBustUrl(
+                        profileState.profile?.background,
+                        avatarVersion,
+                      ),
                       coverHeight: coverHeight,
                       containerHeight: headerMetrics.containerHeightHeader,
                       displayName: displayName ?? 'Профиль',
@@ -686,7 +686,7 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                       // Привязываем ключ к userId + backgroundUrl, чтобы
                       // принудительно пересоздавать виджет и пробивать кэш
                       // при смене обложки после сохранения профиля.
-                      key: ValueKey('profile_bg_${userId}_${background}'),
+                      key: ValueKey('profile_bg_${userId}_$background'),
                       imageUrl: background,
                       width: double.infinity,
                       height: coverHeight,
@@ -736,7 +736,9 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                 child: ClipOval(
                   child: isValidProfile
                       ? Avatar(
-                          key: ValueKey('profile_avatar_${userId}_${avatarUrl ?? 'default'}'),
+                          key: ValueKey(
+                            'profile_avatar_${userId}_${avatarUrl ?? 'default'}',
+                          ),
                           image: (avatarUrl != null && avatarUrl.isNotEmpty)
                               ? avatarUrl
                               : 'assets/avatar_0.png',
@@ -1136,9 +1138,7 @@ Future<void> _showUserMenu({
       text: arePostsHidden ? 'Показать посты' : 'Скрыть посты',
       icon: CupertinoIcons.text_bubble,
       iconColor: arePostsHidden ? iconPrimaryColor : AppColors.error,
-      textStyle: arePostsHidden
-          ? null
-          : TextStyle(color: textPrimaryColor),
+      textStyle: arePostsHidden ? null : TextStyle(color: textPrimaryColor),
       onTap: () async {
         MoreMenuHub.hide();
         await _handleHidePosts(

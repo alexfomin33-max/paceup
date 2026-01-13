@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,7 +56,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   // Вид тренировки: "Бег", "Велосипед", "Плавание", "Лыжи"
   String? _selectedActivityType;
-  static const List<String> _activityTypes = ['Бег', 'Велосипед', 'Плавание', 'Лыжи'];
+  static const List<String> _activityTypes = [
+    'Бег',
+    'Велосипед',
+    'Плавание',
+    'Лыжи',
+  ];
   static const Map<String, String> _activityTypeMap = {
     'Бег': 'run',
     'Велосипед': 'bike',

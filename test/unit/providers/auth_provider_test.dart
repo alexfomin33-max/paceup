@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import 'package:paceup/providers/services/auth_provider.dart';
 import 'package:paceup/core/services/auth_service.dart';
 import '../../helpers/provider_helpers.dart';

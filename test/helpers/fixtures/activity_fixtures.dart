@@ -29,7 +29,7 @@ class ActivityFixtures {
     return Activity(
       id: id ?? 1,
       type: type ?? 'running',
-      dateStart: dateStart ?? DateTime.now().subtract(Duration(hours: 1)),
+      dateStart: dateStart ?? DateTime.now().subtract(const Duration(hours: 1)),
       dateEnd: dateEnd ?? DateTime.now(),
       lentaId: lentaId ?? 1,
       lentaDate: lentaDate ?? DateTime.now(),
@@ -58,10 +58,7 @@ class ActivityFixtures {
       type: 'running',
       lentaId: lentaId,
       userId: userId,
-      stats: createActivityStats(
-        distance: distance,
-        duration: duration,
-      ),
+      stats: createActivityStats(distance: distance, duration: duration),
     );
   }
 
@@ -82,10 +79,7 @@ class ActivityFixtures {
   }
 
   /// Создаёт список активностей для тестов
-  static List<Activity> createActivityList({
-    int count = 3,
-    int? userId,
-  }) {
+  static List<Activity> createActivityList({int count = 3, int? userId}) {
     return List.generate(
       count,
       (index) => createActivity(
@@ -115,7 +109,7 @@ class ActivityFixtures {
       maxAltitudeCoords: null,
       cumulativeElevationGain: 50.0,
       cumulativeElevationLoss: 30.0,
-      startedAt: DateTime.now().subtract(Duration(hours: 1)),
+      startedAt: DateTime.now().subtract(const Duration(hours: 1)),
       startedAtCoords: null,
       finishedAt: DateTime.now(),
       finishedAtCoords: null,
@@ -146,20 +140,12 @@ class ActivityFixtures {
   }
 
   /// Создаёт Coord для тестов
-  static Coord createCoord({
-    double? lat,
-    double? lng,
-  }) {
-    return Coord(
-      lat: lat ?? 55.7558,
-      lng: lng ?? 37.6173,
-    );
+  static Coord createCoord({double? lat, double? lng}) {
+    return Coord(lat: lat ?? 55.7558, lng: lng ?? 37.6173);
   }
 
   /// Создаёт список координат для маршрута
-  static List<Coord> createRoutePoints({
-    int count = 10,
-  }) {
+  static List<Coord> createRoutePoints({int count = 10}) {
     return List.generate(
       count,
       (index) => createCoord(
@@ -175,10 +161,12 @@ class ActivityFixtures {
     bool success = true,
   }) {
     final activitiesList = activities ?? createActivityList();
-    
+
     return {
       'success': success,
-      'data': activitiesList.map((activity) => _activityToJson(activity)).toList(),
+      'data': activitiesList
+          .map((activity) => _activityToJson(activity))
+          .toList(),
     };
   }
 
@@ -197,28 +185,33 @@ class ActivityFixtures {
       'likes': activity.likes,
       'comments': activity.comments,
       'user_group': activity.userGroup,
-      'equpments': activity.equipments.map((e) => {
-        'name': e.name,
-        'brand': e.brand,
-        'mileage': e.mileage,
-        'img': e.img,
-        'main': e.main ? 1 : 0,
-        'myraiting': e.myRating,
-        'type': e.type,
-      }).toList(),
-      'params': activity.stats != null ? {
-        'distance': activity.stats!.distance,
-        'realDistance': activity.stats!.realDistance,
-        'avgSpeed': activity.stats!.avgSpeed,
-        'avgPace': activity.stats!.avgPace,
-        'duration': activity.stats!.duration,
-      } : null,
-      'points': activity.points.map((p) => 'LatLng(${p.lat}, ${p.lng})').toList(),
+      'equpments': activity.equipments
+          .map(
+            (e) => {
+              'name': e.name,
+              'brand': e.brand,
+              'mileage': e.mileage,
+              'img': e.img,
+              'main': e.main ? 1 : 0,
+              'myraiting': e.myRating,
+              'type': e.type,
+            },
+          )
+          .toList(),
+      'params': activity.stats != null
+          ? {
+              'distance': activity.stats!.distance,
+              'realDistance': activity.stats!.realDistance,
+              'avgSpeed': activity.stats!.avgSpeed,
+              'avgPace': activity.stats!.avgPace,
+              'duration': activity.stats!.duration,
+            }
+          : null,
+      'points': activity.points
+          .map((p) => 'LatLng(${p.lat}, ${p.lng})')
+          .toList(),
       'islike': activity.islike ? 1 : 0,
-      'media': {
-        'images': activity.mediaImages,
-        'videos': activity.mediaVideos,
-      },
+      'media': {'images': activity.mediaImages, 'videos': activity.mediaVideos},
     };
   }
 }

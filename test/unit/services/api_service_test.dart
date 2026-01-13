@@ -9,7 +9,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceup/core/services/api_service.dart';
-import 'package:paceup/core/services/auth_service.dart';
 
 void main() {
   group('ApiService', () {

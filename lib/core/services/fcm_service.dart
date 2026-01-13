@@ -14,7 +14,7 @@ import 'api_service.dart';
 import 'auth_service.dart';
 
 /// Сервис для работы с Firebase Cloud Messaging (FCM)
-/// 
+///
 /// Использование:
 /// ```dart
 /// final fcmService = FCMService();
@@ -28,15 +28,13 @@ class FCMService {
   // Ленивая инициализация FirebaseMessaging (создается только при первом использовании)
   FirebaseMessaging? _messaging;
   FirebaseMessaging get messaging {
-    if (_messaging == null) {
-      _messaging = FirebaseMessaging.instance;
-    }
+    _messaging ??= FirebaseMessaging.instance;
     return _messaging!;
   }
-  
+
   final AuthService _auth = AuthService();
   final ApiService _api = ApiService();
-  
+
   String? _fcmToken;
   bool _isInitialized = false;
 
@@ -48,20 +46,22 @@ class FCMService {
       }
       return;
     }
-    
+
     // На macOS FCM не поддерживается, пропускаем инициализацию
     if (Platform.isMacOS) {
       if (kDebugMode) {
-        debugPrint('⚠️ [FCM] Не поддерживается на macOS, пропускаем инициализацию');
+        debugPrint(
+          '⚠️ [FCM] Не поддерживается на macOS, пропускаем инициализацию',
+        );
       }
       return;
     }
-    
+
     try {
       if (kDebugMode) {
         debugPrint('🔔 [FCM] Запрашиваем разрешения на уведомления...');
       }
-      
+
       // Запрос разрешений на уведомления
       NotificationSettings settings = await messaging.requestPermission(
         alert: true,
@@ -71,7 +71,9 @@ class FCMService {
       );
 
       if (kDebugMode) {
-        debugPrint('🔔 [FCM] Статус разрешения: ${settings.authorizationStatus}');
+        debugPrint(
+          '🔔 [FCM] Статус разрешения: ${settings.authorizationStatus}',
+        );
       }
 
       // ВАЖНО: для регистрации токена разрешение на уведомления НЕ обязательно.
@@ -112,14 +114,16 @@ class FCMService {
       if (kDebugMode) {
         debugPrint('🔔 [FCM] Запрашиваем токен у Firebase...');
       }
-      
+
       String? token = await messaging.getToken();
       _fcmToken = token;
-      
+
       if (kDebugMode) {
-        debugPrint('🔔 [FCM] Токен получен: ${token != null ? "${token.substring(0, 20)}..." : "null"}');
+        debugPrint(
+          '🔔 [FCM] Токен получен: ${token != null ? "${token.substring(0, 20)}..." : "null"}',
+        );
       }
-      
+
       if (_fcmToken != null) {
         if (kDebugMode) {
           debugPrint('🔔 [FCM] Регистрируем токен на сервере...');
@@ -130,7 +134,7 @@ class FCMService {
           debugPrint('⚠️ [FCM] Токен не получен от Firebase');
         }
       }
-      
+
       // Слушаем обновления токена
       messaging.onTokenRefresh.listen((newToken) {
         if (kDebugMode) {
@@ -153,7 +157,9 @@ class FCMService {
       final userId = await _auth.getUserId();
       if (userId == null) {
         if (kDebugMode) {
-          debugPrint('⚠️ [FCM] userId не найден, пропускаем регистрацию токена');
+          debugPrint(
+            '⚠️ [FCM] userId не найден, пропускаем регистрацию токена',
+          );
         }
         return;
       }
@@ -165,7 +171,7 @@ class FCMService {
       // Получаем тип устройства
       String deviceType = 'android';
       String? deviceId;
-      
+
       try {
         final deviceInfo = DeviceInfoPlugin();
         if (Platform.isAndroid) {
@@ -192,10 +198,14 @@ class FCMService {
 
       // Отправляем токен на сервер
       if (kDebugMode) {
-        debugPrint('🔔 [FCM] Отправляем запрос на сервер: /register_fcm_token.php');
-        debugPrint('🔔 [FCM] Данные: user_id=$userId, device_type=$deviceType, device_id=$deviceId');
+        debugPrint(
+          '🔔 [FCM] Отправляем запрос на сервер: /register_fcm_token.php',
+        );
+        debugPrint(
+          '🔔 [FCM] Данные: user_id=$userId, device_type=$deviceType, device_id=$deviceId',
+        );
       }
-      
+
       final response = await _api.post(
         '/register_fcm_token.php',
         body: {
@@ -223,7 +233,9 @@ class FCMService {
     // Обработчик уведомлений когда приложение в foreground
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (kDebugMode) {
-        debugPrint('📨 Получено уведомление (foreground): ${message.notification?.title}');
+        debugPrint(
+          '📨 Получено уведомление (foreground): ${message.notification?.title}',
+        );
         debugPrint('   Данные: ${message.data}');
       }
       // Здесь можно показать локальное уведомление или обновить UI
@@ -253,13 +265,13 @@ class FCMService {
   void _handleNotificationTap(RemoteMessage message) {
     final data = message.data;
     // final notificationType = data['notification_type'] as String?;
-    
+
     // Здесь можно добавить логику навигации в зависимости от типа уведомления
     // Например:
     // if (notificationType == 'new_messages') {
     //   Navigator.pushNamed(context, '/chat', arguments: {'chat_id': data['chat_id']});
     // }
-    
+
     if (kDebugMode) {
       debugPrint('📨 Обработка нажатия на уведомление: $data');
     }

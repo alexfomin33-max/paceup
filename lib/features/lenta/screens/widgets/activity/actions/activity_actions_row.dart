@@ -2,9 +2,9 @@
 
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
+
 import 'package:share_plus/share_plus.dart';
-import 'package:cross_file/cross_file.dart';
+
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../core/services/api_service.dart'; // для ApiException
@@ -46,8 +46,7 @@ class ActivityActionsRow extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ActivityActionsRow> createState() =>
-      _ActivityActionsRowState();
+  ConsumerState<ActivityActionsRow> createState() => _ActivityActionsRowState();
 }
 
 class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
@@ -147,11 +146,11 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
 
   Future<void> _onShareTap() async {
     if (widget.activity == null) return;
-    
+
     final activity = widget.activity!;
     final hasPhotos = activity.mediaImages.isNotEmpty;
     final hasMap = activity.points.isNotEmpty;
-    
+
     // Если только карта (нет фото) - сразу репостим карту
     if (hasMap && !hasPhotos) {
       // Генерируем URL карты с размерами для Stories (чтобы использовать кэш)
@@ -165,7 +164,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         maxWidth: 1280.0,
         maxHeight: 1280.0,
       );
-      
+
       await _generateAndShare(
         activity: activity,
         useMap: true,
@@ -174,7 +173,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
       );
       return;
     }
-    
+
     // Если есть фото (с картой или без) - показываем слайдер выбора
     if (hasPhotos) {
       final selection = await ShareImageSelectorDialog.show(
@@ -183,9 +182,9 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         hasMap: hasMap,
         activity: activity,
       );
-      
+
       if (selection == null || !mounted) return;
-      
+
       await _generateAndShare(
         activity: activity,
         useMap: selection.type == ShareImageType.map,
@@ -211,7 +210,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
       }
     }
   }
-  
+
   Future<void> _generateAndShare({
     required al.Activity activity,
     required bool useMap,
@@ -219,7 +218,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     String? mapImageUrl,
   }) async {
     BuildContext? dialogContext;
-    
+
     try {
       // Показываем индикатор загрузки
       showCupertinoDialog(
@@ -235,7 +234,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
           );
         },
       );
-      
+
       // Генерируем финальное изображение для шаринга
       final imagePath = await ShareImageGenerator.generateShareImage(
         activity: activity,
@@ -245,21 +244,20 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         useMap: useMap,
         mapImageUrl: mapImageUrl,
       );
-      
+
       // Закрываем индикатор загрузки
       if (mounted && dialogContext != null) {
         Navigator.of(dialogContext!).pop();
         dialogContext = null;
       }
-      
+
       if (!mounted) return;
-      
+
       if (imagePath != null) {
         // Открываем системный share sheet
-        await Share.shareXFiles(
-          [XFile(imagePath)],
-          text: 'Моя тренировка в PaceUp!',
-        );
+        await Share.shareXFiles([
+          XFile(imagePath),
+        ], text: 'Моя тренировка в PaceUp!');
       } else {
         // Если не удалось сгенерировать изображение, делимся текстом
         await Share.share('Моя тренировка в PaceUp!');
@@ -285,7 +283,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
   @override
   Widget build(BuildContext context) {
     final isOwner = widget.currentUserId == widget.activityUserId;
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

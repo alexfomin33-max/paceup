@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
@@ -163,19 +163,22 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         setState(() {});
         // Начальная загрузка через Riverpod provider
         // После завершения загрузки обновим счетчик непрочитанных чатов
-        ref.read(lentaProvider(userId).notifier).loadInitial(
-          showTrainings: _showTrainings,
-          showPosts: _showPosts,
-          showOwn: _showOwn,
-          showOthers: _showOthers,
-        ).then((_) {
-          if (mounted && _actualUserId != null && _actualUserId == userId) {
-            // Обновляем счетчик после завершения загрузки ленты
-            ref
-                .read(unreadChatsProvider(_actualUserId!).notifier)
-                .loadUnreadCount();
-          }
-        });
+        ref
+            .read(lentaProvider(userId).notifier)
+            .loadInitial(
+              showTrainings: _showTrainings,
+              showPosts: _showPosts,
+              showOwn: _showOwn,
+              showOthers: _showOthers,
+            )
+            .then((_) {
+              if (mounted && _actualUserId != null && _actualUserId == userId) {
+                // Обновляем счетчик после завершения загрузки ленты
+                ref
+                    .read(unreadChatsProvider(_actualUserId!).notifier)
+                    .loadUnreadCount();
+              }
+            });
         // Загружаем количество непрочитанных чатов сразу (не ждем загрузки ленты)
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
@@ -205,12 +208,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       if (lentaState.hasMore &&
           !lentaState.isLoadingMore &&
           pos.extentAfter < 400) {
-        ref.read(lentaProvider(_actualUserId!).notifier).loadMore(
-          showTrainings: _showTrainings,
-          showPosts: _showPosts,
-          showOwn: _showOwn,
-          showOthers: _showOthers,
-        );
+        ref
+            .read(lentaProvider(_actualUserId!).notifier)
+            .loadMore(
+              showTrainings: _showTrainings,
+              showPosts: _showPosts,
+              showOwn: _showOwn,
+              showOthers: _showOthers,
+            );
       }
     });
   }
@@ -408,12 +413,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // Перезагружаем данные с новыми фильтрами
     // Используем forceRefresh для полной перезагрузки с очисткой кэша
-    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh(
-      showTrainings: trainings,
-      showPosts: posts,
-      showOwn: own,
-      showOthers: others,
-    );
+    await ref
+        .read(lentaProvider(_actualUserId!).notifier)
+        .forceRefresh(
+          showTrainings: trainings,
+          showPosts: posts,
+          showOwn: own,
+          showOthers: others,
+        );
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -433,12 +440,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // Очищаем кеш предзагруженных индексов при обновлении
     _prefetchedIndices.clear();
-    await ref.read(lentaProvider(userId).notifier).refresh(
-      showTrainings: _showTrainings,
-      showPosts: _showPosts,
-      showOwn: _showOwn,
-      showOthers: _showOthers,
-    );
+    await ref
+        .read(lentaProvider(userId).notifier)
+        .refresh(
+          showTrainings: _showTrainings,
+          showPosts: _showPosts,
+          showOwn: _showOwn,
+          showOthers: _showOthers,
+        );
     // Обновляем количество непрочитанных чатов при обновлении ленты
     ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
     // Обновляем счетчик непрочитанных уведомлений при обновлении ленты
@@ -564,12 +573,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     // ✅ Используем _actualUserId для forceRefresh
     // Принудительное обновление с очисткой кэша
-    await ref.read(lentaProvider(_actualUserId!).notifier).forceRefresh(
-      showTrainings: _showTrainings,
-      showPosts: _showPosts,
-      showOwn: _showOwn,
-      showOthers: _showOthers,
-    );
+    await ref
+        .read(lentaProvider(_actualUserId!).notifier)
+        .forceRefresh(
+          showTrainings: _showTrainings,
+          showPosts: _showPosts,
+          showOwn: _showOwn,
+          showOthers: _showOthers,
+        );
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -604,12 +615,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // ✅ Используем userId из AuthService (уже получен выше) для forceRefresh
     // Принудительное обновление с очисткой кэша
     // Используем forceRefresh вместо refresh для полного обновления данных
-    await ref.read(lentaProvider(userId).notifier).forceRefresh(
-      showTrainings: _showTrainings,
-      showPosts: _showPosts,
-      showOwn: _showOwn,
-      showOthers: _showOthers,
-    );
+    await ref
+        .read(lentaProvider(userId).notifier)
+        .forceRefresh(
+          showTrainings: _showTrainings,
+          showPosts: _showPosts,
+          showOwn: _showOwn,
+          showOthers: _showOthers,
+        );
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -712,12 +725,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       // ✅ Используем userId из AuthService для forceRefresh
       // Принудительное обновление с очисткой кэша
-      await ref.read(lentaProvider(userId).notifier).forceRefresh(
-        showTrainings: _showTrainings,
-        showPosts: _showPosts,
-        showOwn: _showOwn,
-        showOthers: _showOthers,
-      );
+      await ref
+          .read(lentaProvider(userId).notifier)
+          .forceRefresh(
+            showTrainings: _showTrainings,
+            showPosts: _showPosts,
+            showOwn: _showOwn,
+            showOthers: _showOthers,
+          );
     }
   }
 
@@ -981,12 +996,14 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
               final userId = await _auth.getUserId();
               if (userId == null) return;
-              ref.read(lentaProvider(userId).notifier).loadInitial(
-                showTrainings: _showTrainings,
-                showPosts: _showPosts,
-                showOwn: _showOwn,
-                showOthers: _showOthers,
-              );
+              ref
+                  .read(lentaProvider(userId).notifier)
+                  .loadInitial(
+                    showTrainings: _showTrainings,
+                    showPosts: _showPosts,
+                    showOwn: _showOwn,
+                    showOthers: _showOthers,
+                  );
             },
           );
         }
@@ -1040,7 +1057,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   showOwn: _showOwn,
                   showOthers: _showOthers,
                   onTrainingsChanged: (value) async {
-                    final newPosts = (!value && !_showPosts) ? true : _showPosts;
+                    final newPosts = (!value && !_showPosts)
+                        ? true
+                        : _showPosts;
                     setState(() {
                       _showTrainings = value;
                       _showPosts = newPosts;
@@ -1052,7 +1071,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                     );
                   },
                   onPostsChanged: (value) async {
-                    final newTrainings = (!value && !_showTrainings) ? true : _showTrainings;
+                    final newTrainings = (!value && !_showTrainings)
+                        ? true
+                        : _showTrainings;
                     setState(() {
                       _showPosts = value;
                       _showTrainings = newTrainings;
@@ -1064,7 +1085,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                     );
                   },
                   onOwnChanged: (value) async {
-                    final newOthers = (!value && !_showOthers) ? true : _showOthers;
+                    final newOthers = (!value && !_showOthers)
+                        ? true
+                        : _showOthers;
                     setState(() {
                       _showOwn = value;
                       _showOthers = newOthers;
@@ -1173,7 +1196,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                         showOwn: _showOwn,
                         showOthers: _showOthers,
                         onTrainingsChanged: (value) async {
-                          final newPosts = (!value && !_showPosts) ? true : _showPosts;
+                          final newPosts = (!value && !_showPosts)
+                              ? true
+                              : _showPosts;
                           setState(() {
                             _showTrainings = value;
                             _showPosts = newPosts;
@@ -1185,7 +1210,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                           );
                         },
                         onPostsChanged: (value) async {
-                          final newTrainings = (!value && !_showTrainings) ? true : _showTrainings;
+                          final newTrainings = (!value && !_showTrainings)
+                              ? true
+                              : _showTrainings;
                           setState(() {
                             _showPosts = value;
                             _showTrainings = newTrainings;
@@ -1197,7 +1224,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                           );
                         },
                         onOwnChanged: (value) async {
-                          final newOthers = (!value && !_showOthers) ? true : _showOthers;
+                          final newOthers = (!value && !_showOthers)
+                              ? true
+                              : _showOthers;
                           setState(() {
                             _showOwn = value;
                             _showOthers = newOthers;
@@ -1209,7 +1238,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                           );
                         },
                         onOthersChanged: (value) async {
-                          final newOwn = (!value && !_showOwn) ? true : _showOwn;
+                          final newOwn = (!value && !_showOwn)
+                              ? true
+                              : _showOwn;
                           setState(() {
                             _showOthers = value;
                             _showOwn = newOwn;

@@ -45,24 +45,19 @@ class TestUtils {
   static Map<String, dynamic> createTestJson({
     Map<String, dynamic>? overrides,
   }) {
-    return {
-      'id': 1,
-      'name': 'Test',
-      'value': 'test',
-      ...?overrides,
-    };
+    return {'id': 1, 'name': 'Test', 'value': 'test', ...?overrides};
   }
 
   /// Ожидает завершения всех асинхронных операций
   static Future<void> waitForAsync() async {
-    await Future.delayed(Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 100));
   }
 
   /// Ожидает завершения всех асинхронных операций с таймаутом
   static Future<void> waitForAsyncWithTimeout({
     Duration timeout = const Duration(seconds: 5),
   }) async {
-    await Future.delayed(Duration(milliseconds: 100)).timeout(timeout);
+    await Future.delayed(const Duration(milliseconds: 100)).timeout(timeout);
   }
 }
 
@@ -83,25 +78,16 @@ extension TestExtensions on DateTime {
 class TestMatchers {
   /// Проверяет, что значение является валидным ID (положительное число)
   static Matcher isValidId() {
-    return predicate<int>(
-      (id) => id > 0,
-      'is a valid ID (positive number)',
-    );
+    return predicate<int>((id) => id > 0, 'is a valid ID (positive number)');
   }
 
   /// Проверяет, что строка не пустая
   static Matcher isNotEmptyString() {
-    return predicate<String>(
-      (str) => str.isNotEmpty,
-      'is not empty',
-    );
+    return predicate<String>((str) => str.isNotEmpty, 'is not empty');
   }
 
   /// Проверяет, что список не пустой
   static Matcher isNotEmptyList() {
-    return predicate<List>(
-      (list) => list.isNotEmpty,
-      'is not empty',
-    );
+    return predicate<List>((list) => list.isNotEmpty, 'is not empty');
   }
 }

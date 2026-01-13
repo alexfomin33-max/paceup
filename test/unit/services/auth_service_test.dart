@@ -9,7 +9,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:paceup/core/services/auth_service.dart';
-import 'package:paceup/core/services/api_service.dart';
 
 void main() {
   group('AuthService', () {
@@ -79,7 +78,7 @@ void main() {
         // Создаём новый экземпляр, который может не иметь токена
         // В текущей реализации всегда возвращает токен (костыль)
         // Этот тест показывает структуру для будущих тестов с моками
-        
+
         // Act & Assert
         // Пока пропускаем, так как текущая реализация всегда возвращает токен
         expect(true, isTrue); // Placeholder
@@ -119,10 +118,7 @@ void main() {
     group('logout', () {
       test('не выбрасывает исключений', () async {
         // Act & Assert
-        expect(
-          () => authService.logout(),
-          returnsNormally,
-        );
+        expect(() => authService.logout(), returnsNormally);
       });
     });
   });
