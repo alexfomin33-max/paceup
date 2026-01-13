@@ -330,7 +330,7 @@ body {
 }
 
 .store-badge[src*="app_store"] {
-  height: 70px;
+  height: 50px;
 }
 
 .hero-image {
@@ -1080,6 +1080,15 @@ section {
     width: 250px;
     height: 500px;
   }
+  
+  /* Уменьшаем размер store badge на планшетах и мобильных */
+  .store-badge {
+    height: 42px;
+  }
+  
+  .store-badge[src*="app_store"] {
+    height: 42px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1110,6 +1119,15 @@ section {
   .phone-mockup {
     width: 200px;
     height: 400px;
+  }
+  
+  /* Еще больше уменьшаем размер store badge на маленьких экранах */
+  .store-badge {
+    height: 38px;
+  }
+  
+  .store-badge[src*="app_store"] {
+    height: 38px;
   }
 }
 
