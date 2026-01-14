@@ -38,6 +38,7 @@ import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../core/widgets/expandable_text.dart';
+import '../../../../../features/complaint.dart';
 
 /// Главный виджет «тренировка».
 
@@ -270,7 +271,11 @@ class ActivityBlock extends ConsumerWidget {
                                   color: AppColors.orange,
                                 ),
                                 onTap: () {
-                                  // Функционал будет добавлен позже
+                                  Navigator.of(context, rootNavigator: true).push(
+                                    TransparentPageRoute(
+                                      builder: (_) => const ComplaintScreen(),
+                                    ),
+                                  );
                                 },
                               ),
                               MoreMenuItem(

@@ -5,6 +5,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../features/complaint.dart';
+import '../../../../core/widgets/transparent_route.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -349,7 +351,11 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             color: AppColors.orange,
           ),
           onTap: () {
-            // Функционал будет добавлен позже
+            Navigator.of(context, rootNavigator: true).push(
+              TransparentPageRoute(
+                builder: (_) => const ComplaintScreen(),
+              ),
+            );
           },
         ),
       );

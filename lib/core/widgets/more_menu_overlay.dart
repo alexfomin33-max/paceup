@@ -36,7 +36,11 @@ class MoreMenuOverlay {
     this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.md)),
     this.boxShadow = const [
       // тень по твоим спекам
-      BoxShadow(color: AppColors.scrim20, blurRadius: 4, offset: Offset(0, 1)),
+      BoxShadow(
+        color: AppColors.scrim40,
+        blurRadius: 15,
+        offset: Offset(0, 10),
+      ),
     ],
     this.innerPadding = const EdgeInsets.symmetric(vertical: 6),
   });
@@ -74,9 +78,9 @@ class MoreMenuOverlay {
     if (anchorCtx == null) return;
 
     // ────────────────────────────────────────────────────────────────
-    // 📏 ВЫЧИСЛЕНИЕ ШИРИНЫ ПО СОДЕРЖИМОМУ: находим самый длинный текст
+    // 📏 ВЫЧИСЛЕНИЕ ШИРИНЫ ПО СОДЕРЖИМОМОМУ: находим самый длинный текст
     // ────────────────────────────────────────────────────────────────
-    final textStyle = AppTextStyles.h14w4;
+    final textStyle = AppTextStyles.h15w4;
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     double maxTextWidth = 0.0;
     for (final item in items) {
@@ -89,9 +93,9 @@ class MoreMenuOverlay {
         maxTextWidth = textPainter.width;
       }
     }
-    // Ширина = текст + padding horizontal (14*2) + иконка (18) + отступ (12)
+    // Ширина = текст + padding horizontal (14*2) + иконка (20) + отступ (12)
     // + минимальные отступы для комфорта
-    final computedWidth = maxTextWidth + 14 * 2 + 18 + 12 + 8;
+    final computedWidth = maxTextWidth + 14 * 2 + 20 + 12 + 8;
     // Используем вычисленную ширину, но не меньше минимальной
     final menuWidth = computedWidth > width ? computedWidth : width;
 
@@ -109,10 +113,7 @@ class MoreMenuOverlay {
 
     // Высота меню = пункты (~48 на пункт) + паддинги.
     const itemHeight = 48.0;
-    final double height =
-        innerPadding.vertical +
-        items.length * itemHeight +
-        2;
+    final double height = innerPadding.vertical + items.length * itemHeight + 2;
 
     // Базовая позиция: под кнопкой, выравниваем по правому краю.
     double left = anchorRect.right - menuWidth;
@@ -145,9 +146,13 @@ class MoreMenuOverlay {
     // Для темной темы используем более заметную тень
     final shadowColor = brightness == Brightness.dark
         ? AppColors.darkShadowSoft
-        : AppColors.scrim20;
+        : AppColors.scrim40;
     final shadowList = [
-      BoxShadow(color: shadowColor, blurRadius: 4, offset: const Offset(0, 1)),
+      BoxShadow(
+        color: shadowColor,
+        blurRadius: 15,
+        offset: const Offset(0, 10),
+      ),
     ];
 
     _entry = OverlayEntry(
@@ -204,13 +209,18 @@ class MoreMenuOverlay {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Icon(it.icon, size: 18, color: it.iconColor ?? iconColor),
+                Icon(it.icon, size: 20, color: it.iconColor ?? iconColor),
                 const SizedBox(width: 12),
                 Text(
                   it.text,
-                  style:
-                      it.textStyle ??
-                      AppTextStyles.h14w4.copyWith(color: textColor),
+                  style: it.textStyle != null
+                      ? AppTextStyles.h15w4.copyWith(
+                          color: it.textStyle!.color ?? textColor,
+                          fontWeight:
+                              it.textStyle!.fontWeight ??
+                              AppTextStyles.h15w4.fontWeight,
+                        )
+                      : AppTextStyles.h15w4.copyWith(color: textColor),
                 ),
               ],
             ),

@@ -39,6 +39,7 @@ import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/more_menu_hub.dart';
+import '../../../../features/complaint.dart';
 import '../../../../core/services/api_service.dart'
     show ApiService, ApiException;
 import '../../../../core/utils/error_handler.dart';
@@ -343,7 +344,11 @@ class _ActivityDescriptionPageState
           textStyle: const TextStyle(color: AppColors.orange),
           onTap: () {
             MoreMenuHub.hide();
-            // Функционал будет добавлен позже
+            Navigator.of(context, rootNavigator: true).push(
+              TransparentPageRoute(
+                builder: (_) => const ComplaintScreen(),
+              ),
+            );
           },
         ),
         MoreMenuItem(

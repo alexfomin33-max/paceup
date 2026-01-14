@@ -14,10 +14,12 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/utils/feed_date.dart';
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/widgets/more_menu_overlay.dart';
 import 'post_media_carousel.dart';
 import '../../../widgets/user_header.dart';
 import '../../../../profile/screens/profile_screen.dart';
 import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../../features/complaint.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///   ЭКРАН ОПИСАНИЯ ПОСТА
@@ -475,6 +477,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                             ),
                             child: _LikedUsersList(
                               users: _likedUsers,
+                              likesCount: _currentPost.likes,
                               isLoading: _isLoadingLikes,
                               error: _likesError,
                               onRetry: _loadLikedUsers,
@@ -502,6 +505,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                             ),
                             child: _CommentsList(
                               comments: _comments,
+                              currentUserId: widget.currentUserId,
                               isLoading: _isLoadingComments,
                               error: _commentsError,
                               hasMore: _hasMoreComments,
@@ -676,6 +680,7 @@ class _LikeUser {
 /// ─────────────────────────────────────────────────────────────────────────────
 class _CommentItem {
   final int id;
+  final int userId; // ID автора комментария
   final String userName;
   final String? userAvatar;
   final String text;
@@ -683,6 +688,7 @@ class _CommentItem {
 
   const _CommentItem({
     required this.id,
+    required this.userId,
     required this.userName,
     required this.text,
     required this.createdAt,
@@ -692,6 +698,7 @@ class _CommentItem {
   factory _CommentItem.fromApi(Map<String, dynamic> json) {
     return _CommentItem(
       id: int.tryParse('${json['id']}') ?? 0,
+      userId: int.tryParse('${json['user_id']}') ?? 0,
       userName: (json['user_name'] ?? '').toString(),
       userAvatar: (json['user_avatar']?.toString().isNotEmpty ?? false)
           ? json['user_avatar'].toString()
@@ -707,12 +714,14 @@ class _CommentItem {
 /// ─────────────────────────────────────────────────────────────────────────────
 class _LikedUsersList extends StatelessWidget {
   final List<_LikeUser> users;
+  final int likesCount;
   final bool isLoading;
   final String? error;
   final VoidCallback? onRetry;
 
   const _LikedUsersList({
     required this.users,
+    required this.likesCount,
     required this.isLoading,
     this.error,
     this.onRetry,
@@ -725,6 +734,34 @@ class _LikedUsersList extends StatelessWidget {
     }
     if (avatar.startsWith('http')) return avatar;
     return 'https://uploads.paceup.ru/images/users/avatars/$userId/$avatar';
+  }
+
+  /// ─────────────────────────────────────────────────────────────────────────────
+  /// ФОРМИРОВАНИЕ ТЕКСТА ЗАГОЛОВКА С ПРАВИЛЬНЫМ СКЛОНЕНИЕМ
+  /// ─────────────────────────────────────────────────────────────────────────────
+  String _getLikesTitle(int count) {
+    if (count == 0) return 'Лайки';
+
+    final lastDigit = count % 10;
+    final lastTwoDigits = count % 100;
+
+    // Исключения для 11-14
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return '$count лайков';
+    }
+
+    // 1, 21, 31, 41... лайк
+    if (lastDigit == 1) {
+      return '$count лайк';
+    }
+
+    // 2, 3, 4, 22, 23, 24... лайка
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return '$count лайка';
+    }
+
+    // Остальные: лайков
+    return '$count лайков';
   }
 
   @override
@@ -795,97 +832,80 @@ class _LikedUsersList extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
           child: Text(
-            'Лайки',
-            style: AppTextStyles.h15w6.copyWith(
-              color: AppColors.getTextPrimaryColor(context),
+            _getLikesTitle(likesCount),
+            style: AppTextStyles.h15w5.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
             ),
           ),
-        ),
-        Divider(
-          height: 1,
-          thickness: 0.5,
-          color: AppColors.getBorderColor(context),
         ),
         // Список пользователей
         ...List.generate(users.length, (index) {
           final user = users[index];
           final avatarUrl = _getAvatarUrl(user.avatar, user.id);
-          final isLast = index == users.length - 1;
 
-          return Column(
-            children: [
-              GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  Navigator.of(context).push(
-                    TransparentPageRoute(
-                      builder: (_) => ProfileScreen(userId: user.id),
-                    ),
-                  );
-                },
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      // Аватар
-                      ClipOval(
-                        child: CachedNetworkImage(
-                          imageUrl: avatarUrl,
-                          width: 44,
-                          height: 44,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            width: 44,
-                            height: 44,
-                            color:
-                                Theme.of(context).brightness == Brightness.dark
-                                ? AppColors.darkSurfaceMuted
-                                : AppColors.skeletonBase,
-                            child: Center(
-                              child: CupertinoActivityIndicator(
-                                radius: 9,
-                                color: AppColors.getIconSecondaryColor(context),
-                              ),
-                            ),
-                          ),
-                          errorWidget: (context, url, error) => Container(
-                            width: 44,
-                            height: 44,
-                            color: AppColors.skeletonBase,
-                            child: const Icon(
-                              CupertinoIcons.person_fill,
-                              size: 24,
-                              color: AppColors.textTertiary,
-                            ),
+          return GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              Navigator.of(context).push(
+                TransparentPageRoute(
+                  builder: (_) => ProfileScreen(userId: user.id),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              child: Row(
+                children: [
+                  // Аватар
+                  ClipOval(
+                    child: CachedNetworkImage(
+                      imageUrl: avatarUrl,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 40,
+                        height: 40,
+                        color: AppColors.getSurfaceMutedColor(context),
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            radius: 8,
+                            color: AppColors.getIconSecondaryColor(context),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
-                      // Имя пользователя
-                      Expanded(
+                      errorWidget: (context, url, error) => Container(
+                        width: 40,
+                        height: 40,
+                        color: AppColors.getSurfaceMutedColor(context),
                         child: Text(
-                          user.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.h15w5.copyWith(
+                          user.name.isNotEmpty
+                              ? user.name[0].toUpperCase()
+                              : '?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
                             color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  // Имя пользователя
+                  Expanded(
+                    child: Text(
+                      user.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.h14w6.copyWith(
+                        letterSpacing: 0,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-              if (!isLast)
-                Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  color: AppColors.getBorderColor(context),
-                ),
-            ],
+            ),
           );
         }),
         const SizedBox(height: 8),
@@ -899,6 +919,7 @@ class _LikedUsersList extends StatelessWidget {
 /// ─────────────────────────────────────────────────────────────────────────────
 class _CommentsList extends StatelessWidget {
   final List<_CommentItem> comments;
+  final int currentUserId;
   final bool isLoading;
   final String? error;
   final bool hasMore;
@@ -907,12 +928,61 @@ class _CommentsList extends StatelessWidget {
 
   const _CommentsList({
     required this.comments,
+    required this.currentUserId,
     required this.isLoading,
     this.error,
     required this.hasMore,
     this.onRetry,
     this.onLoadMore,
   });
+
+  /// ─────────────────────────────────────────────────────────────────────────────
+  /// ПОКАЗ МЕНЮ КОММЕНТАРИЯ: показывает меню с действиями
+  /// ─────────────────────────────────────────────────────────────────────────────
+  void _showCommentMenu({
+    required BuildContext context,
+    required _CommentItem comment,
+    required GlobalKey menuKey,
+  }) {
+    final items = <MoreMenuItem>[];
+    final isOwnComment = comment.userId == currentUserId;
+
+    if (isOwnComment) {
+      // ─────────────────────────────────────────────────────────────────────────────
+      // МЕНЮ ДЛЯ СВОЕГО КОММЕНТАРИЯ: удаление
+      // ─────────────────────────────────────────────────────────────────────────────
+      items.add(
+        MoreMenuItem(
+          text: 'Удалить комментарий',
+          icon: CupertinoIcons.minus_circle,
+          iconColor: AppColors.error,
+          textStyle: const TextStyle(color: AppColors.error),
+          onTap: () {
+            // Функционал будет добавлен позже
+          },
+        ),
+      );
+    } else {
+      // ─────────────────────────────────────────────────────────────────────────────
+      // МЕНЮ ДЛЯ ЧУЖОГО КОММЕНТАРИЯ: пожаловаться
+      // ─────────────────────────────────────────────────────────────────────────────
+      items.add(
+        MoreMenuItem(
+          text: 'Пожаловаться',
+          icon: CupertinoIcons.exclamationmark_circle,
+          iconColor: AppColors.orange,
+          textStyle: const TextStyle(color: AppColors.orange),
+          onTap: () {
+            Navigator.of(context, rootNavigator: true).push(
+              TransparentPageRoute(builder: (_) => const ComplaintScreen()),
+            );
+          },
+        ),
+      );
+    }
+
+    MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
+  }
 
   /// Форматирование даты: "сегодня, 18:50" / "вчера, 18:50" / "12 июл, 18:50"
   String _formatHumanDate(String raw) {
@@ -1139,30 +1209,63 @@ class _CommentsList extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Имя пользователя и дата
+                          // Имя пользователя, дата и иконка меню
                           Row(
-                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  comment.userName,
-                                  style: AppTextStyles.h14w6.copyWith(
-                                    letterSpacing: 0,
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        comment.userName,
+                                        style: AppTextStyles.h14w6.copyWith(
+                                          letterSpacing: 0,
+                                          color: AppColors.getTextPrimaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      '· $humanDate',
+                                      style: AppTextStyles.h12w4Ter.copyWith(
+                                        color: AppColors.getTextTertiaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '· $humanDate',
-                                style: AppTextStyles.h12w4Ter.copyWith(
-                                  color: AppColors.getTextTertiaryColor(
-                                    context,
-                                  ),
-                                ),
+                              // Иконка меню с тремя точками (у правого края)
+                              Builder(
+                                builder: (context) {
+                                  final menuKey = GlobalKey();
+                                  return GestureDetector(
+                                    key: menuKey,
+                                    onTap: () => _showCommentMenu(
+                                      context: context,
+                                      comment: comment,
+                                      menuKey: menuKey,
+                                    ),
+                                    behavior: HitTestBehavior.opaque,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.ellipsis_vertical,
+                                        size: 16,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),

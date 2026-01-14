@@ -18,6 +18,7 @@ import '../../../../../core/utils/feed_date.dart';
 import '../../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../profile/screens/profile_screen.dart';
+import '../../../../../features/complaint.dart';
 import '../../../../../features/lenta/providers/lenta_provider.dart';
 import 'description_post_card.dart';
 
@@ -391,7 +392,11 @@ class _PostCardState extends ConsumerState<PostCard> {
                         iconColor: AppColors.warning,
                         textStyle: const TextStyle(color: AppColors.warning),
                         onTap: () {
-                          // TODO: добавить функционал жалобы
+                          Navigator.of(context, rootNavigator: true).push(
+                            TransparentPageRoute(
+                              builder: (_) => const ComplaintScreen(),
+                            ),
+                          );
                         },
                       ),
                     ]);
@@ -406,7 +411,11 @@ class _PostCardState extends ConsumerState<PostCard> {
                         iconColor: AppColors.orange,
                         textStyle: const TextStyle(color: AppColors.orange),
                         onTap: () {
-                          // Функционал будет добавлен позже
+                          Navigator.of(context, rootNavigator: true).push(
+                            TransparentPageRoute(
+                              builder: (_) => const ComplaintScreen(),
+                            ),
+                          );
                         },
                       ),
                       MoreMenuItem(

@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart'; // ← наш глобальный AppBar
 import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/more_menu_overlay.dart';
+import '../../../features/complaint.dart';
 import '../../../core/widgets/more_menu_hub.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
@@ -1271,8 +1272,11 @@ Future<void> _showUserMenu({
       textStyle: TextStyle(color: textPrimaryColor),
       onTap: () {
         MoreMenuHub.hide();
-        _showInfoMessage(context, 'Жалоба отправлена');
-        // TODO: Реализовать функционал жалобы
+        Navigator.of(context, rootNavigator: true).push(
+          TransparentPageRoute(
+            builder: (_) => const ComplaintScreen(),
+          ),
+        );
       },
     ),
 

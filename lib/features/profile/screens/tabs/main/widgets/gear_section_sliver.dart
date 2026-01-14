@@ -56,7 +56,7 @@ class GearSectionSliver extends StatelessWidget {
               isOwnProfile: isOwnProfile,
               stat1Label: 'Пробег:',
               stat1Value: g.mileage,
-              stat2Label: isBike ? 'Скор:' : 'Темп:',
+              stat2Label: isBike ? 'Скорость:' : 'Темп:',
               stat2Value: g.paceOrSpeed,
             ),
           ),
