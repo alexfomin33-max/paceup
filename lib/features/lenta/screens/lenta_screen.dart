@@ -92,14 +92,16 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
   // Типы данных Health, которые нам нужны
   // Используем те же типы, что и в экране подключенных трекеров
-  static const List<HealthDataType> _healthTypes = <HealthDataType>[
-    HealthDataType.WORKOUT,
-    HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.HEART_RATE,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.TOTAL_CALORIES_BURNED,
-  ];
+  // DISTANCE_DELTA и TOTAL_CALORIES_BURNED доступны только на Android Health Connect
+  // На iOS используем WorkoutHealthValue.totalDistance и WorkoutHealthValue.totalEnergyBurned
+  static List<HealthDataType> get _healthTypes => <HealthDataType>[
+        HealthDataType.WORKOUT,
+        HealthDataType.STEPS,
+        if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
+        HealthDataType.HEART_RATE,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        if (Platform.isAndroid) HealthDataType.TOTAL_CALORIES_BURNED,
+      ];
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов

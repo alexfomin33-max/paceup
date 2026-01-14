@@ -42,14 +42,16 @@ class _ConnectedTrackersScreenState
   final Health _health = Health();
 
   // Ровно те типы, которые используем
-  static const List<HealthDataType> _types = <HealthDataType>[
-    HealthDataType.WORKOUT,
-    HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.HEART_RATE,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.TOTAL_CALORIES_BURNED,
-  ];
+  // DISTANCE_DELTA и TOTAL_CALORIES_BURNED доступны только на Android Health Connect
+  // На iOS используем WorkoutHealthValue.totalDistance и WorkoutHealthValue.totalEnergyBurned
+  static List<HealthDataType> get _types => <HealthDataType>[
+        HealthDataType.WORKOUT,
+        HealthDataType.STEPS,
+        if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
+        HealthDataType.HEART_RATE,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+        if (Platform.isAndroid) HealthDataType.TOTAL_CALORIES_BURNED,
+      ];
 
   bool _configured = false;
   bool _busy = false;
@@ -200,20 +202,20 @@ class _ConnectedTrackersScreenState
     final retry = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
-      builder: (_) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Нужен доступ к данным'),
         content: Text(
           Platform.isIOS
               ? 'Разрешите доступ в системном диалоге, чтобы импортировать тренировки, пульс и ккал.'
-              : 'Откроется Health Connect — включите разрешения на чтение (тренировки, дистанция, пульс и активные калории — если доступны источником).',
+              : 'Откроется Health Connect — включите разрешения на чтение (тренировки, дистанция, пульс, активные калории и маршруты). Для маршрутов может потребоваться одноразовое согласие при первой загрузке.',
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: const Text('Отмена'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Повторить'),
           ),
         ],
@@ -355,18 +357,32 @@ class _ConnectedTrackersScreenState
 
         // Запрашиваем дистанцию для этой тренировки
         try {
-          final dists = await _health.getHealthDataFromTypes(
-            types: const [HealthDataType.DISTANCE_DELTA],
-            startTime: wStart,
-            endTime: wEnd,
-          );
           double workoutDistance = 0;
-          for (final p in dists) {
-            final val = p.value;
-            if (val is NumericHealthValue) {
-              workoutDistance += val.numericValue.toDouble();
+          
+          if (Platform.isAndroid) {
+            // На Android используем DISTANCE_DELTA
+            final dists = await _health.getHealthDataFromTypes(
+              types: const [HealthDataType.DISTANCE_DELTA],
+              startTime: wStart,
+              endTime: wEnd,
+            );
+            for (final p in dists) {
+              final val = p.value;
+              if (val is NumericHealthValue) {
+                workoutDistance += val.numericValue.toDouble();
+              }
+            }
+          } else {
+            // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
+            final v = workout.value;
+            if (v is WorkoutHealthValue) {
+              final totalDist = v.totalDistance;
+              if (totalDist != null) {
+                workoutDistance = totalDist.toDouble();
+              }
             }
           }
+          
           distanceMeters += workoutDistance;
 
           // Добавляем в разбивку по дням
@@ -752,7 +768,7 @@ class _ConnectedTrackersScreenState
                         child: Text(
                           Platform.isIOS
                               ? 'Синхронизация с Apple Здоровьем. Разрешите доступ, чтобы импортировать тренировки, пульс и ккал.'
-                              : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс и активные калории (если доступны источником).',
+                              : 'Синхронизация через Health Connect. Разрешите доступ, чтобы импортировать тренировки, дистанцию, пульс, активные калории и маршруты (бег, велосипед, лыжи, ходьба).',
                           style: AppTextStyles.h13w4,
                         ),
                       ),

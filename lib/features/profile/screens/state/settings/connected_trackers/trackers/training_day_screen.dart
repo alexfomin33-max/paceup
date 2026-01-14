@@ -14,6 +14,7 @@ import '../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../../core/widgets/route_card.dart';
 import 'package:flutter/services.dart';
+import '../utils/route_loader.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 ///  ЭКРАН «ДЕТАЛИ ТРЕНИРОВОК» С ВКЛАДКАМИ ПО ДАТАМ
@@ -173,9 +174,10 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
     try {
       // 1) Разрешения
       await _health.configure();
+      // DISTANCE_DELTA доступен только на Android Health Connect
       final types = <HealthDataType>[
         HealthDataType.WORKOUT,
-        HealthDataType.DISTANCE_DELTA,
+        if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
         HealthDataType.HEART_RATE,
       ];
       final ok = await _health.requestAuthorization(
@@ -235,15 +237,30 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       final routeEnd = wEnd.add(const Duration(minutes: 5));
 
       // 4) Дистанция внутри окна тренировки
-      final dists = await _health.getHealthDataFromTypes(
-        types: const [HealthDataType.DISTANCE_DELTA],
-        startTime: wStart,
-        endTime: wEnd,
-      );
+      // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
+      // На Android используем DISTANCE_DELTA
       double distance = 0;
-      for (final p in dists) {
-        final v = p.value;
-        if (v is NumericHealthValue) distance += v.numericValue.toDouble();
+      
+      if (Platform.isAndroid) {
+        // На Android используем DISTANCE_DELTA
+        final dists = await _health.getHealthDataFromTypes(
+          types: const [HealthDataType.DISTANCE_DELTA],
+          startTime: wStart,
+          endTime: wEnd,
+        );
+        for (final p in dists) {
+          final v = p.value;
+          if (v is NumericHealthValue) distance += v.numericValue.toDouble();
+        }
+      } else {
+        // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
+        final v = w.value;
+        if (v is WorkoutHealthValue) {
+          final totalDist = v.totalDistance;
+          if (totalDist != null) {
+            distance = totalDist.toDouble();
+          }
+        }
       }
 
       // 5) Средний, минимальный и максимальный пульс
@@ -274,60 +291,44 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       final dur = wEnd.difference(wStart);
 
       // 7) Маршрут (Android/Health Connect) с высотой
+      // Определяем тип тренировки для загрузки маршрута
+      String workoutType = 'run'; // По умолчанию
+      final workoutValue = w.value;
+      if (workoutValue is WorkoutHealthValue) {
+        final activityTypeName = workoutValue.workoutActivityType.name.toLowerCase();
+        if (activityTypeName.contains('running') ||
+            activityTypeName.contains('walking') ||
+            activityTypeName.contains('hiking') ||
+            activityTypeName.contains('jogging')) {
+          workoutType = 'run';
+        } else if (activityTypeName.contains('cycling') ||
+            activityTypeName.contains('bike')) {
+          workoutType = 'bike';
+        } else if (activityTypeName.contains('skiing') ||
+            activityTypeName.contains('ski')) {
+          workoutType = 'ski';
+        } else if (activityTypeName.contains('swimming') ||
+            activityTypeName.contains('swim')) {
+          workoutType = 'swim';
+        }
+      }
+
+      // Загружаем маршрут через утилиту
       List<LatLng> route = const [];
       List<Map<String, dynamic>> routeData = const [];
       String? routeError;
-      if (Platform.isAndroid) {
-        try {
-          const channel = MethodChannel('paceup/route');
-          final res = await channel.invokeMethod<List<dynamic>>(
-            'getExerciseRoute',
-            <String, dynamic>{
-              'start': routeStart.millisecondsSinceEpoch,
-              'end': routeEnd.millisecondsSinceEpoch,
-            },
-          );
-
-          if (res != null && res.isNotEmpty) {
-            // Получаем полные данные с высотой
-            routeData = res.map((e) {
-              final m = Map<String, dynamic>.from(e as Map);
-              return {
-                'lat': (m['lat'] as num).toDouble(),
-                'lng': (m['lng'] as num).toDouble(),
-                'alt': (m['alt'] as num?)?.toDouble(), // Высота
-              };
-            }).toList();
-
-            // Для отображения на карте (только координаты)
-            route = routeData
-                .where((p) => p['lat'] != null && p['lng'] != null)
-                .map((p) => LatLng(p['lat']!, p['lng']!))
-                .toList();
-          } else {
-            // Маршрут не найден - возможно, требуется одноразовое согласие
-            // или маршрут просто отсутствует в Health Connect
-            routeError =
-                'Маршрут не найден. Возможно, требуется разрешение в Health Connect или маршрут не был записан.';
-          }
-        } on PlatformException catch (e) {
-          // Обрабатываем специфичные ошибки от нативной стороны
-          if (e.code == 'consent_denied') {
-            routeError =
-                'Требуется одноразовое разрешение на доступ к маршруту в Health Connect.';
-          } else if (e.code == 'no_permission') {
-            routeError =
-                'Нет разрешения на чтение маршрутов. Проверьте настройки Health Connect.';
-          } else if (e.code == 'health_connect_unavailable') {
-            routeError = 'Health Connect недоступен на этом устройстве.';
-          } else {
-            routeError = 'Ошибка загрузки маршрута: ${e.message ?? e.code}';
-          }
-          debugPrint('Ошибка загрузки маршрута: ${e.code} - ${e.message}');
-        } catch (e) {
-          // Общая ошибка
-          routeError = 'Ошибка загрузки маршрута: $e';
-          debugPrint('Ошибка загрузки маршрута: $e');
+      
+      final routeResult = await loadWorkoutRoute(wStart, wEnd, workoutType);
+      if (routeResult.hasRoute) {
+        route = routeResult.route;
+        routeData = routeResult.routeData;
+      } else if (routeResult.hasError) {
+        routeError = routeResult.error;
+        // Если требуется согласие, показываем более информативное сообщение
+        if (routeResult.requiresConsent) {
+          routeError =
+              'Требуется одноразовое разрешение на доступ к маршруту в Health Connect. '
+              'Попробуйте загрузить маршрут снова.';
         }
       }
 

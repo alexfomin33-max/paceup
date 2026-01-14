@@ -15,6 +15,7 @@ import '../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'route_loader.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────
 /// ИМПОРТ ОДНОЙ ТРЕНИРОВКИ В БД
@@ -50,16 +51,31 @@ Future<ImportResult> importWorkout(
     final wEnd = workout.dateTo;
 
     // ─── Загружаем дистанцию за период тренировки ───
-    final dists = await health.getHealthDataFromTypes(
-      types: const [HealthDataType.DISTANCE_DELTA],
-      startTime: wStart,
-      endTime: wEnd,
-    );
+    // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
+    // На Android используем DISTANCE_DELTA
     double distanceMeters = 0;
-    for (final p in dists) {
-      final v = p.value;
-      if (v is NumericHealthValue) {
-        distanceMeters += v.numericValue.toDouble();
+    
+    if (Platform.isAndroid) {
+      // На Android используем DISTANCE_DELTA
+      final dists = await health.getHealthDataFromTypes(
+        types: const [HealthDataType.DISTANCE_DELTA],
+        startTime: wStart,
+        endTime: wEnd,
+      );
+      for (final p in dists) {
+        final v = p.value;
+        if (v is NumericHealthValue) {
+          distanceMeters += v.numericValue.toDouble();
+        }
+      }
+    } else {
+      // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
+      final v = workout.value;
+      if (v is WorkoutHealthValue) {
+        final totalDist = v.totalDistance;
+        if (totalDist != null) {
+          distanceMeters = totalDist.toDouble();
+        }
       }
     }
 
@@ -162,42 +178,21 @@ Future<ImportResult> importWorkout(
       // Каденс недоступен — продолжаем без него
     }
 
+    // ─── Определяем тип активности для загрузки маршрута ───
+    final activityType = _mapWorkoutTypeToActivityType(workout);
+
     // ─── Загружаем маршрут (только для Android) ───
+    // Используем утилиту для загрузки маршрута с обработкой ошибок
     List<LatLng> route = const [];
     List<Map<String, dynamic>> routeData = const [];
-    if (Platform.isAndroid) {
-      try {
-        final routeStart = wStart.subtract(const Duration(minutes: 5));
-        final routeEnd = wEnd.add(const Duration(minutes: 5));
-        const channel = MethodChannel('paceup/route');
-        final res = await channel
-            .invokeMethod<List<dynamic>>('getExerciseRoute', <String, dynamic>{
-              'start': routeStart.millisecondsSinceEpoch,
-              'end': routeEnd.millisecondsSinceEpoch,
-            });
-
-        if (res != null && res.isNotEmpty) {
-          routeData = res.map((e) {
-            final m = Map<String, dynamic>.from(e as Map);
-            return {
-              'lat': (m['lat'] as num).toDouble(),
-              'lng': (m['lng'] as num).toDouble(),
-              'alt': (m['alt'] as num?)?.toDouble(),
-            };
-          }).toList();
-
-          route = routeData
-              .where((p) => p['lat'] != null && p['lng'] != null)
-              .map((p) => LatLng(p['lat']!, p['lng']!))
-              .toList();
-        }
-      } catch (_) {
-        // Маршрут недоступен — продолжаем без него
-      }
+    
+    final routeResult = await loadWorkoutRoute(wStart, wEnd, activityType);
+    if (routeResult.hasRoute) {
+      route = routeResult.route;
+      routeData = routeResult.routeData;
     }
+    // Если маршрут недоступен, продолжаем без него (не критично для импорта)
 
-    // ─── Определяем тип активности ───
-    final activityType = _mapWorkoutTypeToActivityType(workout);
 
     // ─── Формируем stats ───
     final stats = <String, dynamic>{

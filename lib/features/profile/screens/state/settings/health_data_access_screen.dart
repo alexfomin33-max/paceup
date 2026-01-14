@@ -23,13 +23,14 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
   Health? _health;
 
   // Типы данных для запроса
-  final List<HealthDataType> _types = [
-    HealthDataType.WORKOUT,
-    HealthDataType.STEPS,
-    HealthDataType.HEART_RATE,
-    HealthDataType.DISTANCE_DELTA,
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-  ];
+  // DISTANCE_DELTA доступен только на Android Health Connect, на iOS используем WorkoutHealthValue.totalDistance
+  List<HealthDataType> get _types => [
+        HealthDataType.WORKOUT,
+        HealthDataType.STEPS,
+        HealthDataType.HEART_RATE,
+        if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
+        HealthDataType.ACTIVE_ENERGY_BURNED,
+      ];
 
   @override
   void initState() {

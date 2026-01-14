@@ -10,6 +10,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../providers/services/auth_provider.dart';
 import '../../../features/lenta/providers/lenta_provider.dart';
@@ -21,15 +22,24 @@ import '../../../features/profile/screens/state/settings/connected_trackers/util
 class HealthSyncService {
   final Health _health = Health();
   static const MethodChannel _syncChannel = MethodChannel('paceup/health_sync');
+  static const String _prefsKeyLastSyncTime = 'health_last_sync_time';
   
   /// Получает время последней синхронизации
   Future<DateTime?> getLastSyncTime() async {
-    if (!Platform.isAndroid) return null;
-    
     try {
-      final timestamp = await _syncChannel.invokeMethod<int>('getLastSyncTime');
-      if (timestamp != null && timestamp > 0) {
-        return DateTime.fromMillisecondsSinceEpoch(timestamp);
+      if (Platform.isAndroid) {
+        // На Android используем MethodChannel
+        final timestamp = await _syncChannel.invokeMethod<int>('getLastSyncTime');
+        if (timestamp != null && timestamp > 0) {
+          return DateTime.fromMillisecondsSinceEpoch(timestamp);
+        }
+      } else {
+        // На iOS используем SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        final timestamp = prefs.getInt(_prefsKeyLastSyncTime);
+        if (timestamp != null && timestamp > 0) {
+          return DateTime.fromMillisecondsSinceEpoch(timestamp);
+        }
       }
     } catch (e) {
       debugPrint('Ошибка при получении времени синхронизации: $e');
@@ -39,24 +49,30 @@ class HealthSyncService {
   
   /// Сохраняет время последней успешной синхронизации
   Future<void> setLastSyncTime(DateTime time) async {
-    if (!Platform.isAndroid) return;
-    
     try {
-      await _syncChannel.invokeMethod('setLastSyncTime', {'timeMillis': time.millisecondsSinceEpoch});
+      if (Platform.isAndroid) {
+        // На Android используем MethodChannel
+        await _syncChannel.invokeMethod('setLastSyncTime', {'timeMillis': time.millisecondsSinceEpoch});
+      } else {
+        // На iOS используем SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setInt(_prefsKeyLastSyncTime, time.millisecondsSinceEpoch);
+      }
     } catch (e) {
       debugPrint('Ошибка при сохранении времени синхронизации: $e');
     }
   }
   
-  /// Автоматически синхронизирует новые тренировки из Health Connect
+  /// Автоматически синхронизирует новые тренировки из Health Connect/Apple Health
   /// 
   /// Проверяет тренировки с момента последней синхронизации и импортирует только новые
   Future<SyncResult> syncNewWorkouts(WidgetRef ref) async {
     try {
-      // Проверяем доступность Health Connect
+      // Конфигурируем Health плагин
+      await _health.configure();
+      
+      // Проверяем доступность Health Connect на Android
       if (Platform.isAndroid) {
-        await _health.configure();
-        
         final hasHC = await _health.isHealthConnectAvailable();
         if (hasHC == false) {
           return const SyncResult(
