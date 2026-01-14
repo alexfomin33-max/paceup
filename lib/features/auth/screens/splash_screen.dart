@@ -81,6 +81,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     try {
       final api = ApiService();
       // Делаем простой запрос с коротким таймаутом для быстрой проверки
+      // Уменьшен до 2 секунд для более быстрой реакции
       await api.get('/', timeout: const Duration(seconds: 5));
       return true;
     } on SocketException {
@@ -165,11 +166,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
     try {
       // Запускаем проверку интернета и минимальное время показа параллельно
+      // Уменьшена задержка до 500ms для более быстрой загрузки
       final results = await Future.wait([
         _checkInternet(),
         Future.delayed(
-          const Duration(milliseconds: 1000),
-        ), // задержка для завершения анимации и комфортного показа логотипа
+          const Duration(milliseconds: 500),
+        ), // минимальная задержка для завершения анимации
       ]);
 
       final bool hasInternet = results[0] as bool;
@@ -236,11 +238,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     final auth = ref.read(authServiceProvider);
 
     // Запускаем проверку авторизации и минимальное время показа параллельно
+    // Убрана задержка - проверка авторизации быстрая (локальная)
     final results = await Future.wait([
       auth.isAuthorized(),
       Future.delayed(
-        const Duration(milliseconds: 1000),
-      ), // задержка для завершения анимации и комфортного показа логотипа
+        const Duration(milliseconds: 300),
+      ), // минимальная задержка для плавности перехода
     ]);
 
     final bool authorized = results[0] as bool;

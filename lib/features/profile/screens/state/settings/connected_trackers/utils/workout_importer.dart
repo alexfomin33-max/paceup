@@ -9,7 +9,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:health/health.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../providers/services/auth_provider.dart';
@@ -54,7 +53,7 @@ Future<ImportResult> importWorkout(
     // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
     // На Android используем DISTANCE_DELTA
     double distanceMeters = 0;
-    
+
     if (Platform.isAndroid) {
       // На Android используем DISTANCE_DELTA
       final dists = await health.getHealthDataFromTypes(
@@ -185,14 +184,13 @@ Future<ImportResult> importWorkout(
     // Используем утилиту для загрузки маршрута с обработкой ошибок
     List<LatLng> route = const [];
     List<Map<String, dynamic>> routeData = const [];
-    
+
     final routeResult = await loadWorkoutRoute(wStart, wEnd, activityType);
     if (routeResult.hasRoute) {
       route = routeResult.route;
       routeData = routeResult.routeData;
     }
     // Если маршрут недоступен, продолжаем без него (не критично для импорта)
-
 
     // ─── Формируем stats ───
     final stats = <String, dynamic>{
@@ -305,7 +303,7 @@ String _mapWorkoutTypeToActivityType(HealthDataPoint workout) {
   final value = workout.value;
   if (value is WorkoutHealthValue) {
     final activityTypeName = value.workoutActivityType.name.toLowerCase();
-    
+
     // Лыжи (проверяем первыми, чтобы не попасть в другие категории)
     if (activityTypeName.contains('skiing') ||
         activityTypeName.contains('ski') ||
@@ -315,7 +313,7 @@ String _mapWorkoutTypeToActivityType(HealthDataPoint workout) {
         activityTypeName.contains('nordic')) {
       return 'ski';
     }
-    
+
     // Бег и ходьба
     if (activityTypeName.contains('running') ||
         activityTypeName.contains('walking') ||

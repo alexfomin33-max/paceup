@@ -120,6 +120,8 @@ class StatsRow extends StatelessWidget {
   showExtendedStats; // показывать ли третью строку (Калории | Шаги | Скорость)
   final String? activityType; // тип активности для определения единиц измерения
   final double? bottomPadding; // нижний padding (по умолчанию 16)
+  final bool
+  hideSecondRowForSwimInFeed; // скрывать ли вторую строку для плавания в ленте
 
   const StatsRow({
     super.key,
@@ -136,6 +138,7 @@ class StatsRow extends StatelessWidget {
     this.showExtendedStats = false,
     this.activityType,
     this.bottomPadding,
+    this.hideSecondRowForSwimInFeed = false,
   });
 
   @override
@@ -428,8 +431,10 @@ class StatsRow extends StatelessWidget {
               // 🏊 ДЛЯ ПЛАВАНИЯ: показываем вторую строку метрик БЕЗ "Набора высоты"
               // 🏃 ДЛЯ БЕГА: показываем вторую строку метрик (как на скриншоте)
               // 🚴 ДЛЯ ВЕЛОСИПЕДА: показываем вторую строку метрик (как на скриншоте)
+              // 🏊 ДЛЯ ПЛАВАНИЯ В ЛЕНТЕ: скрываем вторую строку метрик
               // ──────────────────────────────────────────────────────────────
-              if (!isManuallyAdded) ...[
+              if (!isManuallyAdded &&
+                  !(isSwim && hideSecondRowForSwimInFeed)) ...[
                 const SizedBox(height: 16),
                 Row(
                   mainAxisSize: MainAxisSize.max,
