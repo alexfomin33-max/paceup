@@ -149,9 +149,8 @@ class _BackgroundImageSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-    final calculatedHeight =
-        screenW / 2.1; // Вычисляем высоту по соотношению 2.1:1
+    // Фиксированная высота обложки профиля
+    const calculatedHeight = 180.0;
 
     return Stack(
       clipBehavior: Clip.none,

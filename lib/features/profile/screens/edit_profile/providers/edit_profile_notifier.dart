@@ -115,12 +115,17 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
     state = state.copyWith(avatarBytes: bytes);
   }
 
-  /// Выбор фоновой картинки из галереи с обрезкой в пропорции 2.1:1
+  /// Выбор фоновой картинки из галереи с обрезкой в фиксированную высоту 180.0
   Future<void> pickBackground(BuildContext context) async {
-    // ── выбираем фоновую картинку с обрезкой в пропорцию 2.1:1
+    // ── вычисляем aspectRatio на основе фиксированной высоты 180.0 и ширины экрана
+    final screenWidth = MediaQuery.of(context).size.width;
+    const fixedHeight = 180.0;
+    final aspectRatio = screenWidth / fixedHeight;
+    
+    // ── выбираем фоновую картинку с обрезкой в вычисленную пропорцию
     final processed = await ImagePickerHelper.pickAndProcessImage(
       context: context,
-      aspectRatio: 2.1,
+      aspectRatio: aspectRatio,
       maxSide: ImageCompressionPreset.background.maxSide,
       jpegQuality: ImageCompressionPreset.background.quality,
       cropTitle: 'Обрезка фонового фото',

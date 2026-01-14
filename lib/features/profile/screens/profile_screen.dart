@@ -609,8 +609,8 @@ class _HeaderMetrics {
 
   factory _HeaderMetrics.fromContext(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    // Вычисляем высоту по соотношению 2.1:1 (как в club_detail_screen)
-    final coverHeight = screenW / 2.1;
+    // Фиксированная высота обложки профиля
+    const coverHeight = 180.0;
     // Высота блока обложки + карточки (используется для исчезновения).
     final containerHeightHeader = coverHeight + 68;
     // Высота для расширенной шапки с Tabs (слегка меньше для визуальной связки).

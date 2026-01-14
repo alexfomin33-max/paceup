@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../providers/services/fcm_provider.dart';
 
@@ -130,8 +129,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   @override
   Widget build(BuildContext context) {
     // 🔹 Пока идет проверка авторизации, показываем логотип с fade-in анимацией
+    // ─────────── Тёмный фон для splash screen ───────────
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: Colors.black,
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,

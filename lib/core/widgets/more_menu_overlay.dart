@@ -36,11 +36,7 @@ class MoreMenuOverlay {
     this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.md)),
     this.boxShadow = const [
       // тень по твоим спекам
-      BoxShadow(
-        color: AppColors.scrim40,
-        blurRadius: 15,
-        offset: Offset(0, 10),
-      ),
+      BoxShadow(color: AppColors.scrim40, blurRadius: 10, offset: Offset(0, 4)),
     ],
     this.innerPadding = const EdgeInsets.symmetric(vertical: 6),
   });
@@ -143,17 +139,31 @@ class MoreMenuOverlay {
               ? AppColors.darkSurfaceMuted
               : AppColors.getSurfaceColor(context))
         : backgroundColor;
-    // Для темной темы используем более заметную тень
-    final shadowColor = brightness == Brightness.dark
-        ? AppColors.darkShadowSoft
-        : AppColors.scrim40;
-    final shadowList = [
-      BoxShadow(
-        color: shadowColor,
-        blurRadius: 15,
-        offset: const Offset(0, 10),
-      ),
-    ];
+
+    // ─────────────────────────────────────────────────────────────────────────────
+    // ИСПОЛЬЗОВАНИЕ boxShadow: если передан кастомный - используем его,
+    // иначе создаем адаптивный с учетом темы
+    // ─────────────────────────────────────────────────────────────────────────────
+    final List<BoxShadow> finalShadowList;
+    if (boxShadow.isNotEmpty &&
+        boxShadow.first.color == AppColors.scrim40 &&
+        boxShadow.first.blurRadius == 10 &&
+        boxShadow.first.offset == const Offset(0, 4)) {
+      // Дефолтное значение - создаем адаптивное с учетом темы
+      final shadowColor = brightness == Brightness.dark
+          ? AppColors.darkShadowSoft
+          : AppColors.scrim40;
+      finalShadowList = [
+        BoxShadow(
+          color: shadowColor,
+          blurRadius: boxShadow.first.blurRadius,
+          offset: boxShadow.first.offset,
+        ),
+      ];
+    } else {
+      // Кастомное значение - используем как есть
+      finalShadowList = boxShadow;
+    }
 
     _entry = OverlayEntry(
       builder: (ctx) => Stack(
@@ -171,7 +181,7 @@ class MoreMenuOverlay {
                 decoration: BoxDecoration(
                   color: bgColor,
                   borderRadius: borderRadius,
-                  boxShadow: shadowList,
+                  boxShadow: finalShadowList,
                 ),
                 padding: innerPadding,
                 child: _buildList(ctx),
