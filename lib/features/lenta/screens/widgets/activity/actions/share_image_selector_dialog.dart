@@ -139,6 +139,8 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                       padding: EdgeInsets.zero,
                       minSize: 0,
                       onPressed: () {
+                        if (!mounted) return;
+                        if (!Navigator.of(context).canPop()) return;
                         final currentItem = _items[_currentIndex];
                         Navigator.of(context).pop(ShareImageSelection(
                           type: currentItem.type,
@@ -158,7 +160,11 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                     CupertinoButton(
                       padding: EdgeInsets.zero,
                       minSize: 0,
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () {
+                        if (!mounted) return;
+                        if (!Navigator.of(context).canPop()) return;
+                        Navigator.of(context).pop();
+                      },
                       child: const Icon(
                         CupertinoIcons.xmark,
                         size: 20,
