@@ -48,11 +48,13 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
 
   static const _dotsBottom = 10.0;
 
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
+  // ────────────────────────────────────────────────────────────────
+  // ⚡ КЭШИРОВАНИЕ URL КАРТЫ: генерируем один раз вместо каждого rebuild
+  // ────────────────────────────────────────────────────────────────
+  // Это устраняет джанк при скролле, так как кодирование полилинии
+  // и формирование URL выполняется только один раз при первом build
+  String? _cachedMapUrl;
+  int? _cachedWidthPx;
 
   @override
   void dispose() {
@@ -158,7 +160,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             },
             itemBuilder: (context, index) {
               final item = items[index];
-              
+
               if (item.isMap) {
                 return GestureDetector(
                   onTap: widget.onMapTap,
@@ -188,9 +190,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   /// Строит слайд со статичной картой маршрута.
   ///
   /// ⚡ PERFORMANCE OPTIMIZATION:
-  /// - Использует StaticMapUrlBuilder для генерации URL
+  /// - Использует кэшированный URL вместо генерации при каждом rebuild
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
   /// - Placeholder и error widgets для улучшения UX
+  ///
+  /// ⚡ КЭШИРОВАНИЕ URL: URL генерируется один раз при первом вызове,
+  /// что устраняет джанк при скролле (кодирование полилинии выполняется только один раз)
   Widget _buildStaticMapSlide() {
     return SizedBox(
       width: double.infinity,
@@ -204,61 +209,61 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           if (!hasValidSize) {
             return Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             );
           }
 
           // ────────────────────────────────────────────────────────────────
-          // ⚡ ОПТИМИЗАЦИЯ: используем фиксированный DPR = 2.0 вместо MediaQuery
+          // ⚡ КЭШИРОВАНИЕ URL: генерируем только один раз при первом build
           // ────────────────────────────────────────────────────────────────
-          // Для карточек в ленте фиксированный DPR 2.0 обеспечивает хорошее качество
-          // на всех устройствах без запросов MediaQuery при каждом rebuild
-          // Это снижает CPU usage и устраняет джанк при скролле
-          // На экранах с DPR < 2.0 будет небольшой избыток данных (не критично)
-          // На экранах с DPR > 2.0 качество остается отличным для маленьких карт
-          const double fixedDpr = 2.0;
+          // Если URL еще не сгенерирован - генерируем и кэшируем
+          // При последующих rebuild используем кэшированный URL
+          if (_cachedMapUrl == null) {
+            // Используем фиксированный DPR = 2.0 для оптимизации
+            const double fixedDpr = 2.0;
 
-          final screenW = constraints.maxWidth;
-          final screenH = widget.height;
+            final screenW = constraints.maxWidth;
+            final screenH = widget.height;
 
-          // Генерируем размеры с учетом фиксированного DPR
-          final widthPx = (screenW * fixedDpr).round();
-          final heightPx = (screenH * fixedDpr).round();
+            // Генерируем размеры с учетом фиксированного DPR
+            final widthPx = (screenW * fixedDpr).round();
+            final heightPx = (screenH * fixedDpr).round();
 
-          // Проверяем, что размеры валидны
-          if (widthPx <= 0 || heightPx <= 0) {
+            // Проверяем, что размеры валидны
+            if (widthPx > 0 && heightPx > 0) {
+              // Генерируем URL статичной карты один раз и кэшируем
+              _cachedMapUrl = StaticMapUrlBuilder.fromPoints(
+                points: widget.points,
+                widthPx: widthPx.toDouble(),
+                heightPx: heightPx.toDouble(),
+                strokeWidth: 3.0,
+                padding: 12.0,
+              );
+
+              _cachedWidthPx = widthPx;
+            }
+          }
+
+          // Если URL все еще не сгенерирован (не должно произойти)
+          if (_cachedMapUrl == null || _cachedWidthPx == null) {
             return Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             );
           }
 
-          // Генерируем URL статичной карты
-          final mapUrl = StaticMapUrlBuilder.fromPoints(
-            points: widget.points,
-            widthPx: widthPx.toDouble(),
-            heightPx: heightPx.toDouble(),
-            strokeWidth: 3.0,
-            padding: 12.0,
-          );
-
+          // Используем кэшированный URL вместо генерации при каждом rebuild
           return CachedNetworkImage(
-            imageUrl: mapUrl,
+            imageUrl: _cachedMapUrl!,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
             filterQuality: FilterQuality.medium,
-            memCacheWidth: widthPx,
-            maxWidthDiskCache: widthPx,
+            memCacheWidth: _cachedWidthPx!,
+            maxWidthDiskCache: _cachedWidthPx!,
             placeholder: (context, url) => Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             ),
             errorWidget: (context, url, error) => Container(
               color: AppColors.getSurfaceColor(context),
@@ -311,9 +316,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           maxWidthDiskCache: targetW,
           placeholder: (context, url) => Container(
             color: AppColors.disabled,
-            child: const Center(
-              child: CupertinoActivityIndicator(),
-            ),
+            child: const Center(child: CupertinoActivityIndicator()),
           ),
           errorWidget: (context, url, error) => Container(
             color: AppColors.disabled,
@@ -328,10 +331,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 SizedBox(height: 8),
                 Text(
                   'Изображение недоступно',
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
                 ),
               ],
             ),
@@ -382,6 +382,6 @@ class _CarouselItem {
 
   _CarouselItem.image(this.imageUrl, this.photoIndex) : isMap = false;
   _CarouselItem.map() : imageUrl = null, photoIndex = null, isMap = true;
-  
+
   bool get isImage => !isMap;
 }
