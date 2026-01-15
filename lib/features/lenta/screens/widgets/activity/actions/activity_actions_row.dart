@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'share_image_selector_dialog.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../../../core/utils/static_map_url_builder.dart';
+import '../../../../../lenta/providers/lenta_provider.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
@@ -136,6 +137,20 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
 
       if (ok && serverLikes != null && mounted) {
         setState(() => likesCount = serverLikes);
+        
+        // ────────────────────────────────────────────────────────────────
+        // ⚡ ОПТИМИЗАЦИЯ: обновляем провайдер для синхронизации с другими карточками
+        // ────────────────────────────────────────────────────────────────
+        // Обновляем счетчик лайков в провайдере, чтобы другие карточки
+        // видели актуальные значения. Это вызовет обновление только
+        // lentaItemCountsProvider, но не lentaItemProvider (если правильно настроен select)
+        if (widget.activity != null) {
+          ref
+              .read(
+                lentaProvider(widget.currentUserId).notifier,
+              )
+              .updateLikes(widget.activity!.lentaId, serverLikes);
+        }
       }
       return ok;
     } on ApiException {

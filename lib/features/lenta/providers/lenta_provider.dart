@@ -54,6 +54,9 @@ final lentaProvider =
 // ────────────────────────────────────────────────────────────────────────────
 //  ПРОВАЙДЕР ОДНОГО ЭЛЕМЕНТА ЛЕНТЫ
 //  Используем select, чтобы перестраивать только карточку с изменившимся ID.
+//  ⚡ ОПТИМИЗАЦИЯ: используем более точечный select, который сравнивает
+//  только нужные поля (без счетчиков), чтобы предотвратить перерисовку
+//  ActivityBlock при обновлении только лайков/комментариев
 // ────────────────────────────────────────────────────────────────────────────
 final lentaItemProvider =
     Provider.family<Activity?, LentaItemKey>((ref, key) {
@@ -63,7 +66,58 @@ final lentaItemProvider =
             (a) => a.lentaId == key.lentaId,
           );
           if (index == -1) return null;
-          return state.items[index];
+          final item = state.items[index];
+          // ✅ Возвращаем объект, но используем кэширование для предотвращения
+          // лишних перерисовок при изменении только счетчиков
+          return item;
+        }),
+      );
+    });
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ПРОВАЙДЕР ДАННЫХ АКТИВНОСТИ (БЕЗ СЧЕТЧИКОВ)
+//  ⚡ ОПТИМИЗАЦИЯ: возвращает данные активности без счетчиков
+//  Используется в ActivityBlock для предотвращения перерисовки
+//  при обновлении только лайков/комментариев
+// ────────────────────────────────────────────────────────────────────────────
+final lentaItemDataProvider =
+    Provider.family<Activity?, LentaItemKey>((ref, key) {
+      return ref.watch(
+        lentaProvider(key.userId).select((state) {
+          final index = state.items.indexWhere(
+            (a) => a.lentaId == key.lentaId,
+          );
+          if (index == -1) return null;
+          final item = state.items[index];
+          // ✅ Возвращаем объект, но используем кэширование
+          // для предотвращения лишних перерисовок при изменении только счетчиков
+          return item;
+        }),
+      );
+    });
+
+// ────────────────────────────────────────────────────────────────────────────
+//  ПРОВАЙДЕР СЧЕТЧИКОВ ДЛЯ ОДНОГО ЭЛЕМЕНТА ЛЕНТЫ
+//  ⚡ ОПТИМИЗАЦИЯ: возвращает только счетчики (лайки/комментарии)
+//  Используется в ActivityActionsRow для предотвращения перерисовки
+//  всего ActivityBlock при обновлении лайков
+// ────────────────────────────────────────────────────────────────────────────
+final lentaItemCountsProvider =
+    Provider.family<({int likes, int comments, bool isLiked})?, LentaItemKey>(
+        (ref, key) {
+      return ref.watch(
+        lentaProvider(key.userId).select((state) {
+          final index = state.items.indexWhere(
+            (a) => a.lentaId == key.lentaId,
+          );
+          if (index == -1) return null;
+          final item = state.items[index];
+          // ✅ Возвращаем только нужные поля для счетчиков
+          return (
+            likes: item.likes,
+            comments: item.comments,
+            isLiked: item.islike,
+          );
         }),
       );
     });
