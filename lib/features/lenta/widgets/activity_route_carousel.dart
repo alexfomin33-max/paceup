@@ -64,6 +64,14 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
 
   static const _dotsBottom = 10.0;
 
+  // ────────────────────────────────────────────────────────────────
+  // ⚡ КЭШИРОВАНИЕ URL КАРТЫ: генерируем один раз вместо каждого rebuild
+  // ────────────────────────────────────────────────────────────────
+  // Это устраняет джанк при скролле, так как кодирование полилинии
+  // и формирование URL выполняется только один раз при первом build
+  String? _cachedMapUrl;
+  int? _cachedWidthPx;
+
   @override
   void initState() {
     super.initState();
@@ -199,7 +207,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             },
             itemBuilder: (context, index) {
               final item = items[index];
-              
+
               if (item.isMap) {
                 return GestureDetector(
                   onTap: widget.onMapTap,
@@ -232,8 +240,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   /// - Сначала проверяет наличие сохраненного изображения на сервере
   /// - Если изображение найдено, использует его (быстрее загрузка)
   /// - Если не найдено, генерирует через Mapbox и сохраняет на сервер
+  /// - Использует кэшированный URL вместо генерации при каждом rebuild
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
   /// - Placeholder и error widgets для улучшения UX
+  ///
+  /// ⚡ КЭШИРОВАНИЕ URL: URL генерируется один раз при первом вызове,
+  /// что устраняет джанк при скролле (кодирование полилинии выполняется только один раз)
   Widget _buildStaticMapSlide() {
     return SizedBox(
       width: double.infinity,
@@ -247,85 +259,86 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           if (!hasValidSize) {
             return Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             );
           }
 
-          final dpr = MediaQuery.of(context).devicePixelRatio;
-          final screenW = constraints.maxWidth.isFinite && constraints.maxWidth > 0
-              ? constraints.maxWidth
-              : MediaQuery.of(context).size.width;
-          final screenH = widget.height;
-
           // ────────────────────────────────────────────────────────────────
-          // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для уменьшения веса файла
+          // ⚡ КЭШИРОВАНИЕ URL: генерируем только один раз при первом build
           // ────────────────────────────────────────────────────────────────
-          // Для карточек в ленте достаточно DPR 1.5-2.0 вместо полного devicePixelRatio
-          // Это уменьшает размер файла в 2-4 раза без заметной потери качества
-          // Например, вместо 3x (iPhone) используем 2x
-          final optimizedDpr = (dpr > 2.0 ? 2.0 : dpr).clamp(1.0, 2.0);
+          // Если URL еще не сгенерирован - генерируем и кэшируем
+          // При последующих rebuild используем кэшированный URL
+          if (_cachedMapUrl == null) {
+            // Используем фиксированный DPR = 2.0 для оптимизации
+            const double fixedDpr = 2.0;
 
-          // Генерируем размеры с учетом оптимизированного DPR
-          final widthPx = (screenW * optimizedDpr).round();
-          final heightPx = (screenH * optimizedDpr).round();
+            final screenW = constraints.maxWidth;
+            final screenH = widget.height;
 
-          // Проверяем, что размеры валидны
-          if (widthPx <= 0 || heightPx <= 0) {
+            // Генерируем размеры с учетом фиксированного DPR
+            final widthPx = (screenW * fixedDpr).round();
+            final heightPx = (screenH * fixedDpr).round();
+
+            // Проверяем, что размеры валидны
+            if (widthPx > 0 && heightPx > 0) {
+              // Генерируем URL статичной карты один раз и кэшируем
+              _cachedMapUrl = StaticMapUrlBuilder.fromPoints(
+                points: widget.points,
+                widthPx: widthPx.toDouble(),
+                heightPx: heightPx.toDouble(),
+                strokeWidth: 3.0,
+                padding: 12.0,
+              );
+
+              _cachedWidthPx = widthPx;
+            }
+          }
+
+          // Если URL все еще не сгенерирован (не должно произойти)
+          if (_cachedMapUrl == null || _cachedWidthPx == null) {
             return Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             );
           }
 
           // ────────────────────────────────────────────────────────────────
           // 🔹 ЛОГИКА ОТОБРАЖЕНИЯ КАРТЫ:
-          // 1. При первой загрузке: генерируем Mapbox URL и показываем сразу
-          // 2. При повторной загрузке: если есть в кеше - используем сохраненное
+          // 1. Приоритетно используем сохраненное изображение с сервера (если есть)
+          // 2. Если сохраненного нет - используем кэшированный Mapbox URL
           // 3. Сохранение на сервер происходит в фоне после загрузки Mapbox изображения
           // ────────────────────────────────────────────────────────────────
-          String mapUrl;
-          bool shouldSaveAfterLoad = false;
-          bool useSavedImage = false;
+          // Определяем финальный URL для отображения
+          final String finalMapUrl;
+          final bool shouldSaveAfterLoad;
+          final bool useSavedImage;
 
           // Проверяем наличие сохраненного изображения в кеше (проверено синхронно в initState)
           if (_savedRouteMapUrl != null) {
-            // Используем сохраненное изображение с сервера
-            mapUrl = _savedRouteMapUrl!;
+            // Используем сохраненное изображение с сервера (приоритет)
+            finalMapUrl = _savedRouteMapUrl!;
             useSavedImage = true;
+            shouldSaveAfterLoad = false; // Не нужно сохранять, уже сохранено
           } else {
-            // При первой загрузке генерируем через Mapbox и показываем сразу
-            mapUrl = StaticMapUrlBuilder.fromPoints(
-              points: widget.points,
-              widthPx: widthPx.toDouble(),
-              heightPx: heightPx.toDouble(),
-              strokeWidth: 3.0,
-              padding: 12.0,
-            );
-            
+            // Используем кэшированный Mapbox URL (избегаем перегенерации при каждом rebuild)
+            finalMapUrl = _cachedMapUrl!;
+            useSavedImage = false;
             // Сохраняем изображение на сервер в фоне после успешной загрузки
             // (не блокируя UI, не вызывая перерисовку)
-            if (widget.activityId != null && widget.userId != null) {
-              shouldSaveAfterLoad = true;
-            }
+            shouldSaveAfterLoad = widget.activityId != null && widget.userId != null;
           }
 
           return CachedNetworkImage(
-            imageUrl: mapUrl,
+            imageUrl: finalMapUrl,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,
             filterQuality: FilterQuality.medium,
-            memCacheWidth: widthPx,
-            maxWidthDiskCache: widthPx,
+            memCacheWidth: _cachedWidthPx!,
+            maxWidthDiskCache: _cachedWidthPx!,
             placeholder: (context, url) => Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             ),
             errorWidget: (context, url, error) => Container(
               color: AppColors.getSurfaceColor(context),
@@ -352,7 +365,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             imageBuilder: shouldSaveAfterLoad && !useSavedImage
                 ? (context, imageProvider) {
                     // Сохраняем изображение асинхронно в фоне, не блокируя UI
-                    _saveRouteMapImage(mapUrl);
+                    _saveRouteMapImage(finalMapUrl);
                     return Image(image: imageProvider);
                   }
                 : null,
@@ -390,9 +403,15 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   Widget _buildPhotoSlide(String imageUrl) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final dpr = MediaQuery.of(context).devicePixelRatio;
+        // ────────────────────────────────────────────────────────────────
+        // ⚡ ОПТИМИЗАЦИЯ: используем фиксированный DPR = 2.0 вместо MediaQuery
+        // ────────────────────────────────────────────────────────────────
+        // Для фотографий в ленте фиксированный DPR 2.0 обеспечивает хорошее качество
+        // на всех устройствах без запросов MediaQuery при каждом rebuild
+        // Это снижает CPU usage и устраняет джанк при скролле
+        const double fixedDpr = 2.0;
         final screenW = constraints.maxWidth;
-        final targetW = (screenW * dpr).round();
+        final targetW = (screenW * fixedDpr).round();
 
         return CachedNetworkImage(
           imageUrl: imageUrl,
@@ -404,9 +423,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           maxWidthDiskCache: targetW,
           placeholder: (context, url) => Container(
             color: AppColors.disabled,
-            child: const Center(
-              child: CupertinoActivityIndicator(),
-            ),
+            child: const Center(child: CupertinoActivityIndicator()),
           ),
           errorWidget: (context, url, error) => Container(
             color: AppColors.disabled,
@@ -421,10 +438,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 SizedBox(height: 8),
                 Text(
                   'Изображение недоступно',
-                  style: TextStyle(
-                    color: AppColors.textTertiary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
                 ),
               ],
             ),
@@ -475,6 +489,6 @@ class _CarouselItem {
 
   _CarouselItem.image(this.imageUrl, this.photoIndex) : isMap = false;
   _CarouselItem.map() : imageUrl = null, photoIndex = null, isMap = true;
-  
+
   bool get isImage => !isMap;
 }
