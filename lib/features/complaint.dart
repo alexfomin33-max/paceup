@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../core/theme/app_theme.dart';
@@ -196,7 +195,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.md,
                                   ),
-                                  borderSide: BorderSide(
+                                  borderSide: const BorderSide(
                                     color: AppColors.brandPrimary,
                                     width: 1,
                                   ),
@@ -265,10 +264,10 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                 : AppColors.textPrimary.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          child: Center(
+                          child: const Center(
                             child: Text(
                               'Пожаловаться',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'Inter',
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,

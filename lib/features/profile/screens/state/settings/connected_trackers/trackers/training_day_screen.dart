@@ -28,8 +28,7 @@ class TrainingDayTabsScreen extends ConsumerStatefulWidget {
       _TrainingDayTabsScreenState();
 }
 
-class _TrainingDayTabsScreenState
-    extends ConsumerState<TrainingDayTabsScreen> {
+class _TrainingDayTabsScreenState extends ConsumerState<TrainingDayTabsScreen> {
   // Даты для вкладок: 08.11, 14.11, 15.11 (2025 год)
   final List<DateTime> _dates = [
     DateTime(2025, 11, 8),
@@ -240,7 +239,7 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       // На iOS дистанция хранится в WorkoutHealthValue.totalDistance
       // На Android используем DISTANCE_DELTA
       double distance = 0;
-      
+
       if (Platform.isAndroid) {
         // На Android используем DISTANCE_DELTA
         final dists = await _health.getHealthDataFromTypes(
@@ -295,7 +294,8 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       String workoutType = 'run'; // По умолчанию
       final workoutValue = w.value;
       if (workoutValue is WorkoutHealthValue) {
-        final activityTypeName = workoutValue.workoutActivityType.name.toLowerCase();
+        final activityTypeName = workoutValue.workoutActivityType.name
+            .toLowerCase();
         if (activityTypeName.contains('running') ||
             activityTypeName.contains('walking') ||
             activityTypeName.contains('hiking') ||
@@ -317,8 +317,12 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
       List<LatLng> route = const [];
       List<Map<String, dynamic>> routeData = const [];
       String? routeError;
-      
-      final routeResult = await loadWorkoutRoute(wStart, wEnd, workoutType);
+
+      final routeResult = await loadWorkoutRoute(
+        routeStart,
+        routeEnd,
+        workoutType,
+      );
       if (routeResult.hasRoute) {
         route = routeResult.route;
         routeData = routeResult.routeData;
@@ -629,7 +633,7 @@ class _TrainingTabContentState extends ConsumerState<_TrainingTabContent>
           activityTypeName.contains('nordic')) {
         return 'ski';
       }
-      
+
       // Бег и ходьба
       if (activityTypeName.contains('running') ||
           activityTypeName.contains('walking') ||

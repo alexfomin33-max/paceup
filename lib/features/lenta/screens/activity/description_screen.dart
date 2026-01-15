@@ -345,9 +345,7 @@ class _ActivityDescriptionPageState
           onTap: () {
             MoreMenuHub.hide();
             Navigator.of(context, rootNavigator: true).push(
-              TransparentPageRoute(
-                builder: (_) => const ComplaintScreen(),
-              ),
+              TransparentPageRoute(builder: (_) => const ComplaintScreen()),
             );
           },
         ),

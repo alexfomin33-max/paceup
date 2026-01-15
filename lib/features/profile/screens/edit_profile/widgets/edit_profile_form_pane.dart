@@ -68,7 +68,7 @@ class EditProfileFormPane extends StatelessWidget {
   final void Function(String) setSport;
 
   final Future<void> Function() pickBirthDate;
-  
+
   final List<String> cities;
   final void Function(String)? onCitySelected;
 
@@ -188,14 +188,14 @@ class _BackgroundImageSection extends StatelessWidget {
                       width: double.infinity,
                       height: calculatedHeight,
                       errorBuilder: (context, error, stackTrace) =>
-                          _Placeholder(height: calculatedHeight),
+                          const _Placeholder(height: calculatedHeight),
                     )
                   : backgroundUrl != null && backgroundUrl!.isNotEmpty
                   ? _CachedBackgroundImage(
                       url: backgroundUrl!,
                       height: calculatedHeight,
                     )
-                  : _Placeholder(height: calculatedHeight),
+                  : const _Placeholder(height: calculatedHeight),
             ),
           ),
         ),
