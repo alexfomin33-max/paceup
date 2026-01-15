@@ -1,5 +1,12 @@
 {
   // Отключаем подтверждение синхронизации Git (pull/push)
   "git.confirmSync": false,
-  "git.confirmForceSync": false
+  "git.confirmForceSync": false,
+  "git.autofetch": false,
+  "git.enableSmartCommit": true,
+  "git.autoRepositoryDetection": false,
+  "git.suggestSmartCommit": false,
+  "git.confirmEmptyCommits": false,
+  "git.allowForcePush": true,
+  "git.allowNoVerifyCommit": true
 }
