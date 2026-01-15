@@ -57,6 +57,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   int? _cachedWidthPx;
 
   @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
