@@ -353,7 +353,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
           onTap: () {
             Navigator.of(context, rootNavigator: true).push(
               TransparentPageRoute(
-                builder: (_) => const ComplaintScreen(),
+                builder: (_) => ComplaintScreen(
+                  contentType: widget.itemType == 'post' ? 'post' : 'activity',
+                  contentId: widget.itemId,
+                ),
               ),
             );
           },

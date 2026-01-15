@@ -3,13 +3,25 @@ import 'package:flutter/material.dart';
 import '../core/theme/app_theme.dart';
 import '../core/widgets/app_bar.dart';
 import '../core/widgets/interactive_back_swipe.dart';
+import '../core/services/api_service.dart';
+import '../core/services/auth_service.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// ЭКРАН ЖАЛОБЫ
 /// Страница для подачи жалобы на контент
 /// ─────────────────────────────────────────────────────────────────────────────
 class ComplaintScreen extends StatefulWidget {
-  const ComplaintScreen({super.key});
+  /// Тип контента: 'activity' для активности, 'post' для поста
+  final String contentType;
+  
+  /// ID контента (активности или поста)
+  final int contentId;
+
+  const ComplaintScreen({
+    super.key,
+    required this.contentType,
+    required this.contentId,
+  });
 
   @override
   State<ComplaintScreen> createState() => _ComplaintScreenState();
@@ -22,6 +34,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
   /// Контроллер для текстового поля "Другое"
   late final TextEditingController _otherReasonController;
 
+  /// Флаг загрузки (для блокировки повторных отправок)
+  bool _isSubmitting = false;
+
   /// Список доступных причин жалобы
   static const List<String> _reasons = [
     'Спам',
@@ -31,6 +46,16 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
     'Незаконные товары и услуги',
     'Другое',
   ];
+
+  /// Маппинг русских названий причин на коды API
+  static const Map<String, String> _reasonToApiCode = {
+    'Спам': 'spam',
+    'Откровенное изображение': 'explicit_image',
+    'Насилие и вражда': 'violence',
+    'Мошенничество': 'fraud',
+    'Незаконные товары и услуги': 'illegal',
+    'Другое': 'other',
+  };
 
   @override
   void initState() {
@@ -240,14 +265,13 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                       elevation: 0,
                       child: InkWell(
                         onTap:
-                            _selectedReason != null &&
+                            !_isSubmitting &&
+                                _selectedReason != null &&
                                 (_selectedReason != 'Другое' ||
                                     _otherReasonController.text
                                         .trim()
                                         .isNotEmpty)
-                            ? () {
-                                // Функционал будет добавлен позже
-                              }
+                            ? _handleSubmit
                             : null,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         child: Container(
@@ -264,16 +288,27 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                 : AppColors.textPrimary.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          child: const Center(
-                            child: Text(
-                              'Пожаловаться',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.surface,
-                              ),
-                            ),
+                          child: Center(
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        AppColors.surface,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Пожаловаться',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.surface,
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
@@ -286,5 +321,126 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         ),
       ),
     );
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// Обработка отправки жалобы
+  /// ────────────────────────────────────────────────────────────────
+  Future<void> _handleSubmit() async {
+    // Проверка валидности данных
+    if (_selectedReason == null) {
+      return;
+    }
+
+    if (_selectedReason == 'Другое' &&
+        _otherReasonController.text.trim().isEmpty) {
+      return;
+    }
+
+    // Блокируем повторные отправки
+    if (_isSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Получаем ID текущего пользователя
+      final authService = AuthService();
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Ошибка: пользователь не авторизован'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Преобразуем русское название причины в код API
+      final reportType = _reasonToApiCode[_selectedReason!];
+      if (reportType == null) {
+        throw Exception('Неизвестный тип жалобы: $_selectedReason');
+      }
+
+      // Подготавливаем данные для отправки
+      final requestBody = <String, dynamic>{
+        'userId': userId,
+        'content_type': widget.contentType,
+        'content_id': widget.contentId,
+        'report_type': reportType,
+      };
+
+      // Добавляем комментарий, если выбран пункт "Другое" или он заполнен
+      if (_selectedReason == 'Другое' ||
+          _otherReasonController.text.trim().isNotEmpty) {
+        requestBody['comment'] = _otherReasonController.text.trim();
+      }
+
+      // Отправляем запрос через API
+      final apiService = ApiService();
+      final response = await apiService.post(
+        '/submit_report.php',
+        body: requestBody,
+      );
+
+      // Проверяем успешность ответа
+      if (response['success'] == true) {
+        if (mounted) {
+          // Показываем сообщение об успехе
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Жалоба успешно отправлена'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+
+          // Закрываем экран после небольшой задержки
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+        }
+      } else {
+        throw Exception(
+          response['message']?.toString() ?? 'Неизвестная ошибка',
+        );
+      }
+    } on ApiException catch (e) {
+      // Обработка ошибок API
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка: ${e.message}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      // Обработка других ошибок
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка при отправке жалобы: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 }

@@ -277,7 +277,12 @@ class ActivityBlock extends ConsumerWidget {
                                 onTap: () {
                                   Navigator.of(context, rootNavigator: true).push(
                                     TransparentPageRoute(
-                                      builder: (_) => const ComplaintScreen(),
+                                      builder: (_) => ComplaintScreen(
+                                        contentType: updatedActivity.type == 'post'
+                                            ? 'post'
+                                            : 'activity',
+                                        contentId: updatedActivity.id,
+                                      ),
                                     ),
                                   );
                                 },

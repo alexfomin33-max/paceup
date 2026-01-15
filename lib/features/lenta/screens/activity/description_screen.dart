@@ -344,8 +344,14 @@ class _ActivityDescriptionPageState
           textStyle: const TextStyle(color: AppColors.orange),
           onTap: () {
             MoreMenuHub.hide();
+            final activity = _updatedActivity ?? widget.activity;
             Navigator.of(context, rootNavigator: true).push(
-              TransparentPageRoute(builder: (_) => const ComplaintScreen()),
+              TransparentPageRoute(
+                builder: (_) => ComplaintScreen(
+                  contentType: activity.type == 'post' ? 'post' : 'activity',
+                  contentId: activity.id,
+                ),
+              ),
             );
           },
         ),

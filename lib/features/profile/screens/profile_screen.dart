@@ -1363,6 +1363,8 @@ Future<void> _showUserMenu({
       ),
 
     // 4) Пожаловаться
+    // ⚠️ ВНИМАНИЕ: Жалоба на пользователя требует отдельной реализации API
+    // Сейчас передаются значения для компиляции, но функционал не будет работать
     MoreMenuItem(
       text: 'Пожаловаться',
       icon: CupertinoIcons.exclamationmark_circle,
@@ -1370,10 +1372,19 @@ Future<void> _showUserMenu({
       textStyle: TextStyle(color: textPrimaryColor),
       onTap: () {
         MoreMenuHub.hide();
+        // TODO: Реализовать отдельный API endpoint для жалоб на пользователей
+        // Пока передаем значения для компиляции, но это не будет работать
         Navigator.of(
           context,
           rootNavigator: true,
-        ).push(TransparentPageRoute(builder: (_) => const ComplaintScreen()));
+        ).push(
+          TransparentPageRoute(
+            builder: (_) => ComplaintScreen(
+              contentType: 'activity', // Временное значение
+              contentId: userId, // Временное значение
+            ),
+          ),
+        );
       },
     ),
 

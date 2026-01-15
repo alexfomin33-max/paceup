@@ -506,6 +506,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                             child: _CommentsList(
                               comments: _comments,
                               currentUserId: widget.currentUserId,
+                              postId: _currentPost.id,
                               isLoading: _isLoadingComments,
                               error: _commentsError,
                               hasMore: _hasMoreComments,
@@ -920,6 +921,7 @@ class _LikedUsersList extends StatelessWidget {
 class _CommentsList extends StatelessWidget {
   final List<_CommentItem> comments;
   final int currentUserId;
+  final int postId; // ID поста для жалобы
   final bool isLoading;
   final String? error;
   final bool hasMore;
@@ -929,6 +931,7 @@ class _CommentsList extends StatelessWidget {
   const _CommentsList({
     required this.comments,
     required this.currentUserId,
+    required this.postId,
     required this.isLoading,
     this.error,
     required this.hasMore,
@@ -974,7 +977,12 @@ class _CommentsList extends StatelessWidget {
           textStyle: const TextStyle(color: AppColors.orange),
           onTap: () {
             Navigator.of(context, rootNavigator: true).push(
-              TransparentPageRoute(builder: (_) => const ComplaintScreen()),
+              TransparentPageRoute(
+                builder: (_) => ComplaintScreen(
+                  contentType: 'post',
+                  contentId: postId,
+                ),
+              ),
             );
           },
         ),

@@ -394,7 +394,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                         onTap: () {
                           Navigator.of(context, rootNavigator: true).push(
                             TransparentPageRoute(
-                              builder: (_) => const ComplaintScreen(),
+                              builder: (_) => ComplaintScreen(
+                                contentType: 'post',
+                                contentId: widget.post.id,
+                              ),
                             ),
                           );
                         },
@@ -413,7 +416,10 @@ class _PostCardState extends ConsumerState<PostCard> {
                         onTap: () {
                           Navigator.of(context, rootNavigator: true).push(
                             TransparentPageRoute(
-                              builder: (_) => const ComplaintScreen(),
+                              builder: (_) => ComplaintScreen(
+                                contentType: 'post',
+                                contentId: widget.post.id,
+                              ),
                             ),
                           );
                         },
