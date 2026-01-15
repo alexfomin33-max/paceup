@@ -14,6 +14,7 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../lenta/providers/lenta_provider.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../core/utils/activity_format.dart';
+import '../../../../../core/services/route_map_service.dart';
 
 class TrainingTab extends ConsumerStatefulWidget {
   /// ID пользователя, чьи тренировки нужно отобразить
@@ -885,7 +886,11 @@ class _WorkoutCard extends ConsumerWidget {
                 child: SizedBox(
                   width: 80,
                   height: 74,
-                  child: _buildActivityImage(context, item),
+                  child: _WorkoutCard._buildActivityImage(
+                    context,
+                    item,
+                    userId: profileUserId,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -983,82 +988,47 @@ class _WorkoutCard extends ConsumerWidget {
     );
   }
 
-  /// Прореживает точки маршрута для оптимизации построения карты.
-  ///
-  /// Берет каждую N-ю точку (где N = step), обязательно сохраняя
-  /// первую и последнюю точки маршрута.
-  ///
-  /// Это необходимо для треков с большим количеством точек, чтобы
-  /// уменьшить размер URL и ускорить генерацию карты Mapbox.
-  ///
-  /// Прореживание применяется только если точек больше threshold.
-  List<LatLng> _thinPoints(
-    List<LatLng> points, {
-    int step = 30,
-    int threshold = 100,
+  /// Строит изображение для активности согласно логике приоритетов:
+  /// 1. Если есть валидный трек → показываем карту MapBox (независимо от наличия изображений)
+  /// 2. Если нет трека, но есть изображения → показываем первое изображение
+  /// 3. Если нет трека И нет изображений → показываем заглушку
+  static Widget _buildActivityImage(
+    BuildContext context,
+    _Workout item, {
+    required int userId,
   }) {
-    // Если точек мало или step <= 1, возвращаем как есть
-    if (points.length <= 2 || step <= 1) {
-      return points;
+    // 1. Если есть валидный трек → показываем карту MapBox
+    if (item.hasValidTrack) {
+      return _buildStaticMiniMap(
+        context,
+        item.points,
+        activityId: item.id,
+        userId: userId,
+      );
     }
 
-    // Если точек меньше порога, не прореживаем
-    if (points.length < threshold) {
-      return points;
+    // 2. Если нет трека, но есть изображения → показываем первое изображение
+    if (item.firstImageUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: item.firstImageUrl!,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        placeholder: (context, url) => Container(
+          color: AppColors.getBackgroundColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 10,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
+      );
     }
 
-    final thinnedPoints = <LatLng>[];
-
-    // Всегда добавляем первую точку
-    thinnedPoints.add(points.first);
-
-    // Добавляем каждую step-ю точку, начиная с индекса step
-    for (int i = step; i < points.length - 1; i += step) {
-      thinnedPoints.add(points[i]);
-    }
-
-    // Всегда добавляем последнюю точку (если она еще не добавлена)
-    final lastPoint = points.last;
-    if (thinnedPoints.last != lastPoint) {
-      thinnedPoints.add(lastPoint);
-    }
-
-    return thinnedPoints;
-  }
-
-  /// Проверяет, что точки маршрута валидны для построения карты.
-  ///
-  /// Проверяет, что маршрут имеет достаточный разброс координат
-  /// (минимум 0.001 градуса разницы между самой северной и южной точками,
-  /// или между самой западной и восточной точками).
-  ///
-  /// Это необходимо, потому что Mapbox Static Images API не может построить
-  /// карту, если все точки находятся практически в одной точке.
-  bool _arePointsValidForMap(List<LatLng> points) {
-    if (points.isEmpty || points.length < 2) {
-      return false;
-    }
-
-    // Находим минимальные и максимальные координаты
-    double minLat = points.first.latitude;
-    double maxLat = points.first.latitude;
-    double minLng = points.first.longitude;
-    double maxLng = points.first.longitude;
-
-    for (final point in points) {
-      if (point.latitude < minLat) minLat = point.latitude;
-      if (point.latitude > maxLat) maxLat = point.latitude;
-      if (point.longitude < minLng) minLng = point.longitude;
-      if (point.longitude > maxLng) maxLng = point.longitude;
-    }
-
-    // Проверяем, что есть достаточный разброс координат
-    // Минимум 0.001 градуса (~100 метров) для валидной карты
-    const minDifference = 0.001;
-    final latDifference = maxLat - minLat;
-    final lngDifference = maxLng - minLng;
-
-    return latDifference >= minDifference || lngDifference >= minDifference;
+    // 3. Если нет трека И нет изображений → показываем заглушку
+    return _buildPlaceholderImage(item.kind);
   }
 
   /// Строит статичную мини-карту маршрута (80x70px).
@@ -1068,7 +1038,13 @@ class _WorkoutCard extends ConsumerWidget {
   /// - Ограничивает maxWidth/maxHeight до 160x140px для еще большей экономии
   /// - Прореживает точки (каждую 30-ю) для треков с большим количеством точек
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
-  Widget _buildStaticMiniMap(BuildContext context, List<LatLng> points) {
+  /// - Использует сохраненные изображения карт с сервера, если они есть
+  static Widget _buildStaticMiniMap(
+    BuildContext context,
+    List<LatLng> points, {
+    int? activityId,
+    int? userId,
+  }) {
     const widthDp = 80.0;
     const heightDp = 70.0;
 
@@ -1104,32 +1080,61 @@ class _WorkoutCard extends ConsumerWidget {
     final widthPx = (widthDp * optimizedDpr).round();
     final heightPx = (heightDp * optimizedDpr).round();
 
-    // Генерируем URL статичной карты с дополнительными ограничениями размера
-    // Обрабатываем возможные ошибки при генерации URL
-    String? mapUrl;
-    try {
-      mapUrl = StaticMapUrlBuilder.fromPoints(
-        points: thinnedPoints,
-        widthPx: widthPx.toDouble(),
-        heightPx: heightPx.toDouble(),
-        strokeWidth: 2.5,
-        padding: 8.0,
-        maxWidth: 160.0, // Дополнительное ограничение для маленьких карт
-        maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
-      );
-    } catch (e) {
-      // Если не удалось сгенерировать URL (например, некорректные точки),
-      // возвращаем дефолтное изображение
-      return Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: AppColors.getSurfaceColor(context),
-        child: const Icon(
-          Icons.map_outlined,
-          color: AppColors.brandPrimary,
-          size: 24,
-        ),
-      );
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ЛОГИКА: сначала проверяем кеш, если есть - используем сохраненное
+    // Если нет в кеше - генерируем Mapbox и сохраняем в фоне
+    // ────────────────────────────────────────────────────────────────
+    final routeMapService = RouteMapService();
+    String mapUrl;
+    bool shouldSaveAfterLoad = false;
+
+    // Проверяем наличие сохраненного изображения в кеше (синхронно)
+    final cachedUrl = activityId != null 
+        ? routeMapService.getCachedRouteMapUrl(activityId)
+        : null;
+    
+    if (cachedUrl != null) {
+      // Используем сохраненное изображение из кеша
+      mapUrl = cachedUrl;
+      shouldSaveAfterLoad = false; // Не сохраняем, так как уже есть на сервере
+    } else {
+      // Если нет в кеше - генерируем через Mapbox
+      try {
+        mapUrl = StaticMapUrlBuilder.fromPoints(
+          points: thinnedPoints,
+          widthPx: widthPx.toDouble(),
+          heightPx: heightPx.toDouble(),
+          strokeWidth: 2.5,
+          padding: 8.0,
+          maxWidth: 160.0, // Дополнительное ограничение для маленьких карт
+          maxHeight: 140.0, // Дополнительное ограничение для маленьких карт
+        );
+        
+        // Сохраняем изображение на сервер в фоне после загрузки
+        if (activityId != null && userId != null) {
+          shouldSaveAfterLoad = true;
+        }
+        
+        // Проверяем сервер в фоне для следующей загрузки (на случай если уже есть на сервере)
+        if (activityId != null) {
+          routeMapService.getRouteMapUrl(activityId).catchError((_) {
+            // Игнорируем ошибки проверки в фоне
+          });
+        }
+      } catch (e) {
+        // Если не удалось сгенерировать URL (например, некорректные точки),
+        // возвращаем дефолтное изображение
+        return Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.getSurfaceColor(context),
+          child: const Icon(
+            Icons.map_outlined,
+            color: AppColors.brandPrimary,
+            size: 24,
+          ),
+        );
+      }
     }
 
     return CachedNetworkImage(
@@ -1157,45 +1162,87 @@ class _WorkoutCard extends ConsumerWidget {
           size: 32,
         ),
       ),
+      // Сохраняем изображение на сервер после успешной загрузки
+      imageBuilder: shouldSaveAfterLoad
+          ? (context, imageProvider) {
+              // Сохраняем изображение асинхронно в фоне, не блокируя UI
+              final routeMapService = RouteMapService();
+              routeMapService.saveRouteMapFromUrl(
+                activityId: activityId!,
+                userId: userId!,
+                mapboxUrl: mapUrl,
+              );
+              return Image(image: imageProvider);
+            }
+          : null,
     );
   }
 
-  /// Строит изображение для активности согласно логике приоритетов:
-  /// 1. Если есть валидный трек → показываем карту MapBox (независимо от наличия изображений)
-  /// 2. Если нет трека, но есть изображения → показываем первое изображение
-  /// 3. Если нет трека И нет изображений → показываем заглушку
-  Widget _buildActivityImage(BuildContext context, _Workout item) {
-    // 1. Если есть валидный трек → показываем карту MapBox
-    if (item.hasValidTrack) {
-      return _buildStaticMiniMap(context, item.points);
+  /// Прореживает точки маршрута для оптимизации построения карты.
+  static List<LatLng> _thinPoints(
+    List<LatLng> points, {
+    int step = 30,
+    int threshold = 100,
+  }) {
+    // Если точек мало или step <= 1, возвращаем как есть
+    if (points.length <= 2 || step <= 1) {
+      return points;
     }
 
-    // 2. Если нет трека, но есть изображения → показываем первое изображение
-    if (item.firstImageUrl != null) {
-      return CachedNetworkImage(
-        imageUrl: item.firstImageUrl!,
-        fit: BoxFit.cover,
-        width: double.infinity,
-        height: double.infinity,
-        placeholder: (context, url) => Container(
-          color: AppColors.getBackgroundColor(context),
-          child: Center(
-            child: CupertinoActivityIndicator(
-              radius: 10,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
-          ),
-        ),
-        errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
-      );
+    // Если точек меньше порога, не прореживаем
+    if (points.length < threshold) {
+      return points;
     }
 
-    // 3. Если нет трека И нет изображений → показываем заглушку
-    return _buildPlaceholderImage(item.kind);
+    final thinnedPoints = <LatLng>[];
+
+    // Всегда добавляем первую точку
+    thinnedPoints.add(points.first);
+
+    // Добавляем каждую step-ю точку, начиная с индекса step
+    for (int i = step; i < points.length - 1; i += step) {
+      thinnedPoints.add(points[i]);
+    }
+
+    // Всегда добавляем последнюю точку (если она еще не добавлена)
+    final lastPoint = points.last;
+    if (thinnedPoints.last != lastPoint) {
+      thinnedPoints.add(lastPoint);
+    }
+
+    return thinnedPoints;
+  }
+
+  /// Проверяет, что точки маршрута валидны для построения карты.
+  static bool _arePointsValidForMap(List<LatLng> points) {
+    if (points.isEmpty || points.length < 2) {
+      return false;
+    }
+
+    // Находим минимальные и максимальные координаты
+    double minLat = points.first.latitude;
+    double maxLat = points.first.latitude;
+    double minLng = points.first.longitude;
+    double maxLng = points.first.longitude;
+
+    for (final point in points) {
+      if (point.latitude < minLat) minLat = point.latitude;
+      if (point.latitude > maxLat) maxLat = point.latitude;
+      if (point.longitude < minLng) minLng = point.longitude;
+      if (point.longitude > maxLng) maxLng = point.longitude;
+    }
+
+    // Проверяем, что есть достаточный разброс координат
+    // Минимум 0.001 градуса (~100 метров) для валидной карты
+    const minDifference = 0.001;
+    final latDifference = maxLat - minLat;
+    final lngDifference = maxLng - minLng;
+
+    return latDifference >= minDifference || lngDifference >= minDifference;
   }
 
   /// Строит изображение-заглушку в зависимости от типа спорта
-  Widget _buildPlaceholderImage(int kind) {
+  static Widget _buildPlaceholderImage(int kind) {
     return Image(
       image: AssetImage(
         // Выбираем картинку в зависимости от типа спорта
@@ -1210,6 +1257,7 @@ class _WorkoutCard extends ConsumerWidget {
       fit: BoxFit.cover,
     );
   }
+
 
   /// Отображает метрику с выравниванием по левому краю
   Widget _metric(

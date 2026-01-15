@@ -383,6 +383,8 @@ class ActivityBlock extends ConsumerWidget {
                         imageUrls: updatedActivity.mediaImages,
                         height: 350,
                         mapSortOrder: updatedActivity.mapSortOrder,
+                        activityId: updatedActivity.id,
+                        userId: updatedActivity.userId,
                       );
                     }
 

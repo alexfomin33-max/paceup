@@ -4,11 +4,14 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/utils/static_map_url_builder.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/services/route_map_service.dart';
 
 /// Карусель маршрута с фотографиями для активности.
 /// Карта и фотографии отображаются в порядке, указанном в mapSortOrder.
 ///
 /// ⚡ PERFORMANCE OPTIMIZATION:
+/// - Использует сохраненные изображения карт с сервера вместо генерации через Mapbox
+/// - Если изображение не найдено, генерирует через Mapbox и сохраняет на сервер
 /// - Использует статичные PNG картинки вместо Mapbox GL для устранения jank
 /// - Кеширование через CachedNetworkImage снижает повторные запросы
 /// - Упрощение полилинии уменьшает размер URL и ускоряет генерацию
@@ -20,6 +23,8 @@ class ActivityRouteCarousel extends StatefulWidget {
     this.height = 240,
     this.onMapTap,
     this.mapSortOrder,
+    this.activityId,
+    this.userId,
   });
 
   /// Точки трека в порядке следования.
@@ -38,6 +43,14 @@ class ActivityRouteCarousel extends StatefulWidget {
   /// Если null, карта идет первой (для обратной совместимости).
   final int? mapSortOrder;
 
+  /// ID активности (для получения сохраненного изображения карты).
+  /// Если не указан, карта будет генерироваться через Mapbox без сохранения.
+  final int? activityId;
+
+  /// ID пользователя (для сохранения изображения карты на сервер).
+  /// Если не указан, карта будет генерироваться через Mapbox без сохранения.
+  final int? userId;
+
   @override
   State<ActivityRouteCarousel> createState() => _ActivityRouteCarouselState();
 }
@@ -45,6 +58,9 @@ class ActivityRouteCarousel extends StatefulWidget {
 class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   late final PageController _pageController;
   int _currentIndex = 0;
+  String? _savedRouteMapUrl;
+  bool _isLoadingRouteMap = false;
+  final RouteMapService _routeMapService = RouteMapService();
 
   static const _dotsBottom = 10.0;
 
@@ -52,12 +68,37 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   void initState() {
     super.initState();
     _pageController = PageController();
+    
+    // Проверяем кеш сервиса синхронно (если есть в кеше - используем сразу)
+    if (widget.activityId != null && widget.points.isNotEmpty) {
+      final cachedUrl = _routeMapService.getCachedRouteMapUrl(widget.activityId!);
+      if (cachedUrl != null) {
+        _savedRouteMapUrl = cachedUrl;
+      } else {
+        // Если нет в кеше - проверяем сервер в фоне для следующей загрузки
+        _checkSavedRouteMapInBackground();
+      }
+    }
   }
 
   @override
   void dispose() {
     _pageController.dispose();
     super.dispose();
+  }
+
+  /// Проверяет наличие сохраненного изображения карты маршрута в фоне
+  /// Не блокирует UI - используется только для кеширования на будущее
+  Future<void> _checkSavedRouteMapInBackground() async {
+    if (widget.activityId == null) return;
+
+    try {
+      final savedUrl = await _routeMapService.getRouteMapUrl(widget.activityId!);
+      // URL сохраняется в кеш сервиса автоматически
+      // При следующей загрузке виджета он будет использован из кеша
+    } catch (e) {
+      // Игнорируем ошибки проверки в фоне
+    }
   }
 
   @override
@@ -188,7 +229,9 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   /// Строит слайд со статичной картой маршрута.
   ///
   /// ⚡ PERFORMANCE OPTIMIZATION:
-  /// - Использует StaticMapUrlBuilder для генерации URL
+  /// - Сначала проверяет наличие сохраненного изображения на сервере
+  /// - Если изображение найдено, использует его (быстрее загрузка)
+  /// - Если не найдено, генерирует через Mapbox и сохраняет на сервер
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
   /// - Placeholder и error widgets для улучшения UX
   Widget _buildStaticMapSlide() {
@@ -238,14 +281,37 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             );
           }
 
-          // Генерируем URL статичной карты
-          final mapUrl = StaticMapUrlBuilder.fromPoints(
-            points: widget.points,
-            widthPx: widthPx.toDouble(),
-            heightPx: heightPx.toDouble(),
-            strokeWidth: 3.0,
-            padding: 12.0,
-          );
+          // ────────────────────────────────────────────────────────────────
+          // 🔹 ЛОГИКА ОТОБРАЖЕНИЯ КАРТЫ:
+          // 1. При первой загрузке: генерируем Mapbox URL и показываем сразу
+          // 2. При повторной загрузке: если есть в кеше - используем сохраненное
+          // 3. Сохранение на сервер происходит в фоне после загрузки Mapbox изображения
+          // ────────────────────────────────────────────────────────────────
+          String mapUrl;
+          bool shouldSaveAfterLoad = false;
+          bool useSavedImage = false;
+
+          // Проверяем наличие сохраненного изображения в кеше (проверено синхронно в initState)
+          if (_savedRouteMapUrl != null) {
+            // Используем сохраненное изображение с сервера
+            mapUrl = _savedRouteMapUrl!;
+            useSavedImage = true;
+          } else {
+            // При первой загрузке генерируем через Mapbox и показываем сразу
+            mapUrl = StaticMapUrlBuilder.fromPoints(
+              points: widget.points,
+              widthPx: widthPx.toDouble(),
+              heightPx: heightPx.toDouble(),
+              strokeWidth: 3.0,
+              padding: 12.0,
+            );
+            
+            // Сохраняем изображение на сервер в фоне после успешной загрузки
+            // (не блокируя UI, не вызывая перерисовку)
+            if (widget.activityId != null && widget.userId != null) {
+              shouldSaveAfterLoad = true;
+            }
+          }
 
           return CachedNetworkImage(
             imageUrl: mapUrl,
@@ -282,10 +348,42 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 ],
               ),
             ),
+            // Сохраняем изображение на сервер после успешной загрузки (только если не используем сохраненное)
+            imageBuilder: shouldSaveAfterLoad && !useSavedImage
+                ? (context, imageProvider) {
+                    // Сохраняем изображение асинхронно в фоне, не блокируя UI
+                    _saveRouteMapImage(mapUrl);
+                    return Image(image: imageProvider);
+                  }
+                : null,
           );
         },
       ),
     );
+  }
+
+  /// Сохраняет изображение карты маршрута на сервер в фоне
+  /// Не вызывает перерисовку - URL сохраняется в кеш сервиса для следующей загрузки
+  Future<void> _saveRouteMapImage(String mapboxUrl) async {
+    if (widget.activityId == null || widget.userId == null) return;
+    
+    // Проверяем, что изображение еще не сохранено
+    if (_savedRouteMapUrl != null) return;
+
+    try {
+      // Сохраняем изображение на сервер в фоне
+      // URL автоматически сохраняется в кеш сервиса для следующей загрузки
+      await _routeMapService.saveRouteMapFromUrl(
+        activityId: widget.activityId!,
+        userId: widget.userId!,
+        mapboxUrl: mapboxUrl,
+      );
+      
+      // НЕ обновляем состояние - не вызываем перерисовку
+      // При следующей загрузке виджета URL будет взят из кеша сервиса
+    } catch (e) {
+      // Игнорируем ошибки сохранения (не критично)
+    }
   }
 
   /// Строит слайд с фотографией.
