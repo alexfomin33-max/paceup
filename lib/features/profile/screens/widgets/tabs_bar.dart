@@ -149,11 +149,6 @@ class _TabsBarState extends State<TabsBar> {
               ),
             ),
           ),
-          Divider(
-            height: 0.5,
-            thickness: 0.5,
-            color: AppColors.getDividerColor(context),
-          ),
         ],
       ),
     );

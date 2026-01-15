@@ -153,10 +153,12 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
           dayBubbles[day] = bubbles;
         }
 
+        // ────────────────────────────────────────────────────────────────
+        // Отключаем скроллинг у CustomScrollView, чтобы скроллинг управлялся
+        // только NestedScrollView в profile_screen.dart
+        // ────────────────────────────────────────────────────────────────
         return CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          primary:
-              false, // Отключаем автоматическое использование PrimaryScrollController
+          physics: const NeverScrollableScrollPhysics(),
           slivers: [
             const SliverToBoxAdapter(child: SizedBox(height: 14)),
 

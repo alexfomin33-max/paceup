@@ -7,10 +7,7 @@ import '../../services/stats_service.dart';
 /// • Выпадающий период (неделя/месяц/год)
 /// • Переключение вида спорта (бег/вело/плавание)
 List<Widget> buildByTypeStatsSlivers(int userId) {
-  return [
-    SliverToBoxAdapter(child: _ByTypeContent(userId: userId)),
-    const SliverToBoxAdapter(child: SizedBox(height: 18)),
-  ];
+  return [SliverToBoxAdapter(child: _ByTypeContent(userId: userId))];
 }
 
 class StatsTab extends StatefulWidget {
@@ -34,8 +31,10 @@ class _StatsTabState extends State<StatsTab>
       return const Center(child: Text('Ошибка: не указан userId'));
     }
 
+    // Отключаем скроллинг у CustomScrollView, чтобы скроллинг управлялся
+    // только NestedScrollView в profile_screen.dart
     return CustomScrollView(
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
         ...buildByTypeStatsSlivers(userId),
@@ -176,7 +175,9 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   /// Принимает строку из API (может быть "1.5 км", "1500 м" или число)
   /// Возвращает отформатированную строку в метрах с пробелами после трех знаков
   String _formatElevationGain(String? elevationGain) {
-    if (elevationGain == null || elevationGain.isEmpty || elevationGain == '—') {
+    if (elevationGain == null ||
+        elevationGain.isEmpty ||
+        elevationGain == '—') {
       return '—';
     }
 

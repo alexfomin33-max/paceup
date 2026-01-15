@@ -288,7 +288,7 @@ class _MainTabState extends MainTabState
 
     return [
       // ───────────────── Активность (горизонтальный скроллер) ─────────────────
-      const SliverToBoxAdapter(child: SizedBox(height: 12)),
+      const SliverToBoxAdapter(child: SizedBox(height: 8)),
       const SliverToBoxAdapter(child: _SectionTitle('Активность')),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
@@ -354,7 +354,7 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
       SliverToBoxAdapter(child: _MetricsCard(data: data.metrics)),
 
-      const SliverToBoxAdapter(child: SizedBox(height: 24)),
+      const SliverToBoxAdapter(child: SizedBox(height: 18)),
     ];
   }
 }

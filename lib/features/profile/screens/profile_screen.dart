@@ -89,6 +89,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       0; // Плавное появление имени пользователя в AppBar от 0 до 1
   double _headerOpacity =
       1; // Плавное исчезновение всей шапки (cover + карточка) при скролле
+  double _circleOpacity =
+      1; // Плавное исчезновение кружков в AppBar с самого начала скролла
 
   @override
   void initState() {
@@ -357,6 +359,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     // Высоты шапки, рассчитанные один раз за build (без повторных MediaQuery).
     // ────────────────────────────────────────────────────────────────
     final headerMetrics = _headerMetrics(context);
+    final topSafeArea = MediaQuery.paddingOf(context).top;
+    final coverStackHeight = headerMetrics.coverHeight + topSafeArea;
 
     // ────────────────────────────────────────────────────────────────
     // Ленивая инициализация табов под конкретного пользователя, чтобы
@@ -371,187 +375,233 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.getBackgroundColor(context),
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (notification) {
+      body: Stack(
+        children: [
           // ──────────────────────────────────────────────────────────────
-          // При любом вертикальном скролле прячем всплывающее меню
-          // с тремя точками, чтобы оно не перекрывало контент.
+          // Зафиксированная фоновая картинка, которая не скроллится
+          // Высота блока = 180px + верхний SafeArea (status bar).
+          // Это нужно, потому что SliverAppBar по умолчанию учитывает SafeArea
+          // в своей высоте (primary=true), и без добавки появляется серая
+          // «полоса» между обложкой и карточкой профиля.
+          // Исчезает при скролле, когда появляется AppBar
           // ──────────────────────────────────────────────────────────────
-          if (notification.depth == 0 &&
-              notification.metrics.axis == Axis.vertical) {
-            MoreMenuHub.hide();
-          }
-
-          // Обрабатываем только вертикальные уведомления верхнего уровня,
-          // чтобы свайпы PageView (горизонтальные) не трогали анимацию шапки.
-          if (notification is ScrollUpdateNotification &&
-              notification.depth == 0 &&
-              notification.metrics.axis == Axis.vertical) {
-            final threshold =
-                headerMetrics.threshold; // Порог коллапса шапки (кэш)
-
-            // ──────────────────────────────────────────────────────────────
-            // Плавно считаем прогресс схлопывания шапки, чтобы анимировать
-            // появление имени в AppBar. Ограничиваем обновления, чтобы не
-            // триггерить лишние rebuild'ы при минимальных изменениях.
-            // ──────────────────────────────────────────────────────────────
-            final rawProgress = notification.metrics.pixels / threshold;
-            final newOpacity = rawProgress.clamp(0.0, 1.0).toDouble();
-            final newIsScrolled = newOpacity >= 1;
-            final newHeaderOpacity = (1 - newOpacity).clamp(0.0, 1.0);
-
-            if (newIsScrolled != _isScrolled ||
-                (newOpacity - _titleOpacity).abs() > 0.04 ||
-                (newHeaderOpacity - _headerOpacity).abs() > 0.04) {
-              setState(() {
-                _isScrolled = newIsScrolled;
-                _titleOpacity = newOpacity;
-                _headerOpacity = newHeaderOpacity;
-              });
-            }
-          }
-          return false;
-        },
-        child: NestedScrollView(
-          // ──────────────────────────────────────────────────────────────
-          // Скроллируем шапку как в VK: cover + данные в flexibleSpace,
-          // имя появляется в заголовке при прокрутке.
-          // ──────────────────────────────────────────────────────────────
-          headerSliverBuilder: (context, innerBoxIsScrolled) {
-            final coverHeight = headerMetrics.coverHeight;
-            final containerHeight = headerMetrics.containerHeightTabs;
-            final expandedHeight = containerHeight + 0;
-            final displayName = _buildDisplayName(profileState);
-
-            // Используем прогресс скролла для плавного появления заголовка
-            final titleOpacity = _titleOpacity.clamp(0.0, 1.0);
-            final headerOpacity = _headerOpacity.clamp(0.0, 1.0);
-            final isCollapsed = _isScrolled || innerBoxIsScrolled;
-
-            return [
-              SliverAppBar(
-                pinned: true,
-                floating: false,
-                snap: false,
-                automaticallyImplyLeading: false,
-                expandedHeight: expandedHeight,
-                backgroundColor: AppColors.getSurfaceColor(context),
-                elevation: 0,
-                scrolledUnderElevation: 1,
-                forceElevated: isCollapsed || titleOpacity > 0.05,
-                leadingWidth: 46,
-                leading: isOwnProfile
-                    ? null
-                    : Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: _CircleAppIcon(
-                          icon: CupertinoIcons.back,
-                          isScrolled: isCollapsed,
-                          fadeOpacity: headerOpacity,
-                          onPressed: () => Navigator.of(context).maybePop(),
-                        ),
-                      ),
-                title: displayName != null
-                    ? AnimatedOpacity(
-                        opacity: titleOpacity,
-                        duration: const Duration(milliseconds: 160),
-                        curve: Curves.easeOut,
-                        child: Text(
-                          displayName,
-                          style: AppTextStyles.h18w6.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
-                        ),
-                      )
-                    : null,
-                centerTitle: false,
-                actions: isOwnProfile
-                    ? [
-                        _CircleAppIcon(
-                          icon: CupertinoIcons.ellipsis_vertical,
-                          key: menuKey,
-                          isScrolled: isCollapsed,
-                          fadeOpacity: headerOpacity,
-                          onPressed: () {
-                            _showOwnProfileMenu(
-                              context: context,
-                              ref: ref,
-                              userId: userId,
-                              menuKey: menuKey,
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 6),
-                      ]
-                    : [
-                        _CircleAppIcon(
-                          icon: CupertinoIcons.ellipsis_vertical,
-                          key: menuKey,
-                          isScrolled: isCollapsed,
-                          fadeOpacity: headerOpacity,
-                          onPressed: () {
-                            _showUserMenu(
-                              context: context,
-                              ref: ref,
-                              userId: userId,
-                              currentUserId: currentUserId ?? 0,
-                              menuKey: menuKey,
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 6),
-                      ],
-                flexibleSpace: FlexibleSpaceBar(
-                  collapseMode: CollapseMode.none,
-                  // Плавно скрываем весь flexibleSpace (обложка + карточка)
-                  background: AnimatedOpacity(
-                    opacity: headerOpacity,
-                    duration: const Duration(milliseconds: 160),
-                    curve: Curves.easeOut,
-                    child: _ProfileFlexibleSpace(
-                      userId: userId,
-                      profileState: profileState,
-                      backgroundUrl: _cacheBustUrl(
-                        profileState.profile?.background,
-                        avatarVersion,
-                      ),
-                      coverHeight: coverHeight,
-                      containerHeight: headerMetrics.containerHeightHeader,
-                      displayName: displayName ?? 'Профиль',
-                      onReload: () {
-                        ref
-                            .read(profileHeaderProvider(userId).notifier)
-                            .reload();
-                      },
-                    ),
-                  ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: coverStackHeight,
+            child: Opacity(
+              opacity: _headerOpacity,
+              child: _FixedBackgroundCover(
+                userId: userId,
+                backgroundUrl: _cacheBustUrl(
+                  profileState.profile?.background,
+                  avatarVersion,
                 ),
+                coverHeight: coverStackHeight,
               ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _TabsHeaderDelegate(
-                  pageController: _pageController,
-                  tab: _tab,
-                  items: _tabTitles,
-                  onTap: _onTabTap,
-                  coverHeight: coverHeight,
-                ),
-              ),
-            ];
-          },
-          body: GearPrefsScope(
-            notifier: _gearPrefs,
-            child: PageView.builder(
-              controller: _pageController,
-              physics: const BouncingScrollPhysics(),
-              onPageChanged: _onPageChanged,
-              itemCount: _tabTitles.length,
-              // Ленивая сборка вкладок: создаём по требованию и кэшируем,
-              // чтобы не тратить кадры и память на невидимые экраны.
-              itemBuilder: (context, index) => _getTab(index, userId),
             ),
           ),
-        ),
+          // ──────────────────────────────────────────────────────────────
+          // Скроллируемый контент поверх фона
+          // ──────────────────────────────────────────────────────────────
+          NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              // ──────────────────────────────────────────────────────────────
+              // При любом вертикальном скролле прячем всплывающее меню
+              // с тремя точками, чтобы оно не перекрывало контент.
+              // ──────────────────────────────────────────────────────────────
+              if (notification.depth == 0 &&
+                  notification.metrics.axis == Axis.vertical) {
+                MoreMenuHub.hide();
+              }
+
+              // Обрабатываем только вертикальные уведомления верхнего уровня,
+              // чтобы свайпы PageView (горизонтальные) не трогали анимацию шапки.
+              if (notification is ScrollUpdateNotification &&
+                  notification.depth == 0 &&
+                  notification.metrics.axis == Axis.vertical) {
+                final threshold =
+                    headerMetrics.threshold; // Порог коллапса шапки (кэш)
+
+                // ──────────────────────────────────────────────────────────────
+                // Плавно считаем прогресс схлопывания шапки, чтобы анимировать
+                // появление имени в AppBar. AppBar начинает появляться после
+                // достижения порога appBarStartThreshold.
+                // Ограничиваем обновления, чтобы не триггерить лишние rebuild'ы
+                // при минимальных изменениях.
+                // ──────────────────────────────────────────────────────────────
+                final rawProgress = notification.metrics.pixels / threshold;
+                final newOpacity = rawProgress.clamp(0.0, 1.0).toDouble();
+                final newIsScrolled = newOpacity >= 1;
+                // AppBar начинает появляться после 60% скролла
+                const appBarStartThreshold = 0.6;
+                final appBarProgress = newOpacity > appBarStartThreshold
+                    ? ((newOpacity - appBarStartThreshold) /
+                              (1.0 - appBarStartThreshold))
+                          .clamp(0.0, 1.0)
+                    : 0.0;
+                final newHeaderOpacity = (1 - appBarProgress).clamp(0.0, 1.0);
+                // Кружки исчезают с самого начала скролла
+                final newCircleOpacity = (1 - newOpacity).clamp(0.0, 1.0);
+                // Имя появляется плавно, начиная с 30% прогресса скролла
+                const titleStartThreshold = 0.9;
+                final newTitleOpacity = newOpacity > titleStartThreshold
+                    ? ((newOpacity - titleStartThreshold) /
+                              (1.0 - titleStartThreshold))
+                          .clamp(0.0, 1.0)
+                    : 0.0;
+
+                if (newIsScrolled != _isScrolled ||
+                    newTitleOpacity != _titleOpacity ||
+                    (newHeaderOpacity - _headerOpacity).abs() > 0.04 ||
+                    (newCircleOpacity - _circleOpacity).abs() > 0.04) {
+                  setState(() {
+                    _isScrolled = newIsScrolled;
+                    _titleOpacity = newTitleOpacity;
+                    _headerOpacity = newHeaderOpacity;
+                    _circleOpacity = newCircleOpacity;
+                  });
+                }
+              }
+              return false;
+            },
+            child: NestedScrollView(
+              // ──────────────────────────────────────────────────────────────
+              // Скроллируем шапку как в VK: cover + данные в flexibleSpace,
+              // имя появляется в заголовке при прокрутке.
+              // ──────────────────────────────────────────────────────────────
+              headerSliverBuilder: (context, innerBoxIsScrolled) {
+                final coverHeight = headerMetrics.coverHeight;
+                // Высота AppBar равна высоте фона, чтобы он был прозрачным над фоном
+                final expandedHeight = coverHeight;
+                final displayName = _buildDisplayName(profileState);
+
+                // Используем прогресс скролла для плавного появления заголовка
+                final titleOpacity = _titleOpacity.clamp(0.0, 1.0);
+                final headerOpacity = _headerOpacity.clamp(0.0, 1.0);
+                final isCollapsed = _isScrolled || innerBoxIsScrolled;
+
+                return [
+                  SliverAppBar(
+                    pinned: true,
+                    floating: false,
+                    snap: false,
+                    automaticallyImplyLeading: false,
+                    expandedHeight: expandedHeight,
+                    collapsedHeight: kToolbarHeight,
+                    backgroundColor: AppColors.getSurfaceColor(
+                      context,
+                    ).withOpacity(1 - headerOpacity),
+                    elevation: 0,
+                    scrolledUnderElevation: 1,
+                    forceElevated: headerOpacity < 1,
+                    leadingWidth: 46,
+                    leading: isOwnProfile
+                        ? null
+                        : Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: _CircleAppIcon(
+                              icon: CupertinoIcons.back,
+                              isScrolled: isCollapsed,
+                              fadeOpacity: _circleOpacity,
+                              onPressed: () => Navigator.of(context).maybePop(),
+                            ),
+                          ),
+                    title: displayName != null && titleOpacity > 0
+                        ? Opacity(
+                            opacity: titleOpacity,
+                            child: Text(
+                              displayName,
+                              style: AppTextStyles.h18w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          )
+                        : null,
+                    centerTitle: false,
+                    actions: isOwnProfile
+                        ? [
+                            _CircleAppIcon(
+                              icon: CupertinoIcons.ellipsis_vertical,
+                              key: menuKey,
+                              isScrolled: isCollapsed,
+                              fadeOpacity: _circleOpacity,
+                              onPressed: () {
+                                _showOwnProfileMenu(
+                                  context: context,
+                                  ref: ref,
+                                  userId: userId,
+                                  menuKey: menuKey,
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                          ]
+                        : [
+                            _CircleAppIcon(
+                              icon: CupertinoIcons.ellipsis_vertical,
+                              key: menuKey,
+                              isScrolled: isCollapsed,
+                              fadeOpacity: _circleOpacity,
+                              onPressed: () {
+                                _showUserMenu(
+                                  context: context,
+                                  ref: ref,
+                                  userId: userId,
+                                  currentUserId: currentUserId ?? 0,
+                                  menuKey: menuKey,
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                    flexibleSpace: const SizedBox.shrink(),
+                  ),
+                  // ──────────────────────────────────────────────────────────────
+                  // Блок с аватаром и информацией на белом фоне, который скроллится
+                  // Частично налазит на фоновую картинку для визуального эффекта
+                  // ──────────────────────────────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 0),
+                      child: Transform.translate(
+                        offset: const Offset(0, -20),
+                        child: _ProfileInfoCard(
+                          userId: userId,
+                          profileState: profileState,
+                          coverHeight: coverHeight,
+                          displayName: displayName ?? 'Профиль',
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverPersistentHeader(
+                    pinned: true,
+                    delegate: _TabsHeaderDelegate(
+                      pageController: _pageController,
+                      tab: _tab,
+                      items: _tabTitles,
+                      onTap: _onTabTap,
+                    ),
+                  ),
+                ];
+              },
+              body: GearPrefsScope(
+                notifier: _gearPrefs,
+                child: PageView.builder(
+                  controller: _pageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: _onPageChanged,
+                  itemCount: _tabTitles.length,
+                  // Ленивая сборка вкладок: создаём по требованию и кэшируем,
+                  // чтобы не тратить кадры и память на невидимые экраны.
+                  itemBuilder: (context, index) => _getTab(index, userId),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -593,65 +643,99 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 // ────────────────────────────────────────────────────────────────────
 
 class _HeaderMetrics {
-  final double screenWidth;
   final double coverHeight;
-  final double containerHeightHeader;
-  final double containerHeightTabs;
   final double threshold;
 
-  const _HeaderMetrics({
-    required this.screenWidth,
-    required this.coverHeight,
-    required this.containerHeightHeader,
-    required this.containerHeightTabs,
-    required this.threshold,
-  });
+  const _HeaderMetrics({required this.coverHeight, required this.threshold});
 
   factory _HeaderMetrics.fromContext(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
     // Фиксированная высота обложки профиля
-    const coverHeight = 180.0;
-    // Высота блока обложки + карточки (используется для исчезновения).
-    final containerHeightHeader = coverHeight + 68;
-    // Высота для расширенной шапки с Tabs (слегка меньше для визуальной связки).
-    final containerHeightTabs = coverHeight + 28;
-    final threshold = containerHeightHeader * 0.8;
-    return _HeaderMetrics(
-      screenWidth: screenW,
-      coverHeight: coverHeight,
-      containerHeightHeader: containerHeightHeader,
-      containerHeightTabs: containerHeightTabs,
-      threshold: threshold,
-    );
+    const coverHeight = 150.0;
+    // Порог для анимации появления имени в AppBar при скролле
+    // Рассчитывается на основе высоты фона
+    final threshold = coverHeight + 30;
+    return _HeaderMetrics(coverHeight: coverHeight, threshold: threshold);
   }
 }
 
-/// Гибкая шапка профиля в стиле VK (cover + HeaderCard внутри flexibleSpace).
-class _ProfileFlexibleSpace extends StatelessWidget {
+/// Зафиксированная фоновая картинка профиля, которая не скроллится
+class _FixedBackgroundCover extends StatelessWidget {
   final int userId;
-  final ProfileHeaderState profileState;
-  final VoidCallback onReload;
-  final double coverHeight;
-  final double containerHeight;
-  final String displayName;
   final String? backgroundUrl;
+  final double coverHeight;
 
-  const _ProfileFlexibleSpace({
+  const _FixedBackgroundCover({
     required this.userId,
-    required this.profileState,
-    required this.onReload,
-    required this.coverHeight,
-    required this.containerHeight,
-    required this.displayName,
     required this.backgroundUrl,
+    required this.coverHeight,
   });
 
   @override
   Widget build(BuildContext context) {
-    // ──────────────────────────────────────────────────────────────
-    // Верхний фон: мягкий градиент из brand в surface, скроллится
-    // вместе с контентом.
-    // ──────────────────────────────────────────────────────────────
+    return Opacity(
+      opacity: 0.95,
+      child: backgroundUrl != null && backgroundUrl!.isNotEmpty
+          ? CachedNetworkImage(
+              // Привязываем ключ к userId + backgroundUrl, чтобы
+              // принудительно пересоздавать виджет и пробивать кэш
+              // при смене обложки после сохранения профиля.
+              key: ValueKey('profile_bg_fixed_${userId}_$backgroundUrl'),
+              imageUrl: backgroundUrl!,
+              width: double.infinity,
+              height: coverHeight,
+              fit: BoxFit.cover,
+              placeholder: (context, url) => Container(
+                width: double.infinity,
+                height: coverHeight,
+                color: AppColors.getBackgroundColor(context),
+                child: Center(
+                  child: CupertinoActivityIndicator(
+                    radius: 10,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Image.asset(
+                'assets/fon.jpg',
+                width: double.infinity,
+                height: coverHeight,
+                fit: BoxFit.cover,
+              ),
+            )
+          : Container(
+              // Показываем только индикатор загрузки или прозрачный контейнер,
+              // пока данные профиля не загружены. Дефолтная картинка показывается
+              // только при ошибке загрузки пользовательской картинки.
+              width: double.infinity,
+              height: coverHeight,
+              color: AppColors.getBackgroundColor(context),
+              child: Center(
+                child: CupertinoActivityIndicator(
+                  radius: 10,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+/// Блок с аватаром и информацией на белом фоне, который скроллится
+class _ProfileInfoCard extends StatelessWidget {
+  final int userId;
+  final ProfileHeaderState profileState;
+  final double coverHeight;
+  final String displayName;
+
+  const _ProfileInfoCard({
+    required this.userId,
+    required this.profileState,
+    required this.coverHeight,
+    required this.displayName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final surface = AppColors.getSurfaceColor(context);
     final profile = profileState.profile;
 
@@ -664,76 +748,146 @@ class _ProfileFlexibleSpace extends StatelessWidget {
     final followers = isValidProfile ? (profile.followers ?? 0) : 0;
     final following = isValidProfile ? (profile.following ?? 0) : 0;
     final avatarUrl = isValidProfile ? profile.avatar : null;
-    final background = isValidProfile ? backgroundUrl : null;
+    final city = isValidProfile ? profile.city : null;
 
+    // ──────────────────────────────────────────────────────────────
+    // ВАЖНО: не поднимаем карточку через Transform.translate.
+    // Transform не меняет layout-высоту, из-за чего снизу остаётся
+    // «пустота», через которую виден серый фон экрана.
+    // ──────────────────────────────────────────────────────────────
     return Container(
-      color: surface,
-      height: containerHeight,
-      child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(AppRadius.xl),
-          bottomRight: Radius.circular(AppRadius.xl),
-        ),
-        child: Stack(
-          children: [
-            // Фоновая картинка cover
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: coverHeight,
-              child: background != null && background.isNotEmpty
-                  ? CachedNetworkImage(
-                      // Привязываем ключ к userId + backgroundUrl, чтобы
-                      // принудительно пересоздавать виджет и пробивать кэш
-                      // при смене обложки после сохранения профиля.
-                      key: ValueKey('profile_bg_${userId}_$background'),
-                      imageUrl: background,
-                      width: double.infinity,
-                      height: coverHeight,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        width: double.infinity,
-                        height: coverHeight,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Center(
-                          child: CupertinoActivityIndicator(
-                            radius: 10,
-                            color: AppColors.getIconSecondaryColor(context),
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xll)),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.topCenter,
+        children: [
+          // ──────────────────────────────────────────────────────────────
+          // Слой с информацией (определяет высоту блока)
+          // ──────────────────────────────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.only(top: 52, bottom: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 4),
+                // Блок с именем и статистикой
+                SizedBox(
+                  height: 24,
+                  child: Text(
+                    displayName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.h18w6,
+                  ),
+                ),
+                // Город с иконкой location (отображается только если указан)
+                if (city != null && city.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.placemark,
+                        size: 14,
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        city,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Divider(
+                  height: 1,
+                  thickness: 0.5,
+                  indent: 16,
+                  endIndent: 16,
+                  color: AppColors.getDividerColor(context),
+                ),
+                const SizedBox(height: 12),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: IntrinsicWidth(
+                            child: _CountPill(
+                              label: 'Подписки',
+                              value: following,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (_) => CommunicationPrefsPage(
+                                      startIndex: 0,
+                                      userId: userId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                      errorWidget: (context, url, error) => Image.asset(
-                        'assets/fon.jpg',
-                        width: double.infinity,
-                        height: coverHeight,
-                        fit: BoxFit.cover,
+                      const SizedBox(width: 24),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: IntrinsicWidth(
+                            child: _CountPill(
+                              label: 'Подписчики',
+                              value: followers,
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  CupertinoPageRoute(
+                                    builder: (_) => CommunicationPrefsPage(
+                                      startIndex: 1,
+                                      userId: userId,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                       ),
-                    )
-                  : Image.asset(
-                      'assets/fon.jpg',
-                      width: double.infinity,
-                      height: coverHeight,
-                      fit: BoxFit.cover,
-                    ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-
-            // Аватар с обводкой внизу обложки (как логотип в клубах)
-            // ──────────────────────────────────────────────────────────────
-            // 🔹 КЛЮЧ: привязываем к userId и avatarUrl, чтобы при смене
-            // пользователя виджет пересоздавался и не показывал старый аватар
-            // ──────────────────────────────────────────────────────────────
-            Positioned(
-              left: 12,
-              bottom: 4,
+          ),
+          // ──────────────────────────────────────────────────────────────
+          // Слой с аватаром (не влияет на высоту блока)
+          // ──────────────────────────────────────────────────────────────
+          Positioned(
+            top: -52,
+            left: 0,
+            right: 0,
+            child: Center(
               child: Container(
-                width: 92,
-                height: 92,
+                width: 104,
+                height: 104,
                 decoration: BoxDecoration(
                   color: surface,
                   shape: BoxShape.circle,
                 ),
-                padding: const EdgeInsets.all(1),
+                padding: const EdgeInsets.all(2),
                 child: ClipOval(
                   child: isValidProfile
                       ? Avatar(
@@ -743,13 +897,13 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                           image: (avatarUrl != null && avatarUrl.isNotEmpty)
                               ? avatarUrl
                               : 'assets/avatar_0.png',
-                          size: 90,
+                          size: 100,
                           fadeIn: true,
                           gapless: true,
                         )
                       : Container(
-                          width: 90,
-                          height: 90,
+                          width: 100,
+                          height: 100,
                           color: AppColors.getBackgroundColor(context),
                           child: Center(
                             child: CupertinoActivityIndicator(
@@ -761,67 +915,8 @@ class _ProfileFlexibleSpace extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Блок с именем, возрастом/городом и статистикой
-            Positioned(
-              left: 116,
-              right: 12,
-              top: coverHeight + 11,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  SizedBox(
-                    height: 24,
-                    child: Text(
-                      displayName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.h17w6.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      _CountPill(
-                        label: 'Подписки',
-                        value: following,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (_) => CommunicationPrefsPage(
-                                startIndex: 0,
-                                userId: userId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 24),
-                      _CountPill(
-                        label: 'Подписчики',
-                        value: followers,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            CupertinoPageRoute(
-                              builder: (_) => CommunicationPrefsPage(
-                                startIndex: 1,
-                                userId: userId,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -833,21 +928,19 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   final int tab;
   final List<String> items;
   final ValueChanged<int> onTap;
-  final double coverHeight;
 
   _TabsHeaderDelegate({
     required this.pageController,
     required this.tab,
     required this.items,
     required this.onTap,
-    required this.coverHeight,
   });
 
   @override
-  double get minExtent => 41 + _overlap();
+  double get minExtent => 41 + _overlap() + 8; // 12 сверху + 12 снизу
 
   @override
-  double get maxExtent => 41 + _overlap();
+  double get maxExtent => 41 + _overlap() + 8; // 12 сверху + 12 снизу
 
   @override
   Widget build(
@@ -855,34 +948,38 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: AppColors.getSurfaceColor(context),
-      padding: EdgeInsets.only(top: _overlap()),
-      child: Column(
-        children: [
-          SizedBox(
-            height: 40.5,
-            child: AnimatedBuilder(
-              animation: pageController,
-              builder: (_, __) {
-                final page = pageController.hasClients
-                    ? (pageController.page ?? tab.toDouble())
-                    : tab.toDouble();
-                return TabsBar(
-                  value: tab,
-                  page: page,
-                  items: items,
-                  onChanged: onTap,
-                );
-              },
+    return Transform.translate(
+      offset: const Offset(0, -10),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(AppRadius.md),
+            topRight: Radius.circular(AppRadius.md),
+          ),
+        ),
+        padding: EdgeInsets.only(top: _overlap() + 4, bottom: 4),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 40.5,
+              child: AnimatedBuilder(
+                animation: pageController,
+                builder: (_, __) {
+                  final page = pageController.hasClients
+                      ? (pageController.page ?? tab.toDouble())
+                      : tab.toDouble();
+                  return TabsBar(
+                    value: tab,
+                    page: page,
+                    items: items,
+                    onChanged: onTap,
+                  );
+                },
+              ),
             ),
-          ),
-          Divider(
-            height: 0.5,
-            thickness: 0.5,
-            color: AppColors.getDividerColor(context),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -891,13 +988,12 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant _TabsHeaderDelegate oldDelegate) {
     return oldDelegate.tab != tab ||
         oldDelegate.items != items ||
-        oldDelegate.pageController != pageController ||
-        oldDelegate.coverHeight != coverHeight;
+        oldDelegate.pageController != pageController;
   }
 
   double _overlap() {
     // Небольшое перекрытие, чтобы Tabs визуально "поджимались" к шапке
-    // (как в club_detail_screen) — слегка уменьшаем до 4px, чтобы поднять Tabs
+    // (как в club_detail_screen).
     return 2;
   }
 }
@@ -915,30 +1011,30 @@ class _CountPill extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-        ),
-        padding: const EdgeInsets.only(left: 0, right: 8, top: 4, bottom: 4),
-        child: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
-            children: [
-              TextSpan(
-                text: '$label: ',
-                style: TextStyle(
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: AppColors.getTextSecondaryColor(context),
               ),
-              TextSpan(
-                text: '$value',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$value',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.getTextPrimaryColor(context),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1242,7 +1338,9 @@ Future<void> _showUserMenu({
       MoreMenuItem(
         text: areActivitiesHidden ? 'Показать тренировки' : 'Скрыть тренировки',
         icon: CupertinoIcons.flame,
-        iconColor: areActivitiesHidden ? AppColors.brandPrimary : AppColors.error,
+        iconColor: areActivitiesHidden
+            ? AppColors.brandPrimary
+            : AppColors.error,
         textStyle: areActivitiesHidden
             ? null
             : TextStyle(color: textPrimaryColor),
@@ -1272,11 +1370,10 @@ Future<void> _showUserMenu({
       textStyle: TextStyle(color: textPrimaryColor),
       onTap: () {
         MoreMenuHub.hide();
-        Navigator.of(context, rootNavigator: true).push(
-          TransparentPageRoute(
-            builder: (_) => const ComplaintScreen(),
-          ),
-        );
+        Navigator.of(
+          context,
+          rootNavigator: true,
+        ).push(TransparentPageRoute(builder: (_) => const ComplaintScreen()));
       },
     ),
 
