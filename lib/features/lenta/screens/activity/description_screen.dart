@@ -1002,50 +1002,57 @@ class _ActivityDescriptionPageState
                   ),
                 ),
 
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
                 // ───────── БЛОК ГРАФИКА ВЫСОТЫ
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _ChartMetricsHeader(mode: 2, summary: _chartsSummary),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            height: 210,
-                            width: double.infinity,
-                            child: _isLoadingCharts
-                                ? const Center(
-                                    child: CupertinoActivityIndicator(
-                                      radius: 10,
-                                    ),
-                                  )
-                                : _SimpleLineChart(
-                                    mode: 2,
-                                    paceData: _paceData,
-                                    heartRateData: _heartRateData,
-                                    elevationData: _elevationData,
-                                  ),
+                // 🏊 ДЛЯ ПЛАВАНИЯ: не показываем график высоты
+                if (!(a.type.toLowerCase() == 'swim' ||
+                    a.type.toLowerCase() == 'swimming')) ...[
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: Border.all(
+                            color: AppColors.getBorderColor(context),
+                            width: 1,
                           ),
-                        ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ChartMetricsHeader(
+                              mode: 2,
+                              summary: _chartsSummary,
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 210,
+                              width: double.infinity,
+                              child: _isLoadingCharts
+                                  ? const Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                      ),
+                                    )
+                                  : _SimpleLineChart(
+                                      mode: 2,
+                                      paceData: _paceData,
+                                      heartRateData: _heartRateData,
+                                      elevationData: _elevationData,
+                                    ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                ] else
+                  // 🏊 ДЛЯ ПЛАВАНИЯ: добавляем отступ снизу, если графика Высота нет
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
               ],
             ),
           ),
