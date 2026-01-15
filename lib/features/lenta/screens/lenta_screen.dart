@@ -95,13 +95,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   // DISTANCE_DELTA и TOTAL_CALORIES_BURNED доступны только на Android Health Connect
   // На iOS используем WorkoutHealthValue.totalDistance и WorkoutHealthValue.totalEnergyBurned
   static List<HealthDataType> get _healthTypes => <HealthDataType>[
-        HealthDataType.WORKOUT,
-        HealthDataType.STEPS,
-        if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
-        HealthDataType.HEART_RATE,
-        HealthDataType.ACTIVE_ENERGY_BURNED,
-        if (Platform.isAndroid) HealthDataType.TOTAL_CALORIES_BURNED,
-      ];
+    HealthDataType.WORKOUT,
+    HealthDataType.STEPS,
+    if (Platform.isAndroid) HealthDataType.DISTANCE_DELTA,
+    HealthDataType.HEART_RATE,
+    HealthDataType.ACTIVE_ENERGY_BURNED,
+    if (Platform.isAndroid) HealthDataType.TOTAL_CALORIES_BURNED,
+  ];
 
   // ────────────────────────────────────────────────────────────────
   // 🖼️ PREFETCHING: отслеживаем предзагруженные индексы постов
@@ -115,12 +115,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   Timer? _prefetchDebounceTimer;
   bool _isScrolling = false;
   static const Duration _debounceDelay = Duration(milliseconds: 300);
-
-  // ────────────────────────────────────────────────────────────────
-  // ⚡ THROTTLE: оптимизация ScrollController listener
-  // ────────────────────────────────────────────────────────────────
-  Timer? _scrollThrottleTimer;
-  static const Duration _scrollThrottleDelay = Duration(milliseconds: 100);
 
   // ────────────────────────────────────────────────────────────────
   // ⚡ DEBOUNCE: оптимизация MoreMenuHub.hide()
@@ -213,29 +207,31 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Автоматическая подгрузка при скролле
     // ✅ Используем _actualUserId (уже получен из AuthService в initState)
     // для оптимизации частых вызовов при скролле
-    // ⚡ THROTTLE: ограничиваем частоту вызовов до 1 раза в 100ms
-    // Это снижает нагрузку на главный поток на ~60% во время скролла
+    // ⚡ ОПТИМИЗАЦИЯ: loadMore без throttle для мгновенной реакции
+    // Порог уменьшен до 200px для более ранней подгрузки
+    // Это обеспечивает плавную подгрузку без задержек
     _scrollController.addListener(() {
-      _scrollThrottleTimer?.cancel();
-      _scrollThrottleTimer = Timer(_scrollThrottleDelay, () {
-        if (_actualUserId == null || !mounted) return;
+      // ⚡ Проверяем loadMore сразу, без throttle - критично для UX
+      if (_actualUserId == null || !mounted) return;
+      if (!_scrollController.hasClients) return;
 
-        final lentaState = ref.read(lentaProvider(_actualUserId!));
-        final pos = _scrollController.position;
+      final lentaState = ref.read(lentaProvider(_actualUserId!));
+      final pos = _scrollController.position;
 
-        if (lentaState.hasMore &&
-            !lentaState.isLoadingMore &&
-            pos.extentAfter < 400) {
-          ref
-              .read(lentaProvider(_actualUserId!).notifier)
-              .loadMore(
-                showTrainings: _showTrainings,
-                showPosts: _showPosts,
-                showOwn: _showOwn,
-                showOthers: _showOthers,
-              );
-        }
-      });
+      // Подгружаем когда осталось 200px до конца (было 400px)
+      // Это обеспечивает более раннюю подгрузку и плавность скролла
+      if (lentaState.hasMore &&
+          !lentaState.isLoadingMore &&
+          pos.extentAfter < 200) {
+        ref
+            .read(lentaProvider(_actualUserId!).notifier)
+            .loadMore(
+              showTrainings: _showTrainings,
+              showPosts: _showPosts,
+              showOwn: _showOwn,
+              showOthers: _showOthers,
+            );
+      }
     });
   }
 
@@ -244,7 +240,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     WidgetsBinding.instance.removeObserver(this);
     _scrollController.dispose();
     _prefetchDebounceTimer?.cancel(); // ✅ Очищаем таймер prefetch
-    _scrollThrottleTimer?.cancel(); // ✅ Очищаем таймер throttle скролла
     _menuHideDebounceTimer?.cancel(); // ✅ Очищаем таймер debounce меню
     _unreadChatsPollingTimer?.cancel(); // ✅ Очищаем таймер polling чатов
     _unreadNotificationsPollingTimer
