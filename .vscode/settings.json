@@ -1,0 +1,5 @@
+{
+  // Отключаем подтверждение синхронизации Git (pull/push)
+  "git.confirmSync": false,
+  "git.confirmForceSync": false
+}
