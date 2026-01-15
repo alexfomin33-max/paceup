@@ -12,6 +12,8 @@ import '../../../features/complaint.dart';
 import '../../../core/widgets/more_menu_hub.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
+import '../providers/user_photos_provider.dart';
+import '../providers/user_clubs_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../providers/avatar_version_provider.dart';
 import '../../../providers/services/api_provider.dart';
@@ -71,6 +73,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   final PageController _pageController = PageController();
   final GearPrefs _gearPrefs = GearPrefs();
   final GlobalKey<MainTabState> _mainTabKey = GlobalKey<MainTabState>();
+  final GlobalKey<StatsTabState> _statsTabKey = GlobalKey<StatsTabState>();
+  final GlobalKey<TrainingTabState> _trainingTabKey = GlobalKey<TrainingTabState>();
+  final GlobalKey<GearTabState> _gearTabKey = GlobalKey<GearTabState>();
   late List<Widget?> _tabCache = List<Widget?>.filled(
     _tabTitles.length,
     null,
@@ -197,13 +202,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       case 1:
         return PhotosTab(userId: userId);
       case 2:
-        return StatsTab(userId: userId);
+        return StatsTab(key: _statsTabKey, userId: userId);
       case 3:
-        return TrainingTab(userId: userId);
+        return TrainingTab(key: _trainingTabKey, userId: userId);
       case 4:
         return const RacesTab();
       case 5:
-        return GearTab(userId: userId);
+        return GearTab(key: _gearTabKey, userId: userId);
       case 6:
         return ClubsTab(userId: userId);
       case 7:
@@ -217,27 +222,45 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _onPageChanged(int i) {
     setState(() => _tab = i);
-    // При переключении на вкладку "Основное" (индекс 0) проверяем кэш
-    if (i == 0) {
-      MainTab.checkCache(_mainTabKey);
+
+    // ────────────────────────────────────────────────────────────────────────
+    // Обновление данных конкретной вкладки при переключении
+    // ────────────────────────────────────────────────────────────────────────
+    final userId = widget.userId ?? ref.read(currentUserIdProvider).value;
+    if (userId == null) return;
+
+    switch (i) {
+      case 0: // Основное
+        MainTab.checkCache(_mainTabKey);
+        break;
+      case 1: // Фото
+        ref.read(userPhotosProvider(userId).notifier).refresh();
+        break;
+      case 2: // Статистика
+        _statsTabKey.currentState?.refresh();
+        break;
+      case 3: // Тренировки
+        _trainingTabKey.currentState?.refresh();
+        break;
+      case 4: // Соревнования - статические данные, не обновляем
+        break;
+      case 5: // Снаряжение
+        _gearTabKey.currentState?.refresh();
+        break;
+      case 6: // Клубы
+        ref.invalidate(userClubsProvider(userId));
+        break;
+      case 7: // Награды - статические данные, не обновляем
+        break;
+      case 8: // Навыки - статические данные, не обновляем
+        break;
     }
 
     // ────────────────────────────────────────────────────────────────────────
     // Обновление данных профиля при переключении вкладок
     // Обновляем количество подписок и подписчиков при каждом переключении
     // ────────────────────────────────────────────────────────────────────────
-    final userId = widget.userId;
-    if (userId != null) {
-      _refreshProfileDebounced(userId);
-    } else {
-      // Если userId не передан, получаем текущего пользователя
-      final currentUserIdAsync = ref.read(currentUserIdProvider);
-      currentUserIdAsync.whenData((currentUserId) {
-        if (currentUserId != null) {
-          _refreshProfileDebounced(currentUserId);
-        }
-      });
-    }
+    _refreshProfileDebounced(userId);
   }
 
   // ────────────────────────────────────────────────────────────────────────

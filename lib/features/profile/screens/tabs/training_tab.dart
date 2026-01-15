@@ -22,10 +22,10 @@ class TrainingTab extends ConsumerStatefulWidget {
   const TrainingTab({super.key, required this.userId});
 
   @override
-  ConsumerState<TrainingTab> createState() => _TrainingTabState();
+  ConsumerState<TrainingTab> createState() => TrainingTabState();
 }
 
-class _TrainingTabState extends ConsumerState<TrainingTab>
+class TrainingTabState extends ConsumerState<TrainingTab>
     with AutomaticKeepAliveClientMixin {
   // Текущий месяц
   late DateTime _month;
@@ -46,6 +46,13 @@ class _TrainingTabState extends ConsumerState<TrainingTab>
 
   @override
   bool get wantKeepAlive => true;
+
+  /// Публичный метод для обновления данных тренировок
+  void refresh() {
+    ref.invalidate(trainingActivitiesProvider(
+      (userId: widget.userId, sports: _sports),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {

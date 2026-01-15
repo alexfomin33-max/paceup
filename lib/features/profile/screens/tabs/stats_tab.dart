@@ -15,13 +15,20 @@ class StatsTab extends StatefulWidget {
   const StatsTab({super.key, this.userId});
 
   @override
-  State<StatsTab> createState() => _StatsTabState();
+  State<StatsTab> createState() => StatsTabState();
 }
 
-class _StatsTabState extends State<StatsTab>
+class StatsTabState extends State<StatsTab>
     with AutomaticKeepAliveClientMixin {
+  final GlobalKey<_ByTypeContentState> _contentKey = GlobalKey<_ByTypeContentState>();
+
   @override
   bool get wantKeepAlive => true;
+
+  /// Публичный метод для обновления данных статистики
+  void refresh() {
+    _contentKey.currentState?.refresh();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +44,9 @@ class _StatsTabState extends State<StatsTab>
       physics: const NeverScrollableScrollPhysics(),
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
-        ...buildByTypeStatsSlivers(userId),
+        SliverToBoxAdapter(
+          child: _ByTypeContent(key: _contentKey, userId: userId),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 18)),
       ],
     );
@@ -46,7 +55,7 @@ class _StatsTabState extends State<StatsTab>
 
 class _ByTypeContent extends StatefulWidget {
   final int userId;
-  const _ByTypeContent({required this.userId});
+  const _ByTypeContent({super.key, required this.userId});
   @override
   State<_ByTypeContent> createState() => _ByTypeContentState();
 }
@@ -72,6 +81,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   @override
   void initState() {
     super.initState();
+    _loadStats();
+  }
+
+  /// Публичный метод для обновления данных статистики
+  void refresh() {
     _loadStats();
   }
 

@@ -57,10 +57,10 @@ class GearTab extends ConsumerStatefulWidget {
   final int userId;
   const GearTab({super.key, required this.userId});
   @override
-  ConsumerState<GearTab> createState() => _GearTabState();
+  ConsumerState<GearTab> createState() => GearTabState();
 }
 
-class _GearTabState extends ConsumerState<GearTab>
+class GearTabState extends ConsumerState<GearTab>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
@@ -79,6 +79,11 @@ class _GearTabState extends ConsumerState<GearTab>
   @override
   void initState() {
     super.initState();
+    _loadEquipment();
+  }
+
+  /// Публичный метод для обновления данных снаряжения
+  void refresh() {
     _loadEquipment();
   }
 
