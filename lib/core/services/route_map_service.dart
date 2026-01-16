@@ -29,14 +29,22 @@ class RouteMapService {
   // ──────────────────────────── Кеш для URL изображений ────────────────────────────
   // Кешируем результаты запросов, чтобы не делать повторные запросы для одной активности
   final Map<int, String?> _routeMapUrlCache = {};
+  final Map<int, String?> _routeMapThumbnailUrlCache = {};
 
   /// Проверяет наличие URL в кеше (синхронно)
   /// Возвращает URL если есть в кеше, иначе null
-  String? getCachedRouteMapUrl(int activityId) {
+  String? getCachedRouteMapUrl(int activityId, {bool thumbnail = false}) {
+    if (thumbnail) {
+      return _routeMapThumbnailUrlCache[activityId];
+    }
     return _routeMapUrlCache[activityId];
   }
 
   /// Получает URL сохраненного изображения карты маршрута для активности
+  ///
+  /// Параметры:
+  /// - [activityId] - ID активности
+  /// - [thumbnail] - если true, возвращает мини-карту для экрана профиля
   ///
   /// Возвращает:
   /// - URL изображения, если оно сохранено на сервере
@@ -45,23 +53,27 @@ class RouteMapService {
   /// ⚡ PERFORMANCE OPTIMIZATION:
   /// - Использует кеш для избежания повторных запросов
   /// - Не блокирует UI (асинхронный запрос)
-  Future<String?> getRouteMapUrl(int activityId) async {
+  Future<String?> getRouteMapUrl(int activityId, {bool thumbnail = false}) async {
     // Проверяем кеш
-    if (_routeMapUrlCache.containsKey(activityId)) {
-      return _routeMapUrlCache[activityId];
+    final cache = thumbnail ? _routeMapThumbnailUrlCache : _routeMapUrlCache;
+    if (cache.containsKey(activityId)) {
+      return cache[activityId];
     }
 
     try {
       final response = await _api.get(
         '/get_activity_route_map.php',
-        queryParams: {'activity_id': activityId.toString()},
+        queryParams: {
+          'activity_id': activityId.toString(),
+          if (thumbnail) 'thumbnail': '1',
+        },
       );
 
       final routeMapUrl = response['route_map_url'] as String?;
       final exists = response['exists'] as bool? ?? false;
 
       // Кешируем результат (даже если null)
-      _routeMapUrlCache[activityId] = exists ? routeMapUrl : null;
+      cache[activityId] = exists ? routeMapUrl : null;
 
       return exists ? routeMapUrl : null;
     } catch (e) {
@@ -69,7 +81,7 @@ class RouteMapService {
         debugPrint('⚠️ RouteMapService: Ошибка получения URL карты: $e');
       }
       // При ошибке возвращаем null (будет генерироваться через Mapbox)
-      _routeMapUrlCache[activityId] = null;
+      cache[activityId] = null;
       return null;
     }
   }
@@ -80,6 +92,7 @@ class RouteMapService {
   /// - [activityId] - ID активности
   /// - [userId] - ID пользователя (для проверки прав доступа)
   /// - [imageFile] - файл изображения для загрузки
+  /// - [thumbnail] - если true, сохраняет как мини-карту для экрана профиля
   ///
   /// Возвращает URL сохраненного изображения или null при ошибке
   ///
@@ -90,6 +103,7 @@ class RouteMapService {
     required int activityId,
     required int userId,
     required File imageFile,
+    bool thumbnail = false,
   }) async {
     try {
       final response = await _api.postMultipart(
@@ -98,6 +112,7 @@ class RouteMapService {
         fields: {
           'activity_id': activityId.toString(),
           'user_id': userId.toString(),
+          if (thumbnail) 'thumbnail': '1',
         },
       );
 
@@ -105,7 +120,11 @@ class RouteMapService {
       
       // Обновляем кеш после успешного сохранения
       if (routeMapUrl != null) {
-        _routeMapUrlCache[activityId] = routeMapUrl;
+        if (thumbnail) {
+          _routeMapThumbnailUrlCache[activityId] = routeMapUrl;
+        } else {
+          _routeMapUrlCache[activityId] = routeMapUrl;
+        }
       }
 
       return routeMapUrl;
@@ -125,6 +144,7 @@ class RouteMapService {
   /// - [activityId] - ID активности
   /// - [userId] - ID пользователя
   /// - [mapboxUrl] - URL изображения от Mapbox
+  /// - [thumbnail] - если true, сохраняет как мини-карту для экрана профиля
   ///
   /// ⚡ PERFORMANCE OPTIMIZATION:
   /// - Скачивает изображение в память без сохранения на диск
@@ -133,6 +153,7 @@ class RouteMapService {
     required int activityId,
     required int userId,
     required String mapboxUrl,
+    bool thumbnail = false,
   }) async {
     try {
       // Скачиваем изображение из Mapbox
@@ -146,7 +167,8 @@ class RouteMapService {
       }
 
       // Сохраняем во временный файл
-      final tempFile = File('${Directory.systemTemp.path}/route_map_$activityId.png');
+      final suffix = thumbnail ? '_thumbnail' : '';
+      final tempFile = File('${Directory.systemTemp.path}/route_map${suffix}_$activityId.png');
       await tempFile.writeAsBytes(response.bodyBytes);
 
       try {
@@ -155,6 +177,7 @@ class RouteMapService {
           activityId: activityId,
           userId: userId,
           imageFile: tempFile,
+          thumbnail: thumbnail,
         );
 
         return savedUrl;
@@ -177,10 +200,12 @@ class RouteMapService {
   /// Очищает кеш для конкретной активности
   void clearCache(int activityId) {
     _routeMapUrlCache.remove(activityId);
+    _routeMapThumbnailUrlCache.remove(activityId);
   }
 
   /// Очищает весь кеш
   void clearAllCache() {
     _routeMapUrlCache.clear();
+    _routeMapThumbnailUrlCache.clear();
   }
 }
