@@ -56,6 +56,9 @@ class _MainTabState extends MainTabState
   Future<MainTabData>? _future;
   bool _isCheckingCache =
       false; // Флаг для предотвращения параллельных проверок
+  // Ключ для доступа к состоянию графика недельной активности
+  final GlobalKey<WeeklyActivityChartState> _weeklyChartKey =
+      GlobalKey<WeeklyActivityChartState>();
 
   @override
   void initState() {
@@ -218,6 +221,8 @@ class _MainTabState extends MainTabState
     setState(() {
       _future = _load(forceRefresh: true);
     });
+    // Обновляем график недельной активности при pull-to-refresh
+    _weeklyChartKey.currentState?.refresh();
     await _future;
   }
 
@@ -344,7 +349,10 @@ class _MainTabState extends MainTabState
       SliverToBoxAdapter(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: WeeklyActivityChart(userId: widget.userId),
+          child: WeeklyActivityChart(
+            key: _weeklyChartKey,
+            userId: widget.userId,
+          ),
         ),
       ),
 

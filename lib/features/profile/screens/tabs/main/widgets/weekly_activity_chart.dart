@@ -144,7 +144,13 @@ class WeeklyActivityChart extends ConsumerStatefulWidget {
       _WeeklyActivityChartState();
 }
 
-class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
+/// Публичный класс состояния для доступа извне
+abstract class WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
+  /// Публичный метод для принудительного обновления данных графика
+  void refresh();
+}
+
+class _WeeklyActivityChartState extends WeeklyActivityChartState {
   List<WeekData> _weeks = [];
   bool _isLoading = true;
   String? _error;
@@ -168,6 +174,11 @@ class _WeeklyActivityChartState extends ConsumerState<WeeklyActivityChart> {
       });
       _loadData();
     }
+  }
+
+  @override
+  void refresh() {
+    _loadData();
   }
 
   Future<void> _loadData() async {
