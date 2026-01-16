@@ -877,6 +877,27 @@ class _ActivityDescriptionPageState
                                   latestActivity.comments + 1,
                                 );
                           },
+                          onCommentDeleted: () {
+                            final currentState = ref.read(
+                              lentaProvider(widget.currentUserId),
+                            );
+                            final latestActivity = currentState.items
+                                .firstWhere(
+                                  (a) => a.lentaId == activityItem.lentaId,
+                                  orElse: () => activityItem,
+                                );
+
+                            // Уменьшаем счетчик на 1 (но не меньше 0)
+                            final newCount = (latestActivity.comments - 1).clamp(0, double.infinity).toInt();
+                            ref
+                                .read(
+                                  lentaProvider(widget.currentUserId).notifier,
+                                )
+                                .updateComments(
+                                  activityItem.lentaId,
+                                  newCount,
+                                );
+                          },
                         );
                       },
                       onOpenTogether: () {

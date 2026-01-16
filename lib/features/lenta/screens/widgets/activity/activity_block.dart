@@ -514,6 +514,26 @@ class ActivityBlock extends ConsumerWidget {
                                 latestActivity.comments + 1,
                               );
                         },
+                        // Оптимистичное обновление: уменьшаем счетчик на 1
+                        onCommentDeleted: () {
+                          // Получаем актуальный счетчик из провайдера перед обновлением
+                          final currentState = ref.read(
+                            lentaProvider(currentUserId),
+                          );
+                          final latestActivity = currentState.items.firstWhere(
+                            (a) => a.lentaId == activityItem.lentaId,
+                            orElse: () => activityItem, // fallback
+                          );
+
+                          // Уменьшаем счетчик на 1 (но не меньше 0)
+                          final newCount = (latestActivity.comments - 1).clamp(0, double.infinity).toInt();
+                          ref
+                              .read(lentaProvider(currentUserId).notifier)
+                              .updateComments(
+                                activityItem.lentaId,
+                                newCount,
+                              );
+                        },
                       );
                     },
 

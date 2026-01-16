@@ -706,6 +706,23 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             .read(lentaProvider(_actualUserId!).notifier)
             .updateComments(activity.lentaId, updatedActivity.comments + 1);
       },
+      // ────────────────────────────────────────────────────────────────
+      // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: уменьшаем счетчик комментариев на 1
+      // ────────────────────────────────────────────────────────────────
+      onCommentDeleted: () {
+        // Получаем актуальный счетчик из провайдера перед обновлением
+        final currentState = ref.read(lentaProvider(_actualUserId!));
+        final updatedActivity = currentState.items.firstWhere(
+          (a) => a.lentaId == activity.lentaId,
+          orElse: () => activity, // fallback на исходную activity
+        );
+
+        // Оптимистичное обновление: уменьшаем счетчик на 1 (но не меньше 0)
+        final newCount = (updatedActivity.comments - 1).clamp(0, double.infinity).toInt();
+        ref
+            .read(lentaProvider(_actualUserId!).notifier)
+            .updateComments(activity.lentaId, newCount);
+      },
     );
   }
 
