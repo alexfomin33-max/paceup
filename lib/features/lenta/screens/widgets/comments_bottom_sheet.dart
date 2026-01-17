@@ -26,6 +26,7 @@ void showCommentsBottomSheet({
   required int currentUserId,
   required int lentaId,
   VoidCallback? onCommentAdded,
+  VoidCallback? onCommentDeleted,
 }) {
   // ────────────────────────────────────────────────────────────────
   // ✅ ВАЖНО: используем штатный showModalBottomSheet
@@ -58,6 +59,7 @@ void showCommentsBottomSheet({
       currentUserId: currentUserId,
       lentaId: lentaId,
       onCommentAdded: onCommentAdded,
+      onCommentDeleted: onCommentDeleted,
     ),
   );
 }
@@ -126,6 +128,8 @@ class CommentsBottomSheet extends ConsumerStatefulWidget {
   final int lentaId; // ID из таблицы lenta для обновления счетчика
   final VoidCallback?
   onCommentAdded; // Callback после успешного добавления комментария
+  final VoidCallback?
+  onCommentDeleted; // Callback после успешного удаления комментария
 
   const CommentsBottomSheet({
     super.key,
@@ -134,6 +138,7 @@ class CommentsBottomSheet extends ConsumerStatefulWidget {
     required this.currentUserId,
     required this.lentaId,
     this.onCommentAdded,
+    this.onCommentDeleted,
   });
 
   @override
@@ -313,6 +318,69 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
   }
 
   /// ────────────────────────────────────────────────────────────────
+  /// 🔹 УДАЛЕНИЕ КОММЕНТАРИЯ: удаляет комментарий и обновляет UI
+  /// ────────────────────────────────────────────────────────────────
+  Future<void> _deleteComment(CommentItem comment) async {
+    if (!mounted) return;
+    
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/comments_delete.php',
+        body: {
+          'comment_id': '${comment.id}',
+        },
+      );
+
+      // Проверяем успешность операции - используем прямую проверку как в других местах
+      if (data['success'] != true) {
+        final errorMsg = data['error']?.toString() ?? 
+                        data['message']?.toString() ?? 
+                        'Не удалось удалить комментарий';
+        throw Exception(errorMsg);
+      }
+
+      // ────────────────────────────────────────────────────────────────
+      // 🔄 Динамическое удаление из списка без перезагрузки
+      // ────────────────────────────────────────────────────────────────
+      if (!mounted) return;
+      
+      // Проверяем, что комментарий еще в списке перед удалением
+      final commentExists = _comments.any((c) => c.id == comment.id);
+      if (commentExists) {
+        setState(() {
+          _comments.removeWhere((c) => c.id == comment.id);
+        });
+      }
+
+      // ────────────────────────────────────────────────────────────────
+      // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: вызываем callback после удаления
+      // ────────────────────────────────────────────────────────────────
+      widget.onCommentDeleted?.call();
+
+      if (mounted) {
+        final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+        if (scaffoldMessenger != null) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('Комментарий удален')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);
+        if (scaffoldMessenger != null) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Ошибка удаления: ${ErrorHandler.format(e)}'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  /// ────────────────────────────────────────────────────────────────
   /// 🔹 ПОКАЗ МЕНЮ КОММЕНТАРИЯ: показывает меню с действиями
   /// ────────────────────────────────────────────────────────────────
   void _showCommentMenu({
@@ -329,12 +397,37 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       // ────────────────────────────────────────────────────────────────
       items.add(
         MoreMenuItem(
-          text: 'Удалить комментарий',
+          text: 'Удалить',
           icon: CupertinoIcons.minus_circle,
           iconColor: AppColors.error,
           textStyle: const TextStyle(color: AppColors.error),
-          onTap: () {
-            // Функционал будет добавлен позже
+          onTap: () async {
+            // Показываем диалог подтверждения сразу
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                title: const Text('Удалить комментарий?'),
+                content: const Text('Это действие нельзя отменить.'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Отмена'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                    ),
+                    child: const Text('Удалить'),
+                  ),
+                ],
+              ),
+            );
+
+            // Проверяем результат диалога и что виджет еще смонтирован
+            if (confirmed == true && mounted) {
+              await _deleteComment(comment);
+            }
           },
         ),
       );

@@ -431,37 +431,21 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   }
 
   /// Вычисляет minY, maxY и tick для графика дней активности
+  /// Всегда использует диапазон от 0 до 31 (максимальное количество дней в месяце)
   (double, double, double) _getActiveDaysRange(List<double> values) {
-    if (values.isEmpty || values.every((v) => v <= 0)) {
-      return (0.0, 30.0, 5.0);
-    }
-
-    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
-    final max = values.reduce((a, b) => a > b ? a : b);
-
-    // Добавляем отступ ~5% сверху и снизу
-    final range = max - min;
-    final padding = range * 0.05;
-    final rawMinY = (min - padding).clamp(0.0, double.infinity);
-    final rawMaxY = max + padding;
-
-    // Округляем minY вниз, maxY вверх
-    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 1).floor() * 1).toDouble();
-    final maxY = ((rawMaxY / 1).ceil() * 1).toDouble();
-
-    // Вычисляем tick для 5-7 линий
-    final rangeY = maxY - minY;
-    final targetLines = 6;
-    final rawTick = rangeY / targetLines;
+    // Для графика дней активности всегда используем фиксированный диапазон 0-31
+    const minY = 0.0;
+    const maxY = 31.0;
+    
+    // Вычисляем tick для 6-7 линий на диапазоне 0-31
+    const rangeY = maxY - minY; // 31
+    const targetLines = 6;
+    final rawTick = rangeY / targetLines; // ~5.17
 
     // Округляем tick до разумного значения
     double tick;
-    if (rawTick <= 1) {
-      tick = 1;
-    } else if (rawTick <= 2) {
-      tick = 2;
-    } else if (rawTick <= 5) {
-      tick = 5;
+    if (rawTick <= 5) {
+      tick = 5; // Для диапазона 0-31: 0, 5, 10, 15, 20, 25, 30
     } else {
       tick = ((rawTick / 5).ceil() * 5).toDouble();
     }
