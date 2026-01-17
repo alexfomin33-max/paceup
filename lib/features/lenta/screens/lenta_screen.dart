@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -165,28 +166,73 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       _actualUserId = userId;
 
+      developer.log(
+        '[LENTA_SCREEN] initState: userId=$userId',
+        name: 'LentaScreen',
+      );
+
       if (mounted) {
         // Загружаем сохраненные фильтры перед загрузкой данных
         await _loadFilters();
         setState(() {});
-        // Начальная загрузка через Riverpod provider
-        // После завершения загрузки обновим счетчик непрочитанных чатов
-        ref
-            .read(lentaProvider(userId).notifier)
-            .loadInitial(
-              showTrainings: _showTrainings,
-              showPosts: _showPosts,
-              showOwn: _showOwn,
-              showOthers: _showOthers,
-            )
-            .then((_) {
-              if (mounted && _actualUserId != null && _actualUserId == userId) {
-                // Обновляем счетчик после завершения загрузки ленты
-                ref
-                    .read(unreadChatsProvider(_actualUserId!).notifier)
-                    .loadUnreadCount();
-              }
-            });
+
+        // ✅ Проверяем, есть ли уже данные в провайдере
+        // Если данные уже загружены (например, из code2_screen.dart),
+        // не вызываем loadInitial() чтобы не показывать skeleton loader
+        final currentState = ref.read(lentaProvider(userId));
+        developer.log(
+          '[LENTA_SCREEN] Состояние провайдера в initState: '
+          'items.length=${currentState.items.length}, '
+          'isRefreshing=${currentState.isRefreshing}, '
+          'currentPage=${currentState.currentPage}, '
+          'hasMore=${currentState.hasMore}, '
+          'error=${currentState.error}',
+          name: 'LentaScreen',
+        );
+
+        final hasData = currentState.items.isNotEmpty;
+        developer.log(
+          '[LENTA_SCREEN] hasData=$hasData',
+          name: 'LentaScreen',
+        );
+
+        if (!hasData) {
+          developer.log(
+            '[LENTA_SCREEN] Данных нет, вызываем loadInitial()...',
+            name: 'LentaScreen',
+          );
+          // Начальная загрузка через Riverpod provider
+          // После завершения загрузки обновим счетчик непрочитанных чатов
+          ref
+              .read(lentaProvider(userId).notifier)
+              .loadInitial(
+                showTrainings: _showTrainings,
+                showPosts: _showPosts,
+                showOwn: _showOwn,
+                showOthers: _showOthers,
+              )
+              .then((_) {
+                if (mounted &&
+                    _actualUserId != null &&
+                    _actualUserId == userId) {
+                  // Обновляем счетчик после завершения загрузки ленты
+                  ref
+                      .read(unreadChatsProvider(_actualUserId!).notifier)
+                      .loadUnreadCount();
+                }
+              });
+        } else {
+          developer.log(
+            '[LENTA_SCREEN] ✅ Данные уже загружены, пропускаем loadInitial()',
+            name: 'LentaScreen',
+          );
+          // ✅ Данные уже загружены - обновляем только счетчики
+          if (mounted && _actualUserId != null && _actualUserId == userId) {
+            ref
+                .read(unreadChatsProvider(_actualUserId!).notifier)
+                .loadUnreadCount();
+          }
+        }
         // Загружаем количество непрочитанных чатов сразу (не ждем загрузки ленты)
         ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
         // Запускаем polling для динамического обновления счетчика
@@ -907,8 +953,17 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           isRefreshing: s.isRefreshing,
           hasMore: s.hasMore,
           error: s.error,
+          currentPage: s.currentPage,
         ),
       ),
+    );
+
+    developer.log(
+      '[LENTA_SCREEN] build вызван: items.length=${lentaSnapshot.items.length}, '
+      'isRefreshing=${lentaSnapshot.isRefreshing}, '
+      'currentPage=${lentaSnapshot.currentPage}, '
+      'error=${lentaSnapshot.error}',
+      name: 'LentaScreen',
     );
     // Читаем состояние непрочитанных чатов только по числу, чтобы не триггерить rebuild AppBar
     final unreadChatsCount = _actualUserId != null
@@ -1036,7 +1091,34 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         // ────────────────────────────────────────────────────────────────
         // Если нет данных и идёт загрузка - показываем skeleton loader вместо индикатора
         // Это предотвращает визуальный микролаг после splash screen
-        if (filteredItems.isEmpty && lentaSnapshot.isRefreshing) {
+        // ✅ Показываем skeleton loader только если:
+        // 1. Нет данных (items пустой)
+        // 2. Идёт загрузка (isRefreshing)
+        // 3. Это действительно первая загрузка (currentPage == 1)
+        // 4. Нет ошибки (error == null) - если есть ошибка, показываем её вместо skeleton
+        // Это предотвращает показ skeleton loader, если данные уже загружены из code2_screen.dart
+        // ⚠️ ВАЖНО: skeleton loader показывается только при первой загрузке,
+        // когда данные еще не были загружены ни разу
+        final shouldShowSkeleton = filteredItems.isEmpty &&
+            lentaSnapshot.isRefreshing &&
+            lentaSnapshot.currentPage == 1 &&
+            lentaSnapshot.error == null;
+
+        developer.log(
+          '[LENTA_SCREEN] Проверка показа skeleton loader: '
+          'filteredItems.isEmpty=${filteredItems.isEmpty}, '
+          'isRefreshing=${lentaSnapshot.isRefreshing}, '
+          'currentPage=${lentaSnapshot.currentPage}, '
+          'error=${lentaSnapshot.error}, '
+          'shouldShowSkeleton=$shouldShowSkeleton',
+          name: 'LentaScreen',
+        );
+
+        if (shouldShowSkeleton) {
+          developer.log(
+            '[LENTA_SCREEN] ⚠️ ПОКАЗЫВАЕМ SKELETON LOADER!',
+            name: 'LentaScreen',
+          );
           return ListView(
             padding: const EdgeInsets.only(top: 4, bottom: 12),
             physics: const NeverScrollableScrollPhysics(),

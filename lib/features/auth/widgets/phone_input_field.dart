@@ -68,26 +68,24 @@ class _PhoneInputFieldState extends State<PhoneInputField> {
         style: const TextStyle(color: AppColors.surface),
         inputFormatters: [MaskInputFormatter(mask: '+# (###) ###-##-##')],
         decoration: InputDecoration(
-          hintText: "+7 (999) 123-45-67",
-          labelText: "Телефон",
-          floatingLabelBehavior: FloatingLabelBehavior.always,
+          hintText: "+7 (999) 999-99-99",
           hintStyle: const TextStyle(color: AppColors.textPlaceholder),
-          labelStyle: const TextStyle(color: AppColors.surface, fontSize: 16),
+          filled: true,
+          fillColor: Colors.black.withValues(alpha: 0.1),
           border: OutlineInputBorder(
             borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
           enabledBorder: OutlineInputBorder(
             borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: const BorderSide(width: 1.0, color: AppColors.surface),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
           ),
         ),
       ),
     );
   }
 }
-

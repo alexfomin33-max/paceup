@@ -131,6 +131,9 @@ flutter:
   assets:
      - assets/background.webp
      - assets/logo.png
+     - assets/back.jpg
+     - assets/gorizont.png
+     - assets/logo_white.png
      - assets/logo_icon.png
      - assets/avatar_0.png
      - assets/avatar_1.png

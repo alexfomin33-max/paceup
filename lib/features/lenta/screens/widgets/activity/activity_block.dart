@@ -12,6 +12,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../domain/models/activity_lenta.dart';
 import '../../../../../core/utils/error_handler.dart';
+import '../../../../../core/utils/activity_format.dart';
 
 // Подвиджеты
 import 'header/activity_header.dart';
@@ -141,6 +142,17 @@ class ActivityBlock extends ConsumerWidget {
           // ────────────────────────────────────────────────────────────────
 
           // ────────────────────────────────────────────────────────────────
+          // 📊 ОПРЕДЕЛЕНИЕ: показываются ли метрики поверх карты маршрута
+          // ────────────────────────────────────────────────────────────────
+          // Метрики показываются поверх карты, если есть маршрут или изображения
+          // В этом случае скрываем первую строку метрик в шапке
+          // ────────────────────────────────────────────────────────────────
+          final hasRouteOrImages =
+              updatedActivity.points.isNotEmpty ||
+              updatedActivity.mediaImages.isNotEmpty ||
+              isImportedWithoutRoute;
+
+          // ────────────────────────────────────────────────────────────────
           // 📊 СОЗДАНИЕ ВИДЖЕТА СТАТИСТИКИ: используется в разных местах
           // ────────────────────────────────────────────────────────────────
           // ────────────────────────────────────────────────────────────────
@@ -184,6 +196,10 @@ class ActivityBlock extends ConsumerWidget {
               // 🏊 ДЛЯ ПЛАВАНИЯ В ЛЕНТЕ: скрываем вторую строку метрик
               // ────────────────────────────────────────────────────────────────
               hideSecondRowForSwimInFeed: true,
+              // ────────────────────────────────────────────────────────────────
+              // 📊 СКРЫВАЕМ ПЕРВУЮ СТРОКУ: если метрики показываются поверх карты
+              // ────────────────────────────────────────────────────────────────
+              hideFirstRow: hasRouteOrImages,
             ),
           );
 
@@ -240,8 +256,9 @@ class ActivityBlock extends ConsumerWidget {
                         dateTextOverride: updatedActivity.postDateText,
 
                         // Нижний слот — передаем StatsRow (как в description_screen.dart)
-                        bottom: statsWidget,
-                        bottomGap: 16.0,
+                        // Если метрики показываются поверх карты, скрываем их в шапке
+                        bottom: hasRouteOrImages ? null : statsWidget,
+                        bottomGap: hasRouteOrImages ? 0 : 16.0,
 
                         // ────────────────────────────────────────────────────────────────
                         // 🔹 МЕНЮ С ТРЕМЯ ТОЧКАМИ: показываем всегда, но разное содержимое
@@ -391,44 +408,375 @@ class ActivityBlock extends ConsumerWidget {
                 borderRadius: BorderRadius.zero,
                 child: Builder(
                   builder: (context) {
+                    // ────────────────────────────────────────────────────────────────
+                    // 📊 ФОРМАТИРОВАНИЕ МЕТРИК: вычисляем значения для первой строки
+                    // ────────────────────────────────────────────────────────────────
+                    final activityTypeLower = updatedActivity.type
+                        .toLowerCase();
+                    final isSwim =
+                        activityTypeLower == 'swim' ||
+                        activityTypeLower == 'swimming';
+                    final isBike =
+                        activityTypeLower == 'bike' ||
+                        activityTypeLower == 'bicycle' ||
+                        activityTypeLower == 'cycling';
+                    final isRun =
+                        activityTypeLower == 'run' ||
+                        activityTypeLower == 'running';
+
+                    // Форматирование расстояния
+                    String formatSwimDistance(double meters) {
+                      final value = meters.toStringAsFixed(0);
+                      final buffer = StringBuffer();
+                      for (int i = 0; i < value.length; i++) {
+                        if (i > 0 && (value.length - i) % 3 == 0) {
+                          buffer.write(' ');
+                        }
+                        buffer.write(value[i]);
+                      }
+                      return buffer.toString();
+                    }
+
+                    final distanceText = stats?.distance != null
+                        ? isSwim
+                              ? '${formatSwimDistance(stats!.distance)} м'
+                              : '${((stats!.distance / 1000.0).toStringAsFixed(2))} км'
+                        : '—';
+
+                    // Форматирование времени
+                    final durationText = stats?.duration != null
+                        ? formatDuration(stats!.duration)
+                        : '—';
+
+                    // Форматирование темпа/скорости
+                    String paceText;
+                    double? speedKmh;
+                    if (isSwim) {
+                      if (stats?.avgPace != null && stats!.avgPace > 0) {
+                        paceText = formatPace(stats.avgPace / 10.0);
+                      } else if (stats?.distance != null &&
+                          stats?.duration != null &&
+                          stats!.distance > 0 &&
+                          (stats.duration as num).toDouble() > 0) {
+                        final duration = (stats.duration as num).toDouble();
+                        final paceMinPer100m =
+                            (duration * 100) / (stats.distance * 60);
+                        paceText = formatPace(paceMinPer100m);
+                      } else {
+                        paceText = '—';
+                      }
+                    } else {
+                      paceText = stats?.avgPace != null
+                          ? formatPace(stats!.avgPace)
+                          : '—';
+                    }
+
+                    // Вычисление скорости
+                    if (isBike) {
+                      if (stats?.avgSpeed != null && stats!.avgSpeed > 0) {
+                        speedKmh = stats.avgSpeed;
+                      } else if (stats?.distance != null &&
+                          stats?.duration != null &&
+                          stats!.distance > 0 &&
+                          (stats.duration as num).toDouble() > 0) {
+                        final duration = (stats.duration as num).toDouble();
+                        speedKmh = (stats.distance / duration) * 3.6;
+                      }
+                    } else {
+                      if (stats?.distance != null &&
+                          stats?.duration != null &&
+                          stats!.distance > 0 &&
+                          (stats.duration as num).toDouble() > 0) {
+                        final duration = (stats.duration as num).toDouble();
+                        speedKmh = (stats.distance / duration) * 3.6;
+                      }
+                    }
+                    final speedText = speedKmh != null
+                        ? '${speedKmh.toStringAsFixed(1)} км/ч'
+                        : '—';
+
+                    // ────────────────────────────────────────────────────────────────
+                    // 📊 ВИДЖЕТ ПЕРВОЙ СТРОКИ МЕТРИК: для наложения поверх градиента
+                    // ────────────────────────────────────────────────────────────────
+                    Widget buildOverlayMetricsRow() {
+                      return Positioned(
+                        bottom: 20,
+                        left: 24,
+                        right: 16,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.max,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            SizedBox(
+                              width: 130,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Расстояние',
+                                    style: AppTextStyles.h11w4Sec.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  distanceText == '—'
+                                      ? Text(
+                                          distanceText,
+                                          style: AppTextStyles.h17w6.copyWith(
+                                            color: Colors.white,
+                                          ),
+                                        )
+                                      : Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              TextSpan(
+                                                text: distanceText
+                                                    .replaceAll(' км', '')
+                                                    .replaceAll(' м', ''),
+                                                style: AppTextStyles.h17w6
+                                                    .copyWith(
+                                                      color: Colors.white,
+                                                    ),
+                                              ),
+                                              TextSpan(
+                                                text:
+                                                    distanceText.contains(' км')
+                                                    ? ' км'
+                                                    : ' м',
+                                                style: AppTextStyles.h17w6
+                                                    .copyWith(
+                                                      fontSize: 16,
+                                                      color: Colors.white,
+                                                    ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                              width: 110,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Время, мин',
+                                    style: AppTextStyles.h11w4Sec.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    durationText,
+                                    style: AppTextStyles.h17w6.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isBike
+                                        ? 'Скорость'
+                                        : isSwim
+                                        ? 'Темп, /100м'
+                                        : 'Темп, /км',
+                                    style: AppTextStyles.h11w4Sec.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  isBike
+                                      ? (speedText == '—'
+                                            ? Text(
+                                                speedText,
+                                                style: AppTextStyles.h17w6
+                                                    .copyWith(
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : Text.rich(
+                                                TextSpan(
+                                                  children: [
+                                                    TextSpan(
+                                                      text: speedText
+                                                          .replaceAll(
+                                                            ' км/ч',
+                                                            '',
+                                                          ),
+                                                      style: AppTextStyles.h17w6
+                                                          .copyWith(
+                                                            color: Colors.white,
+                                                          ),
+                                                    ),
+                                                    TextSpan(
+                                                      text: ' км/ч',
+                                                      style: AppTextStyles.h17w6
+                                                          .copyWith(
+                                                            fontSize: 16,
+                                                            color: Colors.white,
+                                                          ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ))
+                                      : Text(
+                                          paceText,
+                                          style: AppTextStyles.h17w6.copyWith(
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
                     // Показываем блок, если есть маршрут, изображения или импортированная тренировка без маршрута
                     if (updatedActivity.points.isNotEmpty ||
                         updatedActivity.mediaImages.isNotEmpty ||
                         isImportedWithoutRoute) {
+                      // ────────────────────────────────────────────────────────────────
+                      // 🖼️ ДЕФОЛТНАЯ КАРТИНКА: для импортированных тренировок без маршрута
+                      // высота фиксированная — 350 пикселей
+                      // ────────────────────────────────────────────────────────────────
                       if (isImportedWithoutRoute) {
                         // ────────────────────────────────────────────────────────────────
                         // ⚡ ОПТИМИЗАЦИЯ: используем предвычисленный defaultImagePath
                         // ────────────────────────────────────────────────────────────────
                         return SizedBox(
-                          height: 350,
+                          height: 350.0,
                           width: double.infinity,
-                          child: Image.asset(
-                            defaultImagePath,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Container(
-                                  color: AppColors.disabled,
-                                  child: const Center(
-                                    child: Icon(
-                                      CupertinoIcons.photo,
-                                      size: 48,
-                                      color: AppColors.textTertiary,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.asset(
+                                defaultImagePath,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                      color: AppColors.disabled,
+                                      child: const Center(
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 48,
+                                          color: AppColors.textTertiary,
+                                        ),
+                                      ),
+                                    ),
+                              ),
+                              // ────────────────────────────────────────────────────────────────
+                              // 🌑 ТЕМНЫЙ ГРАДИЕНТ: наложение внизу изображения для лучшей читаемости
+                              // ────────────────────────────────────────────────────────────────
+                              Positioned(
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                height: 140,
+                                child: IgnorePointer(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topCenter,
+                                        end: Alignment.bottomCenter,
+                                        colors: [
+                                          Colors.transparent,
+                                          Colors.black.withValues(alpha: 0.5),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
+                              ),
+                              // ────────────────────────────────────────────────────────────────
+                              // 📊 ПЕРВАЯ СТРОКА МЕТРИК: дублирование поверх градиента
+                              // ────────────────────────────────────────────────────────────────
+                              buildOverlayMetricsRow(),
+                            ],
                           ),
                         );
                       }
 
-                      return ActivityRouteCarousel(
-                        points: updatedActivity.points
-                            .map((c) => LatLng(c.lat, c.lng))
-                            .toList(),
-                        imageUrls: updatedActivity.mediaImages,
-                        height: 350,
-                        mapSortOrder: updatedActivity.mapSortOrder,
-                        activityId: updatedActivity.id,
-                        userId: updatedActivity.userId,
+                      // ────────────────────────────────────────────────────────────────
+                      // 📐 ВЫЧИСЛЕНИЕ ВЫСОТЫ ПО СООТНОШЕНИЮ 1:1.1:
+                      // Высота = ширина экрана × 1.1
+                      // ────────────────────────────────────────────────────────────────
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final mapHeight = screenWidth * 1.1;
+
+                      return SizedBox(
+                        height: mapHeight,
+                        child: Stack(
+                          children: [
+                            ActivityRouteCarousel(
+                              points: updatedActivity.points
+                                  .map((c) => LatLng(c.lat, c.lng))
+                                  .toList(),
+                              imageUrls: updatedActivity.mediaImages,
+                              height: mapHeight,
+                              mapSortOrder: updatedActivity.mapSortOrder,
+                              activityId: updatedActivity.id,
+                              userId: updatedActivity.userId,
+                            ),
+                            // ────────────────────────────────────────────────────────────────
+                            // 🌑 ТЕМНЫЙ ГРАДИЕНТ: наложение сверху изображения для лучшей читаемости
+                            // ────────────────────────────────────────────────────────────────
+                            Positioned(
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: 140,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.black.withValues(alpha: 0.1),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // ────────────────────────────────────────────────────────────────
+                            // 🌑 ТЕМНЫЙ ГРАДИЕНТ: наложение внизу изображения для лучшей читаемости
+                            // ────────────────────────────────────────────────────────────────
+                            Positioned(
+                              bottom: 0,
+                              left: 0,
+                              right: 0,
+                              height: 140,
+                              child: IgnorePointer(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.black.withValues(alpha: 0.8),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // ────────────────────────────────────────────────────────────────
+                            // 📊 ПЕРВАЯ СТРОКА МЕТРИК: дублирование поверх градиента
+                            // ────────────────────────────────────────────────────────────────
+                            buildOverlayMetricsRow(),
+                          ],
+                        ),
                       );
                     }
 
@@ -569,7 +917,7 @@ Future<void> _handleAddPhotos({
   // использования BuildContext через async gap
   // ────────────────────────────────────────────────────────────────
   final screenWidth = MediaQuery.of(context).size.width;
-  final aspectRatio = screenWidth / 350.0;
+  final aspectRatio = screenWidth / 400.0;
 
   void hideLoader() {
     if (loaderShown && navigator.mounted) {
@@ -603,7 +951,7 @@ Future<void> _handleAddPhotos({
       if (!context.mounted) return;
 
       final picked = pickedFiles[i];
-      // Обрезаем изображение для высоты 350px (динамическое соотношение)
+      // Обрезаем изображение для высоты 400px (динамическое соотношение)
       final cropped = await ImagePickerHelper.cropPickedImage(
         context: context,
         source: picked,

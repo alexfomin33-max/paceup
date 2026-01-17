@@ -19,7 +19,7 @@ abstract class AppColors {
   // Третичный (менее значимый, еле заметный)
   static const Color textTertiary = Color(0xFF8E8E93);
   // Плейсхолдеры/disabled
-  static const Color textPlaceholder = Color(0xFFA3A3A8);
+  static const Color textPlaceholder = Color(0xFFA8A8B1);
   // Интерактивные ссылки
   static const Color link = brandPrimary;
 
@@ -29,6 +29,7 @@ abstract class AppColors {
   // Системные iOS-лайк фоны
   static const Color background = Color(0xFFF2F2F7); // systemGroupedBackground
   static const Color softBg = Color(0xFFF5F5F5);
+  static const Color twinBg = Color(0xFFF8F7FC);
   // основная поверхность (карточки)
   static const Color surface = Color(0xFFFFFFFF);
   // слегка приглушённая поверхность
@@ -64,7 +65,8 @@ abstract class AppColors {
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ ЧИПЫ / ПИЛЮЛИ / ПЛАШКИ                                                │
   // └───────────────────────────────────────────────────────────────────────┘
-  static const Color chipBg = Color(0xFFF3F5F7);
+  static const Color chipBg = Color(0x080000FF);
+  static const Color twinchip = Color(0xFFF1F1F9);
   static const Color chipBorder = Color(0xFFE3E6EA);
   static const Color chipText = textSecondary;
   // для «новое»/badge (синеватый)

@@ -2,26 +2,30 @@ import 'package:flutter/material.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/lenta/screens/lenta_screen.dart';
 import 'features/auth/screens/regstep1_screen.dart';
+import 'features/auth/screens/reg_step1_screen.dart';
+import 'features/auth/screens/reg_step2_screen.dart';
 import 'features/auth/screens/regstep2_screen.dart';
 import 'features/auth/screens/addaccsms_screen.dart';
 import 'features/auth/screens/home_screen.dart';
 import 'features/auth/screens/createacc_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/loginsms_screen.dart';
+import 'features/auth/screens/code1_screen.dart';
+import 'features/auth/screens/code2_screen.dart';
 import '../../core/widgets/app_bottom_nav_shell.dart';
 
 /// 🔹 Маршруты с нижней навигацией
 const bottomNavRoutes = ['/lenta'];
 
 /// 🔹 Маршруты экранов авторизации без анимации перехода
+/// ⚠️ /home, /login, /loginsms, /code1 и /code2 не включены, так как для них нужна fade-in анимация
 const homeRoutes = [
-  '/home',
-  '/login',
   '/createacc',
   '/regstep1',
+  '/reg_step1',
+  '/reg_step2',
   '/regstep2',
   '/addaccsms',
-  '/loginsms',
 ];
 
 /// 🔹 Генератор маршрутов
@@ -44,9 +48,21 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
           : const LentaScreen(userId: 123);
       break;
 
+    case '/reg_step1':
+      screen = (args is Map && args.containsKey('userId'))
+          ? RegStep1Screen(userId: args['userId'] as int)
+          : const HomeScreen();
+      break;
+
     case '/regstep1':
       screen = (args is Map && args.containsKey('userId'))
           ? Regstep1Screen(userId: args['userId'] as int)
+          : const HomeScreen();
+      break;
+
+    case '/reg_step2':
+      screen = (args is Map && args.containsKey('userId'))
+          ? RegStep2Screen(userId: args['userId'] as int)
           : const HomeScreen();
       break;
 
@@ -76,6 +92,22 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
           : const HomeScreen();
       break;
 
+    case '/code1':
+      screen = const Code1Screen();
+      break;
+
+    case '/code2':
+      screen =
+          (args is Map &&
+              args.containsKey('firstCode') &&
+              args.containsKey('userId'))
+          ? Code2Screen(
+              firstCode: args['firstCode'] as String,
+              userId: args['userId'] as int,
+            )
+          : const Code1Screen(); // fallback на code1, если нет аргументов
+      break;
+
     default:
       screen = const SplashScreen();
   }
@@ -91,6 +123,26 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) =>
           AppBottomNavShell(userId: userId),
+      settings: settings,
+      transitionDuration: const Duration(milliseconds: 400),
+      reverseTransitionDuration: const Duration(milliseconds: 300),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        // 🔹 Плавное появление с fade-in эффектом
+        return FadeTransition(
+          opacity: CurvedAnimation(parent: animation, curve: Curves.easeIn),
+          child: child,
+        );
+      },
+    );
+  } else if (settings.name == '/home' ||
+      settings.name == '/login' ||
+      settings.name == '/loginsms' ||
+      settings.name == '/code1' ||
+      settings.name == '/code2') {
+    // 🔹 Для /home, /login, /loginsms, /code1 и /code2 используем fade-in анимацию
+    // Это обеспечивает плавное появление экранов авторизации
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => screen,
       settings: settings,
       transitionDuration: const Duration(milliseconds: 400),
       reverseTransitionDuration: const Duration(milliseconds: 300),
