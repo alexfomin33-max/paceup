@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,50 +6,68 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../../../core/utils/image_picker_helper.dart';
+import '../../../../core/utils/local_image_compressor.dart';
 
-/// 🔹 Второй экран регистрации — выбор даты рождения
-/// Шаг 2 из 6 в процессе регистрации
-class RegStep2Screen extends ConsumerStatefulWidget {
+/// 🔹 Пятый экран регистрации — выбор фото профиля
+/// Шаг 5 из 5 в процессе регистрации
+class RegStep5Screen extends ConsumerStatefulWidget {
   /// 🔹 ID пользователя, передается с предыдущего экрана
   final int userId;
 
-  const RegStep2Screen({super.key, required this.userId});
+  const RegStep5Screen({super.key, required this.userId});
 
   @override
-  ConsumerState<RegStep2Screen> createState() => _RegStep2ScreenState();
+  ConsumerState<RegStep5Screen> createState() => _RegStep5ScreenState();
 }
 
-class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
-  /// 🔹 Выбранная дата рождения
-  DateTime? selectedBirthDate;
-
-  /// 🔹 Флаг, показывающий, изменял ли пользователь дату в пикере
-  bool hasUserSelectedDate = false;
+class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
+  /// 🔹 Выбранное фото профиля
+  File? selectedPhoto;
 
   /// 🔹 Проверка корректности заполнения формы
   bool get isFormValid {
-    return hasUserSelectedDate && selectedBirthDate != null;
+    return selectedPhoto != null;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    // 🔹 Инициализируем дату по умолчанию только для отображения
-    selectedBirthDate = DateTime(1990, 7, 15);
+  /// 🔹 Метод выбора фото с обрезкой 1:1
+  Future<void> _pickPhoto() async {
+    final formNotifier = ref.read(formStateProvider.notifier);
+
+    // 🔹 Выбираем фото с обрезкой в пропорции 1:1
+    final processed = await ImagePickerHelper.pickAndProcessImage(
+      context: context,
+      aspectRatio: 1.0,
+      maxSide: ImageCompressionPreset.avatar.maxSide,
+      jpegQuality: ImageCompressionPreset.avatar.quality,
+      cropTitle: 'Обрезка фото профиля',
+    );
+
+    if (processed == null || !mounted) return;
+
+    setState(() {
+      selectedPhoto = processed;
+    });
+
+    // 🔹 Очищаем ошибки при успешном выборе фото
+    formNotifier.clearGeneralError();
+    formNotifier.clearFieldError('photo');
   }
 
-  /// 🔹 Метод проверки валидности формы и перехода на следующий экран
-  Future<void> _checkAndContinue() async {
+  /// 🔹 Метод завершения регистрации и перехода на главный экран
+  Future<void> _finishRegistration() async {
     final formState = ref.read(formStateProvider);
+
     if (!isFormValid || formState.isSubmitting) return;
 
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;
 
-    // 🔹 Переходим на следующий экран регистрации
+    // 🔹 TODO: Здесь можно добавить сохранение фото через API
+    // Пока просто переходим на главный экран
     Navigator.pushReplacementNamed(
       context,
-      '/regstep3',
+      '/lenta',
       arguments: {'userId': widget.userId},
     );
   }
@@ -104,7 +123,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 ),
                                 // 🔹 Текст с вопросом
                                 const Text(
-                                  'Дата рождения',
+                                  'Ваше фото',
                                   style: TextStyle(
                                     color: AppColors.textPrimary,
                                     fontSize: 24,
@@ -113,28 +132,15 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
-                                const SizedBox(height: 8),
-                                // 🔹 Подсказка
-                                const Text(
-                                  'Понадобится для верификации профиля',
-                                  style: TextStyle(
-                                    color: AppColors.textSecondary,
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: 'Inter',
+                                const SizedBox(height: 30),
+                                // 🔹 Кнопка выбора фото
+                                _PhotoPickerButton(
+                                  selectedPhoto: selectedPhoto,
+                                  onTap: _pickPhoto,
+                                  hasError: formState.fieldErrors.containsKey(
+                                    'photo',
                                   ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height *
-                                          0.30 -
-                                      (MediaQuery.of(context).size.height *
-                                              0.12 +
-                                          24 +
-                                          8 +
-                                          8 +
-                                          50),
+                                  errorText: formState.fieldErrors['photo'],
                                 ),
                                 // 🔹 Показываем ошибку, если есть
                                 Builder(
@@ -157,30 +163,6 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                       ),
                     ],
                   ),
-                  // ─────────── Date Picker позиционированный на 30% от верха ───────────
-                  Positioned(
-                    top: MediaQuery.of(context).size.height * 0.40,
-                    left: MediaQuery.of(context).size.width * 0.1,
-                    right: MediaQuery.of(context).size.width * 0.1,
-                    child: SizedBox(
-                      height: 126,
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        initialDateTime: selectedBirthDate,
-                        minimumDate: DateTime(1900),
-                        maximumDate: DateTime.now(),
-                        onDateTimeChanged: (date) {
-                          setState(() {
-                            selectedBirthDate = date;
-                            hasUserSelectedDate = true;
-                          });
-                          ref
-                              .read(formStateProvider.notifier)
-                              .clearGeneralError();
-                        },
-                      ),
-                    ),
-                  ),
                   // ─────────── Прогресс-бар и кнопка назад в верхней части ───────────
                   Positioned(
                     top: MediaQuery.of(context).size.height * 0.065,
@@ -195,7 +177,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                               ? null
                               : () => Navigator.pushReplacementNamed(
                                   context,
-                                  '/reg_step1',
+                                  '/regstep4',
                                   arguments: {'userId': widget.userId},
                                 ),
                           icon: const Icon(
@@ -222,7 +204,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 ),
                                 child: FractionallySizedBox(
                                   alignment: Alignment.centerLeft,
-                                  widthFactor: 2 / 5,
+                                  widthFactor: 5 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: AppColors.textPrimary,
@@ -236,7 +218,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                         ),
                         // 🔹 Индикатор шага справа
                         const Text(
-                          '2/5',
+                          '5/5',
                           style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
@@ -247,7 +229,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                       ],
                     ),
                   ),
-                  // ─────────── Кнопка "Далее" внизу экрана ───────────
+                  // ─────────── Кнопка "Завершить" внизу экрана ───────────
                   Positioned(
                     bottom: MediaQuery.of(context).padding.bottom + 10,
                     left: MediaQuery.of(context).size.width * 0.1,
@@ -257,7 +239,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                       child: ElevatedButton(
                         onPressed: (!isFormValid || formState.isSubmitting)
                             ? null
-                            : _checkAndContinue,
+                            : _finishRegistration,
                         style: ButtonStyle(
                           backgroundColor: WidgetStateProperty.resolveWith((
                             states,
@@ -297,7 +279,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 ),
                               )
                             : const Text(
-                                'Далее',
+                                'Завершить',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
@@ -313,6 +295,145 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 🔹 Виджет кнопки выбора фото с предпросмотром
+class _PhotoPickerButton extends StatelessWidget {
+  /// 🔹 Выбранное фото
+  final File? selectedPhoto;
+
+  /// 🔹 Обработчик нажатия
+  final VoidCallback onTap;
+
+  /// 🔹 Флаг наличия ошибки
+  final bool hasError;
+
+  /// 🔹 Текст ошибки
+  final String? errorText;
+
+  const _PhotoPickerButton({
+    required this.selectedPhoto,
+    required this.onTap,
+    this.hasError = false,
+    this.errorText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // 🔹 Ширина кнопки (квадрат)
+    final double buttonSize = MediaQuery.of(context).size.width * 0.7;
+
+    return Column(
+      children: [
+        GestureDetector(
+          onTap: onTap,
+          child: Container(
+            width: buttonSize,
+            height: buttonSize,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.xll),
+              color: AppColors.twinchip,
+              border: hasError ? Border.all(color: Colors.red, width: 2) : null,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: selectedPhoto != null
+                ? // 🔹 Показываем выбранное фото
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: Image.file(
+                      selectedPhoto!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: AppColors.twinchip,
+                          child: const Icon(
+                            CupertinoIcons.photo,
+                            size: 48,
+                            color: AppColors.textPlaceholder,
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                : // 🔹 Показываем иконку выбора фото
+                  const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.camera,
+                        size: 48,
+                        color: AppColors.textPlaceholder,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Выбрать фото',
+                        style: TextStyle(
+                          color: AppColors.textPlaceholder,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Inter',
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        // 🔹 Надпись "Аватар" и круглая фотография (показываются только при выборе фото)
+        if (selectedPhoto != null) ...[
+          const SizedBox(height: 40),
+          const Text(
+            'Аватар',
+            style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              fontFamily: 'Inter',
+            ),
+            textAlign: TextAlign.center,
+          ),
+          // 🔹 Круглое изображение 100x100 с выбранной фотографией
+          const SizedBox(height: 12),
+          Container(
+            width: 100,
+            height: 100,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.twinchip,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Image.file(
+              selectedPhoto!,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  color: AppColors.twinchip,
+                  child: const Icon(
+                    CupertinoIcons.photo,
+                    size: 32,
+                    color: AppColors.textPlaceholder,
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+        // 🔹 Показываем ошибку под кнопкой, если есть
+        if (hasError && errorText != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              errorText!,
+              style: const TextStyle(
+                color: Colors.red,
+                fontSize: 12,
+                fontFamily: 'Inter',
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+      ],
     );
   }
 }

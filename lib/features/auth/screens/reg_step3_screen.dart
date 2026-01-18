@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,64 +6,102 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../../../providers/services/api_provider.dart';
 
-/// 🔹 Первый экран регистрации — ввод имени пользователя
-/// Шаг 1 из 6 в процессе регистрации
-class RegStep1Screen extends ConsumerStatefulWidget {
+/// 🔹 Третий экран регистрации — ввод города проживания
+/// Шаг 3 из 6 в процессе регистрации
+class RegStep3Screen extends ConsumerStatefulWidget {
   /// 🔹 ID пользователя, передается с предыдущего экрана
   final int userId;
 
-  const RegStep1Screen({super.key, required this.userId});
+  const RegStep3Screen({super.key, required this.userId});
 
   @override
-  ConsumerState<RegStep1Screen> createState() => _RegStep1ScreenState();
+  ConsumerState<RegStep3Screen> createState() => _RegStep3ScreenState();
 }
 
-class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
-  /// 🔹 Контроллер для поля ввода имени
-  final TextEditingController nameController = TextEditingController();
+class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
+  /// 🔹 Контроллер для поля ввода города
+  final TextEditingController cityController = TextEditingController();
 
-  /// 🔹 Контроллер для поля ввода фамилии
-  final TextEditingController surnameController = TextEditingController();
+  /// 🔹 Список городов для автокомплита (загружается из БД)
+  List<String> _cities = [];
 
-  /// 🔹 Выбранный пол
-  String? selectedGender;
+  /// 🔹 Выбранный город из списка (для валидации)
+  String? _selectedCity;
 
   /// 🔹 Проверка корректности заполнения формы
   bool get isFormValid {
-    return nameController.text.trim().isNotEmpty &&
-        surnameController.text.trim().isNotEmpty &&
-        selectedGender != null;
+    return _selectedCity != null && _selectedCity!.isNotEmpty;
   }
 
   @override
   void initState() {
     super.initState();
-    // 🔹 Очищаем ошибку при изменении полей
+    // 🔹 Очищаем ошибку при изменении поля
     Future.microtask(() {
       final formNotifier = ref.read(formStateProvider.notifier);
-      nameController.addListener(() {
+      cityController.addListener(() {
         formNotifier.clearGeneralError();
-        formNotifier.clearFieldError('name');
+        formNotifier.clearFieldError('city');
+        // Если текст изменился не через выбор из списка, сбрасываем выбранный город
+        if (cityController.text.trim() != _selectedCity) {
+          _selectedCity = null;
+        }
       });
-      surnameController.addListener(() {
-        formNotifier.clearGeneralError();
-        formNotifier.clearFieldError('surname');
-      });
+      // Загружаем список городов из БД
+      _loadCities();
     });
+  }
+
+  /// 🔹 Загрузка списка городов из БД через API
+  Future<void> _loadCities() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api
+          .get('/get_cities.php')
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw TimeoutException(
+                'Превышено время ожидания загрузки городов',
+              );
+            },
+          );
+
+      if (data['success'] == true && data['cities'] != null) {
+        final cities = data['cities'] as List<dynamic>? ?? [];
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустой список
+      // Пользователь все равно сможет ввести город вручную
+      // Ошибка не критична, так как автокомплит работает и без списка
+    }
   }
 
   @override
   void dispose() {
-    // 🔹 Освобождаем контроллеры при уничтожении виджета
-    nameController.dispose();
-    surnameController.dispose();
+    // 🔹 Освобождаем контроллер при уничтожении виджета
+    cityController.dispose();
     super.dispose();
   }
 
   /// 🔹 Метод проверки валидности формы и перехода на следующий экран
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
+
+    // 🔹 Проверяем, что город выбран из списка
+    final formNotifier = ref.read(formStateProvider.notifier);
+    if (_selectedCity == null || _selectedCity!.isEmpty) {
+      formNotifier.setFieldErrors({'city': 'Выберите город из списка'});
+      return;
+    }
+
     if (!isFormValid || formState.isSubmitting) return;
 
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
@@ -71,7 +110,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
     // 🔹 Переходим на следующий экран регистрации
     Navigator.pushReplacementNamed(
       context,
-      '/reg_step2',
+      '/regstep4',
       arguments: {'userId': widget.userId},
     );
   }
@@ -127,7 +166,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 ),
                                 // 🔹 Текст с вопросом
                                 const Text(
-                                  'Как вас зовут?',
+                                  'Город проживания',
                                   style: TextStyle(
                                     color: AppColors.textPrimary,
                                     fontSize: 24,
@@ -139,7 +178,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 const SizedBox(height: 8),
                                 // 🔹 Подсказка
                                 const Text(
-                                  'Понадобится для верификации профиля',
+                                  'Необходим для отображения лидерборда',
                                   style: TextStyle(
                                     color: AppColors.textSecondary,
                                     fontSize: 15,
@@ -149,187 +188,23 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                   textAlign: TextAlign.center,
                                 ),
                                 const SizedBox(height: 50),
-                                // 🔹 Поле ввода имени
-                                TextFormField(
-                                  controller: nameController,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 15,
-                                    fontFamily: 'Inter',
+                                // 🔹 Поле ввода города с автокомплитом
+                                _CityAutocompleteField(
+                                  controller: cityController,
+                                  suggestions: _cities,
+                                  hasError: formState.fieldErrors.containsKey(
+                                    'city',
                                   ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Введите имя',
-                                    hintStyle: const TextStyle(
-                                      color: AppColors.textPlaceholder,
-                                      fontSize: 15,
-                                      fontFamily: 'Inter',
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColors.twinchip,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 14,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 20),
-                                // 🔹 Поле ввода фамилии
-                                TextFormField(
-                                  controller: surnameController,
-                                  style: const TextStyle(
-                                    color: AppColors.textPrimary,
-                                    fontSize: 15,
-                                    fontFamily: 'Inter',
-                                  ),
-                                  decoration: InputDecoration(
-                                    hintText: 'Введите фамилию',
-                                    hintStyle: const TextStyle(
-                                      color: AppColors.textPlaceholder,
-                                      fontSize: 15,
-                                      fontFamily: 'Inter',
-                                    ),
-                                    filled: true,
-                                    fillColor: AppColors.twinchip,
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 14,
-                                    ),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.sm,
-                                      ),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 50),
-                                // 🔹 Секция "Ваш пол"
-                                const Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: Text(
-                                    'Пол',
-                                    style: TextStyle(
-                                      color: AppColors.textPrimary,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      fontFamily: 'Inter',
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                // 🔹 Переключатели пола
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            selectedGender = 'Мужской';
-                                          });
-                                          ref
-                                              .read(formStateProvider.notifier)
-                                              .clearGeneralError();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              selectedGender == 'Мужской'
-                                              ? AppColors.textPrimary
-                                              : AppColors.twinchip,
-                                          foregroundColor:
-                                              selectedGender == 'Мужской'
-                                              ? AppColors.surface
-                                              : AppColors.textPlaceholder,
-                                          elevation: 0,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.xxl,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Мужской',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            fontFamily: 'Inter',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: ElevatedButton(
-                                        onPressed: () {
-                                          setState(() {
-                                            selectedGender = 'Женский';
-                                          });
-                                          ref
-                                              .read(formStateProvider.notifier)
-                                              .clearGeneralError();
-                                        },
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              selectedGender == 'Женский'
-                                              ? AppColors.textPrimary
-                                              : AppColors.twinchip,
-                                          foregroundColor:
-                                              selectedGender == 'Женский'
-                                              ? AppColors.surface
-                                              : AppColors.textPlaceholder,
-                                          elevation: 0,
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 14,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              AppRadius.xxl,
-                                            ),
-                                          ),
-                                        ),
-                                        child: const Text(
-                                          'Женский',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                            fontFamily: 'Inter',
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                  errorText: formState.fieldErrors['city'],
+                                  onSelected: (city) {
+                                    setState(() {
+                                      _selectedCity = city;
+                                      cityController.text = city;
+                                    });
+                                    ref
+                                        .read(formStateProvider.notifier)
+                                        .clearFieldError('city');
+                                  },
                                 ),
                                 // 🔹 Показываем ошибку, если есть
                                 Builder(
@@ -364,7 +239,11 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                         IconButton(
                           onPressed: formState.isSubmitting
                               ? null
-                              : () => Navigator.pop(context),
+                              : () => Navigator.pushReplacementNamed(
+                                  context,
+                                  '/reg_step2',
+                                  arguments: {'userId': widget.userId},
+                                ),
                           icon: const Icon(
                             Icons.arrow_back,
                             color: AppColors.textPrimary,
@@ -389,7 +268,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 ),
                                 child: FractionallySizedBox(
                                   alignment: Alignment.centerLeft,
-                                  widthFactor: 1 / 5,
+                                  widthFactor: 3 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: AppColors.textPrimary,
@@ -403,7 +282,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                         ),
                         // 🔹 Индикатор шага справа
                         const Text(
-                          '1/5',
+                          '3/5',
                           style: TextStyle(
                             color: AppColors.textPrimary,
                             fontSize: 15,
@@ -480,6 +359,149 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+//
+// --------------------------- ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ ---------------------------
+//
+
+// ── автокомплит для города
+class _CityAutocompleteField extends StatelessWidget {
+  final TextEditingController controller;
+  final List<String> suggestions;
+  final Function(String) onSelected;
+  final bool hasError;
+  final String? errorText;
+
+  const _CityAutocompleteField({
+    required this.controller,
+    required this.suggestions,
+    required this.onSelected,
+    this.hasError = false,
+    this.errorText,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<String>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return const Iterable<String>.empty();
+        }
+        final query = textEditingValue.text.toLowerCase();
+        return suggestions.where((city) {
+          return city.toLowerCase().startsWith(query);
+        });
+      },
+      onSelected: onSelected,
+      fieldViewBuilder:
+          (
+            BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted,
+          ) {
+            // Инициализируем текст из внешнего контроллера
+            if (textEditingController.text.isEmpty &&
+                controller.text.isNotEmpty) {
+              textEditingController.text = controller.text;
+            }
+
+            // Синхронизируем изменения в Autocomplete контроллере с внешним
+            textEditingController.addListener(() {
+              if (textEditingController.text != controller.text) {
+                controller.text = textEditingController.text;
+              }
+            });
+
+            return TextField(
+              controller: textEditingController,
+              focusNode: focusNode,
+              onSubmitted: (String value) {
+                onFieldSubmitted();
+              },
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 15,
+                fontFamily: 'Inter',
+              ),
+              decoration: InputDecoration(
+                hintText: 'Введите город',
+                hintStyle: const TextStyle(
+                  color: AppColors.textPlaceholder,
+                  fontSize: 15,
+                  fontFamily: 'Inter',
+                ),
+                filled: true,
+                fillColor: AppColors.twinchip,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                errorText: hasError
+                    ? (errorText ?? 'Выберите город из списка')
+                    : null,
+                errorMaxLines: 2,
+              ),
+            );
+          },
+      optionsViewBuilder:
+          (
+            BuildContext context,
+            AutocompleteOnSelected<String> onSelected,
+            Iterable<String> options,
+          ) {
+            return Align(
+              alignment: Alignment.topLeft,
+              child: Material(
+                elevation: 4.0,
+                color: AppColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
+                    itemCount: options.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      final String option = options.elementAt(index);
+                      return InkWell(
+                        onTap: () {
+                          onSelected(option);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 14,
+                          ),
+                          child: Text(
+                            option,
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            );
+          },
     );
   }
 }

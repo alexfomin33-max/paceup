@@ -138,6 +138,10 @@ abstract class AppColors {
   static Color greenBr = green.withValues(alpha: 0.10);
   static Color redBr = red.withValues(alpha: 0.22);
 
+  static Color green70 = green.withValues(alpha: 0.70);
+  static Color green80 = green.withValues(alpha: 0.80);
+  static Color green90 = green.withValues(alpha: 0.90);
+
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ СПЕЦИАЛЬНЫЕ (под ваш проект)                                          │
   // └───────────────────────────────────────────────────────────────────────┘

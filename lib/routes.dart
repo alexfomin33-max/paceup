@@ -4,6 +4,9 @@ import 'features/lenta/screens/lenta_screen.dart';
 import 'features/auth/screens/regstep1_screen.dart';
 import 'features/auth/screens/reg_step1_screen.dart';
 import 'features/auth/screens/reg_step2_screen.dart';
+import 'features/auth/screens/reg_step3_screen.dart';
+import 'features/auth/screens/reg_step4_screen.dart';
+import 'features/auth/screens/reg_step5_screen.dart';
 import 'features/auth/screens/regstep2_screen.dart';
 import 'features/auth/screens/addaccsms_screen.dart';
 import 'features/auth/screens/home_screen.dart';
@@ -25,6 +28,9 @@ const homeRoutes = [
   '/reg_step1',
   '/reg_step2',
   '/regstep2',
+  '/regstep3',
+  '/regstep4',
+  '/regstep5',
   '/addaccsms',
 ];
 
@@ -69,6 +75,24 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
     case '/regstep2':
       screen = (args is Map && args.containsKey('userId'))
           ? Regstep2Screen(userId: args['userId'] as int)
+          : const HomeScreen();
+      break;
+
+    case '/regstep3':
+      screen = (args is Map && args.containsKey('userId'))
+          ? RegStep3Screen(userId: args['userId'] as int)
+          : const HomeScreen();
+      break;
+
+    case '/regstep4':
+      screen = (args is Map && args.containsKey('userId'))
+          ? RegStep4Screen(userId: args['userId'] as int)
+          : const HomeScreen();
+      break;
+
+    case '/regstep5':
+      screen = (args is Map && args.containsKey('userId'))
+          ? RegStep5Screen(userId: args['userId'] as int)
           : const HomeScreen();
       break;
 
