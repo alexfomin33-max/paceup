@@ -191,10 +191,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         );
 
         final hasData = currentState.items.isNotEmpty;
-        developer.log(
-          '[LENTA_SCREEN] hasData=$hasData',
-          name: 'LentaScreen',
-        );
+        developer.log('[LENTA_SCREEN] hasData=$hasData', name: 'LentaScreen');
 
         if (!hasData) {
           developer.log(
@@ -764,7 +761,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         );
 
         // Оптимистичное обновление: уменьшаем счетчик на 1 (но не меньше 0)
-        final newCount = (updatedActivity.comments - 1).clamp(0, double.infinity).toInt();
+        final newCount = (updatedActivity.comments - 1)
+            .clamp(0, double.infinity)
+            .toInt();
         ref
             .read(lentaProvider(_actualUserId!).notifier)
             .updateComments(activity.lentaId, newCount);
@@ -933,27 +932,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       return Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: PaceAppBar(
-          titleWidget: Text.rich(
-            TextSpan(
-              children: [
-                TextSpan(
-                  text: 'PACE',
-                  style: AppTextStyles.h17w6.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                TextSpan(
-                  text: 'UP',
-                  style: AppTextStyles.h17w6.copyWith(
-                    color: AppColors.greenUP,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ],
-            ),
+          titleWidget: Image.asset(
+            'assets/black_logo.png',
+            height: 22,
+            fit: BoxFit.contain,
           ),
           showBottomDivider: true,
         ),
@@ -998,27 +980,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
       // новый глобальный AppBar без стекла/прозрачности
       appBar: PaceAppBar(
-        titleWidget: Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: 'PACE',
-                style: AppTextStyles.h17w6.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                ),
-              ),
-              TextSpan(
-                text: 'UP',
-                style: AppTextStyles.h17w6.copyWith(
-                  color: AppColors.greenUP,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ],
-          ),
+        titleWidget: Image.asset(
+          'assets/black_logo.png',
+          height: 24,
+          fit: BoxFit.contain,
         ),
         showBottomDivider: true,
         leadingWidth: 96, // две иконки слева
@@ -1116,7 +1081,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         // Это предотвращает показ skeleton loader, если данные уже загружены из code2_screen.dart
         // ⚠️ ВАЖНО: skeleton loader показывается только при первой загрузке,
         // когда данные еще не были загружены ни разу
-        final shouldShowSkeleton = filteredItems.isEmpty &&
+        final shouldShowSkeleton =
+            filteredItems.isEmpty &&
             lentaSnapshot.isRefreshing &&
             lentaSnapshot.currentPage == 1 &&
             lentaSnapshot.error == null;

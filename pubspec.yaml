@@ -131,6 +131,13 @@ flutter:
   assets:
      - assets/background.webp
      - assets/logo.png
+     - assets/black_logo.png
+     - assets/white_logo.png
+     - assets/logo_color.png
+     - assets/logo_color2.png
+     - assets/logo_text_black.png
+     - assets/logo_text_color.png
+     - assets/logo_text_color2.png
      - assets/back.jpg
      - assets/gorizont.png
      - assets/logo_white.png

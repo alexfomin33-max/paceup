@@ -158,8 +158,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Редактировать тренировку'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Редактирование'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
@@ -167,161 +167,185 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           child: SafeArea(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ────────────────────────────────────────────────────────────────
-                  // 📸 1. ФОТОГРАФИИ ТРЕНИРОВКИ (горизонтальная карусель)
-                  // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Фото тренировки',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildPhotoCarousel(),
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ────────────────────────────────────────────────────────────────
+                    // 📸 1. ФОТОГРАФИИ ТРЕНИРОВКИ (горизонтальная карусель)
+                    // ────────────────────────────────────────────────────────────────
+                    const Text(
+                      'Фото тренировки',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildPhotoCarousel(),
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        'Перетащите, чтобы изменить порядок',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.getTextSecondaryColor(context),
+                        ),
+                      ),
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
-                  // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Описание тренировки',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDescriptionInput(),
+                    // ────────────────────────────────────────────────────────────────
+                    // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
+                    // ────────────────────────────────────────────────────────────────
+                    const Text(
+                      'Описание тренировки',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildDescriptionInput(),
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 👟 3. ЭКИПИРОВКА
-                  // ────────────────────────────────────────────────────────────────
-                  Builder(
-                    builder: (context) {
-                      // Получаем обновленную активность из провайдера для проверки
-                      final lentaState = ref.watch(
-                        lentaProvider(widget.currentUserId),
-                      );
-                      final updatedActivity = lentaState.items.firstWhere(
-                        (a) => a.lentaId == widget.activity.lentaId,
-                        orElse: () => widget.activity,
-                      );
-
-                      // Если экипировка уже выбрана, показываем EquipmentChip
-                      if (updatedActivity.equipments.isNotEmpty) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 24),
-                            const Text(
-                              'Экипировка',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildEquipmentSection(),
-                          ],
+                    // ────────────────────────────────────────────────────────────────
+                    // 👟 3. ЭКИПИРОВКА
+                    // ────────────────────────────────────────────────────────────────
+                    Builder(
+                      builder: (context) {
+                        // Получаем обновленную активность из провайдера для проверки
+                        final lentaState = ref.watch(
+                          lentaProvider(widget.currentUserId),
                         );
-                      }
+                        final updatedActivity = lentaState.items.firstWhere(
+                          (a) => a.lentaId == widget.activity.lentaId,
+                          orElse: () => widget.activity,
+                        );
 
-                      // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
-                      if (_shouldShowEquipment()) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const SizedBox(height: 24),
-                            Row(
-                              children: [
-                                SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: Transform.scale(
-                                    scale: 0.85,
-                                    alignment: Alignment.centerLeft,
-                                    child: Checkbox(
-                                      value: _showEquipment,
-                                      materialTapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
-                                      visualDensity: VisualDensity.compact,
-                                      activeColor: AppColors.brandPrimary,
-                                      checkColor: AppColors.getSurfaceColor(
-                                        context,
-                                      ),
-                                      side: BorderSide(
-                                        color: AppColors.getIconSecondaryColor(
+                        // Если экипировка уже выбрана, показываем EquipmentChip
+                        if (updatedActivity.equipments.isNotEmpty) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 24),
+                              const Text(
+                                'Экипировка',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildEquipmentSection(),
+                            ],
+                          );
+                        }
+
+                        // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+                        if (_shouldShowEquipment()) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 24),
+                              Row(
+                                children: [
+                                  SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: Transform.scale(
+                                      scale: 0.85,
+                                      alignment: Alignment.centerLeft,
+                                      child: Checkbox(
+                                        value: _showEquipment,
+                                        materialTapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        visualDensity: VisualDensity.compact,
+                                        activeColor: AppColors.brandPrimary,
+                                        checkColor: AppColors.getSurfaceColor(
                                           context,
                                         ),
-                                        width: 1.5,
+                                        side: BorderSide(
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                                context,
+                                              ),
+                                          width: 1.5,
+                                        ),
+                                        onChanged: (value) {
+                                          setState(() {
+                                            _showEquipment = value ?? false;
+                                            if (_showEquipment &&
+                                                _availableEquipment.isEmpty) {
+                                              _loadEquipment();
+                                            }
+                                          });
+                                        },
                                       ),
-                                      onChanged: (value) {
-                                        setState(() {
-                                          _showEquipment = value ?? false;
-                                          if (_showEquipment &&
-                                              _availableEquipment.isEmpty) {
-                                            _loadEquipment();
-                                          }
-                                        });
-                                      },
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                const Text(
-                                  'Добавить экипировку',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(width: 8),
+                                  const Text(
+                                    'Добавить экипировку',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                    ),
                                   ),
-                                ),
+                                ],
+                              ),
+                              if (_showEquipment) ...[
+                                const SizedBox(height: 8),
+                                _buildEquipmentSelectionSection(),
                               ],
-                            ),
-                            if (_showEquipment) ...[
-                              const SizedBox(height: 8),
-                              _buildEquipmentSelectionSection(),
                             ],
-                          ],
-                        );
-                      }
+                          );
+                        }
 
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                        return const SizedBox.shrink();
+                      },
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
-                  // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Кто видит тренировку',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildVisibilitySelector(),
+                    // ────────────────────────────────────────────────────────────────
+                    // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
+                    // ────────────────────────────────────────────────────────────────
+                    const Text(
+                      'Кто видит тренировку',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildVisibilitySelector(),
 
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 32),
 
-                  // Показываем ошибки, если есть
-                  Builder(
-                    builder: (context) {
-                      final formState = ref.watch(formStateProvider);
-                      if (formState.hasErrors) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: FormErrorDisplay(formState: formState),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
+                    // Показываем ошибки, если есть
+                    Builder(
+                      builder: (context) {
+                        final formState = ref.watch(formStateProvider);
+                        if (formState.hasErrors) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: FormErrorDisplay(formState: formState),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 💾 КНОПКА СОХРАНЕНИЯ
-                  // ────────────────────────────────────────────────────────────────
-                  Center(child: _buildSaveButton()),
-                ],
+                    // ────────────────────────────────────────────────────────────────
+                    // 💾 КНОПКА СОХРАНЕНИЯ
+                    // ────────────────────────────────────────────────────────────────
+                    Center(child: _buildSaveButton()),
+                  ],
+                ),
               ),
             ),
           ),
@@ -333,83 +357,108 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   /// Горизонтальная карусель фотографий и карты
   /// Порядок: кнопка добавления фото → изображения и карта (в порядке сортировки)
   Widget _buildPhotoCarousel() {
-    final hasRoute = _hasRoute;
+    return Builder(
+      builder: (context) {
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ВЫЧИСЛЕНИЕ ДИНАМИЧЕСКОГО РАЗМЕРА ЭЛЕМЕНТА
+        // ────────────────────────────────────────────────────────────────
+        // Размер вычисляется так, чтобы в одну линию на экране помещалось ровно 3 элемента
+        // Учитываем: паддинг Column (16px с каждой стороны = 32px) и отступы между элементами (2 отступа по 12px = 24px)
+        final screenWidth = MediaQuery.of(context).size.width;
+        const horizontalPadding = 16.0 * 2; // Паддинг Column с двух сторон
+        const separatorWidth = 12.0 * 2; // 2 отступа между 3 элементами
+        final itemSize = (screenWidth - horizontalPadding - separatorWidth) / 3;
 
-    // Преобразуем точки маршрута в LatLng для карты (если есть)
-    final routePoints = hasRoute
-        ? widget.activity.points.map((c) => LatLng(c.lat, c.lng)).toList()
-        : <LatLng>[];
+        final hasRoute = _hasRoute;
 
-    // Создаем объединенный список элементов для отображения
-    final List<_MediaItem> items = [];
+        // Преобразуем точки маршрута в LatLng для карты (если есть)
+        final routePoints = hasRoute
+            ? widget.activity.points.map((c) => LatLng(c.lat, c.lng)).toList()
+            : <LatLng>[];
 
-    // Добавляем изображения
-    for (int i = 0; i < _imageUrls.length; i++) {
-      items.add(_MediaItem.image(_imageUrls[i], i));
-    }
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 СОЗДАНИЕ СПИСКА ЭЛЕМЕНТОВ С ОГРАНИЧЕНИЕМ В 3 ЭЛЕМЕНТА
+        // ────────────────────────────────────────────────────────────────
+        // Максимум 3 элемента в карусели: фотографии/карта + кнопка (если есть место)
+        final List<_MediaItem> items = [];
 
-    // Добавляем карту, если есть маршрут
-    if (hasRoute && _mapPosition != null) {
-      // Вставляем карту в нужную позицию
-      final insertIndex = _mapPosition!.clamp(0, items.length);
-      items.insert(insertIndex, _MediaItem.map());
-    }
+        // Добавляем изображения
+        for (int i = 0; i < _imageUrls.length; i++) {
+          items.add(_MediaItem.image(_imageUrls[i], i));
+          // Ограничиваем максимум 3 элементами (без кнопки)
+          if (items.length >= 3) break;
+        }
 
-    // Общее количество элементов: кнопка добавления (1) + элементы (изображения + карта)
-    final totalItems = 1 + items.length;
-
-    return SizedBox(
-      height: 96, // 90 + 6 (padding сверху для кнопок удаления)
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.only(
-          top: 6,
-        ), // Добавляем padding сверху для кнопок удаления
-        itemCount: totalItems,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          // Первый элемент — кнопка добавления фото
-          if (index == 0) {
-            return _buildAddPhotoButton();
+        // Добавляем карту, если есть маршрут (если еще есть место)
+        if (hasRoute && _mapPosition != null && items.length < 3) {
+          // Вставляем карту в нужную позицию, но не выходим за лимит
+          final insertIndex = _mapPosition!.clamp(0, items.length);
+          items.insert(insertIndex, _MediaItem.map());
+          // Если после вставки карты стало больше 3 элементов, обрезаем
+          if (items.length > 3) {
+            items.removeRange(3, items.length);
           }
+        }
 
-          // Остальные элементы — изображения и карта
-          // itemIndex в отображаемом списке (без кнопки добавления)
-          final itemIndex = index - 1;
-          final item = items[itemIndex];
+        // Показываем кнопку добавления только если есть место (меньше 3 элементов)
+        final showAddButton = items.length < 3;
+        final totalItems = items.length + (showAddButton ? 1 : 0);
 
-          if (item.isMap) {
-            return _buildDraggableMapItem(routePoints, itemIndex);
-          } else {
-            return _buildDraggablePhotoItem(
-              item.imageUrl!,
-              item.photoIndex!,
-              itemIndex,
-            );
-          }
-        },
-      ),
+        return SizedBox(
+          height:
+              itemSize +
+              6, // Размер элемента + padding сверху для кнопок удаления
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 6,
+            ), // Добавляем padding сверху для кнопок удаления
+            itemCount: totalItems,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              // Сначала показываем элементы медиа (фотографии и карта)
+              if (index < items.length) {
+                final item = items[index];
+
+                if (item.isMap) {
+                  return _buildDraggableMapItem(routePoints, index, itemSize);
+                } else {
+                  return _buildDraggablePhotoItem(
+                    item.imageUrl!,
+                    item.photoIndex!,
+                    index,
+                    itemSize,
+                  );
+                }
+              }
+
+              // Если есть место (items.length < 3), последний элемент — кнопка добавления
+              // Кнопка всегда справа от всех элементов
+              return _buildAddPhotoButton(itemSize);
+            },
+          ),
+        );
+      },
     );
   }
 
   /// Кнопка добавления фотографии
-  Widget _buildAddPhotoButton() {
+  Widget _buildAddPhotoButton(double size) {
     return GestureDetector(
       onTap: _handleAddPhotos,
       child: Container(
-        width: 90,
-        height: 90,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          color: AppColors.getSurfaceColor(context),
-          border: Border.all(color: AppColors.getBorderColor(context)),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
         ),
-        child: Center(
+        child: const Center(
           child: Icon(
-            CupertinoIcons.photo,
-            size: 28,
-            color: AppColors.getIconSecondaryColor(context),
+            CupertinoIcons.camera_fill,
+            size: 24,
+            color: AppColors.scrim20,
           ),
         ),
       ),
@@ -417,7 +466,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Перетаскиваемый элемент карты
-  Widget _buildDraggableMapItem(List<LatLng> points, int itemIndex) {
+  Widget _buildDraggableMapItem(
+    List<LatLng> points,
+    int itemIndex,
+    double size,
+  ) {
     final isDragging = _draggedIndex == itemIndex;
 
     return LongPressDraggable<int>(
@@ -426,7 +479,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         color: Colors.transparent,
         child: Opacity(
           opacity: 0.8,
-          child: _buildMapItem(points, isDragging: true),
+          child: _buildMapItem(points, size: size, isDragging: true),
         ),
       ),
       onDragStarted: () {
@@ -453,7 +506,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           final isTargeted = candidateData.isNotEmpty;
           return Opacity(
             opacity: isDragging ? 0.5 : (isTargeted ? 0.7 : 1.0),
-            child: _buildMapItem(points, isDragging: isDragging),
+            child: _buildMapItem(points, size: size, isDragging: isDragging),
           );
         },
       ),
@@ -462,12 +515,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
   /// Элемент карты маршрута
   /// Использует статичную картинку с оптимизацией размера
-  Widget _buildMapItem(List<LatLng> points, {bool isDragging = false}) {
+  Widget _buildMapItem(
+    List<LatLng> points, {
+    required double size,
+    bool isDragging = false,
+  }) {
     return Container(
-      width: 90,
-      height: 90,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         color: AppColors.getBackgroundColor(context),
         border: isDragging
             ? Border.all(color: AppColors.brandPrimary, width: 2)
@@ -485,19 +542,19 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                 ),
               ),
             )
-          : _buildStaticMiniMap(points),
+          : _buildStaticMiniMap(points, size),
     );
   }
 
-  /// Строит статичную мини-карту маршрута (90x90px) с оптимизацией размера.
+  /// Строит статичную мини-карту маршрута с оптимизацией размера.
   ///
   /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
   /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
   /// - Ограничивает maxWidth/maxHeight до 180x180px для еще большей экономии
   /// - Кеширование через CachedNetworkImage с memCacheWidth/maxWidthDiskCache
-  Widget _buildStaticMiniMap(List<LatLng> points) {
-    const widthDp = 90.0;
-    const heightDp = 90.0;
+  Widget _buildStaticMiniMap(List<LatLng> points, double size) {
+    final widthDp = size;
+    final heightDp = size;
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 ОПТИМИЗАЦИЯ РАЗМЕРА: используем ограниченный DPR для мини-карт
@@ -516,7 +573,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       widthPx: widthPx.toDouble(),
       heightPx: heightPx.toDouble(),
       strokeWidth: 2.5,
-      padding: 8.0,
+      padding: 10.0,
       maxWidth: 180.0, // Дополнительное ограничение для маленьких карт
       maxHeight: 180.0, // Дополнительное ограничение для маленьких карт
     );
@@ -549,6 +606,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     String imageUrl,
     int photoIndex,
     int itemIndex,
+    double size,
   ) {
     final isDragging = _draggedIndex == itemIndex;
 
@@ -558,7 +616,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         color: Colors.transparent,
         child: Opacity(
           opacity: 0.8,
-          child: _buildPhotoItemContent(imageUrl, isDragging: true),
+          child: _buildPhotoItemContent(imageUrl, size: size, isDragging: true),
         ),
       ),
       onDragStarted: () {
@@ -586,7 +644,11 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           final isTargeted = candidateData.isNotEmpty;
           return Opacity(
             opacity: isDragging ? 0.5 : (isTargeted ? 0.7 : 1.0),
-            child: _buildPhotoItemContent(imageUrl, isDragging: isDragging),
+            child: _buildPhotoItemContent(
+              imageUrl,
+              size: size,
+              isDragging: isDragging,
+            ),
           );
         },
       ),
@@ -652,23 +714,27 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   }
 
   /// Содержимое элемента фотографии (без обертки drag and drop)
-  Widget _buildPhotoItemContent(String imageUrl, {bool isDragging = false}) {
+  Widget _buildPhotoItemContent(
+    String imageUrl, {
+    required double size,
+    bool isDragging = false,
+  }) {
     return Builder(
       builder: (context) {
         final dpr = MediaQuery.of(context).devicePixelRatio;
-        final w = (90 * dpr).round();
+        final w = (size * dpr).round();
 
         return SizedBox(
-          width: 90,
-          height: 90,
+          width: size,
+          height: size,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
               Container(
-                width: 90,
-                height: 90,
+                width: size,
+                height: size,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   color: AppColors.getBackgroundColor(context),
                   border: isDragging
                       ? Border.all(color: AppColors.brandPrimary, width: 2)
@@ -745,25 +811,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         fillColor: AppColors.getSurfaceColor(context),
         contentPadding: const EdgeInsets.all(12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: BorderSide.none,
         ),
       ),
     );
@@ -1271,9 +1328,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       }
 
       if (filesForUpload.isEmpty) {
-        if (mounted) {
-          _showError('Не удалось подготовить файлы для загрузки.');
-        }
         return;
       }
 

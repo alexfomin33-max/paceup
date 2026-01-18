@@ -29,7 +29,7 @@ abstract class AppColors {
   // Системные iOS-лайк фоны
   static const Color background = Color(0xFFF2F2F7); // systemGroupedBackground
   static const Color softBg = Color(0xFFF5F5F5);
-  static const Color twinBg = Color(0xFFF8F7FC);
+  static const Color twinBg = Color(0xFFF8F8FC);
   // основная поверхность (карточки)
   static const Color surface = Color(0xFFFFFFFF);
   // слегка приглушённая поверхность
@@ -67,6 +67,7 @@ abstract class AppColors {
   // └───────────────────────────────────────────────────────────────────────┘
   static const Color chipBg = Color(0x080000FF);
   static const Color twinchip = Color(0xFFF1F1F9);
+  static const Color twinphoto = Color(0xFFEDEEF5);
   static const Color chipBorder = Color(0xFFE3E6EA);
   static const Color chipText = textSecondary;
   // для «новое»/badge (синеватый)

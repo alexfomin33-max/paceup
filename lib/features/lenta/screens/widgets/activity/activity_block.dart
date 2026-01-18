@@ -283,7 +283,7 @@ class ActivityBlock extends ConsumerWidget {
                                   icon: CupertinoIcons.pencil,
                                   iconColor: AppColors.brandPrimary,
                                   onTap: () {
-                                    Navigator.of(context)
+                                    Navigator.of(context, rootNavigator: true)
                                         .push(
                                           TransparentPageRoute(
                                             builder: (_) => EditActivityScreen(

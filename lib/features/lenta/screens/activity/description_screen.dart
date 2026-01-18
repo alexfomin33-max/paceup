@@ -281,7 +281,7 @@ class _ActivityDescriptionPageState
           iconColor: AppColors.brandPrimary,
           onTap: () {
             MoreMenuHub.hide();
-            Navigator.of(context)
+            Navigator.of(context, rootNavigator: true)
                 .push(
                   TransparentPageRoute(
                     builder: (_) => EditActivityScreen(
