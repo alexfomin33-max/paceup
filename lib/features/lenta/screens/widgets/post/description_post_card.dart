@@ -383,19 +383,25 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                       ),
 
                       // ──────────────────────────────────────────────────────────────
-                      // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 350
+                      // МЕДИА-КАРУСЕЛЬ: картинки/видео, соотношение 1:1.1 (ширина:высота)
                       // ──────────────────────────────────────────────────────────────
-                      Container(
-                        width: double.infinity,
-                        color: AppColors.getSurfaceColor(context),
-                        child: SizedBox(
-                          height: 350,
-                          width: double.infinity,
-                          child: PostMediaCarousel(
-                            imageUrls: _currentPost.mediaImages,
-                            videoUrls: _currentPost.mediaVideos,
-                          ),
-                        ),
+                      Builder(
+                        builder: (context) {
+                          final screenWidth = MediaQuery.of(context).size.width;
+                          final mediaHeight = screenWidth * 1.1;
+                          return Container(
+                            width: double.infinity,
+                            color: AppColors.getSurfaceColor(context),
+                            child: SizedBox(
+                              height: mediaHeight,
+                              width: double.infinity,
+                              child: PostMediaCarousel(
+                                imageUrls: _currentPost.mediaImages,
+                                videoUrls: _currentPost.mediaVideos,
+                              ),
+                            ),
+                          );
+                        },
                       ),
 
                       // ──────────────────────────────────────────────────────────────

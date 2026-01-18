@@ -658,7 +658,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     MoreMenuHub.hide();
 
-    final created = await Navigator.of(context).push<bool>(
+    final created = await Navigator.of(context, rootNavigator: true).push<bool>(
       TransparentPageRoute(builder: (_) => NewPostScreen(userId: userId)),
     );
 
@@ -778,8 +778,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     MoreMenuHub.hide();
 
-    final updated = await Navigator.push<bool>(
-      context,
+    final updated = await Navigator.of(context, rootNavigator: true).push<bool>(
       TransparentPageRoute(
         builder: (_) => EditPostScreen(
           userId: userId,
