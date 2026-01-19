@@ -15,13 +15,14 @@ import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/loginsms_screen.dart';
 import 'features/auth/screens/code1_screen.dart';
 import 'features/auth/screens/code2_screen.dart';
+import 'features/auth/screens/enter_code_screen.dart';
 import '../../core/widgets/app_bottom_nav_shell.dart';
 
 /// 🔹 Маршруты с нижней навигацией
 const bottomNavRoutes = ['/lenta'];
 
 /// 🔹 Маршруты экранов авторизации без анимации перехода
-/// ⚠️ /home, /login, /loginsms, /code1 и /code2 не включены, так как для них нужна fade-in анимация
+/// ⚠️ /home, /login, /loginsms, /code1, /code2 и /entercode не включены, так как для них нужна fade-in анимация
 const homeRoutes = [
   '/createacc',
   '/regstep1',
@@ -132,6 +133,10 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
           : const Code1Screen(); // fallback на code1, если нет аргументов
       break;
 
+    case '/entercode':
+      screen = const EnterCodeScreen();
+      break;
+
     default:
       screen = const SplashScreen();
   }
@@ -162,8 +167,9 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       settings.name == '/login' ||
       settings.name == '/loginsms' ||
       settings.name == '/code1' ||
-      settings.name == '/code2') {
-    // 🔹 Для /home, /login, /loginsms, /code1 и /code2 используем fade-in анимацию
+      settings.name == '/code2' ||
+      settings.name == '/entercode') {
+    // 🔹 Для /home, /login, /loginsms, /code1, /code2 и /entercode используем fade-in анимацию
     // Это обеспечивает плавное появление экранов авторизации
     return PageRouteBuilder(
       pageBuilder: (context, animation, secondaryAnimation) => screen,

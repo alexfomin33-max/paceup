@@ -282,17 +282,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         // 🔹 Если получили userId → переходим на основной экран с данными пользователя
         Navigator.pushReplacementNamed(
           context,
-          '/home', // Можно заменить на HomeShell для bottom nav
+          '/entercode', // Можно заменить на HomeShell для bottom nav
           arguments: {'userId': userId},
         );
       } else {
         // 🔹 fallback: userId не найден, переходим на общий HomeScreen
-        Navigator.pushReplacementNamed(context, '/home');
+        Navigator.pushReplacementNamed(context, '/entercode');
       }
     } else {
       // 🔹 Пользователь не авторизован → показываем экран приветствия / HomeScreen
       // Используем /home для плавного fade-in перехода
-      Navigator.pushReplacementNamed(context, '/home');
+      Navigator.pushReplacementNamed(context, '/entercode');
     }
   }
 
