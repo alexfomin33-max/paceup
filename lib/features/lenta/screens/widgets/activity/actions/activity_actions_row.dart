@@ -475,7 +475,9 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
           ],
         ),
 
-        // Правая группа: «совместно» + шаринг (скрываем для тренировок, добавленных вручную)
+        // Правая группа: «совместно» + шаринг
+        // ✅ ИСПРАВЛЕНО: иконка совместной тренировки показывается всегда для владельца
+        // Шаринг скрывается только для тренировок без карты
         if (!widget.hideRightActions)
           _RightActionsGroup(
             activityId: widget.activityId,
@@ -485,6 +487,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
             isOwner: isOwner,
             onOpenTogether: widget.onOpenTogether,
             onShareTap: _onShareTap,
+            hideShare: widget.activity?.points.isEmpty ?? true,
           ),
       ],
     );
@@ -507,6 +510,7 @@ class _RightActionsGroup extends ConsumerWidget {
   final bool isOwner;
   final VoidCallback? onOpenTogether;
   final VoidCallback onShareTap;
+  final bool hideShare; // ✅ Скрывать шаринг для тренировок без карты
 
   const _RightActionsGroup({
     required this.activityId,
@@ -516,19 +520,21 @@ class _RightActionsGroup extends ConsumerWidget {
     required this.isOwner,
     this.onOpenTogether,
     required this.onShareTap,
+    this.hideShare = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ───────────────────────────────────────────────────────────────────────
-    // ✅ ВЛАДЕЛЕЦ: всегда видит иконку
+    // ✅ ВЛАДЕЛЕЦ: всегда видит иконку совместной тренировки
+    // Шаринг показывается только если есть карта маршрута
     // ───────────────────────────────────────────────────────────────────────
     if (isOwner) {
       return _buildActionsRow(
         context: context,
         showTogetherIcon: true,
         togetherCount: activity?.togetherCount ?? 1,
-        showShareIcon: true,
+        showShareIcon: !hideShare, // ✅ Шаринг только для тренировок с картой
         onOpenTogether: onOpenTogether,
         onShareTap: onShareTap,
       );
@@ -576,6 +582,7 @@ class _RightActionsGroup extends ConsumerWidget {
 
         // ───────────────────────────────────────────────────────────────────
         // ✅ ЯВЛЯЕТСЯ УЧАСТНИКОМ: показываем иконку
+        // Шаринг только для владельца
         // ───────────────────────────────────────────────────────────────────
         return _buildActionsRow(
           context: context,
