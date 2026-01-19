@@ -95,7 +95,7 @@ class SmsCodeInputState extends State<SmsCodeInput> {
             borderRadius: BorderRadius.circular(AppRadius.sm),
           ),
           filled: true,
-          fillColor: Colors.transparent,
+          fillColor: Colors.black.withValues(alpha: 0.1),
           contentPadding: const EdgeInsets.all(0),
         ),
         onChanged: (v) {

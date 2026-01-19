@@ -461,16 +461,22 @@ class _PostCardState extends ConsumerState<PostCard>
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // МЕДИА-КАРУСЕЛЬ: картинки/видео, высота 350
+          // МЕДИА-КАРУСЕЛЬ: картинки/видео, соотношение 1:1.1 (ширина:высота)
           // ──────────────────────────────────────────────────────────────
-          SizedBox(
-            height: 350,
-            width: double.infinity,
-            child: PostMediaCarousel(
-              imageUrls: post.mediaImages,
-              videoUrls: post.mediaVideos,
-              onMediaTap: _openPostDescription,
-            ),
+          Builder(
+            builder: (context) {
+              final screenWidth = MediaQuery.of(context).size.width;
+              final mediaHeight = screenWidth * 1.1;
+              return SizedBox(
+                height: mediaHeight,
+                width: double.infinity,
+                child: PostMediaCarousel(
+                  imageUrls: post.mediaImages,
+                  videoUrls: post.mediaVideos,
+                  onMediaTap: _openPostDescription,
+                ),
+              );
+            },
           ),
 
           // ──────────────────────────────────────────────────────────────

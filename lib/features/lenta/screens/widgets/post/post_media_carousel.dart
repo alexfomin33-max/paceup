@@ -24,7 +24,6 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
   int _index = 0;
 
   static const _dotsBottom = 10.0;
-  static const _dotsPad = EdgeInsets.symmetric(horizontal: 8, vertical: 4);
 
   // Картинка-заглушка для видео
   static const _videoPlaceholder =
@@ -185,30 +184,23 @@ class _PostMediaCarouselState extends State<PostMediaCarousel> {
 
   Widget _buildDots(int total) {
     if (total <= 1) return const SizedBox.shrink();
-    return Center(
-      child: Container(
-        padding: _dotsPad,
-        decoration: BoxDecoration(
-          color: AppColors.scrim20,
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(total, (i) {
-            final active = i == _index;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              width: active ? 16 : 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: active ? AppColors.brandPrimary : AppColors.skeletonBase,
-                borderRadius: BorderRadius.circular(AppRadius.xs),
-              ),
-            );
-          }),
-        ),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(total, (index) {
+        final isActive = _index == index;
+        final color = isActive
+            ? AppColors.surface
+            : AppColors.surface.withValues(alpha: 0.3);
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+          ),
+        );
+      }),
     );
   }
 }

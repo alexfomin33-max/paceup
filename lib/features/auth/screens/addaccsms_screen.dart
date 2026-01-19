@@ -121,7 +121,7 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         if (codeValue > 0 && mounted) {
           Navigator.pushReplacementNamed(
             context,
-            '/regstep1', // экран следующего шага регистрации
+            '/reg_step1', // экран следующего шага регистрации
             arguments: {'userId': codeValue}, // передаём userId
           );
         } else {

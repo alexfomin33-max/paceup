@@ -79,7 +79,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: const PaceAppBar(title: 'Новый пост'),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
@@ -169,52 +169,74 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Горизонтальная карусель фотографий
   Widget _buildPhotoCarousel() {
-    // Общее количество элементов: кнопка добавления + фотографии
-    final totalItems = 1 + _images.length;
+    return Builder(
+      builder: (context) {
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ВЫЧИСЛЕНИЕ ДИНАМИЧЕСКОГО РАЗМЕРА ЭЛЕМЕНТА
+        // ────────────────────────────────────────────────────────────────
+        // Размер вычисляется так, чтобы в одну линию на экране помещалось ровно 3 элемента
+        // Учитываем: паддинг Column (16px с каждой стороны = 32px) и отступы между элементами (2 отступа по 12px = 24px)
+        final screenWidth = MediaQuery.of(context).size.width;
+        const horizontalPadding = 16.0 * 2; // Паддинг Column с двух сторон
+        const separatorWidth = 12.0 * 2; // 2 отступа между 3 элементами
+        final itemSize = (screenWidth - horizontalPadding - separatorWidth) / 3;
 
-    return SizedBox(
-      height: 90,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: totalItems,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          // Первый элемент — кнопка добавления фото
-          if (index == 0) {
-            return _buildAddPhotoButton();
-          }
-          // Остальные элементы — фотографии
-          final photoIndex = index - 1;
-          final file = _images[photoIndex];
-          return _buildPhotoItem(file, photoIndex);
-        },
-      ),
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 СОЗДАНИЕ СПИСКА ЭЛЕМЕНТОВ С ОГРАНИЧЕНИЕМ В 3 ЭЛЕМЕНТА
+        // ────────────────────────────────────────────────────────────────
+        // Максимум 3 элемента в карусели: фотографии + кнопка (если есть место)
+        final displayImages = _images.take(3).toList();
+
+        // Показываем кнопку добавления только если есть место (меньше 3 элементов)
+        final showAddButton = displayImages.length < 3;
+        final totalItems = displayImages.length + (showAddButton ? 1 : 0);
+
+        return SizedBox(
+          height:
+              itemSize +
+              6, // Размер элемента + padding сверху для кнопок удаления
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 6,
+            ), // Добавляем padding сверху для кнопок удаления
+            itemCount: totalItems,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              // Сначала показываем элементы медиа (фотографии)
+              if (index < displayImages.length) {
+                final image = displayImages[index];
+                final photoIndex = _images.indexOf(image);
+                return _buildPhotoItem(image, photoIndex, itemSize);
+              }
+
+              // Если есть место (displayImages.length < 3), последний элемент — кнопка добавления
+              // Кнопка всегда справа от всех элементов
+              return _buildAddPhotoButton(itemSize);
+            },
+          ),
+        );
+      },
     );
   }
 
   /// Кнопка добавления фотографии
-  Widget _buildAddPhotoButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Builder(
-        builder: (context) => GestureDetector(
-          onTap: _handleAddPhotos,
-          child: Container(
-            width: 90,
-            height: 90,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              color: AppColors.getSurfaceColor(context),
-              border: Border.all(color: AppColors.getBorderColor(context)),
-            ),
-            child: Center(
-              child: Icon(
-                CupertinoIcons.photo,
-                size: 28,
-                color: AppColors.getIconSecondaryColor(context),
-              ),
-            ),
+  Widget _buildAddPhotoButton(double size) {
+    return GestureDetector(
+      onTap: _handleAddPhotos,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.camera_fill,
+            size: 24,
+            color: AppColors.scrim20,
           ),
         ),
       ),
@@ -222,19 +244,19 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   }
 
   /// Элемент фотографии с кнопкой удаления
-  Widget _buildPhotoItem(File file, int photoIndex) {
+  Widget _buildPhotoItem(File file, int photoIndex, double size) {
     return Builder(
-      builder: (context) => Padding(
-        padding: const EdgeInsets.only(top: 6),
+      builder: (context) => SizedBox(
+        width: size,
+        height: size,
         child: Stack(
           clipBehavior: Clip.none,
           children: [
             GestureDetector(
               onTap: () async {
                 // По тапу можно заменить картинку
-                // ── выбираем и обрезаем изображение для высоты 350px (динамическое соотношение)
-                final screenWidth = MediaQuery.of(context).size.width;
-                final aspectRatio = screenWidth / 350.0;
+                // ── выбираем и обрезаем изображение в соотношении 1:1.1 (ширина:высота)
+                final aspectRatio = 1.0 / 1.1;
                 final processed = await ImagePickerHelper.pickAndProcessImage(
                   context: context,
                   aspectRatio: aspectRatio,
@@ -250,13 +272,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                 });
               },
               child: Container(
-                width: 90,
-                height: 90,
+                width: size,
+                height: size,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   color: AppColors.getBackgroundColor(context),
                 ),
-                clipBehavior: Clip.hardEdge,
+                clipBehavior: Clip.antiAlias,
                 child: Image.file(
                   file,
                   fit: BoxFit.cover,
@@ -283,7 +305,9 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
                     borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(color: AppColors.getBorderColor(context)),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
                   ),
                   child: const Icon(
                     CupertinoIcons.clear_circled_solid,
@@ -549,7 +573,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   /// Обработчик добавления фотографий к посту
   Future<void> _handleAddPhotos() async {
     try {
-      // ── выбираем и обрезаем изображения для высоты 350px (динамическое соотношение)
+      // ── выбираем и обрезаем изображения в соотношении 1:1.1 (ширина:высота)
       // Используем стандартный pickMultiImage, затем обрезаем каждое
       final picker = ImagePicker();
       final pickedFiles = await picker.pickMultiImage(
@@ -559,33 +583,33 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       );
       if (pickedFiles.isEmpty || !mounted) return;
 
-      // Рассчитываем соотношение сторон на основе ширины экрана
-      final screenWidth = MediaQuery.of(context).size.width;
-      final aspectRatio = screenWidth / 350.0;
+      // Соотношение сторон 1:1.1 (ширина:высота)
+      final aspectRatio = 1.0 / 1.1;
 
       // ── обрезаем и сжимаем все выбранные изображения
       final compressedFiles = <File>[];
       for (int i = 0; i < pickedFiles.length; i++) {
         if (!mounted) return;
-        
+
         final picked = pickedFiles[i];
-        // Обрезаем изображение для высоты 350px (динамическое соотношение)
+        // Обрезаем изображение в соотношении 1:1.1 (ширина:высота)
         final cropped = await ImagePickerHelper.cropPickedImage(
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
           title: 'Обрезка фотографии ${i + 1}',
         );
-        
-        if (cropped == null) continue; // Пропускаем, если пользователь отменил обрезку
-        
+
+        if (cropped == null)
+          continue; // Пропускаем, если пользователь отменил обрезку
+
         // Сжимаем обрезанное изображение
         final compressed = await compressLocalImage(
           sourceFile: cropped,
           maxSide: ImageCompressionPreset.post.maxSide,
           jpegQuality: ImageCompressionPreset.post.quality,
         );
-        
+
         // Удаляем временный файл обрезки
         if (cropped.path != compressed.path) {
           try {
@@ -594,12 +618,12 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
             // Игнорируем ошибки удаления
           }
         }
-        
+
         compressedFiles.add(compressed);
       }
 
       if (compressedFiles.isEmpty || !mounted) return;
-      
+
       setState(() {
         _images.addAll(compressedFiles);
         _updatePublishState();

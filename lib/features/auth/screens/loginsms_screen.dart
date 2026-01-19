@@ -1,14 +1,16 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'auth_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/fcm_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../widgets/sms_code_input.dart';
-import '../widgets/resend_code_button.dart';
 import '../../../core/widgets/form_error_display.dart';
 
 //import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -28,14 +30,54 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
   /// 🔹 Ключ для доступа к виджету SmsCodeInput (для очистки полей)
   final GlobalKey<SmsCodeInputState> _smsCodeInputKey = GlobalKey();
 
-  /// 🔹 Ключ для доступа к виджету ResendCodeButton (для перезапуска таймера)
-  final GlobalKey<ResendCodeButtonState> _resendButtonKey = GlobalKey();
+  /// 🔹 Таймер для обратного отсчёта до возможности повторной отправки
+  Timer? _resendTimer;
+
+  /// 🔹 Оставшееся время до возможности повторной отправки (в секундах)
+  int _remainingSeconds = 0;
 
   @override
   void initState() {
     super.initState();
-    // 🔹 При открытии экрана сразу отправляем запрос на вход пользователя
-    fetchApiData();
+    // 🔹 Запускаем таймер при инициализации
+    _startTimer();
+    // 🔹 При открытии экрана отправляем запрос на вход пользователя
+    // Откладываем выполнение до завершения сборки виджета, чтобы избежать
+    // ошибки "Tried to modify a provider while the widget tree was building"
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchApiData();
+    });
+  }
+
+  @override
+  void dispose() {
+    // 🔹 Отменяем таймер при уничтожении виджета
+    _resendTimer?.cancel();
+    super.dispose();
+  }
+
+  /// 🔹 Запуск таймера обратного отсчёта
+  void _startTimer() {
+    _remainingSeconds = 60;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_remainingSeconds > 0) {
+            _remainingSeconds--;
+          } else {
+            timer.cancel();
+          }
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  /// 🔹 Перезапуск таймера (вызывается после успешной отправки)
+  void _resetTimer() {
+    _startTimer();
   }
 
   /// 🔹 Метод для первоначальной отправки запроса входа пользователя
@@ -87,7 +129,7 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
       },
       onSuccess: () {
         // 🔹 После успешной отправки перезапускаем таймер
-        _resendButtonKey.currentState?.resetTimer();
+        _resetTimer();
       },
       // 🔹 Ошибки повторной отправки кода только логируем, не показываем пользователю
       onError: (error) {
@@ -130,10 +172,10 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
               }
             }
           }
-          
+
           Navigator.pushReplacementNamed(
             context,
-            '/lenta',
+            '/code1',
             arguments: {
               'userId': codeValue,
             }, // передаём userId на следующий экран
@@ -163,61 +205,244 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
     // 🔹 Получаем состояние формы
     final formState = ref.watch(formStateProvider);
 
-    // 🔹 Получаем высоту клавиатуры для адаптации контента
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
-    // 🔹 Базовый отступ снизу, который уменьшается при появлении клавиатуры
-    final verticalPadding = 100.0 - (keyboardHeight * 0.3).clamp(0.0, 60.0);
-
-    return Scaffold(
-      // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
-      resizeToAvoidBottomInset: true,
-      body: GestureDetector(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
+      ),
+      child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
-        child: AuthShell(
-          contentPadding: EdgeInsets.symmetric(
-            horizontal: 40,
-            vertical: verticalPadding,
-          ),
-          overlayAlpha: 0.5,
-          child: SingleChildScrollView(
-            // 🔹 Прокручиваем контент при появлении клавиатуры
-            physics: const ClampingScrollPhysics(),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "Введите код, отправленный на номер\n${widget.phone}",
-                  style: const TextStyle(
-                    color: AppColors.surface,
-                    fontSize: 15,
-                    fontFamily: 'Inter',
+        child: Scaffold(
+          // 🔹 Отключаем автоматическую прокрутку Scaffold, используем свою
+          resizeToAvoidBottomInset: true,
+          backgroundColor: Colors.transparent,
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
                   ),
-                  textAlign: TextAlign.left,
-                ),
-                const SizedBox(height: 20),
-                // 🔹 Используем общий виджет для ввода SMS-кода
-                SmsCodeInput(
-                  key: _smsCodeInputKey,
-                  onCodeComplete: formState.isSubmitting ? null : enterCode,
-                  enabled: !formState.isSubmitting,
-                ),
-                // 🔹 Показываем ошибку, если есть
-                if (formState.error != null) ...[
-                  const SizedBox(height: 12),
-                  FormErrorDisplay(formState: formState),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.6,
+                            ), // Сверху менее прозрачный (темнее)
+                            Colors.black.withValues(
+                              alpha: 0.2,
+                            ), // Снизу более прозрачный (светлее)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Контент ───────────
+                  Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // ─────────── Логотип на 1/3 от высоты экрана ───────────
+                      Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).size.height * 0.085,
+                          ),
+                          child: Opacity(
+                            opacity: 0.9,
+                            child: Image.asset(
+                              'assets/gorizont.png',
+                              width: 180,
+                              filterQuality: FilterQuality.high,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // ─────────── Форма внизу ───────────
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Padding(
+                          padding: EdgeInsets.only(
+                            bottom: MediaQuery.of(context).size.height * 0.1,
+                            left: MediaQuery.of(context).size.width * 0.1,
+                            right: MediaQuery.of(context).size.width * 0.1,
+                          ),
+                          child: SingleChildScrollView(
+                            // 🔹 Прокручиваем контент при появлении клавиатуры
+                            physics: const ClampingScrollPhysics(),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // 🔹 Текст с номером телефона
+                                Text(
+                                  "Введите код, отправленный на номер\n${widget.phone}",
+                                  style: const TextStyle(
+                                    color: AppColors.surface,
+                                    fontSize: 15,
+                                    fontFamily: 'Inter',
+                                  ),
+                                  textAlign: TextAlign.left,
+                                ),
+                                const SizedBox(height: 20),
+                                // 🔹 Используем общий виджет для ввода SMS-кода
+                                SmsCodeInput(
+                                  key: _smsCodeInputKey,
+                                  onCodeComplete: formState.isSubmitting
+                                      ? null
+                                      : enterCode,
+                                  enabled: !formState.isSubmitting,
+                                ),
+                                // 🔹 Показываем ошибку, если есть
+                                Builder(
+                                  builder: (context) {
+                                    if (formState.hasErrors) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(top: 12),
+                                        child: FormErrorDisplay(
+                                          formState: formState,
+                                        ),
+                                      );
+                                    }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                                const SizedBox(height: 20),
+                                // 🔹 Кнопка "Отправить заново" в стиле "Получить код"
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed:
+                                        (_remainingSeconds > 0 ||
+                                            formState.isLoading)
+                                        ? null
+                                        : resendCode,
+                                    style: ButtonStyle(
+                                      backgroundColor:
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.disabled,
+                                            )) {
+                                              return AppColors.disabledBg
+                                                  .withValues(alpha: 0.5);
+                                            }
+                                            return AppColors.getSurfaceColor(
+                                              context,
+                                            );
+                                          }),
+                                      foregroundColor:
+                                          WidgetStateProperty.resolveWith((
+                                            states,
+                                          ) {
+                                            if (states.contains(
+                                              WidgetState.disabled,
+                                            )) {
+                                              return AppColors.textPrimary
+                                                  .withValues(alpha: 0.5);
+                                            }
+                                            return AppColors.textPrimary;
+                                          }),
+                                      padding: const WidgetStatePropertyAll(
+                                        EdgeInsets.symmetric(vertical: 15),
+                                      ),
+                                      shape: WidgetStatePropertyAll(
+                                        RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            AppRadius.xxl,
+                                          ),
+                                        ),
+                                      ),
+                                      elevation: const WidgetStatePropertyAll(
+                                        0,
+                                      ),
+                                    ),
+                                    child: formState.isLoading
+                                        ? const SizedBox(
+                                            height: 20,
+                                            width: 20,
+                                            child: CupertinoActivityIndicator(
+                                              radius: 10,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          )
+                                        : Text(
+                                            _remainingSeconds > 0
+                                                ? "Отправить заново ($_remainingSecondsс)"
+                                                : "Отправить заново",
+                                            style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // ─────────── Кнопка "Назад" в верхнем левом углу ───────────
+                  Positioned(
+                    top: MediaQuery.of(context).size.height * 0.076,
+                    left: 16,
+                    child: Builder(
+                      builder: (context) {
+                        final formState = ref.watch(formStateProvider);
+                        return TextButton(
+                          onPressed: formState.isSubmitting
+                              ? null
+                              : () => Navigator.pushReplacementNamed(
+                                  context,
+                                  '/login',
+                                ),
+                          style: const ButtonStyle(
+                            overlayColor: WidgetStatePropertyAll(
+                              Colors.transparent,
+                            ),
+                            animationDuration: Duration(milliseconds: 0),
+                            padding: WidgetStatePropertyAll(EdgeInsets.all(8)),
+                            minimumSize: WidgetStatePropertyAll(Size(40, 40)),
+                          ),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: AppColors.surface,
+                            size: 24,
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
-                const SizedBox(height: 15),
-                // 🔹 Используем общий виджет для кнопки повторной отправки
-                ResendCodeButton(
-                  key: _resendButtonKey,
-                  onPressed: formState.isLoading ? null : resendCode,
-                  initialSeconds: 60,
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       ),

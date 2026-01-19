@@ -12,6 +12,7 @@
 //  • Offline-first кэширование (работа без интернета)
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'dart:developer' as developer;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/cache_service.dart';
@@ -148,16 +149,40 @@ class LentaNotifier extends StateNotifier<LentaState> {
     bool showOwn = true,
     bool showOthers = true,
   }) async {
+    developer.log(
+      '[LENTA_NOTIFIER] loadInitial вызван: userId=$userId, '
+      'showTrainings=$showTrainings, showPosts=$showPosts, '
+      'showOwn=$showOwn, showOthers=$showOthers',
+      name: 'LentaNotifier',
+    );
+
     // 🔒 Защита от одновременного выполнения
-    if (_isLoading) return;
+    if (_isLoading) {
+      developer.log(
+        '[LENTA_NOTIFIER] ⚠️ Уже идет загрузка, пропускаем',
+        name: 'LentaNotifier',
+      );
+      return;
+    }
 
     try {
       _isLoading = true;
+
+      developer.log(
+        '[LENTA_NOTIFIER] Устанавливаем isRefreshing=true, '
+        'текущее состояние: items.length=${state.items.length}, '
+        'currentPage=${state.currentPage}',
+        name: 'LentaNotifier',
+      );
 
       // Показываем индикатор загрузки
       state = state.copyWith(isRefreshing: true, error: null);
 
       // ────────── ШАГ 2: Загружаем свежие данные ──────────
+      developer.log(
+        '[LENTA_NOTIFIER] Начинаем загрузку данных с API...',
+        name: 'LentaNotifier',
+      );
       final freshItems = await _loadActivities(
         page: 1,
         limit: limit,
@@ -167,8 +192,18 @@ class LentaNotifier extends StateNotifier<LentaState> {
         showOthers: showOthers,
       );
 
+      developer.log(
+        '[LENTA_NOTIFIER] Данные получены с API: ${freshItems.length} элементов',
+        name: 'LentaNotifier',
+      );
+
       // ✅ Дедупликация на случай, если API вернет дубликаты
       final deduplicatedItems = _deduplicateItems(freshItems);
+
+      developer.log(
+        '[LENTA_NOTIFIER] После дедупликации: ${deduplicatedItems.length} элементов',
+        name: 'LentaNotifier',
+      );
 
       // Сохраняем в кэш (для возможного использования в будущем)
       await _cache.cacheActivities(deduplicatedItems, userId: userId);
@@ -182,6 +217,12 @@ class LentaNotifier extends StateNotifier<LentaState> {
       // Если вернулось меньше limit - это последняя страница (hasMore = false)
       final itemsCount = deduplicatedItems.length;
       final hasMore = itemsCount == limit;
+
+      developer.log(
+        '[LENTA_NOTIFIER] Обновляем состояние: items.length=$itemsCount, '
+        'hasMore=$hasMore, isRefreshing=false',
+        name: 'LentaNotifier',
+      );
       
       state = state.copyWith(
         items: deduplicatedItems,
@@ -191,13 +232,28 @@ class LentaNotifier extends StateNotifier<LentaState> {
         isRefreshing: false,
         error: null,
       );
-    } catch (e) {
+
+      developer.log(
+        '[LENTA_NOTIFIER] ✅ loadInitial завершен успешно',
+        name: 'LentaNotifier',
+      );
+    } catch (e, stackTrace) {
+      developer.log(
+        '[LENTA_NOTIFIER] ❌ Ошибка в loadInitial: $e',
+        name: 'LentaNotifier',
+        error: e,
+        stackTrace: stackTrace,
+      );
       state = state.copyWith(
         error: ErrorHandler.format(e),
         isRefreshing: false,
       );
     } finally {
       _isLoading = false;
+      developer.log(
+        '[LENTA_NOTIFIER] _isLoading установлен в false',
+        name: 'LentaNotifier',
+      );
     }
   }
 

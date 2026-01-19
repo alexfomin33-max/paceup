@@ -62,7 +62,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   bool _isLoadingRouteMap = false;
   final RouteMapService _routeMapService = RouteMapService();
 
-  static const _dotsBottom = 10.0;
+  static const _dotsTop = 10.0;
 
   // ────────────────────────────────────────────────────────────────
   // ⚡ КЭШИРОВАНИЕ URL КАРТЫ: генерируем один раз вместо каждого rebuild
@@ -76,10 +76,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    
+
     // Проверяем кеш сервиса синхронно (если есть в кеше - используем сразу)
     if (widget.activityId != null && widget.points.isNotEmpty) {
-      final cachedUrl = _routeMapService.getCachedRouteMapUrl(widget.activityId!);
+      final cachedUrl = _routeMapService.getCachedRouteMapUrl(
+        widget.activityId!,
+      );
       if (cachedUrl != null) {
         _savedRouteMapUrl = cachedUrl;
       } else {
@@ -101,7 +103,9 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     if (widget.activityId == null) return;
 
     try {
-      final savedUrl = await _routeMapService.getRouteMapUrl(widget.activityId!);
+      final savedUrl = await _routeMapService.getRouteMapUrl(
+        widget.activityId!,
+      );
       // URL сохраняется в кеш сервиса автоматически
       // При следующей загрузке виджета он будет использован из кеша
     } catch (e) {
@@ -147,10 +151,10 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             // Индикаторы точек, если фотографий больше одной
             if (widget.imageUrls.length > 1)
               Positioned(
-                bottom: _dotsBottom,
+                top: _dotsTop,
                 left: 0,
                 right: 0,
-                child: _buildDots(widget.imageUrls.length),
+                child: _buildDots(widget.imageUrls.length, isPhotosOnly: true),
               ),
           ],
         ),
@@ -220,14 +224,14 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           ),
 
           // ────────────────────────────────────────────────────────────────
-          // 🔘 ИНДИКАТОРЫ: точки внизу для навигации
+          // 🔘 ИНДИКАТОРЫ: точки сверху для навигации
           // ────────────────────────────────────────────────────────────────
           if (totalSlides > 1)
             Positioned(
-              bottom: _dotsBottom,
+              top: _dotsTop,
               left: 0,
               right: 0,
-              child: _buildDots(totalSlides),
+              child: _buildDots(totalSlides, items: items),
             ),
         ],
       ),
@@ -325,7 +329,8 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             useSavedImage = false;
             // Сохраняем изображение на сервер в фоне после успешной загрузки
             // (не блокируя UI, не вызывая перерисовку)
-            shouldSaveAfterLoad = widget.activityId != null && widget.userId != null;
+            shouldSaveAfterLoad =
+                widget.activityId != null && widget.userId != null;
           }
 
           return CachedNetworkImage(
@@ -379,7 +384,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   /// Не вызывает перерисовку - URL сохраняется в кеш сервиса для следующей загрузки
   Future<void> _saveRouteMapImage(String mapboxUrl) async {
     if (widget.activityId == null || widget.userId == null) return;
-    
+
     // Проверяем, что изображение еще не сохранено
     if (_savedRouteMapUrl != null) return;
 
@@ -391,7 +396,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
         userId: widget.userId!,
         mapboxUrl: mapboxUrl,
       );
-      
+
       // НЕ обновляем состояние - не вызываем перерисовку
       // При следующей загрузке виджета URL будет взят из кеша сервиса
     } catch (e) {
@@ -448,26 +453,46 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     );
   }
 
-  /// Строит индикаторы точек внизу карусели.
-  Widget _buildDots(int total) {
+  /// Строит индикаторы точек сверху карусели.
+  /// Если переданы items, определяет цвет по типу активного элемента:
+  /// - темные точки для карты маршрута
+  /// - светлые точки для фотографий
+  Widget _buildDots(
+    int total, {
+    List<_CarouselItem>? items,
+    bool isPhotosOnly = false,
+  }) {
+    // Определяем, карта ли сейчас активна
+    final isCurrentMap =
+        items != null &&
+        _currentIndex < items.length &&
+        items[_currentIndex].isMap;
+
+    // Если только фотографии или текущий слайд - фото, используем светлые точки
+    // Если текущий слайд - карта, используем темные точки
+    final useLightDots = isPhotosOnly || !isCurrentMap;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        total,
-        (index) => Padding(
+      children: List.generate(total, (index) {
+        final isActive = _currentIndex == index;
+        final color = useLightDots
+            ? (isActive
+                  ? AppColors.surface
+                  : AppColors.surface.withValues(alpha: 0.3))
+            : (isActive
+                  ? AppColors.brandPrimary
+                  : AppColors.brandPrimary.withValues(alpha: 0.3));
+
+        return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4),
           child: Container(
             width: 6,
             height: 6,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _currentIndex == index
-                  ? AppColors.brandPrimary
-                  : AppColors.brandPrimary.withValues(alpha: 0.3),
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 
