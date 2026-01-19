@@ -425,6 +425,15 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
   @override
   Widget build(BuildContext context) {
     final isOwner = widget.currentUserId == widget.activityUserId;
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // ✅ ПРОВЕРКА ДАННЫХ ДЛЯ РЕПОСТА: иконка показывается, если есть карта
+    // ИЛИ фото (можно репостить либо карту, либо фото)
+    // ───────────────────────────────────────────────────────────────────────
+    final hasMap = widget.activity?.points.isNotEmpty ?? false;
+    final hasPhotos = widget.activity?.mediaImages.isNotEmpty ?? false;
+    // Иконка репоста скрывается только если нет ни карты, ни фото
+    final hideShare = !(hasMap || hasPhotos);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -477,7 +486,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
 
         // Правая группа: «совместно» + шаринг
         // ✅ ИСПРАВЛЕНО: иконка совместной тренировки показывается всегда для владельца
-        // Шаринг скрывается только для тренировок без карты
+        // Шаринг скрывается только для тренировок без карты И без фото
         if (!widget.hideRightActions)
           _RightActionsGroup(
             activityId: widget.activityId,
@@ -487,7 +496,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
             isOwner: isOwner,
             onOpenTogether: widget.onOpenTogether,
             onShareTap: _onShareTap,
-            hideShare: widget.activity?.points.isEmpty ?? true,
+            hideShare: hideShare,
           ),
       ],
     );
