@@ -124,6 +124,11 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
     }
   }
 
+  /// 🔹 Обработка нажатия на кнопку выхода
+  void _onExitPressed() {
+    Navigator.pushReplacementNamed(context, '/home');
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -330,12 +335,12 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
           ],
         ),
         SizedBox(height: rowSpacing),
-        // Четвёртая строка: пустое место, 0, кнопка удаления
+        // Четвёртая строка: кнопка выхода, 0, кнопка удаления
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 🔹 Невидимая кнопка-заглушка для симметрии
-            SizedBox(width: buttonSize, height: buttonSize),
+            // 🔹 Кнопка выхода
+            _buildExitButton(buttonSize),
             SizedBox(width: buttonSpacing),
             _buildNumberButton('0', buttonSize),
             SizedBox(width: buttonSpacing),
@@ -367,6 +372,28 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
             style: const TextStyle(
               color: AppColors.surface,
               fontSize: 24,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 🔹 Создание кнопки выхода
+  Widget _buildExitButton(double size) {
+    return GestureDetector(
+      onTap: _onExitPressed,
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: const Center(
+          child: Text(
+            'Выйти',
+            style: TextStyle(
+              color: AppColors.surface,
+              fontSize: 14,
+              fontFamily: 'Inter',
               fontWeight: FontWeight.w500,
             ),
           ),
