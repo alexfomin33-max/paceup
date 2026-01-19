@@ -167,8 +167,14 @@ class RouteMapService {
       }
 
       // Сохраняем во временный файл
+      // Убеждаемся, что временная директория существует
+      final tempDir = Directory.systemTemp;
+      if (!await tempDir.exists()) {
+        await tempDir.create(recursive: true);
+      }
+      
       final suffix = thumbnail ? '_thumbnail' : '';
-      final tempFile = File('${Directory.systemTemp.path}/route_map${suffix}_$activityId.png');
+      final tempFile = File('${tempDir.path}/route_map${suffix}_$activityId.png');
       await tempFile.writeAsBytes(response.bodyBytes);
 
       try {
