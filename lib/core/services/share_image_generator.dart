@@ -487,11 +487,39 @@ class ShareImageGenerator {
     }
   }
 
+  /// Рисует полупрозрачную панель поверх изображения (затемнение)
+  static void _drawSemiTransparentPanel(
+    img.Image image, {
+    required int x1,
+    required int y1,
+    required int x2,
+    required int y2,
+    required double opacity, // 0.0 - прозрачно, 1.0 - непрозрачно
+  }) {
+    for (int y = y1; y < y2 && y < image.height; y++) {
+      for (int x = x1; x < x2 && x < image.width; x++) {
+        final pixel = image.getPixel(x, y);
+        // Получаем текущий цвет пикселя
+        final r = pixel.r;
+        final g = pixel.g;
+        final b = pixel.b;
+        
+        // Смешиваем с черным цветом с учетом прозрачности
+        // opacity = 0.6 означает 60% черного, 40% исходного цвета
+        final newR = ((r * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
+        final newG = ((g * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
+        final newB = ((b * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
+        
+        image.setPixel(x, y, img.ColorRgb8(newR, newG, newB));
+      }
+    }
+  }
+
   /// Добавляет логотип PaceUp в верхнюю часть изображения
   static Future<void> _drawLogo(img.Image shareImage) async {
     try {
-      // Загружаем логотип из assets
-      final ByteData logoData = await rootBundle.load('assets/logo.png');
+      // Загружаем черный логотип из assets (как в шапке ленты)
+      final ByteData logoData = await rootBundle.load('assets/black_logo.png');
       final Uint8List logoBytes = logoData.buffer.asUint8List();
 
       // Декодируем логотип
@@ -501,8 +529,8 @@ class ShareImageGenerator {
         return;
       }
 
-      // Масштабируем логотип до нужного размера (примерно 15% от ширины экрана)
-      final logoWidth = (storyWidth * 0.15).round(); // 15% от ширины
+      // Масштабируем логотип до нужного размера (30% от ширины экрана - в 2 раза больше)
+      final logoWidth = (storyWidth * 0.30).round(); // 30% от ширины (в 2 раза больше)
       final logoHeight = (logoImage.height * logoWidth / logoImage.width)
           .round();
 
@@ -531,7 +559,7 @@ class ShareImageGenerator {
     }
   }
 
-  /// Рисует параметры тренировки напрямую на изображении (слева внизу, как на скриншотах)
+  /// Рисует параметры тренировки внизу на темной полосе слева (три колонки: Расстояние, Время, Темп)
   static Future<void> _drawStatsOnImage(
     img.Image shareImage,
     ActivityStats stats,
@@ -539,51 +567,118 @@ class ShareImageGenerator {
     Activity activity,
   ) async {
     try {
-      const pixelRatio = 2.0;
-      const labelFontSize = 64.0; // Увеличено в 2 раза (было 32.0)
-      const valueFontSize = 96.0; // Увеличено в 2 раза (было 48.0)
-      const titleFontSize = 80.0; // Увеличено в 2 раза (было 40.0)
-      const leftPadding = 50.0;
-      const bottomPadding = 60.0; // Отступ от нижнего края
-      const lineSpacing = 120.0; // Увеличено в 2 раза (было 60.0)
-      const labelValueSpacing = 12.0; // Увеличено в 2 раза (было 6.0)
+      // Размеры темной панели внизу (примерно 20% высоты экрана)
+      final panelHeight = (storyHeight * 0.2).round();
+      final panelY = storyHeight - panelHeight;
 
-      // Создаем Canvas для рисования текста и иконки
+      // Рисуем полупрозрачную темную панель внизу
+      _drawSemiTransparentPanel(
+        shareImage,
+        x1: 0,
+        y1: panelY,
+        x2: storyWidth,
+        y2: storyHeight,
+        opacity: 0.35,
+      );
+
+      // Создаем Canvas для рисования текста
       final recorder = ui.PictureRecorder();
       final canvas = Canvas(
         recorder,
         Rect.fromLTWH(0, 0, storyWidth.toDouble(), storyHeight.toDouble()),
       );
 
+      // Размеры шрифтов (соответствуют картинке)
+      const labelFontSize = 48.0; // Мелкий шрифт для меток (белый)
+      const valueFontSize = 64.0; // Шрифт для значений (белый, жирный) - уменьшен
+      const attributionFontSize = 24.0; // Мелкий шрифт для атрибуций
+
+      // Отступы для текста внизу слева на темной полосе
+      const leftPadding = 80.0; // Левый отступ от края экрана (внутри панели)
+      const bottomPadding = 50.0; // Отступ снизу от края панели (внутри панели)
+      const columnSpacing = 350.0; // Расстояние между колонками (увеличено, чтобы не наезжали)
+      const labelValueSpacing = 12.0; // Отступ между меткой и значением
+
       final textPainter = TextPainter(
         textDirection: TextDirection.ltr,
         textAlign: TextAlign.left,
       );
 
+      // Стили текста (белый цвет для текста на темной панели)
       const labelStyle = TextStyle(
         fontFamily: 'Inter',
         fontSize: labelFontSize,
-        fontWeight: FontWeight.w500,
-        color: Colors.black,
+        fontWeight: FontWeight.w400,
+        color: Colors.white, // Белый цвет для меток
       );
       const valueStyle = TextStyle(
         fontFamily: 'Inter',
         fontSize: valueFontSize,
-        fontWeight: FontWeight.w700,
-        color: Colors.black,
+        fontWeight: FontWeight.w600, // Жирный шрифт для значений
+        color: Colors.white, // Белый цвет для значений
       );
-      const titleStyle = TextStyle(
+      const attributionStyle = TextStyle(
         fontFamily: 'Inter',
-        fontSize: titleFontSize,
-        fontWeight: FontWeight.w600,
-        color: Colors.black,
+        fontSize: attributionFontSize,
+        fontWeight: FontWeight.w400,
+        color: Colors.white70, // Полупрозрачный белый для атрибуций
       );
 
-      // Начинаем рисовать снизу вверх: нижний край блока на высоте storyHeight - bottomPadding
-      // textPainter.paint рисует текст от базовой линии вверх, так что базовая линия = нижний край текста
-      double currentY = storyHeight - bottomPadding;
+      // ────────────────────────────────────────────────────────────────
+      // РИСУЕМ КОЛОНКИ ГОРИЗОНТАЛЬНО В ОДНУ СТРОКУ: Расстояние, Время, Темп
+      // ────────────────────────────────────────────────────────────────
+      
+      // Базовая позиция Y - ВНУТРИ панели, снизу (снизу вверх: сначала значение, потом метка)
+      // panelY - это начало панели, storyHeight - конец
+      // Текст должен быть внутри панели, ближе к низу
+      final bottomY = storyHeight - bottomPadding; // Позиция снизу внутри панели
 
-      // Сначала рисуем Темп (самый нижний элемент в списке)
+      // КОЛОНКА 1: Расстояние (СЛЕВА с отступом, внутри панели)
+      final distanceKm = stats.distance / 1000.0;
+      final distanceValue = '${distanceKm.toStringAsFixed(2)} км';
+      final column1X = leftPadding; // Левый отступ от края экрана
+
+      // Значение расстояния (самый нижний элемент)
+      textPainter.text = TextSpan(text: distanceValue, style: valueStyle);
+      textPainter.layout();
+      double currentY1 = bottomY;
+      textPainter.paint(
+        canvas,
+        Offset(column1X, currentY1 - textPainter.height),
+      );
+
+      // Метка "Расстояние" (над значением)
+      currentY1 -= textPainter.height + labelValueSpacing;
+      textPainter.text = const TextSpan(text: 'Расстояние', style: labelStyle);
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(column1X, currentY1 - textPainter.height),
+      );
+
+      // КОЛОНКА 2: Время
+      final timeValue = _formatDurationForShareNew(stats.duration);
+      final column2X = column1X + columnSpacing;
+
+      // Значение времени (самый нижний элемент)
+      textPainter.text = TextSpan(text: timeValue, style: valueStyle);
+      textPainter.layout();
+      double currentY2 = bottomY;
+      textPainter.paint(
+        canvas,
+        Offset(column2X, currentY2 - textPainter.height),
+      );
+
+      // Метка "Время, мин" (над значением)
+      currentY2 -= textPainter.height + labelValueSpacing;
+      textPainter.text = const TextSpan(text: 'Время, мин', style: labelStyle);
+      textPainter.layout();
+      textPainter.paint(
+        canvas,
+        Offset(column2X, currentY2 - textPainter.height),
+      );
+
+      // КОЛОНКА 3: Темп
       if (stats.avgPace > 0) {
         // avgPace в секундах на км, конвертируем в минуты на км
         double paceMinPerKm;
@@ -599,85 +694,75 @@ class ShareImageGenerator {
           paceMinPerKm = stats.avgPace / 60.0;
         }
 
-        // Форматируем темп с секундами (мин:сек /км)
+        // Форматируем темп (мин:сек /км)
         final paceValue = '${formatPace(paceMinPerKm)} /км';
+        final column3X = column2X + columnSpacing;
 
-        // Значение - базовая линия на currentY (текст пойдет вверх)
+        // Значение темпа (самый нижний элемент)
         textPainter.text = TextSpan(text: paceValue, style: valueStyle);
         textPainter.layout();
-        textPainter.paint(canvas, Offset(leftPadding, currentY));
-        currentY -= textPainter.height;
-        currentY -= labelValueSpacing;
+        double currentY3 = bottomY;
+        textPainter.paint(
+          canvas,
+          Offset(column3X, currentY3 - textPainter.height),
+        );
 
-        // Метка
-        textPainter.text = const TextSpan(text: 'Темп', style: labelStyle);
+        // Метка "Темп, /км" (над значением)
+        currentY3 -= textPainter.height + labelValueSpacing;
+        textPainter.text = const TextSpan(text: 'Темп, /км', style: labelStyle);
         textPainter.layout();
-        textPainter.paint(canvas, Offset(leftPadding, currentY));
-        currentY -= textPainter.height;
-        currentY -= lineSpacing;
+        textPainter.paint(
+          canvas,
+          Offset(column3X, currentY3 - textPainter.height),
+        );
       }
 
-      // Время (формат: "23мин." или "1ч. 23мин." - без секунд)
-      final timeValue = _formatDurationForShare(stats.duration);
-
-      // Значение
-      textPainter.text = TextSpan(text: timeValue, style: valueStyle);
+      // ────────────────────────────────────────────────────────────────
+      // РИСУЕМ АТРИБУЦИИ ВНИЗУ ПАНЕЛИ
+      // ────────────────────────────────────────────────────────────────
+      // Атрибуция Mapbox слева внизу
+      textPainter.text = const TextSpan(text: '© Mapbox', style: attributionStyle);
+      textPainter.textAlign = TextAlign.left;
       textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= textPainter.height;
-      currentY -= labelValueSpacing;
+      final attributionLeftPadding = 40.0;
+      final attributionBottomPadding = 20.0;
+      textPainter.paint(
+        canvas,
+        Offset(
+          attributionLeftPadding,
+          storyHeight - attributionBottomPadding - textPainter.height,
+        ),
+      );
 
-      // Метка
-      textPainter.text = const TextSpan(text: 'Время', style: labelStyle);
+      // Атрибуция OpenStreetMap справа внизу
+      textPainter.text = const TextSpan(text: '© OpenStreetMap', style: attributionStyle);
+      textPainter.textAlign = TextAlign.right;
       textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= textPainter.height;
-      currentY -= lineSpacing;
-
-      // Расстояние (формат: "3,51 км" с запятой)
-      final distanceKm = stats.distance / 1000.0;
-      final distanceValue =
-          '${distanceKm.toStringAsFixed(2).replaceAll('.', ',')} км';
-
-      // Значение
-      textPainter.text = TextSpan(text: distanceValue, style: valueStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= textPainter.height;
-      currentY -= labelValueSpacing;
-
-      // Метка
-      textPainter.text = const TextSpan(text: 'Расстояние', style: labelStyle);
-      textPainter.layout();
-      textPainter.paint(canvas, Offset(leftPadding, currentY));
-      currentY -= textPainter.height;
-      currentY -= lineSpacing;
-
-      // Тип тренировки - ПЕРВЫЙ в списке (рисуем последним, чтобы он был сверху)
-      // БЕЗ ИКОНКИ - только текст
-      String activityTypeTitle = _getActivityTypeTitle(activity.type);
-
-      if (activityTypeTitle.isNotEmpty) {
-        textPainter.text = TextSpan(text: activityTypeTitle, style: titleStyle);
-        textPainter.layout();
-        textPainter.paint(canvas, Offset(leftPadding, currentY));
-      }
+      final attributionRightPadding = 40.0;
+      textPainter.paint(
+        canvas,
+        Offset(
+          storyWidth - attributionRightPadding - textPainter.width,
+          storyHeight - attributionBottomPadding - textPainter.height,
+        ),
+      );
 
       // Конвертируем Canvas в изображение
       final picture = recorder.endRecording();
+      // Используем те же размеры, что и shareImage, без pixelRatio, чтобы координаты совпадали
       final uiImage = await picture.toImage(
-        (storyWidth * pixelRatio).toInt(),
-        (storyHeight * pixelRatio).toInt(),
+        storyWidth,
+        storyHeight,
       );
       final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
       picture.dispose();
       uiImage.dispose();
 
       if (byteData != null) {
-        // Композируем текст на основное изображение
+        // Композируем текст на основное изображение (панель уже нарисована)
         final textImage = img.decodeImage(byteData.buffer.asUint8List());
         if (textImage != null) {
-          img.compositeImage(shareImage, textImage);
+          img.compositeImage(shareImage, textImage, dstX: 0, dstY: 0);
         }
       }
     } catch (e) {
@@ -697,7 +782,7 @@ class ShareImageGenerator {
         return 'Прогулка';
       case 'cycling':
       case 'bike':
-        return 'Велозаезд';
+        return 'Заезд';
       case 'swimming':
       case 'swim':
         return 'Плавание';
@@ -709,7 +794,24 @@ class ShareImageGenerator {
     }
   }
 
+  /// Форматирует длительность для репоста (формат: "1:22:44" - часы:минуты:секунды)
+  static String _formatDurationForShareNew(num? seconds) {
+    if (seconds == null || seconds <= 0) return '0:00:00';
+
+    final total = seconds.toInt();
+    final hours = total ~/ 3600;
+    final minutes = ((total % 3600) ~/ 60).toString().padLeft(2, '0');
+    final secs = (total % 60).toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      return '$hours:$minutes:$secs';
+    } else {
+      return '0:$minutes:$secs';
+    }
+  }
+
   /// Форматирует длительность для репоста (формат: "23мин." или "1ч. 0мин." - всегда с минутами, без секунд)
+  /// @deprecated Используйте _formatDurationForShareNew для нового стиля
   static String _formatDurationForShare(num? seconds) {
     if (seconds == null || seconds <= 0) return '0мин.';
 
