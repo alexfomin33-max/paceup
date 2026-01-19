@@ -12,7 +12,12 @@ import 'tabs/members/member_content.dart';
 import 'tabs/adding/adding_content.dart';
 
 class TogetherScreen extends ConsumerStatefulWidget {
-  const TogetherScreen({super.key});
+  final int activityId;
+
+  const TogetherScreen({
+    super.key,
+    required this.activityId,
+  });
 
   @override
   ConsumerState<TogetherScreen> createState() => _TogetherScreenState();
@@ -77,14 +82,14 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
               controller: _page,
               physics: const BouncingScrollPhysics(),
               onPageChanged: (i) => setState(() => _index = i),
-              children: const [
+              children: [
                 _PageWrapper(
                   key: PageStorageKey('together_members'),
-                  child: MemberContent(),
+                  child: MemberContent(activityId: widget.activityId),
                 ),
                 _PageWrapper(
                   key: PageStorageKey('together_adding'),
-                  child: AddingContent(),
+                  child: AddingContent(activityId: widget.activityId),
                 ),
               ],
             ),

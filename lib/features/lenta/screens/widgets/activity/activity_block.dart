@@ -541,7 +541,9 @@ class ActivityBlock extends ConsumerWidget {
                     onOpenTogether: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (_) => const TogetherScreen(),
+                          builder: (_) => TogetherScreen(
+                            activityId: updatedActivity.id,
+                          ),
                         ),
                       );
                     },

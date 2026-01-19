@@ -74,42 +74,47 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   // ─────────────────────────────────────────────────────────────────────────────
   String _formatNotificationText(String text) {
     // Паттерн для забегов: "закончил забег X км." или "закончил забег X.XX км."
+    // Поддерживаем как точку, так и запятую в числе
     // Округляем до 2 знаков после запятой
     final runPattern = RegExp(
-      r'закончил забег\s+(\d+(?:\.\d+)?)\s*км\.?',
+      r'закончил забег\s+(\d+(?:[.,]\d+)?)\s*км\.?',
       caseSensitive: false,
     );
 
     text = text.replaceAllMapped(runPattern, (match) {
-      final distanceStr = match.group(1) ?? '0';
+      final distanceStr = (match.group(1) ?? '0').replaceAll(',', '.');
       final distanceKm = double.tryParse(distanceStr) ?? 0.0;
+      // Округляем до 2 знаков после запятой и форматируем с запятой
       final formattedDistance = distanceKm.toStringAsFixed(2).replaceAll('.', ',');
       return 'закончил забег $formattedDistance км';
     });
 
     // Паттерн для заездов: "закончил заезд X км." или "закончил заезд X.XX км."
+    // Поддерживаем как точку, так и запятую в числе
     // Округляем до 2 знаков после запятой
     final ridePattern = RegExp(
-      r'закончил заезд\s+(\d+(?:\.\d+)?)\s*км\.?',
+      r'закончил заезд\s+(\d+(?:[.,]\d+)?)\s*км\.?',
       caseSensitive: false,
     );
 
     text = text.replaceAllMapped(ridePattern, (match) {
-      final distanceStr = match.group(1) ?? '0';
+      final distanceStr = (match.group(1) ?? '0').replaceAll(',', '.');
       final distanceKm = double.tryParse(distanceStr) ?? 0.0;
+      // Округляем до 2 знаков после запятой и форматируем с запятой
       final formattedDistance = distanceKm.toStringAsFixed(2).replaceAll('.', ',');
       return 'закончил заезд $formattedDistance км';
     });
 
     // Паттерн для заплывов: "закончил заплыв X.XX км." или "закончил заплыв X км."
+    // Поддерживаем как точку, так и запятую в числе
     // Заменяем на формат в метрах без десятичных значений: "закончил заплыв XXX м"
     final swimPattern = RegExp(
-      r'закончил заплыв\s+(\d+(?:\.\d+)?)\s*км\.?',
+      r'закончил заплыв\s+(\d+(?:[.,]\d+)?)\s*км\.?',
       caseSensitive: false,
     );
 
     text = text.replaceAllMapped(swimPattern, (match) {
-      final distanceStr = match.group(1) ?? '0';
+      final distanceStr = (match.group(1) ?? '0').replaceAll(',', '.');
       final distanceKm = double.tryParse(distanceStr) ?? 0.0;
       final distanceMeters = (distanceKm * 1000).round();
       return 'закончил заплыв $distanceMeters м';

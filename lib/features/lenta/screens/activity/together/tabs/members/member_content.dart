@@ -1,82 +1,121 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
+import '../../together_providers.dart';
 
-class MemberContent extends StatelessWidget {
-  const MemberContent({super.key});
+class MemberContent extends ConsumerWidget {
+  final int activityId;
 
-  static const _members = <_Person>[
-    _Person('Алексей Лукашин', 35, 'Владимир', 'assets/avatar_1.png'),
-    _Person('Александр Палаткин', 38, 'Воронеж', 'assets/avatar_2.png'),
-    _Person(
-      'Екатерина Виноградова',
-      30,
-      'Санкт-Петербург',
-      'assets/avatar_4.png',
-    ),
-  ];
+  const MemberContent({
+    super.key,
+    required this.activityId,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Табличный блок как в subscriptions_content.dart
-        Container(
-          width: double.infinity, // ← добавили
-          decoration: const BoxDecoration(
-            color: AppColors.surface,
-            // border: Border(
-            //   top: BorderSide(color: AppColors.border, width: 0.5),
-            //   bottom: BorderSide(color: AppColors.border, width: 0.5),
-            // ),
-          ),
-          child: Column(
-            children: List.generate(_members.length, (i) {
-              final p = _members[i];
-              return Column(
-                children: [
-                  _RowTile(
-                    person: p,
-                    trailing: const SizedBox.shrink(), // без правой кнопки
-                  ),
-                  // if (i != _members.length - 1)
-                  //   const Divider(
-                  //     height: 1,
-                  //     thickness: 0.5,
-                  //     color: AppColors.divider,
-                  //   ),
-                ],
-              );
-            }),
-          ),
-        ),
-        const SizedBox(height: 20),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(togetherMembersProvider(activityId));
 
-        // Кнопка «Покинуть группу»
-        SizedBox(
-          height: 44,
-          width: 200,
-          child: OutlinedButton(
-            onPressed: () {},
-            style: OutlinedButton.styleFrom(
-              side: BorderSide.none,
-              foregroundColor: AppColors.error,
-              backgroundColor: AppColors.backgroundRed,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-              ),
-            ),
-            child: const Text(
-              'Покинуть группу',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+    return state.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.only(top: 24),
+        child: Center(child: CupertinoActivityIndicator(radius: 10)),
+      ),
+      error: (e, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: SelectableText.rich(
+          TextSpan(
+            children: [
+              const TextSpan(text: 'Ошибка загрузки участников:\n\n'),
+              TextSpan(text: e.toString()),
+            ],
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              color: AppColors.error,
             ),
           ),
         ),
-      ],
+      ),
+      data: (members) {
+        // ────────────────────────────────────────────────────────────────────
+        // ВАЖНО: дизайн оставляем тем же, меняем только источник данных
+        // ────────────────────────────────────────────────────────────────────
+        final uiMembers = members
+            .map(
+              (m) => _Person(
+                m.fullName,
+                m.age,
+                m.city,
+                m.avatar,
+              ),
+            )
+            .toList(growable: false);
+
+        return Column(
+          children: [
+            // Табличный блок как в subscriptions_content.dart
+            Container(
+              width: double.infinity, // ← добавили
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+              ),
+              child: Column(
+                children: List.generate(uiMembers.length, (i) {
+                  final p = uiMembers[i];
+                  return Column(
+                    children: [
+                      _RowTile(
+                        person: p,
+                        trailing: const SizedBox.shrink(), // без правой кнопки
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Кнопка «Покинуть группу»
+            SizedBox(
+              height: 44,
+              width: 200,
+              child: OutlinedButton(
+                onPressed: () async {
+                  // ─────────────────────────────────────────────────────────
+                  // ✅ Выходим из группы, но тренировка у пользователя сохраняется
+                  // (мы только снимаем участие в группе)
+                  // ─────────────────────────────────────────────────────────
+                  try {
+                    final api = ref.read(togetherApiProvider);
+                    await api.leaveGroup(activityId: activityId);
+                    ref.invalidate(togetherMembersProvider(activityId));
+                  } catch (_) {
+                    // Ошибку показываем выше через перезагрузку провайдера (при необходимости)
+                    ref.invalidate(togetherMembersProvider(activityId));
+                  }
+                },
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide.none,
+                  foregroundColor: AppColors.error,
+                  backgroundColor: AppColors.backgroundRed,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                  ),
+                ),
+                child: const Text(
+                  'Покинуть группу',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -93,7 +132,7 @@ class _RowTile extends StatelessWidget {
       child: Row(
         children: [
           ClipOval(
-            child: Image.asset(
+            child: Image.network(
               person.avatar,
               width: 44,
               height: 44,
