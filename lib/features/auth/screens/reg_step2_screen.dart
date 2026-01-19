@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
+import '../../../core/providers/registration_data_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 
 /// 🔹 Второй экран регистрации — выбор даты рождения
@@ -42,6 +43,12 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
     if (!isFormValid || formState.isSubmitting) return;
+
+    // 🔹 Сохраняем дату рождения в провайдер регистрации
+    final registrationNotifier = ref.read(registrationDataProvider.notifier);
+    if (selectedBirthDate != null) {
+      registrationNotifier.setBirthDate(selectedBirthDate!);
+    }
 
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;

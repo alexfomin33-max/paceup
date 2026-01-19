@@ -155,6 +155,7 @@ class RouteMapService {
     required String mapboxUrl,
     bool thumbnail = false,
   }) async {
+    File? tempFile;
     try {
       // Скачиваем изображение из Mapbox
       final response = await http.get(Uri.parse(mapboxUrl));
@@ -166,6 +167,22 @@ class RouteMapService {
         return null;
       }
 
+      // Проверяем, что ответ полностью загружен
+      // Если указан contentLength, проверяем соответствие размера
+      final contentLength = response.contentLength;
+      final bodyBytes = response.bodyBytes;
+      
+      if (contentLength != null && bodyBytes.length != contentLength) {
+        if (kDebugMode) {
+          debugPrint(
+            '⚠️ RouteMapService: Размер ответа не совпадает: '
+            'получено ${bodyBytes.length} байт, ожидалось $contentLength',
+          );
+        }
+        // Продолжаем работу, так как bodyBytes может быть валидным
+        // (некоторые серверы не указывают contentLength корректно)
+      }
+
       // Сохраняем во временный файл
       // Убеждаемся, что временная директория существует
       final tempDir = Directory.systemTemp;
@@ -174,32 +191,55 @@ class RouteMapService {
       }
       
       final suffix = thumbnail ? '_thumbnail' : '';
-      final tempFile = File('${tempDir.path}/route_map${suffix}_$activityId.png');
-      await tempFile.writeAsBytes(response.bodyBytes);
-
-      try {
-        // Загружаем на сервер
-        final savedUrl = await saveRouteMapImage(
-          activityId: activityId,
-          userId: userId,
-          imageFile: tempFile,
-          thumbnail: thumbnail,
-        );
-
-        return savedUrl;
-      } finally {
-        // Удаляем временный файл
-        try {
-          await tempFile.delete();
-        } catch (_) {
-          // Игнорируем ошибки удаления
+      tempFile = File('${tempDir.path}/route_map${suffix}_$activityId.png');
+      
+      // Записываем файл с проверкой
+      await tempFile.writeAsBytes(bodyBytes, flush: true);
+      
+      // Проверяем, что файл создан и имеет правильный размер
+      if (!await tempFile.exists()) {
+        if (kDebugMode) {
+          debugPrint('⚠️ RouteMapService: Временный файл не был создан');
         }
+        return null;
       }
+      
+      final fileSize = await tempFile.length();
+      if (fileSize != bodyBytes.length) {
+        if (kDebugMode) {
+          debugPrint(
+            '⚠️ RouteMapService: Размер файла не совпадает: '
+            'записано $fileSize байт, ожидалось ${bodyBytes.length}',
+          );
+        }
+        return null;
+      }
+
+      // Загружаем на сервер
+      final savedUrl = await saveRouteMapImage(
+        activityId: activityId,
+        userId: userId,
+        imageFile: tempFile,
+        thumbnail: thumbnail,
+      );
+
+      return savedUrl;
     } catch (e) {
       if (kDebugMode) {
         debugPrint('⚠️ RouteMapService: Ошибка сохранения карты из URL: $e');
       }
       return null;
+    } finally {
+      // Удаляем временный файл
+      if (tempFile != null) {
+        try {
+          if (await tempFile.exists()) {
+            await tempFile.delete();
+          }
+        } catch (_) {
+          // Игнорируем ошибки удаления
+        }
+      }
     }
   }
 

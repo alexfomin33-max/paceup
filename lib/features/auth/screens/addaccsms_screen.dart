@@ -16,8 +16,14 @@ import '../../../core/widgets/form_error_display.dart';
 class AddAccSmsScreen extends ConsumerStatefulWidget {
   /// 🔹 Номер телефона, на который отправлен код
   final String phone;
+  /// 🔹 ID пользователя, если он уже был создан (например, через check_phone)
+  final int? userId;
 
-  const AddAccSmsScreen({super.key, required this.phone});
+  const AddAccSmsScreen({
+    super.key,
+    required this.phone,
+    this.userId,
+  });
 
   @override
   ConsumerState<AddAccSmsScreen> createState() => AddAccSmsScreenState();
@@ -33,12 +39,17 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
   @override
   void initState() {
     super.initState();
-    // 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
-    fetchApiData();
+    // 🔹 При открытии экрана отправляем запрос на регистрацию пользователя,
+    // 🔹 только если userId не был передан (пользователь ещё не создан)
+    // 🔹 Обёртываем в Future, чтобы избежать изменения провайдера во время построения виджета
+    if (widget.userId == null) {
+      Future(() => fetchApiData());
+    }
   }
 
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   /// Отправляет номер телефона на сервер для генерации SMS-кода
+  /// Вызывается только если пользователь ещё не был создан (userId == null)
   Future<void> fetchApiData() async {
     final formState = ref.read(formStateProvider);
     if (formState.isLoading) return;

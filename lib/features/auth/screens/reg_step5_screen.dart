@@ -1,14 +1,19 @@
 import 'dart:io';
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
+import '../../../core/providers/registration_data_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/utils/local_image_compressor.dart';
+import '../../../../providers/services/api_provider.dart';
 
 /// 🔹 Пятый экран регистрации — выбор фото профиля
 /// Шаг 5 из 5 в процессе регистрации
@@ -50,6 +55,10 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
       selectedPhoto = processed;
     });
 
+    // 🔹 Сохраняем аватар в провайдер регистрации
+    final registrationNotifier = ref.read(registrationDataProvider.notifier);
+    registrationNotifier.setAvatar(processed);
+
     // 🔹 Очищаем ошибки при успешном выборе фото
     formNotifier.clearGeneralError();
     formNotifier.clearFieldError('photo');
@@ -64,13 +73,137 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;
 
-    // 🔹 TODO: Здесь можно добавить сохранение фото через API
-    // Пока после успешного выбора фото переходим на экран создания PIN-кода
-    Navigator.pushReplacementNamed(
-      context,
-      '/code1',
-      arguments: {'userId': widget.userId},
-    );
+    // 🔹 Получаем все данные регистрации из провайдера
+    final registrationData = ref.read(registrationDataProvider);
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
+
+    // 🔹 Устанавливаем состояние загрузки
+    formNotifier.setSubmitting(true);
+
+    try {
+      // 🔹 Сохраняем основные данные регистрации (имя, фамилия, дата, пол, город, спорт)
+      if (registrationData.firstName != null &&
+          registrationData.lastName != null &&
+          registrationData.birthDate != null &&
+          registrationData.gender != null &&
+          registrationData.city != null &&
+          registrationData.mainSport != null) {
+        // 🔹 Форматируем дату в формат dd.MM.yyyy для PHP
+        final birthDateStr = DateFormat('dd.MM.yyyy')
+            .format(registrationData.birthDate!);
+
+        // 🔹 Нормализуем пол для PHP (Мужской -> Муж, Женский -> Жен)
+        String normalizedGender = registrationData.gender!;
+        if (normalizedGender == 'Мужской') {
+          normalizedGender = 'Муж';
+        } else if (normalizedGender == 'Женский') {
+          normalizedGender = 'Жен';
+        }
+
+        // 🔹 Нормализуем спорт для PHP (соответствует enum в БД)
+        String normalizedSport = registrationData.mainSport!;
+        switch (normalizedSport) {
+          case 'running':
+            normalizedSport = 'Бег';
+            break;
+          case 'cycling':
+            normalizedSport = 'Велосипед';
+            break;
+          case 'swimming':
+            normalizedSport = 'Плавание';
+            break;
+          case 'skiing':
+            // 🔹 Если в БД нет 'Лыжи' в enum, используем 'Бег' как значение по умолчанию
+            // Или можно оставить 'Лыжи', если enum был обновлен
+            normalizedSport = 'Лыжи'; // user_profile_edit.php поддерживает 'Лыжи'
+            break;
+          default:
+            normalizedSport = 'Бег'; // значение по умолчанию
+            break;
+        }
+
+        // 🔹 Отправляем данные на сервер через save_reg_form1.php
+        final saveResponse = await api.post(
+          '/save_reg_form1.php',
+          body: {
+            'user_id': widget.userId,
+            'name': registrationData.firstName,
+            'surname': registrationData.lastName,
+            'dateage': birthDateStr,
+            'city': registrationData.city,
+            'gender': normalizedGender,
+            'sport': normalizedSport,
+          },
+        );
+
+        if (kDebugMode) {
+          debugPrint(
+            'save_reg_form1 response: $saveResponse',
+          );
+        }
+
+        if (saveResponse['success'] != true) {
+          throw Exception('Ошибка сохранения данных регистрации');
+        }
+      }
+
+      // 🔹 Сохраняем аватар через user_profile_edit.php
+      if (registrationData.avatar != null) {
+        // 🔹 Читаем файл и конвертируем в base64
+        final avatarBytes = await registrationData.avatar!.readAsBytes();
+        final avatarBase64 = base64Encode(avatarBytes);
+
+        // 🔹 Отправляем аватар на сервер
+        final avatarResponse = await api.post(
+          '/user_profile_edit.php',
+          body: {
+            'user_id': widget.userId,
+            'edit': true,
+            'load': false,
+            'avatar_base64': 'data:image/jpeg;base64,$avatarBase64',
+          },
+        );
+
+        if (kDebugMode) {
+          debugPrint('avatar save response: $avatarResponse');
+        }
+
+        if (avatarResponse['ok'] != true) {
+          if (kDebugMode) {
+            debugPrint(
+              '⚠️ Ошибка сохранения аватара: ${avatarResponse['error']}',
+            );
+          }
+          // Не блокируем переход, если аватар не сохранился
+        }
+      }
+
+      // 🔹 Очищаем данные регистрации после успешного сохранения
+      ref.read(registrationDataProvider.notifier).clear();
+
+      // 🔹 Переходим на экран создания PIN-кода
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(
+        context,
+        '/code1',
+        arguments: {'userId': widget.userId},
+      );
+    } catch (e, stackTrace) {
+      if (kDebugMode) {
+        debugPrint('❌ Ошибка при сохранении данных регистрации: $e');
+        debugPrint('Stack trace: $stackTrace');
+      }
+
+      // 🔹 Показываем ошибку пользователю
+      if (mounted) {
+        formNotifier.setError(
+          'Ошибка сохранения данных. Попробуйте ещё раз.',
+        );
+      }
+    } finally {
+      formNotifier.setSubmitting(false);
+    }
   }
 
   @override
