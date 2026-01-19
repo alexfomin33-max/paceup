@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../core/theme/app_theme.dart';
 import '../../together_providers.dart';
+import '../../../../../../profile/screens/profile_screen.dart';
 
 class MemberContent extends ConsumerWidget {
   final int activityId;
@@ -48,6 +49,7 @@ class MemberContent extends ConsumerWidget {
                 m.age,
                 m.city,
                 m.avatar,
+                id: m.id,
               ),
             )
             .toList(growable: false);
@@ -125,62 +127,77 @@ class _RowTile extends StatelessWidget {
   final Widget trailing;
   const _RowTile({required this.person, required this.trailing});
 
+  // ────────────────────────────────────────────────────────────────────────────
+  // ✅ Навигация на экран профиля пользователя
+  // ────────────────────────────────────────────────────────────────────────────
+  void _navigateToProfile(BuildContext context) {
+    Navigator.of(context).push(
+      CupertinoPageRoute(
+        builder: (_) => ProfileScreen(userId: person.id),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      child: Row(
-        children: [
-          ClipOval(
-            child: Image.network(
-              person.avatar,
-              width: 44,
-              height: 44,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+    return InkWell(
+      onTap: () => _navigateToProfile(context),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        child: Row(
+          children: [
+            ClipOval(
+              child: Image.network(
+                person.avatar,
                 width: 44,
                 height: 44,
-                color: AppColors.skeletonBase,
-                alignment: Alignment.center,
-                child: const Icon(
-                  CupertinoIcons.person,
-                  size: 20,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  person.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${person.age} лет, ${person.city}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: 44,
+                  height: 44,
+                  color: AppColors.skeletonBase,
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    CupertinoIcons.person,
+                    size: 20,
                     color: AppColors.textSecondary,
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          trailing,
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    person.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${person.age} лет, ${person.city}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            trailing,
+          ],
+        ),
       ),
     );
   }
@@ -191,5 +208,12 @@ class _Person {
   final int age;
   final String city;
   final String avatar;
-  const _Person(this.name, this.age, this.city, this.avatar);
+  final int id;
+  const _Person(
+    this.name,
+    this.age,
+    this.city,
+    this.avatar, {
+    required this.id,
+  });
 }
