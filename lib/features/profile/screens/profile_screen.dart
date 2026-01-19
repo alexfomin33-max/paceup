@@ -520,7 +520,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     scrolledUnderElevation: 1,
                     forceElevated: headerOpacity < 1,
                     leadingWidth: 46,
-                    leading: isOwnProfile
+                    // ──────────────────────────────────────────────────────────────
+                    // Показываем кнопку "назад" если:
+                    // 1. Это не свой профиль ИЛИ
+                    // 2. Это свой профиль, но можно вернуться назад (переход с другого экрана)
+                    // Не показываем кнопку только если это свой профиль и это корневой экран
+                    // (открыт из нижнего навигационного меню)
+                    // ──────────────────────────────────────────────────────────────
+                    leading: (isOwnProfile && !Navigator.canPop(context))
                         ? null
                         : Padding(
                             padding: const EdgeInsets.only(left: 8),
