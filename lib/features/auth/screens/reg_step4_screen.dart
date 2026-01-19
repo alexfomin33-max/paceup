@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,9 +72,9 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.surface,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -82,12 +83,48 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
         child: Scaffold(
           // 🔹 Отключаем изменение размера при открытии клавиатуры для фиксации кнопки
           resizeToAvoidBottomInset: false,
-          backgroundColor: AppColors.twinBg,
+          backgroundColor: Colors.transparent,
           body: LayoutBuilder(
             builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.6,
+                            ), // Сверху менее прозрачный (темнее)
+                            Colors.black.withValues(
+                              alpha: 0.2,
+                            ), // Снизу более прозрачный (светлее)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   // ─────────── Контент ───────────
                   Stack(
                     fit: StackFit.expand,
@@ -116,7 +153,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                 const Text(
                                   'Основной вид спорта',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.surface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
@@ -128,7 +165,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                 const Text(
                                   'Для отображения необходимой статистики',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.surface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: 'Inter',
@@ -265,7 +302,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                 ),
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             size: 24,
                           ),
                           padding: EdgeInsets.zero,
@@ -282,7 +319,9 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.twinchip,
+                                  color: AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: FractionallySizedBox(
@@ -290,7 +329,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                   widthFactor: 4 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -303,7 +342,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                         const Text(
                           '4/5',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Inter',
@@ -327,7 +366,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                             child: Text(
                               selectedSportName!,
                               style: const TextStyle(
-                                color: AppColors.textPrimary,
+                                color: AppColors.surface,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                                 fontFamily: 'Inter',
@@ -347,17 +386,21 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                 states,
                               ) {
                                 if (states.contains(WidgetState.disabled)) {
-                                  return AppColors.twinchip;
+                                  return AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  );
                                 }
-                                return AppColors.textPrimary;
+                                return AppColors.getSurfaceColor(context);
                               }),
                               foregroundColor: WidgetStateProperty.resolveWith((
                                 states,
                               ) {
                                 if (states.contains(WidgetState.disabled)) {
-                                  return AppColors.textPlaceholder;
+                                  return AppColors.surface.withValues(
+                                    alpha: 0.5,
+                                  );
                                 }
-                                return AppColors.surface;
+                                return AppColors.textPrimary;
                               }),
                               padding: const WidgetStatePropertyAll(
                                 EdgeInsets.symmetric(vertical: 15),
@@ -377,7 +420,7 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
                                     width: 20,
                                     child: CupertinoActivityIndicator(
                                       radius: 10,
-                                      color: AppColors.surface,
+                                      color: AppColors.textPrimary,
                                     ),
                                   )
                                 : const Text(
@@ -433,6 +476,12 @@ class _SportButton extends StatelessWidget {
         height: width,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.surface
+                : AppColors.surface.withValues(alpha: 0.5),
+            width: isSelected ? 1 : 1,
+          ),
         ),
         clipBehavior: Clip.antiAlias,
         child: ClipRRect(

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -54,7 +55,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
     formNotifier.clearFieldError('photo');
   }
 
-  /// 🔹 Метод завершения регистрации и перехода на главный экран
+  /// 🔹 Метод завершения регистрации и перехода на экран создания PIN-кода
   Future<void> _finishRegistration() async {
     final formState = ref.read(formStateProvider);
 
@@ -64,10 +65,10 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
     if (!mounted) return;
 
     // 🔹 TODO: Здесь можно добавить сохранение фото через API
-    // Пока просто переходим на главный экран
+    // Пока после успешного выбора фото переходим на экран создания PIN-кода
     Navigator.pushReplacementNamed(
       context,
-      '/lenta',
+      '/code1',
       arguments: {'userId': widget.userId},
     );
   }
@@ -80,9 +81,9 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.surface,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -91,12 +92,48 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
         child: Scaffold(
           // 🔹 Отключаем изменение размера при открытии клавиатуры для фиксации кнопки
           resizeToAvoidBottomInset: false,
-          backgroundColor: AppColors.twinBg,
+          backgroundColor: Colors.transparent,
           body: LayoutBuilder(
             builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.6,
+                            ), // Сверху менее прозрачный (темнее)
+                            Colors.black.withValues(
+                              alpha: 0.2,
+                            ), // Снизу более прозрачный (светлее)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   // ─────────── Контент ───────────
                   Stack(
                     fit: StackFit.expand,
@@ -125,7 +162,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                                 const Text(
                                   'Ваше фото',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.surface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
@@ -182,7 +219,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                                 ),
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             size: 24,
                           ),
                           padding: EdgeInsets.zero,
@@ -199,7 +236,9 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.twinchip,
+                                  color: AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: FractionallySizedBox(
@@ -207,7 +246,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                                   widthFactor: 5 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -220,7 +259,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                         const Text(
                           '5/5',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Inter',
@@ -245,17 +284,17 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.twinchip;
+                              return AppColors.surface.withValues(alpha: 0.3);
                             }
-                            return AppColors.textPrimary;
+                            return AppColors.getSurfaceColor(context);
                           }),
                           foregroundColor: WidgetStateProperty.resolveWith((
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.textPlaceholder;
+                              return AppColors.surface.withValues(alpha: 0.5);
                             }
-                            return AppColors.surface;
+                            return AppColors.textPrimary;
                           }),
                           padding: const WidgetStatePropertyAll(
                             EdgeInsets.symmetric(vertical: 15),
@@ -275,7 +314,7 @@ class _RegStep5ScreenState extends ConsumerState<RegStep5Screen> {
                                 width: 20,
                                 child: CupertinoActivityIndicator(
                                   radius: 10,
-                                  color: AppColors.surface,
+                                  color: AppColors.textPrimary,
                                 ),
                               )
                             : const Text(
@@ -334,14 +373,21 @@ class _PhotoPickerButton extends StatelessWidget {
             height: buttonSize,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppRadius.xll),
-              color: AppColors.twinchip,
-              border: hasError ? Border.all(color: Colors.red, width: 2) : null,
+              color: AppColors.twinchip.withValues(alpha: 0.2),
+              border: hasError
+                  ? Border.all(color: Colors.red, width: 2)
+                  : selectedPhoto != null
+                  ? Border.all(
+                      color: AppColors.surface.withValues(alpha: 0.5),
+                      width: 1,
+                    )
+                  : null,
             ),
             clipBehavior: Clip.antiAlias,
             child: selectedPhoto != null
                 ? // 🔹 Показываем выбранное фото
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    borderRadius: BorderRadius.circular(AppRadius.xll),
                     child: Image.file(
                       selectedPhoto!,
                       fit: BoxFit.cover,
@@ -358,19 +404,19 @@ class _PhotoPickerButton extends StatelessWidget {
                     ),
                   )
                 : // 🔹 Показываем иконку выбора фото
-                  const Column(
+                  Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         CupertinoIcons.camera,
-                        size: 48,
-                        color: AppColors.textPlaceholder,
+                        size: 28,
+                        color: AppColors.surface.withValues(alpha: 0.7),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                       Text(
                         'Выбрать фото',
                         style: TextStyle(
-                          color: AppColors.textPlaceholder,
+                          color: AppColors.surface.withValues(alpha: 0.7),
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           fontFamily: 'Inter',
@@ -386,7 +432,7 @@ class _PhotoPickerButton extends StatelessWidget {
           const Text(
             'Аватар',
             style: TextStyle(
-              color: AppColors.textPrimary,
+              color: AppColors.surface,
               fontSize: 18,
               fontWeight: FontWeight.w600,
               fontFamily: 'Inter',
@@ -398,24 +444,30 @@ class _PhotoPickerButton extends StatelessWidget {
           Container(
             width: 100,
             height: 100,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppColors.twinchip,
+              border: Border.all(
+                color: AppColors.surface.withValues(alpha: 0.5),
+                width: 0.5,
+              ),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Image.file(
-              selectedPhoto!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  color: AppColors.twinchip,
-                  child: const Icon(
-                    CupertinoIcons.photo,
-                    size: 32,
-                    color: AppColors.textPlaceholder,
-                  ),
-                );
-              },
+            child: ClipOval(
+              child: Image.file(
+                selectedPhoto!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    color: AppColors.twinchip,
+                    child: const Icon(
+                      CupertinoIcons.photo,
+                      size: 32,
+                      color: AppColors.textPlaceholder,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
         ],

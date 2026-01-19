@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -61,9 +62,9 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.surface,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -72,12 +73,48 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
         child: Scaffold(
           // 🔹 Отключаем изменение размера при открытии клавиатуры для фиксации кнопки
           resizeToAvoidBottomInset: false,
-          backgroundColor: AppColors.twinBg,
+          backgroundColor: Colors.transparent,
           body: LayoutBuilder(
             builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.6,
+                            ),
+                            Colors.black.withValues(
+                              alpha: 0.2,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   // ─────────── Контент ───────────
                   Stack(
                     fit: StackFit.expand,
@@ -106,7 +143,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 const Text(
                                   'Дата рождения',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.surface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
@@ -118,7 +155,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 const Text(
                                   'Понадобится для верификации профиля',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.surface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: 'Inter',
@@ -157,27 +194,39 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                       ),
                     ],
                   ),
-                  // ─────────── Date Picker позиционированный на 30% от верха ───────────
+                  // ─────────── Date Picker позиционированный на 40% от верха ───────────
                   Positioned(
                     top: MediaQuery.of(context).size.height * 0.40,
                     left: MediaQuery.of(context).size.width * 0.1,
                     right: MediaQuery.of(context).size.width * 0.1,
                     child: SizedBox(
                       height: 126,
-                      child: CupertinoDatePicker(
-                        mode: CupertinoDatePickerMode.date,
-                        initialDateTime: selectedBirthDate,
-                        minimumDate: DateTime(1900),
-                        maximumDate: DateTime.now(),
-                        onDateTimeChanged: (date) {
-                          setState(() {
-                            selectedBirthDate = date;
-                            hasUserSelectedDate = true;
-                          });
-                          ref
-                              .read(formStateProvider.notifier)
-                              .clearGeneralError();
-                        },
+                      child: CupertinoTheme(
+                        data: const CupertinoThemeData(
+                          brightness: Brightness.dark,
+                          textTheme: CupertinoTextThemeData(
+                            dateTimePickerTextStyle: TextStyle(
+                              color: AppColors.surface,
+                              fontSize: 20,
+                              fontFamily: 'Inter',
+                            ),
+                          ),
+                        ),
+                        child: CupertinoDatePicker(
+                          mode: CupertinoDatePickerMode.date,
+                          initialDateTime: selectedBirthDate,
+                          minimumDate: DateTime(1900),
+                          maximumDate: DateTime.now(),
+                          onDateTimeChanged: (date) {
+                            setState(() {
+                              selectedBirthDate = date;
+                              hasUserSelectedDate = true;
+                            });
+                            ref
+                                .read(formStateProvider.notifier)
+                                .clearGeneralError();
+                          },
+                        ),
                       ),
                     ),
                   ),
@@ -194,13 +243,13 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                           onPressed: formState.isSubmitting
                               ? null
                               : () => Navigator.pushReplacementNamed(
-                                  context,
-                                  '/reg_step1',
-                                  arguments: {'userId': widget.userId},
-                                ),
+                                    context,
+                                    '/reg_step1',
+                                    arguments: {'userId': widget.userId},
+                                  ),
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             size: 24,
                           ),
                           padding: EdgeInsets.zero,
@@ -217,7 +266,9 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.twinchip,
+                                  color: AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: FractionallySizedBox(
@@ -225,7 +276,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                   widthFactor: 2 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -238,7 +289,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                         const Text(
                           '2/5',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Inter',
@@ -263,17 +314,17 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.twinchip;
+                              return AppColors.surface.withValues(alpha: 0.3);
                             }
-                            return AppColors.textPrimary;
+                            return AppColors.getSurfaceColor(context);
                           }),
                           foregroundColor: WidgetStateProperty.resolveWith((
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.textPlaceholder;
+                              return AppColors.surface.withValues(alpha: 0.5);
                             }
-                            return AppColors.surface;
+                            return AppColors.textPrimary;
                           }),
                           padding: const WidgetStatePropertyAll(
                             EdgeInsets.symmetric(vertical: 15),
@@ -293,7 +344,7 @@ class _RegStep2ScreenState extends ConsumerState<RegStep2Screen> {
                                 width: 20,
                                 child: CupertinoActivityIndicator(
                                   radius: 10,
-                                  color: AppColors.surface,
+                                  color: AppColors.textPrimary,
                                 ),
                               )
                             : const Text(

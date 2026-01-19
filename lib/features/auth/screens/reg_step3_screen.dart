@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -123,9 +124,9 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.surface,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -134,12 +135,44 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
         child: Scaffold(
           // 🔹 Отключаем изменение размера при открытии клавиатуры для фиксации кнопки
           resizeToAvoidBottomInset: false,
-          backgroundColor: AppColors.twinBg,
+          backgroundColor: Colors.transparent,
           body: LayoutBuilder(
             builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.6),
+                            Colors.black.withValues(alpha: 0.2),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   // ─────────── Контент ───────────
                   Stack(
                     fit: StackFit.expand,
@@ -168,7 +201,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                                 const Text(
                                   'Город проживания',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.surface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
@@ -180,7 +213,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                                 const Text(
                                   'Необходим для отображения лидерборда',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.surface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: 'Inter',
@@ -246,7 +279,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                                 ),
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             size: 24,
                           ),
                           padding: EdgeInsets.zero,
@@ -263,7 +296,9 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.twinchip,
+                                  color: AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: FractionallySizedBox(
@@ -271,7 +306,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                                   widthFactor: 3 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -284,7 +319,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                         const Text(
                           '3/5',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Inter',
@@ -295,7 +330,10 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                   ),
                   // ─────────── Кнопка "Далее" внизу экрана ───────────
                   Positioned(
-                    bottom: MediaQuery.of(context).padding.bottom + 10,
+                    bottom:
+                        MediaQuery.of(context).padding.bottom +
+                        MediaQuery.of(context).viewInsets.bottom +
+                        10,
                     left: MediaQuery.of(context).size.width * 0.1,
                     right: MediaQuery.of(context).size.width * 0.1,
                     child: SizedBox(
@@ -309,17 +347,17 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.twinchip;
+                              return AppColors.surface.withValues(alpha: 0.3);
                             }
-                            return AppColors.textPrimary;
+                            return AppColors.getSurfaceColor(context);
                           }),
                           foregroundColor: WidgetStateProperty.resolveWith((
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.textPlaceholder;
+                              return AppColors.surface.withValues(alpha: 0.5);
                             }
-                            return AppColors.surface;
+                            return AppColors.textPrimary;
                           }),
                           padding: const WidgetStatePropertyAll(
                             EdgeInsets.symmetric(vertical: 15),
@@ -339,7 +377,7 @@ class _RegStep3ScreenState extends ConsumerState<RegStep3Screen> {
                                 width: 20,
                                 child: CupertinoActivityIndicator(
                                   radius: 10,
-                                  color: AppColors.surface,
+                                  color: AppColors.textPrimary,
                                 ),
                               )
                             : const Text(
@@ -435,22 +473,31 @@ class _CityAutocompleteField extends StatelessWidget {
                   fontFamily: 'Inter',
                 ),
                 filled: true,
-                fillColor: AppColors.twinchip,
+                fillColor: AppColors.surface,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 14,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    width: 0,
+                    color: AppColors.surface,
+                  ),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    width: 0,
+                    color: AppColors.surface,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(
+                    width: 0,
+                    color: AppColors.surface,
+                  ),
                 ),
                 errorText: hasError
                     ? (errorText ?? 'Выберите город из списка')

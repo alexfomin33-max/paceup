@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -84,9 +85,9 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.surface,
-        systemNavigationBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: AppColors.darkSurface,
+        systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: GestureDetector(
         // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
@@ -95,12 +96,48 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
         child: Scaffold(
           // 🔹 Отключаем изменение размера при открытии клавиатуры для фиксации кнопки
           resizeToAvoidBottomInset: false,
-          backgroundColor: AppColors.twinBg,
+          backgroundColor: Colors.transparent,
           body: LayoutBuilder(
             builder: (context, constraints) {
+              final screenSize = MediaQuery.of(context).size;
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // ─────────── Фоновая картинка (заполняет весь экран включая системные области) ───────────
+                  Positioned.fill(
+                    child: Opacity(
+                      opacity: 1.0,
+                      child: ImageFiltered(
+                        imageFilter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                        child: Image.asset(
+                          'assets/back.jpg',
+                          width: screenSize.width,
+                          height: screenSize.height,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.low,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ─────────── Темный градиент поверх фоновой картинки ───────────
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.6,
+                            ), // Сверху менее прозрачный (темнее)
+                            Colors.black.withValues(
+                              alpha: 0.2,
+                            ), // Снизу более прозрачный (светлее)
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   // ─────────── Контент ───────────
                   Stack(
                     fit: StackFit.expand,
@@ -129,7 +166,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 const Text(
                                   'Как вас зовут?',
                                   style: TextStyle(
-                                    color: AppColors.textPrimary,
+                                    color: AppColors.surface,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w600,
                                     fontFamily: 'Inter',
@@ -141,7 +178,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 const Text(
                                   'Понадобится для верификации профиля',
                                   style: TextStyle(
-                                    color: AppColors.textSecondary,
+                                    color: AppColors.surface,
                                     fontSize: 15,
                                     fontWeight: FontWeight.w400,
                                     fontFamily: 'Inter',
@@ -165,7 +202,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                       fontFamily: 'Inter',
                                     ),
                                     filled: true,
-                                    fillColor: AppColors.twinchip,
+                                    fillColor: AppColors.surface,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 14,
@@ -174,19 +211,28 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -207,7 +253,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                       fontFamily: 'Inter',
                                     ),
                                     filled: true,
-                                    fillColor: AppColors.twinchip,
+                                    fillColor: AppColors.surface,
                                     contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 12,
                                       vertical: 14,
@@ -216,19 +262,28 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(
                                         AppRadius.sm,
                                       ),
-                                      borderSide: BorderSide.none,
+                                      borderSide: const BorderSide(
+                                        width: 0,
+                                        color: AppColors.surface,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -239,7 +294,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                   child: Text(
                                     'Пол',
                                     style: TextStyle(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w600,
                                       fontFamily: 'Inter',
@@ -263,12 +318,14 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               selectedGender == 'Мужской'
-                                              ? AppColors.textPrimary
-                                              : AppColors.twinchip,
+                                              ? AppColors.surface
+                                              : AppColors.surface.withValues(
+                                                  alpha: 0.25,
+                                                ),
                                           foregroundColor:
                                               selectedGender == 'Мужской'
-                                              ? AppColors.surface
-                                              : AppColors.textPlaceholder,
+                                              ? AppColors.textPrimary
+                                              : AppColors.surface,
                                           elevation: 0,
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 14,
@@ -303,12 +360,14 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor:
                                               selectedGender == 'Женский'
-                                              ? AppColors.textPrimary
-                                              : AppColors.twinchip,
+                                              ? AppColors.surface
+                                              : AppColors.surface.withValues(
+                                                  alpha: 0.25,
+                                                ),
                                           foregroundColor:
                                               selectedGender == 'Женский'
-                                              ? AppColors.surface
-                                              : AppColors.textPlaceholder,
+                                              ? AppColors.textPrimary
+                                              : AppColors.surface,
                                           elevation: 0,
                                           padding: const EdgeInsets.symmetric(
                                             vertical: 14,
@@ -367,7 +426,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                               : () => Navigator.pop(context),
                           icon: const Icon(
                             Icons.arrow_back,
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             size: 24,
                           ),
                           padding: EdgeInsets.zero,
@@ -384,7 +443,9 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                               child: Container(
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: AppColors.twinchip,
+                                  color: AppColors.surface.withValues(
+                                    alpha: 0.3,
+                                  ),
                                   borderRadius: BorderRadius.circular(2),
                                 ),
                                 child: FractionallySizedBox(
@@ -392,7 +453,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                   widthFactor: 1 / 5,
                                   child: Container(
                                     decoration: BoxDecoration(
-                                      color: AppColors.textPrimary,
+                                      color: AppColors.surface,
                                       borderRadius: BorderRadius.circular(2),
                                     ),
                                   ),
@@ -405,7 +466,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                         const Text(
                           '1/5',
                           style: TextStyle(
-                            color: AppColors.textPrimary,
+                            color: AppColors.surface,
                             fontSize: 15,
                             fontWeight: FontWeight.w500,
                             fontFamily: 'Inter',
@@ -430,17 +491,17 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.twinchip;
+                              return AppColors.surface.withValues(alpha: 0.3);
                             }
-                            return AppColors.textPrimary;
+                            return AppColors.getSurfaceColor(context);
                           }),
                           foregroundColor: WidgetStateProperty.resolveWith((
                             states,
                           ) {
                             if (states.contains(WidgetState.disabled)) {
-                              return AppColors.textPlaceholder;
+                              return AppColors.surface.withValues(alpha: 0.5);
                             }
-                            return AppColors.surface;
+                            return AppColors.textPrimary;
                           }),
                           padding: const WidgetStatePropertyAll(
                             EdgeInsets.symmetric(vertical: 15),
@@ -460,7 +521,7 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
                                 width: 20,
                                 child: CupertinoActivityIndicator(
                                   radius: 10,
-                                  color: AppColors.surface,
+                                  color: AppColors.textPrimary,
                                 ),
                               )
                             : const Text(

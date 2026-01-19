@@ -211,8 +211,8 @@ class _EnterAccScreenState extends ConsumerState<EnterAccScreen> {
                                                 if (states.contains(
                                                   WidgetState.disabled,
                                                 )) {
-                                                  return AppColors.disabledBg
-                                                      .withValues(alpha: 0.5);
+                                                  return AppColors.surface
+                                                      .withValues(alpha: 0.4);
                                                 }
                                                 return AppColors.getSurfaceColor(
                                                   context,
@@ -226,7 +226,7 @@ class _EnterAccScreenState extends ConsumerState<EnterAccScreen> {
                                                   WidgetState.disabled,
                                                 )) {
                                                   return AppColors.textPrimary
-                                                      .withValues(alpha: 0.5);
+                                                      .withValues(alpha: 0.6);
                                                 }
                                                 return AppColors.textPrimary;
                                               }),
