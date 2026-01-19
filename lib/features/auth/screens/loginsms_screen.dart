@@ -175,10 +175,11 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
           Navigator.pushReplacementNamed(
             context,
-            '/code1',
+            '/entercode',
             arguments: {
               'userId': codeValue,
-            }, // передаём userId на следующий экран
+              'phone': widget.phone,
+            }, // передаём userId и phone на следующий экран
           );
         } else {
           // 🔹 Неверный код — показываем ошибку и очищаем поля

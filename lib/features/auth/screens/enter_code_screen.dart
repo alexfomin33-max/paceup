@@ -2,8 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
+import '../../../providers/services/api_provider.dart';
+import '../../lenta/providers/lenta_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:developer' as developer;
 
 /// 🔹 Экран для ввода кода доступа (4-значный PIN)
 class EnterCodeScreen extends ConsumerStatefulWidget {
@@ -95,22 +100,135 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
         _code += number;
       });
 
-      // 🔹 Если код полностью введён (4 цифры), переходим на следующий экран
+      // 🔹 Если код полностью введён (4 цифры), проверяем PIN-код
       if (_code.length == 4) {
-        // 🔹 Получаем userId из аргументов маршрута
-        final args = ModalRoute.of(context)?.settings.arguments;
-        final userId = (args is Map && args.containsKey('userId'))
-            ? args['userId'] as int
-            : null;
+        _checkPinCode();
+      }
+    }
+  }
 
-        if (userId != null) {
-          // 🔹 Переходим на экран повторения кода с передачей кода и userId
+  /// 🔹 Проверка PIN-кода через API
+  Future<void> _checkPinCode() async {
+    // 🔹 Получаем userId и phone из аргументов маршрута
+    final args = ModalRoute.of(context)?.settings.arguments;
+    final userId = (args is Map && args.containsKey('userId'))
+        ? args['userId'] as int
+        : null;
+    final phone = (args is Map && args.containsKey('phone'))
+        ? args['phone'] as String
+        : '';
+
+    if (userId == null || phone.isEmpty) {
+      if (mounted) {
+        setState(() {
+          _code = '';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка: не переданы данные пользователя'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      
+      final data = await api.post(
+        '/check_pin_code.php',
+        body: {
+          'pin_code': _code,
+          'phone': phone,
+        },
+      );
+
+      if (kDebugMode) {
+        debugPrint('check_pin_code response: $data');
+      }
+
+      if (data['success'] == true && mounted) {
+        // 🔹 PIN-код верный - загружаем данные ленты и переходим на экран ленты
+        developer.log(
+          '[ENTER_CODE_SCREEN] PIN-код верный, загружаем данные ленты',
+          name: 'EnterCodeScreen',
+        );
+
+        try {
+          // Загружаем сохраненные фильтры из SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          final showTrainings =
+              prefs.getBool('lenta_filter_show_trainings') ?? true;
+          final showPosts = prefs.getBool('lenta_filter_show_posts') ?? true;
+          final showOwn = prefs.getBool('lenta_filter_show_own') ?? true;
+          final showOthers = prefs.getBool('lenta_filter_show_others') ?? true;
+
+          // Загружаем данные ленты через провайдер
+          await ref
+              .read(lentaProvider(userId).notifier)
+              .loadInitial(
+                showTrainings: showTrainings,
+                showPosts: showPosts,
+                showOwn: showOwn,
+                showOthers: showOthers,
+              );
+
+          developer.log(
+            '[ENTER_CODE_SCREEN] Данные ленты загружены',
+            name: 'EnterCodeScreen',
+          );
+        } catch (e, stackTrace) {
+          developer.log(
+            '[ENTER_CODE_SCREEN] Ошибка при загрузке данных: $e',
+            name: 'EnterCodeScreen',
+            error: e,
+            stackTrace: stackTrace,
+          );
+          // Игнорируем ошибки загрузки - данные загрузятся на экране ленты
+        }
+
+        if (mounted) {
           Navigator.pushReplacementNamed(
             context,
-            '/code2',
-            arguments: {'firstCode': _code, 'userId': userId},
+            '/lenta',
+            arguments: {'userId': userId},
           );
         }
+      } else {
+        // 🔹 PIN-код неверный - очищаем поле и показываем ошибку
+        if (mounted) {
+          setState(() {
+            _code = '';
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message']?.toString() ?? 'Неверный PIN-код'),
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        '[ENTER_CODE_SCREEN] Ошибка при проверке PIN-кода: $e',
+        name: 'EnterCodeScreen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      
+      if (mounted) {
+        setState(() {
+          _code = '';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Ошибка при проверке PIN-кода. Попробуйте ещё раз.'),
+            backgroundColor: AppColors.error,
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     }
   }

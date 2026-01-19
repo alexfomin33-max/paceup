@@ -287,12 +287,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         );
       } else {
         // 🔹 fallback: userId не найден, переходим на общий HomeScreen
-        Navigator.pushReplacementNamed(context, '/entercode');
+        Navigator.pushReplacementNamed(context, '/home');
       }
     } else {
       // 🔹 Пользователь не авторизован → показываем экран приветствия / HomeScreen
       // Используем /home для плавного fade-in перехода
-      Navigator.pushReplacementNamed(context, '/entercode');
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
