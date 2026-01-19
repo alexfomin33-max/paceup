@@ -493,6 +493,23 @@ class ApiService {
             data['message']?.toString() ?? 'API вернул ошибку',
           );
         }
+        
+        // ─────────────────────────────────────────────────────────────────────
+        // ✅ ПРОВЕРКА ОШИБОК: даже при успешном HTTP статусе может быть ошибка
+        // в полях error или message (например, ошибки БД)
+        // ─────────────────────────────────────────────────────────────────────
+        if (data.containsKey('error') && data['error'] != null) {
+          final errorMsg = data['error'].toString();
+          // Если ошибка не пустая и не является частью успешного ответа
+          if (errorMsg.isNotEmpty && !errorMsg.toLowerCase().contains('null')) {
+            throw ApiException(errorMsg);
+          }
+        }
+        if (data.containsKey('message') && 
+            data['message'] != null && 
+            data['message'].toString().toLowerCase().contains('ошибка')) {
+          throw ApiException(data['message'].toString());
+        }
 
         return data;
       } on FormatException catch (e) {

@@ -49,6 +49,7 @@ import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../providers/lenta_provider.dart';
+import 'together/together_providers.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -76,6 +77,11 @@ class _ActivityDescriptionPageState
   String? _userLastName;
   String? _userAvatar;
   bool _isLoadingUserData = true;
+
+  // ────────────────────────────────────────────────────────────────
+  // ✅ Совместная тренировка: плашка приглашения
+  // ────────────────────────────────────────────────────────────────
+  bool _inviteBannerDismissed = false;
 
   // ────────────────────────────────────────────────────────────────
   // 🔹 КЛЮЧ ДЛЯ МЕНЮ: нужен для привязки всплывающего меню
@@ -498,6 +504,20 @@ class _ActivityDescriptionPageState
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
+        // ────────────────────────────────────────────────────────────────
+        // ✅ Плашка приглашения в совместную тренировку (фиксированная снизу)
+        // ────────────────────────────────────────────────────────────────
+        // ВАЖНО: визуально это "плавающая плашка", но реализуем через
+        // bottomNavigationBar, чтобы не вмешиваться в сложную верстку NestedScrollView
+        // и гарантировать отсутствие регрессий.
+        bottomNavigationBar: _inviteBannerDismissed
+            ? null
+            : _TogetherInviteBottomBar(
+                activityId: a.id,
+                activityOwnerId: a.userId,
+                currentUserId: widget.currentUserId,
+                onDismiss: () => setState(() => _inviteBannerDismissed = true),
+              ),
         body: NotificationListener<ScrollNotification>(
           onNotification: (notification) {
             // ──────────────────────────────────────────────────────────────
@@ -945,7 +965,7 @@ class _ActivityDescriptionPageState
                         // ────────────────────────────────────────────────────────────────
                         Navigator.of(context).push(
                           TransparentPageRoute(
-                            builder: (_) => const TogetherScreen(),
+                            builder: (_) => TogetherScreen(activityId: a.id),
                           ),
                         );
                       },
@@ -1509,6 +1529,166 @@ class _ActivityDescriptionPageState
     } catch (_) {
       return false;
     }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ✅ Плашка приглашения "Принять / Отменить"
+// ─────────────────────────────────────────────────────────────────────────────
+class _TogetherInviteBottomBar extends ConsumerWidget {
+  final int activityId;
+  final int activityOwnerId;
+  final int currentUserId;
+  final VoidCallback onDismiss;
+
+  const _TogetherInviteBottomBar({
+    required this.activityId,
+    required this.activityOwnerId,
+    required this.currentUserId,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ─────────────────────────────────────────────────────────────────────────
+    // Условия показа:
+    // - видит только получатель (не владелец)
+    // - только на тренировке отправителя
+    // ─────────────────────────────────────────────────────────────────────────
+    if (currentUserId == activityOwnerId) {
+      return const SizedBox.shrink();
+    }
+
+    final state = ref.watch(togetherInviteStatusProvider(activityId));
+
+    return state.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (dto) {
+        if (!dto.hasPending) return const SizedBox.shrink();
+        if (dto.inviteId == null || dto.senderId == null) {
+          return const SizedBox.shrink();
+        }
+        if (dto.senderId != activityOwnerId) {
+          return const SizedBox.shrink();
+        }
+
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                  width: 1,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.shadowSoft,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          onDismiss();
+                          try {
+                            final api = ref.read(togetherApiProvider);
+                            await api.respondInvite(
+                              inviteId: dto.inviteId!,
+                              accept: true,
+                            );
+                          } finally {
+                            // ────────────────────────────────────────────
+                            // Обновляем локальные данные
+                            // ────────────────────────────────────────────
+                            ref.invalidate(
+                              togetherInviteStatusProvider(activityId),
+                            );
+                            ref.invalidate(togetherMembersProvider(activityId));
+                            ref.invalidate(
+                              togetherCandidatesProvider(activityId),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.brandPrimary,
+                          foregroundColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? AppColors.surface
+                                  : AppColors.getSurfaceColor(context),
+                          elevation: 0,
+                          shape: const StadiumBorder(),
+                        ),
+                        child: const Text(
+                          'Принять',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 40,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          onDismiss();
+                          try {
+                            final api = ref.read(togetherApiProvider);
+                            await api.respondInvite(
+                              inviteId: dto.inviteId!,
+                              accept: false,
+                            );
+                          } finally {
+                            ref.invalidate(
+                              togetherInviteStatusProvider(activityId),
+                            );
+                            ref.invalidate(
+                              togetherCandidatesProvider(activityId),
+                            );
+                          }
+                        },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: AppColors.getBorderColor(context),
+                          ),
+                          foregroundColor:
+                              AppColors.getTextPrimaryColor(context),
+                          shape: const StadiumBorder(),
+                        ),
+                        child: const Text(
+                          'Отменить',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 

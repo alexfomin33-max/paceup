@@ -22,6 +22,7 @@ class Activity {
   final int likes;
   final int comments;
   final int userGroup;
+  final int togetherCount; // ✅ Количество участников совместной тренировки
   final List<Equipment> equipments; // note: server key is 'equpments'
   final ActivityStats? stats; // server key 'params'
   final List<Coord> points;
@@ -46,6 +47,7 @@ class Activity {
     required this.likes,
     required this.comments,
     required this.userGroup,
+    this.togetherCount = 1,
     required this.equipments,
     required this.stats,
     required this.points,
@@ -92,6 +94,7 @@ class Activity {
       likes: _asInt(j['likes']),
       comments: _asInt(j['comments']),
       userGroup: _asInt(j['user_group']),
+      togetherCount: j['together_count'] == null ? 1 : _asInt(j['together_count']),
       equipments: _parseEquipments(j['equpments']),
       stats: paramsRaw is Map<String, dynamic>
           ? ActivityStats.fromJson(paramsRaw)
@@ -126,6 +129,7 @@ class Activity {
       likes: newLikes,
       comments: comments,
       userGroup: userGroup,
+      togetherCount: togetherCount,
       equipments: equipments,
       stats: stats,
       points: points,
@@ -154,6 +158,7 @@ class Activity {
       likes: likes,
       comments: newComments,
       userGroup: userGroup,
+      togetherCount: togetherCount,
       equipments: equipments,
       stats: stats,
       points: points,
@@ -182,6 +187,7 @@ class Activity {
       likes: likes,
       comments: comments,
       userGroup: userGroup,
+      togetherCount: togetherCount,
       equipments: equipments,
       stats: stats,
       points: points,
