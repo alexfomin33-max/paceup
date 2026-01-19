@@ -1,36 +1,52 @@
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_service.dart';
 
+/// 🔹 Сервис для управления авторизацией пользователя
+/// Использует FlutterSecureStorage для безопасного хранения токенов
 class AuthService {
-  //final storage = const FlutterSecureStorage();
+  /// 🔹 Безопасное хранилище для токенов и данных пользователя
+  final storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+    iOptions: IOSOptions(
+      accessibility: KeychainAccessibility.first_unlock_this_device,
+    ),
+  );
+
   final String baseUrl = "https://api.paceup.ru";
 
-  //Future<String?> getAccessToken() async => await storage.read(key: "access_token");
-  //Future<String?> getRefreshToken() async => await storage.read(key: "refresh_token");
-  //Future<String?> getUserId() async => await storage.read(key: "user_id");
-  //временный костыль
-  Future<String?> getAccessToken() async {
-    return "50378be4309b33f868ad01bfb3755288";
-  }
+  /// 🔹 Получение access token из безопасного хранилища
+  Future<String?> getAccessToken() async =>
+      await storage.read(key: "access_token");
 
-  Future<String?> getRefreshToken() async {
-    return "cbf57e89d7de3fb483edc5a0f0e42b0e19a552588bd9acf951430959330f9156";
-  }
+  /// 🔹 Получение refresh token из безопасного хранилища
+  Future<String?> getRefreshToken() async =>
+      await storage.read(key: "refresh_token");
 
+  /// 🔹 Получение ID пользователя из безопасного хранилища
   Future<int?> getUserId() async {
-    final userIdStr = "1";
-    return int.tryParse(userIdStr);
+    final userIdStr = await storage.read(key: "user_id");
+    return userIdStr != null ? int.tryParse(userIdStr) : null;
   }
 
-  Future<void> saveTokens(String access, String refresh) async {
-    //временный костыль
-    // await storage.write(key: "access_token", value: access);
-    // await storage.write(key: "refresh_token", value: refresh);
+  /// 🔹 Сохранение токенов и ID пользователя в безопасное хранилище
+  /// Вызывается после успешной авторизации или обновления токенов
+  Future<void> saveTokens(
+    String access,
+    String refresh,
+    int userId,
+  ) async {
+    await Future.wait([
+      storage.write(key: "access_token", value: access),
+      storage.write(key: "refresh_token", value: refresh),
+      storage.write(key: "user_id", value: userId.toString()),
+    ]);
   }
 
+  /// 🔹 Выход из системы - удаление всех сохраненных данных
   Future<void> logout() async {
-    //временный костыль
-    //await storage.deleteAll();
+    await storage.deleteAll();
   }
 
   // Проверка access_token на валидность
@@ -71,8 +87,14 @@ class AuthService {
       );
 
       if (data["success"] == true) {
-        //временный костыль
-        // await storage.write(key: "access_token", value: data["access_token"]);
+        // 🔹 Сохраняем новый access token после обновления
+        final newAccessToken = data["access_token"] as String?;
+        if (newAccessToken != null) {
+          await storage.write(
+            key: "access_token",
+            value: newAccessToken,
+          );
+        }
         return true;
       }
     } on ApiException {

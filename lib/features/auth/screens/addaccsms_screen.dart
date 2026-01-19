@@ -4,12 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../widgets/sms_code_input.dart';
 import '../widgets/resend_code_button.dart';
 import '../../../core/widgets/form_error_display.dart';
-
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
 /// Используется после регистрации телефона для подтверждения кода.
@@ -127,9 +126,15 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
 
         // ApiService уже распарсил JSON
         final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+        final accessToken = data['access_token'] as String?;
+        final refreshToken = data['refresh_token'] as String?;
 
-        // 🔹 Если код валиден и экран всё ещё "смонтирован", переходим к следующему шагу
-        if (codeValue > 0 && mounted) {
+        // 🔹 Если код валиден и экран всё ещё "смонтирован", сохраняем токены и переходим к следующему шагу
+        if (codeValue > 0 && accessToken != null && refreshToken != null && mounted) {
+          // 🔹 Сохраняем токены в безопасное хранилище
+          final auth = ref.read(authServiceProvider);
+          await auth.saveTokens(accessToken, refreshToken, codeValue);
+
           Navigator.pushReplacementNamed(
             context,
             '/reg_step1', // экран следующего шага регистрации
