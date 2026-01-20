@@ -183,7 +183,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                           text: 'Добавить велосипед',
                           leading: const Icon(CupertinoIcons.plus_circle, size: 18),
                           onPressed: () async {
-                            await Navigator.of(context).push(
+                            await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => const AddingEquipmentScreen(
                                   initialSegment: 1,
@@ -253,7 +253,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                           text: 'Добавить велосипед',
                           leading: const Icon(CupertinoIcons.plus_circle, size: 18),
                           onPressed: () async {
-                            await Navigator.of(context).push(
+                            await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => const AddingEquipmentScreen(
                                   initialSegment: 1,

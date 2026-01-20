@@ -124,9 +124,11 @@ class _ActivityDescriptionPageState
   Future<void> _loadUserData() async {
     final activityUserId = widget.activity.userId;
     if (activityUserId <= 0) {
-      setState(() {
-        _isLoadingUserData = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingUserData = false;
+        });
+      }
       return;
     }
 
@@ -137,24 +139,28 @@ class _ActivityDescriptionPageState
         timeout: const Duration(seconds: 10),
       );
 
-      if (data['ok'] == true) {
-        setState(() {
-          _userFirstName = data['first_name']?.toString() ?? '';
-          _userLastName = data['last_name']?.toString() ?? '';
-          _userAvatar = data['avatar']?.toString() ?? '';
-          _isLoadingUserData = false;
-        });
-      } else {
-        // Если ошибка, используем данные из Activity как fallback
+      if (mounted) {
+        if (data['ok'] == true) {
+          setState(() {
+            _userFirstName = data['first_name']?.toString() ?? '';
+            _userLastName = data['last_name']?.toString() ?? '';
+            _userAvatar = data['avatar']?.toString() ?? '';
+            _isLoadingUserData = false;
+          });
+        } else {
+          // Если ошибка, используем данные из Activity как fallback
+          setState(() {
+            _isLoadingUserData = false;
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки используем данные из Activity как fallback
+      if (mounted) {
         setState(() {
           _isLoadingUserData = false;
         });
       }
-    } catch (e) {
-      // В случае ошибки используем данные из Activity как fallback
-      setState(() {
-        _isLoadingUserData = false;
-      });
     }
   }
 
@@ -162,9 +168,11 @@ class _ActivityDescriptionPageState
   Future<void> _loadChartsData() async {
     final activityId = widget.activity.id;
     if (activityId <= 0) {
-      setState(() {
-        _isLoadingCharts = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoadingCharts = false;
+        });
+      }
       return;
     }
 
@@ -175,38 +183,42 @@ class _ActivityDescriptionPageState
         timeout: const Duration(seconds: 10),
       );
 
-      if (data['ok'] == true) {
-        setState(() {
-          // Преобразуем массивы в List<double>
-          _paceData =
-              (data['pace'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _heartRateData =
-              (data['heartRate'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _elevationData =
-              (data['elevation'] as List<dynamic>?)
-                  ?.map((e) => (e as num).toDouble())
-                  .toList() ??
-              [];
-          _chartsSummary = data['summary'] as Map<String, dynamic>?;
-          _isLoadingCharts = false;
-        });
-      } else {
-        // Если ошибка, оставляем пустые данные
+      if (mounted) {
+        if (data['ok'] == true) {
+          setState(() {
+            // Преобразуем массивы в List<double>
+            _paceData =
+                (data['pace'] as List<dynamic>?)
+                    ?.map((e) => (e as num).toDouble())
+                    .toList() ??
+                [];
+            _heartRateData =
+                (data['heartRate'] as List<dynamic>?)
+                    ?.map((e) => (e as num).toDouble())
+                    .toList() ??
+                [];
+            _elevationData =
+                (data['elevation'] as List<dynamic>?)
+                    ?.map((e) => (e as num).toDouble())
+                    .toList() ??
+                [];
+            _chartsSummary = data['summary'] as Map<String, dynamic>?;
+            _isLoadingCharts = false;
+          });
+        } else {
+          // Если ошибка, оставляем пустые данные
+          setState(() {
+            _isLoadingCharts = false;
+          });
+        }
+      }
+    } catch (e) {
+      // В случае ошибки оставляем пустые данные
+      if (mounted) {
         setState(() {
           _isLoadingCharts = false;
         });
       }
-    } catch (e) {
-      // В случае ошибки оставляем пустые данные
-      setState(() {
-        _isLoadingCharts = false;
-      });
     }
   }
 
@@ -2215,10 +2227,12 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
           selectedIndex: _selectedIndex,
         );
         final tappedIndex = painter.getTappedIndex(localPosition, box.size);
-        setState(() {
-          // Если кликнули по той же точке, снимаем выделение
-          _selectedIndex = tappedIndex == _selectedIndex ? null : tappedIndex;
-        });
+        if (mounted) {
+          setState(() {
+            // Если кликнули по той же точке, снимаем выделение
+            _selectedIndex = tappedIndex == _selectedIndex ? null : tappedIndex;
+          });
+        }
       },
       child: CustomPaint(
         painter: _LinePainter(
