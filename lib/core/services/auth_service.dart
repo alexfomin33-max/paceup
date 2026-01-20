@@ -102,38 +102,41 @@ class AuthService {
       final userID = await getUserId();
       
       if (kDebugMode) {
-        debugPrint('🔹 Проверка токенов: access=${token != null}, refresh=${refresh != null}, userId=${userID != null}');
+        debugPrint('🔹 [Auth] Проверка токенов в хранилище:');
+        debugPrint('   - Access token: ${token != null ? "найден (${token.length} символов)" : "НЕ НАЙДЕН"}');
+        debugPrint('   - Refresh token: ${refresh != null ? "найден (${refresh.length} символов)" : "НЕ НАЙДЕН"}');
+        debugPrint('   - User ID: ${userID != null ? "найден ($userID)" : "НЕ НАЙДЕН"}');
       }
       
       if (token == null) {
         if (kDebugMode) {
-          debugPrint('⚠️ Access token не найден');
+          debugPrint('⚠️ [Auth] Access token не найден в хранилище');
         }
         return false;
       }
 
       if (refresh == null) {
         if (kDebugMode) {
-          debugPrint('⚠️ Refresh token не найден');
+          debugPrint('⚠️ [Auth] Refresh token не найден в хранилище');
         }
         return false;
       }
 
       if (userID == null) {
         if (kDebugMode) {
-          debugPrint('⚠️ User ID не найден');
+          debugPrint('⚠️ [Auth] User ID не найден в хранилище');
         }
         return false;
       }
 
       if (kDebugMode) {
-        debugPrint('✅ Все токены найдены, userId=$userID');
+        debugPrint('✅ [Auth] Все токены найдены в хранилище, userId=$userID');
       }
       
       return true;
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('⚠️ Ошибка при проверке токенов: $e');
+        debugPrint('❌ [Auth] Ошибка при проверке токенов в хранилище: $e');
       }
       return false;
     }
@@ -148,10 +151,20 @@ class AuthService {
   /// - false если токен невалиден и не удалось обновить
   Future<bool> validateToken() async {
     final token = await getAccessToken();
-    if (token == null) return false;
+    if (token == null) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [Auth] Access token не найден в хранилище');
+      }
+      return false;
+    }
 
     final userID = await getUserId();
-    if (userID == null) return false;
+    if (userID == null) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [Auth] User ID не найден в хранилище');
+      }
+      return false;
+    }
 
     try {
       // ApiService автоматически добавит заголовки с токеном
@@ -160,18 +173,27 @@ class AuthService {
 
       if (data["valid"] == true) {
         // Токен валиден
+        if (kDebugMode) {
+          debugPrint('✅ [Auth] Access token валиден');
+        }
         return true;
       }
       
       // Токен невалиден - пробуем обновить через refresh_token
       if (kDebugMode) {
-        debugPrint('🔹 Access token невалиден, пытаемся обновить через refresh_token');
+        debugPrint('⚠️ [Auth] Access token невалиден (valid=false), пытаемся обновить через refresh_token');
       }
       return await refreshToken();
     } on ApiException catch (e) {
       // Ошибка сети или сервера - пробуем обновить токен
       if (kDebugMode) {
-        debugPrint('⚠️ Ошибка при проверке токена: $e, пытаемся обновить');
+        debugPrint('⚠️ [Auth] Ошибка при проверке токена: $e, пытаемся обновить через refresh_token');
+      }
+      return await refreshToken();
+    } catch (e) {
+      // Неожиданная ошибка
+      if (kDebugMode) {
+        debugPrint('❌ [Auth] Неожиданная ошибка при проверке токена: $e');
       }
       return await refreshToken();
     }
@@ -205,12 +227,26 @@ class AuthService {
   // Обновление access_token через refresh_token
   Future<bool> refreshToken() async {
     final refresh = await getRefreshToken();
-    if (refresh == null) return false;
+    if (refresh == null) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [Auth] Refresh token не найден в хранилище');
+      }
+      return false;
+    }
 
     final userID = await getUserId();
-    if (userID == null) return false;
+    if (userID == null) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [Auth] User ID не найден в хранилище для обновления токена');
+      }
+      return false;
+    }
 
     try {
+      if (kDebugMode) {
+        debugPrint('🔹 [Auth] Пытаемся обновить access token через refresh token');
+      }
+      
       final api = ApiService();
       final data = await api.post(
         '/refresh.php',
@@ -222,14 +258,35 @@ class AuthService {
         final newAccessToken = data["access_token"] as String?;
         if (newAccessToken != null) {
           await storage.write(key: "access_token", value: newAccessToken);
+          if (kDebugMode) {
+            debugPrint('✅ [Auth] Access token успешно обновлен');
+          }
+          return true;
+        } else {
+          if (kDebugMode) {
+            debugPrint('⚠️ [Auth] Сервер вернул success=true, но access_token отсутствует в ответе');
+          }
+          return false;
         }
-        return true;
+      } else {
+        if (kDebugMode) {
+          final message = data["message"]?.toString() ?? 'Неизвестная ошибка';
+          debugPrint('⚠️ [Auth] Обновление токена не удалось: $message');
+        }
+        return false;
       }
-    } on ApiException {
+    } on ApiException catch (e) {
       // Ошибка обновления токена
+      if (kDebugMode) {
+        debugPrint('❌ [Auth] Ошибка API при обновлении токена: $e');
+      }
+      return false;
+    } catch (e) {
+      // Неожиданная ошибка
+      if (kDebugMode) {
+        debugPrint('❌ [Auth] Неожиданная ошибка при обновлении токена: $e');
+      }
       return false;
     }
-
-    return false;
   }
 }
