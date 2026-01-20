@@ -140,11 +140,11 @@ class HealthSyncService {
         // Сортируем по дате начала (старые первыми)
         newWorkouts.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
       } else {
-        // При первой синхронизации импортируем только последнюю тренировку
+        // При первой синхронизации импортируем две последние тренировки
         // Сортируем по дате начала по убыванию (новые первыми)
         workouts.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
-        // Берем только самую последнюю тренировку
-        newWorkouts = workouts.take(1).toList();
+        // Берем две последние тренировки (если таких ещё нет)
+        newWorkouts = workouts.take(2).toList();
       }
       
       if (newWorkouts.isEmpty) {

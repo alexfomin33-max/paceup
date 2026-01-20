@@ -6,9 +6,7 @@ import 'api_service.dart';
 class AuthService {
   /// 🔹 Безопасное хранилище для токенов и данных пользователя
   final storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
@@ -32,11 +30,7 @@ class AuthService {
 
   /// 🔹 Сохранение токенов и ID пользователя в безопасное хранилище
   /// Вызывается после успешной авторизации или обновления токенов
-  Future<void> saveTokens(
-    String access,
-    String refresh,
-    int userId,
-  ) async {
+  Future<void> saveTokens(String access, String refresh, int userId) async {
     await Future.wait([
       storage.write(key: "access_token", value: access),
       storage.write(key: "refresh_token", value: refresh),
@@ -133,10 +127,7 @@ class AuthService {
         // 🔹 Сохраняем новый access token после обновления
         final newAccessToken = data["access_token"] as String?;
         if (newAccessToken != null) {
-          await storage.write(
-            key: "access_token",
-            value: newAccessToken,
-          );
+          await storage.write(key: "access_token", value: newAccessToken);
         }
         return true;
       }

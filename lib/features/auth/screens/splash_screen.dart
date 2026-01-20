@@ -286,7 +286,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       // 🔹 Переходим на основной экран с данными пользователя
       Navigator.pushReplacementNamed(
         context,
-        '/entercode', // Можно заменить на HomeShell для bottom nav
+        '/lenta', // Можно заменить на HomeShell для bottom nav
         arguments: {'userId': userId},
       );
     } else {
