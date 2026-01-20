@@ -133,7 +133,29 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
         if (codeValue > 0 && accessToken != null && refreshToken != null && mounted) {
           // 🔹 Сохраняем токены в безопасное хранилище
           final auth = ref.read(authServiceProvider);
+          
+          if (kDebugMode) {
+            debugPrint('🔹 Сохранение токенов: userId=$codeValue');
+          }
+          
+          // 🔹 Сохраняем токены и ждем завершения операции
           await auth.saveTokens(accessToken, refreshToken, codeValue);
+          
+          // 🔹 Дополнительная проверка: убеждаемся, что токены действительно сохранились
+          final hasTokens = await auth.hasStoredTokens();
+          if (!hasTokens) {
+            if (kDebugMode) {
+              debugPrint('⚠️ ОШИБКА: Токены не сохранились после операции saveTokens!');
+            }
+            throw Exception('Не удалось сохранить токены');
+          }
+          
+          if (kDebugMode) {
+            debugPrint('✅ Токены успешно сохранены и проверены');
+          }
+          
+          // 🔹 Проверяем, что виджет еще монтирован перед навигацией
+          if (!mounted) return;
 
           Navigator.pushReplacementNamed(
             context,
