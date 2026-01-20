@@ -16,7 +16,6 @@ import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/utils/static_map_url_builder.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/widgets/primary_button.dart';
 import '../../../../domain/models/activity_lenta.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../core/services/auth_service.dart';
@@ -159,7 +158,13 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
-        appBar: const PaceAppBar(title: 'Редактирование'),
+        appBar: const PaceAppBar(
+          title: 'Редактирование',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
@@ -197,7 +202,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 30),
 
                     // ────────────────────────────────────────────────────────────────
                     // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
@@ -231,7 +236,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 30),
                               const Text(
                                 'Экипировка',
                                 style: TextStyle(
@@ -309,7 +314,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                       },
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 30),
 
                     // ────────────────────────────────────────────────────────────────
                     // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
@@ -324,7 +329,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                     const SizedBox(height: 8),
                     _buildVisibilitySelector(),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 30),
 
                     // Показываем ошибки, если есть
                     Builder(
@@ -793,34 +798,46 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    return TextField(
-      controller: _descriptionController,
-      focusNode: _descriptionFocusNode,
-      maxLines: 12,
-      minLines: 7,
-      textAlignVertical: TextAlignVertical.top,
-      style: AppTextStyles.h14w4.copyWith(
-        color: AppColors.getTextPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.background,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      decoration: InputDecoration(
-        hintText: 'Введите описание тренировки',
-        hintStyle: AppTextStyles.h14w4Place.copyWith(
-          color: AppColors.getTextPlaceholderColor(context),
+      child: TextField(
+        controller: _descriptionController,
+        focusNode: _descriptionFocusNode,
+        maxLines: 14,
+        minLines: 7,
+        textAlignVertical: TextAlignVertical.top,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
         ),
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.all(12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          borderSide: BorderSide.none,
+        decoration: InputDecoration(
+          hintText: 'Введите описание тренировки',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.all(12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderSide: BorderSide.none,
+          ),
         ),
       ),
     );
@@ -836,37 +853,51 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       orElse: () => widget.activity,
     );
 
-    return EquipmentChip(
-      items: updatedActivity.equipments,
-      userId: updatedActivity.userId,
-      activityType: updatedActivity.type,
-      activityId: updatedActivity.id,
-      activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
-      showMenuButton: true,
-      // Убираем нижний разделитель на экране редактирования
-      showDivider: false,
-      // ────────────────────────────────────────────────────────────────
-      // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
-      // ────────────────────────────────────────────────────────────────
-      // Только для светлой темы на этой странице
-      backgroundColor: Theme.of(context).brightness == Brightness.light
-          ? AppColors.getSurfaceColor(context)
-          : null, // В темной теме используем дефолтное поведение
-      // ────────────────────────────────────────────────────────────────
-      // 🔹 ФОН КНОПКИ МЕНЮ: в светлой теме используем background вместо surface
-      // ────────────────────────────────────────────────────────────────
-      // Только для светлой темы на этой странице
-      menuButtonColor: Theme.of(context).brightness == Brightness.light
-          ? AppColors.getBackgroundColor(context)
-          : null, // В темной теме используем дефолтное поведение
-      onEquipmentChanged: () {
-        // Обновляем ленту фоном без блокировки UI
-        unawaited(
-          ref.read(lentaProvider(widget.currentUserId).notifier).forceRefresh(),
-        );
-        // Проверяем изменения после обновления
-        _checkForChanges();
-      },
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.background,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: EquipmentChip(
+        items: updatedActivity.equipments,
+        userId: updatedActivity.userId,
+        activityType: updatedActivity.type,
+        activityId: updatedActivity.id,
+        activityDistance: (updatedActivity.stats?.distance ?? 0.0) / 1000.0,
+        showMenuButton: true,
+        // Убираем нижний разделитель на экране редактирования
+        showDivider: false,
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ФОН ПЛАШКИ: в светлой теме используем surface вместо background
+        // ────────────────────────────────────────────────────────────────
+        // Только для светлой темы на этой странице
+        backgroundColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getSurfaceColor(context)
+            : null, // В темной теме используем дефолтное поведение
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ФОН КНОПКИ МЕНЮ: в светлой теме используем background вместо surface
+        // ────────────────────────────────────────────────────────────────
+        // Только для светлой темы на этой странице
+        menuButtonColor: Theme.of(context).brightness == Brightness.light
+            ? AppColors.getBackgroundColor(context)
+            : null, // В темной теме используем дефолтное поведение
+        onEquipmentChanged: () {
+          // Обновляем ленту фоном без блокировки UI
+          unawaited(
+            ref
+                .read(lentaProvider(widget.currentUserId).notifier)
+                .forceRefresh(),
+          );
+          // Проверяем изменения после обновления
+          _checkForChanges();
+        },
+      ),
     );
   }
 
@@ -895,33 +926,45 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     // Если экипировка выбрана, показываем EquipmentChip
     if (_selectedEquipment != null) {
-      return EquipmentChip(
-        items: [_selectedEquipment!],
-        userId: widget.currentUserId,
-        activityType: widget.activity.type,
-        activityId: widget.activity.id,
-        activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
-        showMenuButton: true,
-        // Убираем нижний разделитель на экране редактирования
-        showDivider: false,
-        backgroundColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.getSurfaceColor(context)
-            : null,
-        menuButtonColor: Theme.of(context).brightness == Brightness.light
-            ? AppColors.getBackgroundColor(context)
-            : null,
-        onEquipmentChanged: () {
-          _loadEquipment();
-        },
-        onEquipmentSelected: (Equipment newEquipment) {
-          setState(() {
-            // Обновляем выбранную экипировку при выборе через попап
-            // Это гарантирует, что последняя выбранная экипировка будет сохранена при сохранении изменений
-            _selectedEquipment = newEquipment;
-          });
-          // Перезагружаем список доступной экипировки для обновления выпадающего списка
-          _loadEquipment();
-        },
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          boxShadow: [
+            const BoxShadow(
+              color: AppColors.background,
+              blurRadius: 10,
+              offset: Offset(0, 1),
+            ),
+          ],
+        ),
+        child: EquipmentChip(
+          items: [_selectedEquipment!],
+          userId: widget.currentUserId,
+          activityType: widget.activity.type,
+          activityId: widget.activity.id,
+          activityDistance: (widget.activity.stats?.distance ?? 0.0) / 1000.0,
+          showMenuButton: true,
+          // Убираем нижний разделитель на экране редактирования
+          showDivider: false,
+          backgroundColor: Theme.of(context).brightness == Brightness.light
+              ? AppColors.getSurfaceColor(context)
+              : null,
+          menuButtonColor: Theme.of(context).brightness == Brightness.light
+              ? AppColors.getBackgroundColor(context)
+              : null,
+          onEquipmentChanged: () {
+            _loadEquipment();
+          },
+          onEquipmentSelected: (Equipment newEquipment) {
+            setState(() {
+              // Обновляем выбранную экипировку при выборе через попап
+              // Это гарантирует, что последняя выбранная экипировка будет сохранена при сохранении изменений
+              _selectedEquipment = newEquipment;
+            });
+            // Перезагружаем список доступной экипировки для обновления выпадающего списка
+            _loadEquipment();
+          },
+        ),
       );
     }
 
@@ -1078,69 +1121,75 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       'Только Вы',
     ];
 
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.background,
+            blurRadius: 10,
+            offset: Offset(0, 1),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
+        ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: options[_selectedVisibility],
-          isExpanded: true,
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              final index = options.indexOf(newValue);
-              if (index != -1) {
-                setState(() {
-                  _selectedVisibility = index;
-                  _checkForChanges();
-                });
+      child: InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: options[_selectedVisibility],
+            isExpanded: true,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                final index = options.indexOf(newValue);
+                if (index != -1) {
+                  setState(() {
+                    _selectedVisibility = index;
+                    _checkForChanges();
+                  });
+                }
               }
-            }
-          },
-          dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(
-                option,
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
+            },
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            items: options.map((option) {
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -1149,13 +1198,55 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   /// Кнопка сохранения
   Widget _buildSaveButton() {
     final formState = ref.watch(formStateProvider);
-    return PrimaryButton(
-      text: 'Сохранить',
-      onPressed: !formState.isSubmitting ? _saveChanges : () {},
-      width: 190,
-      isLoading: formState.isSubmitting,
-      enabled: !formState.isSubmitting,
+    final isSubmitting = formState.isSubmitting;
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: !isSubmitting ? _saveChanges : () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.textPrimary,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: isSubmitting
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Сохранить',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              'Сохранить',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
     );
+
+    if (isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
   }
 
   /// Сохраняет изменения на сервер

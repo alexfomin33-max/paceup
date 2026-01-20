@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
@@ -22,6 +23,13 @@ import '../../core/utils/image_cache_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ────────────────────────── Фиксация портретной ориентации ──────────────────────────
+  // Запрещаем поворот экрана, приложение работает только в вертикальной ориентации
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+  ]);
 
   // ────────────────────────── Firebase инициализация ──────────────────────────
   // ВАЖНО: Перед запуском выполните: flutter pub get
@@ -203,6 +211,25 @@ class _PaceUpAppState extends State<PaceUpApp> {
   @override
   void initState() {
     super.initState();
+    // ────────────────────────── Фиксация портретной ориентации ──────────────────────────
+    // Устанавливаем портретную ориентацию при инициализации виджета
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    // ────────────────────────── Восстановление ориентации ──────────────────────────
+    // Разрешаем все ориентации при уничтожении виджета (на случай выхода из приложения)
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    super.dispose();
   }
 
   @override
