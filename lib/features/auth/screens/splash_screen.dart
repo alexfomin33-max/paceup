@@ -229,6 +229,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     // Получаем AuthService через провайдер
     final auth = ref.read(authServiceProvider);
 
+    if (kDebugMode) {
+      debugPrint('🔹 Начало проверки авторизации...');
+    }
+
     // 🔹 Сначала быстрая проверка наличия сохраненных токенов (без сети)
     final hasTokens = await auth.hasStoredTokens();
 
@@ -245,10 +249,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
 
     // 🔹 Если токены есть - проверяем их валидность
+    // 🔹 Дополнительная проверка: читаем токены напрямую для надежности
     final int? userId = await auth.getUserId();
+    final accessToken = await auth.getAccessToken();
+    final refreshToken = await auth.getRefreshToken();
+    
+    if (kDebugMode) {
+      debugPrint('🔹 Проверка токенов: userId=$userId, access=${accessToken != null}, refresh=${refreshToken != null}');
+    }
+    
     if (!mounted) return;
 
-    if (userId != null) {
+    // 🔹 Если все токены есть и userId найден - переходим на основной экран
+    if (userId != null && accessToken != null && refreshToken != null) {
       // 🔹 Если интернет есть - валидируем токен ПЕРЕД переходом
       if (_hasInternet == true) {
         try {
