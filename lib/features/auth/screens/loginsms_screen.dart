@@ -8,12 +8,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../providers/services/fcm_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../widgets/sms_code_input.dart';
 import '../../../core/widgets/form_error_display.dart';
-
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран для ввода кода из SMS для подтверждения номера телефона
 class LoginSmsScreen extends ConsumerStatefulWidget {
@@ -158,9 +157,15 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
         // ApiService уже распарсил JSON
         final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+        final accessToken = data['access_token'] as String?;
+        final refreshToken = data['refresh_token'] as String?;
 
-        // 🔹 Если код валиден и виджет всё ещё в дереве
-        if (codeValue > 0 && mounted) {
+        // 🔹 Если код валиден и виджет всё ещё в дереве, сохраняем токены
+        if (codeValue > 0 && accessToken != null && refreshToken != null && mounted) {
+          // 🔹 Сохраняем токены в безопасное хранилище
+          final auth = ref.read(authServiceProvider);
+          await auth.saveTokens(accessToken, refreshToken, codeValue);
+
           // Регистрируем FCM токен после успешного входа (только на Android, временно отключено для iOS)
           if (!Platform.isMacOS && !Platform.isIOS) {
             try {
@@ -175,10 +180,11 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
 
           Navigator.pushReplacementNamed(
             context,
-            '/code1',
+            '/entercode',
             arguments: {
               'userId': codeValue,
-            }, // передаём userId на следующий экран
+              'phone': widget.phone,
+            }, // передаём userId и phone на следующий экран
           );
         } else {
           // 🔹 Неверный код — показываем ошибку и очищаем поля

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
+import '../../../core/providers/registration_data_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 
 /// 🔹 Четвертый экран регистрации — выбор основного вида спорта
@@ -48,6 +49,12 @@ class _RegStep4ScreenState extends ConsumerState<RegStep4Screen> {
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
     if (!isFormValid || formState.isSubmitting) return;
+
+    // 🔹 Сохраняем основной вид спорта в провайдер регистрации
+    final registrationNotifier = ref.read(registrationDataProvider.notifier);
+    if (selectedSport != null) {
+      registrationNotifier.setMainSport(selectedSport!);
+    }
 
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;

@@ -4,20 +4,25 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'auth_shell.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../widgets/sms_code_input.dart';
 import '../widgets/resend_code_button.dart';
 import '../../../core/widgets/form_error_display.dart';
-
-//import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 /// 🔹 Экран ввода кода из SMS для подтверждения номера телефона
 /// Используется после регистрации телефона для подтверждения кода.
 class AddAccSmsScreen extends ConsumerStatefulWidget {
   /// 🔹 Номер телефона, на который отправлен код
   final String phone;
+  /// 🔹 ID пользователя, если он уже был создан (например, через check_phone)
+  final int? userId;
 
-  const AddAccSmsScreen({super.key, required this.phone});
+  const AddAccSmsScreen({
+    super.key,
+    required this.phone,
+    this.userId,
+  });
 
   @override
   ConsumerState<AddAccSmsScreen> createState() => AddAccSmsScreenState();
@@ -33,12 +38,17 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
   @override
   void initState() {
     super.initState();
-    // 🔹 При открытии экрана сразу отправляем запрос на регистрацию пользователя
-    fetchApiData();
+    // 🔹 При открытии экрана отправляем запрос на регистрацию пользователя,
+    // 🔹 только если userId не был передан (пользователь ещё не создан)
+    // 🔹 Обёртываем в Future, чтобы избежать изменения провайдера во время построения виджета
+    if (widget.userId == null) {
+      Future(() => fetchApiData());
+    }
   }
 
   /// 🔹 Метод для первоначальной отправки запроса регистрации пользователя
   /// Отправляет номер телефона на сервер для генерации SMS-кода
+  /// Вызывается только если пользователь ещё не был создан (userId == null)
   Future<void> fetchApiData() async {
     final formState = ref.read(formStateProvider);
     if (formState.isLoading) return;
@@ -116,9 +126,15 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
 
         // ApiService уже распарсил JSON
         final codeValue = int.tryParse(data['code'].toString()) ?? 0;
+        final accessToken = data['access_token'] as String?;
+        final refreshToken = data['refresh_token'] as String?;
 
-        // 🔹 Если код валиден и экран всё ещё "смонтирован", переходим к следующему шагу
-        if (codeValue > 0 && mounted) {
+        // 🔹 Если код валиден и экран всё ещё "смонтирован", сохраняем токены и переходим к следующему шагу
+        if (codeValue > 0 && accessToken != null && refreshToken != null && mounted) {
+          // 🔹 Сохраняем токены в безопасное хранилище
+          final auth = ref.read(authServiceProvider);
+          await auth.saveTokens(accessToken, refreshToken, codeValue);
+
           Navigator.pushReplacementNamed(
             context,
             '/reg_step1', // экран следующего шага регистрации

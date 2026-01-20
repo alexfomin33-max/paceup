@@ -99,7 +99,12 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
 
     case '/addaccsms':
       screen = (args is Map && args.containsKey('phone'))
-          ? AddAccSmsScreen(phone: args['phone'] as String)
+          ? AddAccSmsScreen(
+              phone: args['phone'] as String,
+              userId: (args is Map && args.containsKey('userId'))
+                  ? args['userId'] as int?
+                  : null,
+            )
           : const HomeScreen();
       break;
 

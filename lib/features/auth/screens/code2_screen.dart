@@ -3,9 +3,11 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../lenta/providers/lenta_provider.dart';
+import '../../../providers/services/api_provider.dart';
 
 /// 🔹 Экран для повторения кода доступа (4-значный PIN)
 class Code2Screen extends ConsumerStatefulWidget {
@@ -60,7 +62,10 @@ class _Code2ScreenState extends ConsumerState<Code2Screen> {
     });
 
     if (isMatch) {
-      // 🔹 При успехе: загружаем данные ленты перед переходом
+      // 🔹 При успехе: сохраняем PIN-код в базу данных
+      await _savePinCode(_code);
+
+      // 🔹 Загружаем данные ленты перед переходом
       // Это предотвращает показ skeleton loader на экране ленты
       developer.log(
         '[CODE2_SCREEN] Начинаем загрузку данных ленты перед переходом',
@@ -175,6 +180,48 @@ class _Code2ScreenState extends ConsumerState<Code2Screen> {
       setState(() {
         _code = _code.substring(0, _code.length - 1);
       });
+    }
+  }
+
+  /// 🔹 Сохранение PIN-кода в базу данных
+  /// Вызывается после успешного подтверждения PIN-кода
+  Future<void> _savePinCode(String pinCode) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      
+      final data = await api.post(
+        '/save_pin_code.php',
+        body: {
+          'pin_code': pinCode,
+          'user_id': widget.userId,
+        },
+      );
+
+      if (kDebugMode) {
+        debugPrint('save_pin_code response: $data');
+      }
+
+      if (data['success'] == true) {
+        developer.log(
+          '[CODE2_SCREEN] PIN-код успешно сохранен в базу данных',
+          name: 'Code2Screen',
+        );
+      } else {
+        developer.log(
+          '[CODE2_SCREEN] Ошибка сохранения PIN-кода: ${data['message']}',
+          name: 'Code2Screen',
+        );
+        // Не блокируем переход, даже если сохранение не удалось
+        // PIN-код можно будет сохранить позже или пользователь сможет установить его заново
+      }
+    } catch (e, stackTrace) {
+      developer.log(
+        '[CODE2_SCREEN] Ошибка при сохранении PIN-кода: $e',
+        name: 'Code2Screen',
+        error: e,
+        stackTrace: stackTrace,
+      );
+      // Не блокируем переход при ошибке сохранения
     }
   }
 

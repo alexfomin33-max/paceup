@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../core/providers/form_state_provider.dart';
+import '../../../core/providers/registration_data_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
 
 /// 🔹 Первый экран регистрации — ввод имени пользователя
@@ -65,6 +66,12 @@ class _RegStep1ScreenState extends ConsumerState<RegStep1Screen> {
   Future<void> _checkAndContinue() async {
     final formState = ref.read(formStateProvider);
     if (!isFormValid || formState.isSubmitting) return;
+
+    // 🔹 Сохраняем данные в провайдер регистрации
+    final registrationNotifier = ref.read(registrationDataProvider.notifier);
+    registrationNotifier.setFirstName(nameController.text.trim());
+    registrationNotifier.setLastName(surnameController.text.trim());
+    registrationNotifier.setGender(selectedGender!);
 
     // 🔹 Проверка, что виджет ещё монтирован перед использованием context
     if (!mounted) return;

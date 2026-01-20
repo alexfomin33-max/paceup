@@ -3,10 +3,12 @@ import "package:flutter/material.dart";
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../widgets/phone_input_field.dart';
 import '../../../core/providers/form_state_provider.dart';
 import '../../../core/widgets/form_error_display.dart';
+import '../../../providers/services/api_provider.dart';
 
 /// 🔹 Обёртка для экрана входа
 /// Используется для маршрутизации и возможного расширения функционала
@@ -43,7 +45,8 @@ class _EnterAccScreenState extends ConsumerState<EnterAccScreen> {
   }
 
   /// 🔹 Обработка нажатия кнопки "Войти"
-  void _handleLogin() {
+  /// Проверяет номер телефона в базе и переходит на соответствующий экран
+  Future<void> _handleLogin() async {
     final formState = ref.read(formStateProvider);
     if (formState.isSubmitting) return;
 
@@ -55,11 +58,63 @@ class _EnterAccScreenState extends ConsumerState<EnterAccScreen> {
       return;
     }
 
-    // 🔹 Переходим на экран ввода SMS-кода
-    Navigator.pushReplacementNamed(
-      context,
-      '/loginsms',
-      arguments: {'phone': phoneController.text},
+    final formNotifier = ref.read(formStateProvider.notifier);
+    final api = ref.read(apiServiceProvider);
+
+    // 🔹 Вызываем API для проверки телефона и отправки кода
+    await formNotifier.submitWithLoading(
+      () async {
+        final data = await api.post(
+          '/check_phone.php',
+          body: {'phone': phoneController.text},
+        );
+
+        if (kDebugMode) {
+          debugPrint('check_phone response: $data');
+        }
+
+        // 🔹 Проверяем, существует ли пользователь в базе
+        final exists = data['exists'] == true;
+        final userId = data['userId'] as int?;
+
+        // 🔹 Если виджет всё ещё в дереве, переходим на соответствующий экран
+        if (mounted) {
+          if (exists) {
+            // 🔹 Пользователь существует - переходим на экран ввода кода для входа
+            // После ввода кода будет переход на code1_screen.dart
+            Navigator.pushReplacementNamed(
+              context,
+              '/loginsms',
+              arguments: {
+                'phone': phoneController.text,
+                'userId': userId,
+              },
+            );
+          } else {
+            // 🔹 Пользователя нет - переходим на экран ввода кода для регистрации
+            // После ввода кода будет переход на reg_step1_screen.dart
+            Navigator.pushReplacementNamed(
+              context,
+              '/addaccsms',
+              arguments: {
+                'phone': phoneController.text,
+                'userId': userId,
+              },
+            );
+          }
+        }
+      },
+      onError: (error) {
+        if (kDebugMode) {
+          debugPrint('check_phone error: $error');
+        }
+        // 🔹 Показываем ошибку пользователю
+        if (mounted) {
+          formNotifier.setError(
+            'Ошибка при проверке номера телефона. Попробуйте ещё раз.',
+          );
+        }
+      },
     );
   }
 

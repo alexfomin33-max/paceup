@@ -115,11 +115,28 @@ class LentaNotifier extends StateNotifier<LentaState> {
         .map(Activity.fromApi)
         .toList();
 
-    // ✅ Сортируем по lentaDate (дата из таблицы lenta) - новые сверху
-    // Это обеспечивает единую сортировку для активностей и постов
+    // ────────────────────────────────────────────────────────────────────────────
+    // ✅ ИСПРАВЛЕНО: Сортировка по правильной дате
+    // Для тренировок используем dateStart (дата создания тренировки)
+    // Для постов используем lentaDate (дата добавления в ленту)
+    // ────────────────────────────────────────────────────────────────────────────
     activities.sort((a, b) {
-      final dateA = a.lentaDate;
-      final dateB = b.lentaDate;
+      // Определяем дату для сортировки
+      DateTime? dateA;
+      DateTime? dateB;
+      
+      // Для тренировок используем dateStart
+      if (a.type != 'post' && a.dateStart != null) {
+        dateA = a.dateStart;
+      } else {
+        dateA = a.lentaDate;
+      }
+      
+      if (b.type != 'post' && b.dateStart != null) {
+        dateB = b.dateStart;
+      } else {
+        dateB = b.lentaDate;
+      }
 
       // Если даты отсутствуют, помещаем в конец
       if (dateA == null && dateB == null) return 0;
