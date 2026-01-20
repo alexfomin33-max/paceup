@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'api_service.dart';
 
@@ -62,6 +63,10 @@ class AuthService {
   /// 🔹 Проверка валидности access_token через сеть
   /// Выполняет запрос к серверу для проверки токена
   /// Если токен невалиден, пытается обновить через refresh_token
+  /// 
+  /// Возвращает:
+  /// - true если токен валиден или успешно обновлен
+  /// - false если токен невалиден и не удалось обновить
   Future<bool> validateToken() async {
     final token = await getAccessToken();
     if (token == null) return false;
@@ -74,13 +79,23 @@ class AuthService {
       final api = ApiService();
       final data = await api.post('/check_token.php');
 
-      if (data["valid"] == true) return true;
-    } on ApiException {
-      // Токен невалиден или ошибка сети
+      if (data["valid"] == true) {
+        // Токен валиден
+        return true;
+      }
+      
+      // Токен невалиден - пробуем обновить через refresh_token
+      if (kDebugMode) {
+        debugPrint('🔹 Access token невалиден, пытаемся обновить через refresh_token');
+      }
+      return await refreshToken();
+    } on ApiException catch (e) {
+      // Ошибка сети или сервера - пробуем обновить токен
+      if (kDebugMode) {
+        debugPrint('⚠️ Ошибка при проверке токена: $e, пытаемся обновить');
+      }
+      return await refreshToken();
     }
-
-    // Если access_token просрочен, пробуем обновить
-    return await refreshToken();
   }
 
   /// 🔹 Проверка авторизации пользователя
