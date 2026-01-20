@@ -26,13 +26,37 @@ Future<void> clearAllImageCache() async {
 }
 
 /// Очистка кэша конкретного URL
+/// 
+/// Очищает кэш для всех вариантов URL (с параметрами и без),
+/// чтобы гарантировать обновление изображения даже если URL
+/// содержит cache-busting параметры (?v=timestamp).
 Future<void> clearImageCacheForUrl(String url) async {
   try {
-    await CachedNetworkImage.evictFromCache(url);
+    // Очищаем базовый URL (без параметров)
+    final baseUrl = url.split('?').first;
+    await CachedNetworkImage.evictFromCache(baseUrl);
     
-    // Также очищаем через provider
-    final provider = CachedNetworkImageProvider(url);
+    // Очищаем полный URL (с параметрами, если есть)
+    if (url != baseUrl) {
+      await CachedNetworkImage.evictFromCache(url);
+    }
+    
+    // Также очищаем через provider для базового URL
+    final provider = CachedNetworkImageProvider(baseUrl);
     await provider.evict();
+    
+    // Очищаем через provider для полного URL (если отличается)
+    if (url != baseUrl) {
+      final fullProvider = CachedNetworkImageProvider(url);
+      await fullProvider.evict();
+    }
+    
+    // Очищаем Flutter ImageCache для всех вариантов
+    PaintingBinding.instance.imageCache.evict(provider);
+    if (url != baseUrl) {
+      final fullProvider = CachedNetworkImageProvider(url);
+      PaintingBinding.instance.imageCache.evict(fullProvider);
+    }
   } catch (e) {
     // Игнорируем ошибки
   }

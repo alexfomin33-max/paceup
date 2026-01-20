@@ -17,6 +17,7 @@ import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/utils/local_image_compressor.dart'
     show ImageCompressionPreset;
 import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../providers/avatar_version_provider.dart';
 import '../../../providers/profile_header_provider.dart';
 import 'edit_profile_state.dart';
 
@@ -167,7 +168,17 @@ class EditProfileNotifier extends StateNotifier<EditProfileState> {
         }
       },
       onSuccess: () {
-        // Обновляем данные профиля в шапке сразу после сохранения
+        // ────────────────────────────────────────────────────────────────
+        // ШАГ 1: Обновляем версию аватара и фона СРАЗУ после сохранения
+        // Это гарантирует, что все виджеты с аватаркой и фоном обновятся
+        // и загрузят новое изображение с cache-busting параметром
+        // ────────────────────────────────────────────────────────────────
+        _ref.read(avatarVersionProvider.notifier).bump();
+        
+        // ────────────────────────────────────────────────────────────────
+        // ШАГ 2: Обновляем данные профиля в шапке (включая очистку кэша)
+        // Это загрузит свежие данные с сервера и очистит старый кэш
+        // ────────────────────────────────────────────────────────────────
         _ref.read(profileHeaderProvider(userId).notifier).reload();
       },
     );
