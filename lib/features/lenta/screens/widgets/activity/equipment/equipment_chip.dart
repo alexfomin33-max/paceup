@@ -118,7 +118,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                   top: 0,
                   bottom: 0,
                   child: Container(
-                    width: 50,
+                    width: 56,
                     height: 50,
                     decoration: BoxDecoration(
                       // ────────────────────────────────────────────────────────────────
@@ -129,19 +129,20 @@ class _EquipmentChipState extends State<EquipmentChip> {
                       color: Theme.of(context).brightness == Brightness.dark
                           ? AppColors.surface
                           : AppColors.getSurfaceColor(context),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                    child: ClipOval(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(25),
                       child: hasValidImageUrl
                           ? Builder(
                               builder: (context) {
                                 final dpr = MediaQuery.of(
                                   context,
                                 ).devicePixelRatio;
-                                final w = (50 * dpr).round();
+                                final w = (56 * dpr).round();
                                 return CachedNetworkImage(
                                   imageUrl: img,
-                                  width: 50,
+                                  width: 56,
                                   height: 50,
                                   fit: BoxFit.contain,
                                   memCacheWidth: w,
@@ -152,7 +153,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                     // ────────────────────────────────────────────────────────────────
                                     // Убрали дефолтную картинку, чтобы сразу загружалась нужная
                                     return const SizedBox(
-                                      width: 50,
+                                      width: 56,
                                       height: 50,
                                     );
                                   },
@@ -162,7 +163,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                     // ────────────────────────────────────────────────────────────────
                                     final image = Image.asset(
                                       defaultImageAsset,
-                                      width: 50,
+                                      width: 56,
                                       height: 50,
                                       fit: BoxFit
                                           .contain, // длинная сторона помещается полностью
@@ -179,7 +180,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                                 // ────────────────────────────────────────────────────────────────
                                 final image = Image.asset(
                                   defaultImageAsset,
-                                  width: 50,
+                                  width: 56,
                                   height: 50,
                                   fit: BoxFit
                                       .contain, // длинная сторона помещается полностью
@@ -195,7 +196,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                 // 📏 ПРАВАЯ ГРАНИЦА: резервируем место для кнопки только если она видима
                 // ────────────────────────────────────────────────────────────────
                 Positioned(
-                  left: 62,
+                  left: 68,
                   top: 0,
                   bottom: 0,
                   right: widget.showMenuButton

@@ -7,7 +7,6 @@ import '../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
 import '../../../../../../../core/utils/error_handler.dart';
-import '../../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../../core/providers/form_state_provider.dart';
@@ -210,7 +209,9 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
           'name': model,
           'brand': brand,
           'dist': km.toString(),
-          'main': hasMainEquipment ? '0' : '1', // Основное, если нет основного снаряжения
+          'main': hasMainEquipment
+              ? '0'
+              : '1', // Основное, если нет основного снаряжения
           'in_use_since': _formatDateForApi(
             _inUseFrom ?? DateTime.now(),
           ), // Дата в формате DD.MM.YYYY
@@ -574,27 +575,68 @@ class _AddingSneakersContentState extends ConsumerState<AddingSneakersContent> {
             },
           ),
 
-          // ─────────────────── Кнопка «Сохранить» (унифицированная) ───────────────────
-          Center(
-            child: Builder(
-              builder: (context) {
-                final formState = ref.watch(formStateProvider);
-                return ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _brandCtrl,
-                  builder: (context, brandValue, child) {
-                    return PrimaryButton(
-                      text: 'Сохранить',
-                      onPressed: _saveEquipment,
-                      isLoading: formState.isSubmitting,
-                      enabled:
-                          brandValue.text.trim().isNotEmpty &&
-                          !formState.isSubmitting,
-                      width: 220, // ← единая ширина, как у «Пригласить»
-                    );
-                  },
-                );
-              },
-            ),
+          // ─────────────────── Кнопка «Добавить» ───────────────────
+          Builder(
+            builder: (context) {
+              final formState = ref.watch(formStateProvider);
+              final isSubmitting = formState.isSubmitting;
+              final textColor = AppColors.getSurfaceColor(context);
+
+              return ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _brandCtrl,
+                builder: (context, brandValue, child) {
+                  final isEnabled =
+                      brandValue.text.trim().isNotEmpty && !isSubmitting;
+
+                  final button = ElevatedButton(
+                    onPressed: isEnabled ? _saveEquipment : () {},
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.button,
+                      foregroundColor: textColor,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      shape: const StadiumBorder(),
+                      minimumSize: const Size(double.infinity, 50),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      alignment: Alignment.center,
+                    ),
+                    child: isSubmitting
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 10),
+                                child: CupertinoActivityIndicator(
+                                  radius: 9,
+                                  color: textColor,
+                                ),
+                              ),
+                              Text(
+                                'Добавить',
+                                style: AppTextStyles.h15w5.copyWith(
+                                  color: textColor,
+                                  height: 1.0,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            'Добавить',
+                            style: AppTextStyles.h15w5.copyWith(
+                              color: textColor,
+                              height: 1.0,
+                            ),
+                          ),
+                  );
+
+                  if (isSubmitting || !isEnabled) {
+                    return IgnorePointer(child: button);
+                  }
+
+                  return button;
+                },
+              );
+            },
           ),
         ],
       ),

@@ -189,7 +189,7 @@ class _ViewingSneakersContentState
                             size: 18,
                           ),
                           onPressed: () async {
-                            await Navigator.of(context).push(
+                            await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => const AddingEquipmentScreen(
                                   initialSegment: 0,
@@ -266,7 +266,7 @@ class _ViewingSneakersContentState
                             size: 18,
                           ),
                           onPressed: () async {
-                            await Navigator.of(context).push(
+                            await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => const AddingEquipmentScreen(
                                   initialSegment: 0,

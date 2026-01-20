@@ -11,11 +11,8 @@ import 'tabs/adding_sneakers_content.dart';
 class AddingEquipmentScreen extends ConsumerStatefulWidget {
   /// 0 — Кроссовки (по умолчанию), 1 — Велосипеды
   final int initialSegment;
-  
-  const AddingEquipmentScreen({
-    super.key,
-    this.initialSegment = 0,
-  });
+
+  const AddingEquipmentScreen({super.key, this.initialSegment = 0});
 
   @override
   ConsumerState<AddingEquipmentScreen> createState() =>

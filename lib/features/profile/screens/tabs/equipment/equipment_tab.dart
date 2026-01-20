@@ -435,7 +435,7 @@ class GearTabState extends ConsumerState<GearTab>
                   text: 'Добавить снаряжение',
                   leading: const Icon(CupertinoIcons.plus_circle, size: 18),
                   onPressed: () async {
-                    await Navigator.of(context).push(
+                    await Navigator.of(context, rootNavigator: true).push(
                       CupertinoPageRoute(
                         builder: (_) => const AddingEquipmentScreen(),
                       ),
