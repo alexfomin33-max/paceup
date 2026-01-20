@@ -436,6 +436,29 @@ class ApiService {
     final raw = utf8.decode(response.bodyBytes);
     final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
 
+    // ─────────────────────────────────────────────────────────────────────
+    // 🔹 ЛОГИРОВАНИЕ ОШИБОК ОТ БЭКЕНДА
+    // ─────────────────────────────────────────────────────────────────────
+    if (response.statusCode >= 400) {
+      if (kDebugMode) {
+        debugPrint('❌ [API] HTTP ${response.statusCode} ошибка');
+        debugPrint('❌ [API] URL: ${response.request?.url}');
+        try {
+          if (cleaned.isNotEmpty) {
+            final errorData = json.decode(cleaned);
+            if (errorData is Map<String, dynamic>) {
+              debugPrint('❌ [API] Ошибка от бэкенда: ${errorData.toString()}');
+            } else {
+              debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+            }
+          }
+        } catch (e) {
+          debugPrint('❌ [API] Не удалось распарсить ошибку: $e');
+          debugPrint('❌ [API] Тело ответа (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+        }
+      }
+    }
+
     // Проверяем успешность HTTP запроса
     if (response.statusCode >= 200 && response.statusCode < 300) {
       // Пустой ответ — возвращаем пустой объект
@@ -486,12 +509,18 @@ class ApiService {
         // Проверяем поля "ok" или "success" если есть
         final data = decoded;
         if (data.containsKey('ok') && data['ok'] == false) {
-          throw ApiException(data['error']?.toString() ?? 'API вернул ошибку');
+          final errorMsg = data['error']?.toString() ?? 'API вернул ошибку';
+          if (kDebugMode) {
+            debugPrint('❌ [API] Ошибка от бэкенда (ok=false): $errorMsg');
+          }
+          throw ApiException(errorMsg);
         }
         if (data.containsKey('success') && data['success'] == false) {
-          throw ApiException(
-            data['message']?.toString() ?? 'API вернул ошибку',
-          );
+          final errorMsg = data['message']?.toString() ?? 'API вернул ошибку';
+          if (kDebugMode) {
+            debugPrint('❌ [API] Ошибка от бэкенда (success=false): $errorMsg');
+          }
+          throw ApiException(errorMsg);
         }
         
         // ─────────────────────────────────────────────────────────────────────
@@ -502,13 +531,20 @@ class ApiService {
           final errorMsg = data['error'].toString();
           // Если ошибка не пустая и не является частью успешного ответа
           if (errorMsg.isNotEmpty && !errorMsg.toLowerCase().contains('null')) {
+            if (kDebugMode) {
+              debugPrint('❌ [API] Ошибка от бэкенда (поле error): $errorMsg');
+            }
             throw ApiException(errorMsg);
           }
         }
         if (data.containsKey('message') && 
             data['message'] != null && 
             data['message'].toString().toLowerCase().contains('ошибка')) {
-          throw ApiException(data['message'].toString());
+          final errorMsg = data['message'].toString();
+          if (kDebugMode) {
+            debugPrint('❌ [API] Ошибка от бэкенда (поле message): $errorMsg');
+          }
+          throw ApiException(errorMsg);
         }
 
         return data;
@@ -583,10 +619,18 @@ class ApiService {
               errorData['error']?.toString() ??
               errorData['message']?.toString() ??
               errorMessage;
+          if (kDebugMode) {
+            debugPrint('❌ [API] Ошибка HTTP ${response.statusCode}: $errorMessage');
+            debugPrint('❌ [API] Полный ответ: ${errorData.toString()}');
+          }
         }
       }
-    } catch (_) {
-      // Игнорируем ошибки парсинга
+    } catch (e) {
+      // Игнорируем ошибки парсинга, но логируем
+      if (kDebugMode) {
+        debugPrint('❌ [API] Не удалось распарсить ошибку HTTP ${response.statusCode}: $e');
+        debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+      }
     }
 
     throw ApiException(errorMessage);
