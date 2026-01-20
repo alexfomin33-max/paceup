@@ -88,7 +88,8 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
               id: item['id'] as int,
               name: item['name'] as String? ?? 'Пользователь',
               avatar: item['avatar'] as String?,
-              // Если переключатель выключен - контент скрыт
+              // API возвращает: 1 = скрыто, 0 = видно
+              // isActivitiesHidden: true = скрыто, false = видно
               isActivitiesHidden: (item['activities_hidden'] as int? ?? 0) == 1,
               isPostsHidden: (item['posts_hidden'] as int? ?? 0) == 1,
             );
@@ -124,10 +125,12 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
       );
 
       if (data['success'] == true) {
+        // Обновляем состояние на основе ответа API
+        final isHiddenFromApi = data['is_hidden'] as bool? ?? isHidden;
         setState(() {
           _users = _users.map((user) {
             if (user.id == userId) {
-              return user.copyWith(isActivitiesHidden: isHidden);
+              return user.copyWith(isActivitiesHidden: isHiddenFromApi);
             }
             return user;
           }).toList();
@@ -176,10 +179,12 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
       );
 
       if (data['success'] == true) {
+        // Обновляем состояние на основе ответа API
+        final isHiddenFromApi = data['is_hidden'] as bool? ?? isHidden;
         setState(() {
           _users = _users.map((user) {
             if (user.id == userId) {
-              return user.copyWith(isPostsHidden: isHidden);
+              return user.copyWith(isPostsHidden: isHiddenFromApi);
             }
             return user;
           }).toList();
@@ -342,15 +347,21 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
                                     _HiddenUserRow(
                                       user: user,
                                       onActivitiesChanged: (value) {
+                                        // value = новое состояние переключателя
+                                        // Если переключатель включен (true) → контент скрыт → isHidden = true
+                                        // Если переключатель выключен (false) → контент виден → isHidden = false
                                         _updateActivitiesHidden(
                                           user.id,
-                                          !value, // Инвертируем: если переключатель выключен - скрыто
+                                          value,
                                         );
                                       },
                                       onPostsChanged: (value) {
+                                        // value = новое состояние переключателя
+                                        // Если переключатель включен (true) → контент скрыт → isHidden = true
+                                        // Если переключатель выключен (false) → контент виден → isHidden = false
                                         _updatePostsHidden(
                                           user.id,
-                                          !value, // Инвертируем: если переключатель выключен - скрыто
+                                          value,
                                         );
                                       },
                                     ),
@@ -433,8 +444,9 @@ class _HiddenUserRow extends StatelessWidget {
             child: Transform.scale(
               scale: 0.75,
               child: CupertinoSwitch(
-                value: !user
-                    .isActivitiesHidden, // Инвертируем: если скрыто - переключатель выключен
+                // Переключатель включен (true) = контент скрыт (isActivitiesHidden)
+                // Переключатель выключен (false) = контент виден (!isActivitiesHidden)
+                value: user.isActivitiesHidden,
                 onChanged: onActivitiesChanged,
                 activeTrackColor: AppColors.brandPrimary,
               ),
@@ -447,8 +459,9 @@ class _HiddenUserRow extends StatelessWidget {
             child: Transform.scale(
               scale: 0.75,
               child: CupertinoSwitch(
-                value: !user
-                    .isPostsHidden, // Инвертируем: если скрыто - переключатель выключен
+                // Переключатель включен (true) = контент скрыт (isPostsHidden)
+                // Переключатель выключен (false) = контент виден (!isPostsHidden)
+                value: user.isPostsHidden,
                 onChanged: onPostsChanged,
                 activeTrackColor: AppColors.brandPrimary,
               ),
