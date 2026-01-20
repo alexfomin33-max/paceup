@@ -52,16 +52,23 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     final surfaceColor = AppColors.getSurfaceColor(context);
     final borderColor = AppColors.getBorderColor(context);
 
+    // ── основной каркас экрана с унифицированным AppBar как в NewPostScreen
     return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: PaceAppBar(title: widget.title),
+      backgroundColor: AppColors.twinBg,
+      appBar: PaceAppBar(
+        title: widget.title,
+        backgroundColor: AppColors.twinBg,
+        showBottomDivider: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
       body: SafeArea(
         child: Column(
           children: [
             // ── рабочая область обрезки
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: surfaceColor,
@@ -84,15 +91,48 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                 ),
               ),
             ),
-            // ── кнопка подтверждения обрезки
+            // ── кнопка подтверждения обрезки в стиле "Опубликовать" на экране нового поста
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              child: PrimaryButton(
-                text: 'Готово',
-                onPressed: () => _onCropPressed(),
-                expanded: true,
-                isLoading: _cropping,
-                enabled: !_cropping,
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: Builder(
+                  builder: (context) {
+                    final textColor = AppColors.getSurfaceColor(context);
+                    final button = ElevatedButton(
+                      onPressed: _onCropPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.textPrimary,
+                        foregroundColor: textColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        shape: const StadiumBorder(),
+                        minimumSize: const Size(double.infinity, 50),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.center,
+                      ),
+                      child: _cropping
+                          ? CupertinoActivityIndicator(
+                              radius: 9,
+                              color: textColor,
+                            )
+                          : Text(
+                              'Готово',
+                              style: AppTextStyles.h15w5.copyWith(
+                                color: textColor,
+                                height: 1.0,
+                              ),
+                            ),
+                    );
+
+                    if (_cropping) {
+                      return IgnorePointer(child: button);
+                    }
+
+                    return button;
+                  },
+                ),
               ),
             ),
           ],
@@ -139,4 +179,3 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     }
   }
 }
-

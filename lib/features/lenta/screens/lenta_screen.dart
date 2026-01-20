@@ -82,6 +82,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   bool _showOwn = true; // показывать свои посты/тренировки
   bool _showOthers = true; // показывать посты/тренировки других пользователей
 
+  // Флаг, что только что создаём новый пост и ждём его появления в ленте
+  bool _isPublishingPost = false;
+
   // Ключи для сохранения фильтров в SharedPreferences
   static const String _keyShowTrainings = 'lenta_filter_show_trainings';
   static const String _keyShowPosts = 'lenta_filter_show_posts';
@@ -664,6 +667,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
 
     if (!mounted || created != true) return;
 
+    // Показ плейсхолдера "Публикуем пост..." сразу после возврата
+    setState(() {
+      _isPublishingPost = true;
+    });
+
     // Очищаем кеш предзагруженных индексов
     _prefetchedIndices.clear();
 
@@ -682,6 +690,13 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           showOwn: _showOwn,
           showOthers: _showOthers,
         );
+
+    if (!mounted) return;
+
+    // Скрываем плейсхолдер после прихода обновлённой ленты
+    setState(() {
+      _isPublishingPost = false;
+    });
 
     // Прокрутка к началу
     if (_scrollController.hasClients) {
@@ -1359,6 +1374,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                           },
                         ),
                         const SizedBox(height: 12),
+                        if (_isPublishingPost) ...[
+                          const _PublishingPostPlaceholder(),
+                          const SizedBox(height: 16),
+                        ],
                       ],
                     ),
                   );
@@ -1396,13 +1415,21 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   final card = _buildFeedItem(activity);
                   return RepaintBoundary(
                     key: ValueKey(activity.lentaId),
-                    child: Column(
-                      children: [
-                        card,
-                        const SizedBox(height: 16),
-                        const RecommendedBlock(),
-                        const SizedBox(height: 16),
-                      ],
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 250),
+                      builder: (context, value, child) => Opacity(
+                        opacity: value,
+                        child: child,
+                      ),
+                      child: Column(
+                        children: [
+                          card,
+                          const SizedBox(height: 16),
+                          const RecommendedBlock(),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
                     ),
                   );
                 }
@@ -1418,7 +1445,20 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 // но обертка всех элементов дает лучший результат
                 return RepaintBoundary(
                   key: ValueKey(activity.lentaId),
-                  child: Column(children: [card, const SizedBox(height: 16)]),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: const Duration(milliseconds: 250),
+                    builder: (context, value, child) => Opacity(
+                      opacity: value,
+                      child: child,
+                    ),
+                    child: Column(
+                      children: [
+                        card,
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
@@ -1506,6 +1546,35 @@ class _Badge extends StatelessWidget {
           color: AppColors.surface,
           fontWeight: FontWeight.w700,
         ),
+      ),
+    );
+  }
+}
+
+/// Плейсхолдер "публикуем пост" в ленте с индикатором загрузки
+class _PublishingPostPlaceholder extends StatelessWidget {
+  const _PublishingPostPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Row(
+        children: [
+          const CupertinoActivityIndicator(),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Text(
+              'Публикуем пост…',
+              style: AppTextStyles.h14w4,
+            ),
+          ),
+        ],
       ),
     );
   }

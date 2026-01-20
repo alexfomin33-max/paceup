@@ -462,7 +462,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   Widget _buildPublishButton() {
     final formState = ref.watch(formStateProvider);
     final isSubmitting = formState.isSubmitting;
-    final isEnabled = _canPublish && !isSubmitting;
+    final isEnabled = _canPublish;
     final textColor = AppColors.getSurfaceColor(context);
 
     // ────────────────────────────────────────────────────────────────
@@ -481,25 +481,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         alignment: Alignment.center,
       ),
       child: isSubmitting
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: CupertinoActivityIndicator(
-                    radius: 9,
-                    color: textColor,
-                  ),
-                ),
-                Text(
-                  'Опубликовать',
-                  style: AppTextStyles.h15w5.copyWith(
-                    color: textColor,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            )
+          ? CupertinoActivityIndicator(radius: 9, color: textColor)
           : Text(
               'Опубликовать',
               style: AppTextStyles.h15w5.copyWith(
@@ -601,20 +583,6 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         }
       },
       onSuccess: () async {
-        // Очищаем форму
-        _descriptionController.clear();
-        if (!mounted) return;
-        setState(() {
-          _images.clear();
-          _canPublish = false;
-        });
-
-        // Обновляем ленту
-        await ref.read(lentaProvider(widget.userId).notifier).forceRefresh();
-
-        // Небольшая задержка для гарантии обновления данных на сервере
-        await Future.delayed(const Duration(milliseconds: 500));
-
         if (!mounted) return;
         Navigator.pop(context, true);
       },

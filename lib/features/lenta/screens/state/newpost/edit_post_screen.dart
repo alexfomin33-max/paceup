@@ -148,86 +148,109 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
-        appBar: const PaceAppBar(title: 'Редактировать пост'),
+        resizeToAvoidBottomInset: false,
+        appBar: const PaceAppBar(
+          title: 'Редактировать пост',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ────────────────────────────────────────────────────────────────
-                  // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Фотографии поста',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
+            child: Column(
+              children: [
+                // ────────────────────────────────────────────────────────────────
+                // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
+                // ────────────────────────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ────────────────────────────────────────────────────────────────
+                          // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Фотографии поста',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          _buildPhotoCarousel(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 📝 2. ОПИСАНИЕ ПОСТА
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Описание поста',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildDescriptionInput(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Кто видит пост',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildVisibilitySelector(),
+
+                          const SizedBox(height: 20),
+
+                          // Показываем ошибки, если есть
+                          Builder(
+                            builder: (context) {
+                              final formState = ref.watch(formStateProvider);
+                              if (formState.hasErrors) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: FormErrorDisplay(formState: formState),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  _buildPhotoCarousel(),
+                ),
 
-                  const SizedBox(height: 24),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 📝 2. ОПИСАНИЕ ПОСТА
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Описание поста',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDescriptionInput(),
-
-                  const SizedBox(height: 24),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Кто видит пост',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildVisibilitySelector(),
-
-                  const SizedBox(height: 32),
-
-                  // Показываем ошибки, если есть
-                  Builder(
-                    builder: (context) {
-                      final formState = ref.watch(formStateProvider);
-                      if (formState.hasErrors) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: FormErrorDisplay(formState: formState),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 💾 КНОПКА СОХРАНЕНИЯ
-                  // ────────────────────────────────────────────────────────────────
-                  Center(child: _buildSaveButton()),
-                ],
-              ),
+                // ────────────────────────────────────────────────────────────────
+                // 💾 ЗАФИКСИРОВАННАЯ КНОПКА СОХРАНЕНИЯ ВНИЗУ ЭКРАНА
+                // ────────────────────────────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: AppColors.twinBg,
+                  child: _buildSaveButton(),
+                ),
+              ],
             ),
           ),
         ),
@@ -524,42 +547,45 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    return Builder(
-      builder: (context) => TextField(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: TextField(
         controller: _descriptionController,
         focusNode: _descriptionFocusNode,
-        maxLines: 24,
-        minLines: 14,
+        maxLines: 20,
+        minLines: 10,
         textAlignVertical: TextAlignVertical.top,
         style: AppTextStyles.h14w4.copyWith(
           color: AppColors.getTextPrimaryColor(context),
         ),
         decoration: InputDecoration(
           hintText: 'Обновите описание',
-          hintStyle: AppTextStyles.h14w4Place,
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
           filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.all(12),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
         ),
       ),
@@ -574,35 +600,36 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
       'Только Вы',
     ];
 
-    return Builder(
-      builder: (context) => InputDecorator(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: InputDecorator(
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 4,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
         ),
         child: DropdownButtonHideUnderline(
@@ -651,19 +678,43 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   /// Кнопка сохранения
   Widget _buildSaveButton() {
     final formState = ref.watch(formStateProvider);
-    return PrimaryButton(
-      text: 'Сохранить',
-      onPressed: !formState.isSubmitting ? _submitEdit : () {},
-      width: 190,
-      isLoading: formState.isSubmitting,
-      enabled: _canSave && !formState.isSubmitting,
+    final isSubmitting = formState.isSubmitting;
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: !isSubmitting ? _submitEdit : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.textPrimary,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: isSubmitting
+          ? CupertinoActivityIndicator(radius: 9, color: textColor)
+          : Text(
+              'Сохранить',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
     );
+
+    if (isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
   }
 
   /// Сохраняет изменения поста на сервер
   Future<void> _submitEdit() async {
     final formState = ref.read(formStateProvider);
-    if (formState.isSubmitting || !_canSave) return;
+    if (formState.isSubmitting) return;
 
     final text = _descriptionController.text.trim();
     final keepUrls = _existing.where((e) => e.keep).map((e) => e.url).toList();
