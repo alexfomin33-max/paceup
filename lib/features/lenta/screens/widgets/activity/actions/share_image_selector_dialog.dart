@@ -57,7 +57,8 @@ class ShareImageSelectorDialog extends StatefulWidget {
   }
 
   @override
-  State<ShareImageSelectorDialog> createState() => _ShareImageSelectorDialogState();
+  State<ShareImageSelectorDialog> createState() =>
+      _ShareImageSelectorDialogState();
 }
 
 class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
@@ -69,24 +70,24 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
   @override
   void initState() {
     super.initState();
-    
+
     // Формируем список элементов: карта (если есть) + все фото
     _items = [];
     if (widget.hasMap && widget.activity != null) {
-      _items.add(_ShareOption(
-        type: ShareImageType.map,
-        title: 'Карта',
-        photoUrl: null,
-      ));
+      _items.add(
+        _ShareOption(type: ShareImageType.map, title: 'Карта', photoUrl: null),
+      );
     }
     for (final photoUrl in widget.photoUrls) {
-      _items.add(_ShareOption(
-        type: ShareImageType.photo,
-        title: 'Фото ${widget.photoUrls.indexOf(photoUrl) + 1}',
-        photoUrl: photoUrl,
-      ));
+      _items.add(
+        _ShareOption(
+          type: ShareImageType.photo,
+          title: 'Фото ${widget.photoUrls.indexOf(photoUrl) + 1}',
+          photoUrl: photoUrl,
+        ),
+      );
     }
-    
+
     _pageController = PageController();
   }
 
@@ -137,16 +138,20 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                   children: [
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      minSize: 0,
+                      minimumSize: Size.zero,
                       onPressed: () {
                         if (!mounted) return;
                         if (!Navigator.of(context).canPop()) return;
                         final currentItem = _items[_currentIndex];
-                        Navigator.of(context).pop(ShareImageSelection(
-                          type: currentItem.type,
-                          photoUrl: currentItem.photoUrl,
-                          mapImageUrl: currentItem.type == ShareImageType.map ? _currentMapUrl : null,
-                        ));
+                        Navigator.of(context).pop(
+                          ShareImageSelection(
+                            type: currentItem.type,
+                            photoUrl: currentItem.photoUrl,
+                            mapImageUrl: currentItem.type == ShareImageType.map
+                                ? _currentMapUrl
+                                : null,
+                          ),
+                        );
                       },
                       child: const Text(
                         'Выбрать',
@@ -159,7 +164,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
                     const SizedBox(width: 8),
                     CupertinoButton(
                       padding: EdgeInsets.zero,
-                      minSize: 0,
+                      minimumSize: Size.zero,
                       onPressed: () {
                         if (!mounted) return;
                         if (!Navigator.of(context).canPop()) return;
@@ -176,7 +181,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
               ],
             ),
           ),
-          
+
           // Слайдер с изображениями
           Expanded(
             child: PageView.builder(
@@ -191,7 +196,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
               },
             ),
           ),
-          
+
           // Индикаторы точек
           if (_items.length > 1)
             Padding(
@@ -227,11 +232,9 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
       final points = widget.activity!.points
           .map((c) => LatLng(c.lat, c.lng))
           .toList();
-      
+
       if (points.isEmpty) {
-        return const Center(
-          child: Text('Карта недоступна'),
-        );
+        return const Center(child: Text('Карта недоступна'));
       }
 
       return LayoutBuilder(
@@ -239,7 +242,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
           final dpr = MediaQuery.of(context).devicePixelRatio;
           final widthPx = (constraints.maxWidth * dpr).round();
           final heightPx = (constraints.maxHeight * dpr).round();
-          
+
           final mapUrl = StaticMapUrlBuilder.fromPoints(
             points: points,
             widthPx: widthPx.toDouble(),
@@ -247,7 +250,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
             strokeWidth: 3.0,
             padding: 12.0,
           );
-          
+
           // Сохраняем URL карты для использования при репосте
           if (_currentMapUrl != mapUrl) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -266,9 +269,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
             height: double.infinity,
             placeholder: (context, url) => Container(
               color: AppColors.getSurfaceColor(context),
-              child: const Center(
-                child: CupertinoActivityIndicator(),
-              ),
+              child: const Center(child: CupertinoActivityIndicator()),
             ),
             errorWidget: (context, url, error) => Container(
               color: AppColors.getSurfaceColor(context),
@@ -292,9 +293,7 @@ class _ShareImageSelectorDialogState extends State<ShareImageSelectorDialog> {
         height: double.infinity,
         placeholder: (context, url) => Container(
           color: AppColors.disabled,
-          child: const Center(
-            child: CupertinoActivityIndicator(),
-          ),
+          child: const Center(child: CupertinoActivityIndicator()),
         ),
         errorWidget: (context, url, error) => Container(
           color: AppColors.disabled,
@@ -316,10 +315,5 @@ class _ShareOption {
   final String title;
   final String? photoUrl;
 
-  _ShareOption({
-    required this.type,
-    required this.title,
-    this.photoUrl,
-  });
+  _ShareOption({required this.type, required this.title, this.photoUrl});
 }
-

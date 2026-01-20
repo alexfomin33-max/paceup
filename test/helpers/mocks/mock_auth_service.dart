@@ -28,7 +28,7 @@ extension MockAuthServiceExtensions on MockAuthService {
     when(() => this.refreshToken()).thenAnswer((_) async => isAuthorized);
     
     // Методы без возвращаемого значения
-    when(() => saveTokens(any(), any())).thenAnswer((_) async {});
+    when(() => saveTokens(any(), any(), any())).thenAnswer((_) async {});
     when(() => logout()).thenAnswer((_) async {});
   }
 

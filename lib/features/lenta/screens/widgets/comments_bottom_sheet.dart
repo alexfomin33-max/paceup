@@ -7,6 +7,7 @@ import '../../../../providers/services/api_provider.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../features/complaint.dart';
 import '../../../../core/widgets/transparent_route.dart';
+import '../../../../features/profile/screens/profile_screen.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -607,24 +608,34 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ──── Аватарка (сверху) ────
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.getSurfaceMutedColor(context),
-                backgroundImage:
-                    (c.userAvatar != null && c.userAvatar!.isNotEmpty)
-                    ? NetworkImage(c.userAvatar!)
-                    : null,
-                child: (c.userAvatar == null || c.userAvatar!.isEmpty)
-                    ? Text(
-                        c.userName.isNotEmpty
-                            ? c.userName.characters.first
-                            : '?',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      )
-                    : null,
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ProfileScreen(userId: c.userId),
+                    ),
+                  );
+                },
+                behavior: HitTestBehavior.opaque,
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.getSurfaceMutedColor(context),
+                  backgroundImage:
+                      (c.userAvatar != null && c.userAvatar!.isNotEmpty)
+                      ? NetworkImage(c.userAvatar!)
+                      : null,
+                  child: (c.userAvatar == null || c.userAvatar!.isEmpty)
+                      ? Text(
+                          c.userName.isNotEmpty
+                              ? c.userName.characters.first
+                              : '?',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: 12),
               // ──── Имя, дата и текст ────

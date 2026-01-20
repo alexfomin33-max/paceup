@@ -503,13 +503,13 @@ class ShareImageGenerator {
         final r = pixel.r;
         final g = pixel.g;
         final b = pixel.b;
-        
+
         // Смешиваем с черным цветом с учетом прозрачности
         // opacity = 0.6 означает 60% черного, 40% исходного цвета
         final newR = ((r * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
         final newG = ((g * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
         final newB = ((b * (1 - opacity) + 0 * opacity)).round().clamp(0, 255);
-        
+
         image.setPixel(x, y, img.ColorRgb8(newR, newG, newB));
       }
     }
@@ -530,7 +530,8 @@ class ShareImageGenerator {
       }
 
       // Масштабируем логотип до нужного размера (30% от ширины экрана - в 2 раза больше)
-      final logoWidth = (storyWidth * 0.30).round(); // 30% от ширины (в 2 раза больше)
+      final logoWidth = (storyWidth * 0.30)
+          .round(); // 30% от ширины (в 2 раза больше)
       final logoHeight = (logoImage.height * logoWidth / logoImage.width)
           .round();
 
@@ -590,13 +591,15 @@ class ShareImageGenerator {
 
       // Размеры шрифтов (соответствуют картинке)
       const labelFontSize = 48.0; // Мелкий шрифт для меток (белый)
-      const valueFontSize = 64.0; // Шрифт для значений (белый, жирный) - уменьшен
+      const valueFontSize =
+          64.0; // Шрифт для значений (белый, жирный) - уменьшен
       const attributionFontSize = 24.0; // Мелкий шрифт для атрибуций
 
       // Отступы для текста внизу слева на темной полосе
       const leftPadding = 80.0; // Левый отступ от края экрана (внутри панели)
       const bottomPadding = 50.0; // Отступ снизу от края панели (внутри панели)
-      const columnSpacing = 350.0; // Расстояние между колонками (увеличено, чтобы не наезжали)
+      const columnSpacing =
+          350.0; // Расстояние между колонками (увеличено, чтобы не наезжали)
       const labelValueSpacing = 12.0; // Отступ между меткой и значением
 
       final textPainter = TextPainter(
@@ -627,11 +630,12 @@ class ShareImageGenerator {
       // ────────────────────────────────────────────────────────────────
       // РИСУЕМ КОЛОНКИ ГОРИЗОНТАЛЬНО В ОДНУ СТРОКУ: Расстояние, Время, Темп
       // ────────────────────────────────────────────────────────────────
-      
+
       // Базовая позиция Y - ВНУТРИ панели, снизу (снизу вверх: сначала значение, потом метка)
       // panelY - это начало панели, storyHeight - конец
       // Текст должен быть внутри панели, ближе к низу
-      final bottomY = storyHeight - bottomPadding; // Позиция снизу внутри панели
+      final bottomY =
+          storyHeight - bottomPadding; // Позиция снизу внутри панели
 
       // КОЛОНКА 1: Расстояние (СЛЕВА с отступом, внутри панели)
       final distanceKm = stats.distance / 1000.0;
@@ -721,7 +725,10 @@ class ShareImageGenerator {
       // РИСУЕМ АТРИБУЦИИ ВНИЗУ ПАНЕЛИ
       // ────────────────────────────────────────────────────────────────
       // Атрибуция Mapbox слева внизу
-      textPainter.text = const TextSpan(text: '© Mapbox', style: attributionStyle);
+      textPainter.text = const TextSpan(
+        text: '© Mapbox',
+        style: attributionStyle,
+      );
       textPainter.textAlign = TextAlign.left;
       textPainter.layout();
       final attributionLeftPadding = 40.0;
@@ -735,7 +742,10 @@ class ShareImageGenerator {
       );
 
       // Атрибуция OpenStreetMap справа внизу
-      textPainter.text = const TextSpan(text: '© OpenStreetMap', style: attributionStyle);
+      textPainter.text = const TextSpan(
+        text: '© OpenStreetMap',
+        style: attributionStyle,
+      );
       textPainter.textAlign = TextAlign.right;
       textPainter.layout();
       final attributionRightPadding = 40.0;
@@ -750,10 +760,7 @@ class ShareImageGenerator {
       // Конвертируем Canvas в изображение
       final picture = recorder.endRecording();
       // Используем те же размеры, что и shareImage, без pixelRatio, чтобы координаты совпадали
-      final uiImage = await picture.toImage(
-        storyWidth,
-        storyHeight,
-      );
+      final uiImage = await picture.toImage(storyWidth, storyHeight);
       final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
       picture.dispose();
       uiImage.dispose();
@@ -767,30 +774,6 @@ class ShareImageGenerator {
       }
     } catch (e) {
       debugPrint('Ошибка рисования параметров: $e');
-    }
-  }
-
-  /// Возвращает название типа активности на русском
-  static String _getActivityTypeTitle(String type) {
-    final typeLower = type.toLowerCase();
-    switch (typeLower) {
-      case 'running':
-      case 'run':
-        return 'Забег';
-      case 'walking':
-      case 'walk':
-        return 'Прогулка';
-      case 'cycling':
-      case 'bike':
-        return 'Заезд';
-      case 'swimming':
-      case 'swim':
-        return 'Плавание';
-      case 'skiing':
-      case 'ski':
-        return 'Лыжи';
-      default:
-        return 'Тренировка';
     }
   }
 

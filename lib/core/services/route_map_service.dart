@@ -16,7 +16,6 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'api_service.dart';
-import '../config/app_config.dart';
 
 /// Сервис для работы с сохраненными изображениями карт маршрутов
 class RouteMapService {
@@ -25,7 +24,7 @@ class RouteMapService {
   RouteMapService._internal();
 
   final ApiService _api = ApiService();
-  
+
   // ──────────────────────────── Кеш для URL изображений ────────────────────────────
   // Кешируем результаты запросов, чтобы не делать повторные запросы для одной активности
   final Map<int, String?> _routeMapUrlCache = {};
@@ -53,7 +52,10 @@ class RouteMapService {
   /// ⚡ PERFORMANCE OPTIMIZATION:
   /// - Использует кеш для избежания повторных запросов
   /// - Не блокирует UI (асинхронный запрос)
-  Future<String?> getRouteMapUrl(int activityId, {bool thumbnail = false}) async {
+  Future<String?> getRouteMapUrl(
+    int activityId, {
+    bool thumbnail = false,
+  }) async {
     // Проверяем кеш
     final cache = thumbnail ? _routeMapThumbnailUrlCache : _routeMapUrlCache;
     if (cache.containsKey(activityId)) {
@@ -117,7 +119,7 @@ class RouteMapService {
       );
 
       final routeMapUrl = response['route_map_url'] as String?;
-      
+
       // Обновляем кеш после успешного сохранения
       if (routeMapUrl != null) {
         if (thumbnail) {
@@ -159,10 +161,12 @@ class RouteMapService {
     try {
       // Скачиваем изображение из Mapbox
       final response = await http.get(Uri.parse(mapboxUrl));
-      
+
       if (response.statusCode != 200) {
         if (kDebugMode) {
-          debugPrint('⚠️ RouteMapService: Не удалось скачать изображение с Mapbox');
+          debugPrint(
+            '⚠️ RouteMapService: Не удалось скачать изображение с Mapbox',
+          );
         }
         return null;
       }
@@ -171,7 +175,7 @@ class RouteMapService {
       // Если указан contentLength, проверяем соответствие размера
       final contentLength = response.contentLength;
       final bodyBytes = response.bodyBytes;
-      
+
       if (contentLength != null && bodyBytes.length != contentLength) {
         if (kDebugMode) {
           debugPrint(
@@ -189,13 +193,13 @@ class RouteMapService {
       if (!await tempDir.exists()) {
         await tempDir.create(recursive: true);
       }
-      
+
       final suffix = thumbnail ? '_thumbnail' : '';
       tempFile = File('${tempDir.path}/route_map${suffix}_$activityId.png');
-      
+
       // Записываем файл с проверкой
       await tempFile.writeAsBytes(bodyBytes, flush: true);
-      
+
       // Проверяем, что файл создан и имеет правильный размер
       if (!await tempFile.exists()) {
         if (kDebugMode) {
@@ -203,7 +207,7 @@ class RouteMapService {
         }
         return null;
       }
-      
+
       final fileSize = await tempFile.length();
       if (fileSize != bodyBytes.length) {
         if (kDebugMode) {

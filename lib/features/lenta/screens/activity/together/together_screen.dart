@@ -14,10 +14,7 @@ import 'tabs/adding/adding_content.dart';
 class TogetherScreen extends ConsumerStatefulWidget {
   final int activityId;
 
-  const TogetherScreen({
-    super.key,
-    required this.activityId,
-  });
+  const TogetherScreen({super.key, required this.activityId});
 
   @override
   ConsumerState<TogetherScreen> createState() => _TogetherScreenState();
@@ -84,11 +81,11 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
               onPageChanged: (i) => setState(() => _index = i),
               children: [
                 _PageWrapper(
-                  key: PageStorageKey('together_members'),
+                  key: const PageStorageKey('together_members'),
                   child: MemberContent(activityId: widget.activityId),
                 ),
                 _PageWrapper(
-                  key: PageStorageKey('together_adding'),
+                  key: const PageStorageKey('together_adding'),
                   child: AddingContent(activityId: widget.activityId),
                 ),
               ],

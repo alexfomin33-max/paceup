@@ -135,13 +135,10 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
 
     try {
       final api = ref.read(apiServiceProvider);
-      
+
       final data = await api.post(
         '/check_pin_code.php',
-        body: {
-          'pin_code': _code,
-          'phone': phone,
-        },
+        body: {'pin_code': _code, 'phone': phone},
       );
 
       if (kDebugMode) {
@@ -217,7 +214,7 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
         error: e,
         stackTrace: stackTrace,
       );
-      
+
       if (mounted) {
         setState(() {
           _code = '';
@@ -348,7 +345,7 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
                           // 🔹 Заголовок
                           const SizedBox(height: 25),
                           const Text(
-                            "Введите код доступа",
+                            "Введите код для входа",
                             style: TextStyle(
                               color: AppColors.surface,
                               fontSize: 16,

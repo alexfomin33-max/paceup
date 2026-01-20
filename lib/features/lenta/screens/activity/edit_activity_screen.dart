@@ -158,6 +158,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
+        resizeToAvoidBottomInset: false,
         appBar: const PaceAppBar(
           title: 'Редактирование',
           backgroundColor: AppColors.twinBg,
@@ -170,188 +171,211 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ────────────────────────────────────────────────────────────────
-                    // 📸 1. ФОТОГРАФИИ ТРЕНИРОВКИ (горизонтальная карусель)
-                    // ────────────────────────────────────────────────────────────────
-                    const Text(
-                      'Фото тренировки',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPhotoCarousel(),
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        'Перетащите, чтобы изменить порядок',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // ────────────────────────────────────────────────────────────────
-                    // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
-                    // ────────────────────────────────────────────────────────────────
-                    const Text(
-                      'Описание тренировки',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _buildDescriptionInput(),
-
-                    // ────────────────────────────────────────────────────────────────
-                    // 👟 3. ЭКИПИРОВКА
-                    // ────────────────────────────────────────────────────────────────
-                    Builder(
-                      builder: (context) {
-                        // Получаем обновленную активность из провайдера для проверки
-                        final lentaState = ref.watch(
-                          lentaProvider(widget.currentUserId),
-                        );
-                        final updatedActivity = lentaState.items.firstWhere(
-                          (a) => a.lentaId == widget.activity.lentaId,
-                          orElse: () => widget.activity,
-                        );
-
-                        // Если экипировка уже выбрана, показываем EquipmentChip
-                        if (updatedActivity.equipments.isNotEmpty) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 30),
-                              const Text(
-                                'Экипировка',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                ),
+            child: Column(
+              children: [
+                // ────────────────────────────────────────────────────────────────
+                // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
+                // ────────────────────────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ────────────────────────────────────────────────────────────────
+                          // 📸 1. ФОТОГРАФИИ ТРЕНИРОВКИ (горизонтальная карусель)
+                          // ────────────────────────────────────────────────────────────────
+                          const Text(
+                            'Фото тренировки',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildPhotoCarousel(),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: Text(
+                              'Перетащите, чтобы изменить порядок',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.getTextTertiaryColor(context),
                               ),
-                              const SizedBox(height: 8),
-                              _buildEquipmentSection(),
-                            ],
-                          );
-                        }
+                            ),
+                          ),
 
-                        // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
-                        if (_shouldShowEquipment()) {
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 24),
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Transform.scale(
-                                      scale: 0.85,
-                                      alignment: Alignment.centerLeft,
-                                      child: Checkbox(
-                                        value: _showEquipment,
-                                        materialTapTargetSize:
-                                            MaterialTapTargetSize.shrinkWrap,
-                                        visualDensity: VisualDensity.compact,
-                                        activeColor: AppColors.brandPrimary,
-                                        checkColor: AppColors.getSurfaceColor(
-                                          context,
-                                        ),
-                                        side: BorderSide(
-                                          color:
-                                              AppColors.getIconSecondaryColor(
-                                                context,
-                                              ),
-                                          width: 1.5,
-                                        ),
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _showEquipment = value ?? false;
-                                            if (_showEquipment &&
-                                                _availableEquipment.isEmpty) {
-                                              _loadEquipment();
-                                            }
-                                          });
-                                        },
+                          const SizedBox(height: 30),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
+                          // ────────────────────────────────────────────────────────────────
+                          const Text(
+                            'Описание тренировки',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildDescriptionInput(),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 👟 3. ЭКИПИРОВКА
+                          // ────────────────────────────────────────────────────────────────
+                          Builder(
+                            builder: (context) {
+                              // Получаем обновленную активность из провайдера для проверки
+                              final lentaState = ref.watch(
+                                lentaProvider(widget.currentUserId),
+                              );
+                              final updatedActivity = lentaState.items
+                                  .firstWhere(
+                                    (a) => a.lentaId == widget.activity.lentaId,
+                                    orElse: () => widget.activity,
+                                  );
+
+                              // Если экипировка уже выбрана, показываем EquipmentChip
+                              if (updatedActivity.equipments.isNotEmpty) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 30),
+                                    const Text(
+                                      'Экипировка',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Text(
-                                    'Добавить экипировку',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w500,
+                                    const SizedBox(height: 8),
+                                    _buildEquipmentSection(),
+                                  ],
+                                );
+                              }
+
+                              // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+                              if (_shouldShowEquipment()) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const SizedBox(height: 24),
+                                    Row(
+                                      children: [
+                                        SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: Transform.scale(
+                                            scale: 0.85,
+                                            alignment: Alignment.centerLeft,
+                                            child: Checkbox(
+                                              value: _showEquipment,
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              activeColor:
+                                                  AppColors.brandPrimary,
+                                              checkColor:
+                                                  AppColors.getSurfaceColor(
+                                                    context,
+                                                  ),
+                                              side: BorderSide(
+                                                color:
+                                                    AppColors.getIconSecondaryColor(
+                                                      context,
+                                                    ),
+                                                width: 1.5,
+                                              ),
+                                              onChanged: (value) {
+                                                setState(() {
+                                                  _showEquipment =
+                                                      value ?? false;
+                                                  if (_showEquipment &&
+                                                      _availableEquipment
+                                                          .isEmpty) {
+                                                    _loadEquipment();
+                                                  }
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Text(
+                                          'Добавить экипировку',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                ],
-                              ),
-                              if (_showEquipment) ...[
-                                const SizedBox(height: 8),
-                                _buildEquipmentSelectionSection(),
-                              ],
-                            ],
-                          );
-                        }
+                                    if (_showEquipment) ...[
+                                      const SizedBox(height: 8),
+                                      _buildEquipmentSelectionSection(),
+                                    ],
+                                  ],
+                                );
+                              }
 
-                        return const SizedBox.shrink();
-                      },
-                    ),
+                              return const SizedBox.shrink();
+                            },
+                          ),
 
-                    const SizedBox(height: 30),
+                          const SizedBox(height: 30),
 
-                    // ────────────────────────────────────────────────────────────────
-                    // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
-                    // ────────────────────────────────────────────────────────────────
-                    const Text(
-                      'Кто видит тренировку',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                          // ────────────────────────────────────────────────────────────────
+                          // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
+                          // ────────────────────────────────────────────────────────────────
+                          const Text(
+                            'Кто видит тренировку',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildVisibilitySelector(),
+
+                          const SizedBox(height: 30),
+
+                          // Показываем ошибки, если есть
+                          Builder(
+                            builder: (context) {
+                              final formState = ref.watch(formStateProvider);
+                              if (formState.hasErrors) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: FormErrorDisplay(formState: formState),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+
+                          // Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                          const SizedBox(height: 20),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _buildVisibilitySelector(),
-
-                    const SizedBox(height: 30),
-
-                    // Показываем ошибки, если есть
-                    Builder(
-                      builder: (context) {
-                        final formState = ref.watch(formStateProvider);
-                        if (formState.hasErrors) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: FormErrorDisplay(formState: formState),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      },
-                    ),
-
-                    // ────────────────────────────────────────────────────────────────
-                    // 💾 КНОПКА СОХРАНЕНИЯ
-                    // ────────────────────────────────────────────────────────────────
-                    Center(child: _buildSaveButton()),
-                  ],
+                  ),
                 ),
-              ),
+
+                // ────────────────────────────────────────────────────────────────
+                // 💾 ЗАФИКСИРОВАННАЯ КНОПКА СОХРАНЕНИЯ ВНИЗУ ЭКРАНА
+                // ────────────────────────────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: AppColors.twinBg,
+                  child: _buildSaveButton(),
+                ),
+              ],
             ),
           ),
         ),
@@ -803,8 +827,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.background,
-            blurRadius: 10,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
             offset: Offset(0, 1),
           ),
         ],
@@ -858,8 +882,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.background,
-            blurRadius: 10,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
             offset: Offset(0, 1),
           ),
         ],
@@ -931,8 +955,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: [
             const BoxShadow(
-              color: AppColors.background,
-              blurRadius: 10,
+              color: AppColors.twinshadow,
+              blurRadius: 20,
               offset: Offset(0, 1),
             ),
           ],
@@ -1126,8 +1150,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.background,
-            blurRadius: 10,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
             offset: Offset(0, 1),
           ),
         ],

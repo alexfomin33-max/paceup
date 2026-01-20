@@ -17,7 +17,6 @@ import '../../../../core/utils/error_handler.dart';
 import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/widgets/primary_button.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
@@ -125,7 +124,13 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
-        appBar: const PaceAppBar(title: 'Добавить тренировку'),
+        appBar: const PaceAppBar(
+          title: 'Добавление',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
@@ -580,131 +585,141 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Виджет для выбора GPX файла
   Widget _buildGpxFileSelector() {
     if (_gpxFile != null) {
-      return InputDecorator(
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 18,
-          ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 6),
-            child: Icon(
-              CupertinoIcons.doc,
-              size: 20,
-              color: AppColors.getIconPrimaryColor(context),
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          boxShadow: const [
+            // Мягкая тень вместо бордера
+            BoxShadow(
+              color: AppColors.twinshadow,
+              blurRadius: 20,
+              offset: Offset(0, 1),
             ),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 20 + 14,
-            minHeight: 20,
-          ),
-          suffixIcon: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _gpxFile = null;
-                });
-              },
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.getBorderColor(context)),
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 20,
-                  color: AppColors.error,
+          ],
+        ),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 18,
+            ),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.doc,
+                size: 20,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 20 + 14,
+              minHeight: 20,
+            ),
+            suffixIcon: Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _gpxFile = null;
+                  });
+                },
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
                 ),
               ),
             ),
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 24,
-            minHeight: 24,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 24,
+              minHeight: 24,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
             ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+          child: Text(
+            _gpxFile?.path.split('/').last ?? '',
+            style: AppTextStyles.h14w4,
+            overflow: TextOverflow.ellipsis,
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-        ),
-        child: Text(
-          _gpxFile?.path.split('/').last ?? '',
-          style: AppTextStyles.h14w4,
-          overflow: TextOverflow.ellipsis,
         ),
       );
     }
 
-    return GestureDetector(
-      onTap: _handlePickGpxFile,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 18,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 6),
-            child: Icon(
-              CupertinoIcons.add_circled,
-              size: 20,
-              color: AppColors.getIconSecondaryColor(context),
+        ],
+      ),
+      child: GestureDetector(
+        onTap: _handlePickGpxFile,
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 18,
+            ),
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.add_circled,
+                size: 20,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 20 + 14,
+              minHeight: 20,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
             ),
           ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 20 + 14,
-            minHeight: 20,
+          child: const Text(
+            'Прикрепить файл GPX',
+            style: AppTextStyles.h14w4Place,
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-        ),
-        child: const Text(
-          'Прикрепить файл GPX',
-          style: AppTextStyles.h14w4Place,
         ),
       ),
     );
@@ -713,77 +728,81 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Выпадающий список для выбора типа тренировки
   Widget _buildActivityTypeSelector() {
     final isEnabled = _gpxFile == null;
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: InputDecorator(
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 4,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+        ],
+      ),
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: InputDecorator(
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 4,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
             ),
           ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-        ),
-        child: DropdownButtonHideUnderline(
-          child: DropdownButton<String>(
-            value: _selectedActivityType,
-            isExpanded: true,
-            hint: const Text(
-              'Выберите вид тренировки',
-              style: AppTextStyles.h14w4Place,
-            ),
-            onChanged: isEnabled
-                ? (String? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        _selectedActivityType = newValue;
-                        // При смене типа тренировки сбрасываем выбранную экипировку
-                        _selectedEquipment = null;
-                        // Если выбран "Плавание" — скрываем экипировку
-                        if (!_shouldShowEquipment()) {
-                          _showEquipment = false;
-                        } else if (_showEquipment) {
-                          _loadEquipment();
-                        }
-                      });
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedActivityType,
+              isExpanded: true,
+              hint: const Text(
+                'Выберите вид тренировки',
+                style: AppTextStyles.h14w4Place,
+              ),
+              onChanged: isEnabled
+                  ? (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedActivityType = newValue;
+                          // При смене типа тренировки сбрасываем выбранную экипировку
+                          _selectedEquipment = null;
+                          // Если выбран "Плавание" — скрываем экипировку
+                          if (!_shouldShowEquipment()) {
+                            _showEquipment = false;
+                          } else if (_showEquipment) {
+                            _loadEquipment();
+                          }
+                        });
+                      }
                     }
-                  }
-                : null,
-            dropdownColor: AppColors.getSurfaceColor(context),
-            menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            icon: Icon(
-              Icons.arrow_drop_down,
-              color: AppColors.getIconSecondaryColor(context),
+                  : null,
+              dropdownColor: AppColors.getSurfaceColor(context),
+              menuMaxHeight: 300,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              icon: Icon(
+                Icons.arrow_drop_down,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+              style: AppTextStyles.h14w4,
+              items: _activityTypes.map((option) {
+                return DropdownMenuItem<String>(
+                  value: option,
+                  child: Text(option, style: AppTextStyles.h14w4),
+                );
+              }).toList(),
             ),
-            style: AppTextStyles.h14w4,
-            items: _activityTypes.map((option) {
-              return DropdownMenuItem<String>(
-                value: option,
-                child: Text(option, style: AppTextStyles.h14w4),
-              );
-            }).toList(),
           ),
         ),
       ),
@@ -793,62 +812,66 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Поле выбора даты тренировки
   Widget _buildDateField() {
     final isEnabled = _gpxFile == null;
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: GestureDetector(
-        onTap: isEnabled ? _pickDate : null,
-        child: AbsorbPointer(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.getSurfaceColor(context),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 18,
-              ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 12, right: 6),
-                child: Icon(
-                  CupertinoIcons.calendar,
-                  size: 18,
-                  color: AppColors.getIconPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: GestureDetector(
+          onTap: isEnabled ? _pickDate : null,
+          child: AbsorbPointer(
+            child: InputDecorator(
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 18,
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 6),
+                  child: Icon(
+                    CupertinoIcons.calendar,
+                    size: 18,
+                    color: AppColors.getIconPrimaryColor(context),
+                  ),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 18 + 14,
+                  minHeight: 18,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
                 ),
               ),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 18 + 14,
-                minHeight: 18,
+              child: Text(
+                _activityDate != null
+                    ? _formatDate(_activityDate!)
+                    : 'Выберите дату',
+                style: _activityDate != null
+                    ? AppTextStyles.h14w4
+                    : AppTextStyles.h14w4Place,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Text(
-              _activityDate != null
-                  ? _formatDate(_activityDate!)
-                  : 'Выберите дату',
-              style: _activityDate != null
-                  ? AppTextStyles.h14w4
-                  : AppTextStyles.h14w4Place,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -859,60 +882,66 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Поле выбора времени начала
   Widget _buildTimeField() {
     final isEnabled = _gpxFile == null;
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: GestureDetector(
-        onTap: isEnabled ? _pickTime : null,
-        child: AbsorbPointer(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.getSurfaceColor(context),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 18,
-              ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 12, right: 6),
-                child: Icon(
-                  CupertinoIcons.time,
-                  size: 18,
-                  color: AppColors.getIconPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: GestureDetector(
+          onTap: isEnabled ? _pickTime : null,
+          child: AbsorbPointer(
+            child: InputDecorator(
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 18,
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 6),
+                  child: Icon(
+                    CupertinoIcons.time,
+                    size: 18,
+                    color: AppColors.getIconPrimaryColor(context),
+                  ),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 18 + 14,
+                  minHeight: 18,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
                 ),
               ),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 18 + 14,
-                minHeight: 18,
+              child: Text(
+                _startTime != null
+                    ? _formatTime(_startTime!)
+                    : 'Выберите время',
+                style: _startTime != null
+                    ? AppTextStyles.h14w4
+                    : AppTextStyles.h14w4Place,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Text(
-              _startTime != null ? _formatTime(_startTime!) : 'Выберите время',
-              style: _startTime != null
-                  ? AppTextStyles.h14w4
-                  : AppTextStyles.h14w4Place,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
         ),
@@ -923,54 +952,58 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Поле ввода дистанции
   Widget _buildDistanceField() {
     final isEnabled = _gpxFile == null;
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: TextField(
-        controller: _distanceController,
-        enabled: isEnabled,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textInputAction: TextInputAction.next,
-        style: AppTextStyles.h14w4,
-        decoration: InputDecoration(
-          hintText: '0.0',
-          hintStyle: AppTextStyles.h14w4Place,
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 17,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера, как на экране редактирования
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 12, right: 6),
-            child: Icon(
-              CupertinoIcons.location,
-              size: 18,
-              color: AppColors.getIconPrimaryColor(context),
+        ],
+      ),
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: TextField(
+          controller: _distanceController,
+          enabled: isEnabled,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          textInputAction: TextInputAction.next,
+          style: AppTextStyles.h14w4,
+          decoration: InputDecoration(
+            hintText: '0.0',
+            hintStyle: AppTextStyles.h14w4Place,
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 17,
             ),
-          ),
-          prefixIconConstraints: const BoxConstraints(
-            minWidth: 18 + 14,
-            minHeight: 18,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            prefixIcon: Padding(
+              padding: const EdgeInsets.only(left: 12, right: 6),
+              child: Icon(
+                CupertinoIcons.location,
+                size: 18,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
             ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 18 + 14,
+              minHeight: 18,
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
             ),
           ),
         ),
@@ -981,58 +1014,62 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Поле выбора длительности тренировки
   Widget _buildDurationField() {
     final isEnabled = _gpxFile == null;
-    return Opacity(
-      opacity: isEnabled ? 1.0 : 0.5,
-      child: GestureDetector(
-        onTap: isEnabled ? _pickDuration : null,
-        child: AbsorbPointer(
-          child: InputDecorator(
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.getSurfaceColor(context),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 18,
-              ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.only(left: 12, right: 6),
-                child: Icon(
-                  CupertinoIcons.timer,
-                  size: 18,
-                  color: AppColors.getIconPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера, как на экране редактирования
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: GestureDetector(
+          onTap: isEnabled ? _pickDuration : null,
+          child: AbsorbPointer(
+            child: InputDecorator(
+              decoration: InputDecoration(
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 18,
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.only(left: 12, right: 6),
+                  child: Icon(
+                    CupertinoIcons.timer,
+                    size: 18,
+                    color: AppColors.getIconPrimaryColor(context),
+                  ),
+                ),
+                prefixIconConstraints: const BoxConstraints(
+                  minWidth: 18 + 14,
+                  minHeight: 18,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
                 ),
               ),
-              prefixIconConstraints: const BoxConstraints(
-                minWidth: 18 + 14,
-                minHeight: 18,
+              child: Text(
+                _duration != null ? _formatDuration(_duration) : '00:00:00',
+                style: _duration != null
+                    ? AppTextStyles.h14w4
+                    : AppTextStyles.h14w4Place,
               ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Text(
-              _duration != null ? _formatDuration(_duration) : '00:00:00',
-              style: _duration != null
-                  ? AppTextStyles.h14w4
-                  : AppTextStyles.h14w4Place,
             ),
           ),
         ),
@@ -1042,42 +1079,46 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    return TextField(
-      controller: _descriptionController,
-      focusNode: _descriptionFocusNode,
-      maxLines: 12,
-      minLines: 7,
-      textAlignVertical: TextAlignVertical.top,
-      style: AppTextStyles.h14w4.copyWith(
-        color: AppColors.getTextPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера, как в edit_activity_screen
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      decoration: InputDecoration(
-        hintText: 'Введите описание тренировки',
-        hintStyle: AppTextStyles.h14w4Place.copyWith(
-          color: AppColors.getTextPlaceholderColor(context),
+      child: TextField(
+        controller: _descriptionController,
+        focusNode: _descriptionFocusNode,
+        maxLines: 12,
+        minLines: 7,
+        textAlignVertical: TextAlignVertical.top,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
         ),
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.all(12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+        decoration: InputDecoration(
+          hintText: 'Введите описание тренировки',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.all(12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
           ),
         ),
       ),
@@ -1213,68 +1254,75 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
       'Только Вы',
     ];
 
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера, как в edit_activity_screen
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
+        ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: options[_selectedVisibility],
-          isExpanded: true,
-          onChanged: (String? newValue) {
-            if (newValue != null) {
-              final index = options.indexOf(newValue);
-              if (index != -1) {
-                setState(() {
-                  _selectedVisibility = index;
-                });
+      child: InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: options[_selectedVisibility],
+            isExpanded: true,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                final index = options.indexOf(newValue);
+                if (index != -1) {
+                  setState(() {
+                    _selectedVisibility = index;
+                  });
+                }
               }
-            }
-          },
-          dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
-          ),
-          items: options.map((option) {
-            return DropdownMenuItem<String>(
-              value: option,
-              child: Text(
-                option,
-                style: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
+            },
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            items: options.map((option) {
+              return DropdownMenuItem<String>(
+                value: option,
+                child: Text(
+                  option,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -1283,13 +1331,57 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   /// Кнопка сохранения
   Widget _buildSaveButton() {
     final formState = ref.watch(formStateProvider);
-    return PrimaryButton(
-      text: 'Сохранить',
-      onPressed: !formState.isSubmitting ? _saveActivity : () {},
-      width: 190,
-      isLoading: formState.isSubmitting,
-      enabled: !formState.isSubmitting,
+    final textColor = AppColors.getSurfaceColor(context);
+
+    // ────────────────────────────────────────────────────────────────
+    // 💾 КНОПКА СОХРАНЕНИЯ (единый стиль с экраном редактирования)
+    // ────────────────────────────────────────────────────────────────
+    final button = ElevatedButton(
+      onPressed: formState.isSubmitting ? null : _saveActivity,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.textPrimary,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: formState.isSubmitting
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Добавить',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              'Добавить',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
     );
+
+    if (formState.isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
   }
 
   /// Загружает список экипировки для выбранного типа тренировки
