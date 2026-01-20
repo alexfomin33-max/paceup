@@ -13,7 +13,6 @@ import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../../core/widgets/primary_button.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../providers/lenta_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
@@ -80,7 +79,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
-        appBar: const PaceAppBar(title: 'Новый пост'),
+        appBar: const PaceAppBar(
+          title: 'Новый пост',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: GestureDetector(
           // Скрываем клавиатуру при нажатии на пустую область
           onTap: () => FocusScope.of(context).unfocus(),
@@ -157,6 +162,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   // ────────────────────────────────────────────────────────────────
                   // 💾 КНОПКА ПУБЛИКАЦИИ
                   // ────────────────────────────────────────────────────────────────
+                  const SizedBox(height: 12),
                   Center(child: _buildPublishButton()),
                 ],
               ),
@@ -325,42 +331,45 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
-    return Builder(
-      builder: (context) => TextField(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: TextField(
         controller: _descriptionController,
         focusNode: _descriptionFocusNode,
-        maxLines: 24,
-        minLines: 14,
+        maxLines: 20,
+        minLines: 10,
         textAlignVertical: TextAlignVertical.top,
         style: AppTextStyles.h14w4.copyWith(
           color: AppColors.getTextPrimaryColor(context),
         ),
         decoration: InputDecoration(
-          hintText: 'Расскажите, о чём ваш пост...',
-          hintStyle: AppTextStyles.h14w4Place,
+          hintText: 'Расскажите, о чём ваш пост',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
           filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.all(12),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
           ),
         ),
       ),
@@ -375,35 +384,36 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       'Только Вы',
     ];
 
-    return Builder(
-      builder: (context) => InputDecorator(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: InputDecorator(
         decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
+          fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 4,
           ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            borderSide: BorderSide.none,
           ),
         ),
         child: DropdownButtonHideUnderline(
@@ -451,13 +461,59 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   /// Кнопка публикации
   Widget _buildPublishButton() {
     final formState = ref.watch(formStateProvider);
-    return PrimaryButton(
-      text: 'Опубликовать',
-      onPressed: !formState.isSubmitting ? _submitPost : () {},
-      width: 190,
-      isLoading: formState.isSubmitting,
-      enabled: _canPublish && !formState.isSubmitting,
+    final isSubmitting = formState.isSubmitting;
+    final isEnabled = _canPublish && !isSubmitting;
+    final textColor = AppColors.getSurfaceColor(context);
+
+    // ────────────────────────────────────────────────────────────────
+    // 💾 КНОПКА ПУБЛИКАЦИИ (единый стиль с экраном добавления)
+    // ────────────────────────────────────────────────────────────────
+    final button = ElevatedButton(
+      onPressed: isEnabled ? _submitPost : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.textPrimary,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: isSubmitting
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Опубликовать',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              'Опубликовать',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
     );
+
+    if (isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
   }
 
   /// Сохраняет пост на сервер
