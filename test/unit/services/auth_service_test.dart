@@ -109,7 +109,7 @@ void main() {
       test('не выбрасывает исключений', () async {
         // Act & Assert
         expect(
-          () => authService.saveTokens('access', 'refresh'),
+          () => authService.saveTokens('access', 'refresh', 1),
           returnsNormally,
         );
       });

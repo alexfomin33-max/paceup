@@ -5,6 +5,7 @@
 //  Синхронизация запускается при загрузке LentaScreen
 // ────────────────────────────────────────────────────────────────────────────
 
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -65,7 +66,8 @@ class HealthSyncService {
   
   /// Автоматически синхронизирует новые тренировки из Health Connect/Apple Health
   /// 
-  /// Проверяет тренировки с момента последней синхронизации и импортирует только новые
+  /// Ищет тренировки за последние 2 дня и импортирует те, которых ещё нет в базе.
+  /// Сервер сам проверит дубликаты и вернет ошибку, если тренировка уже существует.
   Future<SyncResult> syncNewWorkouts(WidgetRef ref) async {
     try {
       // Конфигурируем Health плагин
@@ -98,21 +100,20 @@ class HealthSyncService {
         );
       }
       
-      // Получаем время последней синхронизации
-      final lastSyncTime = await getLastSyncTime();
-      
-      // Получаем тренировки с момента последней синхронизации
+      // ────────────────────────────────────────────────────────────────
+      // 🔄 НОВАЯ ЛОГИКА: всегда ищем тренировки за последние 2 дня
+      // ────────────────────────────────────────────────────────────────
+      // Импортируем все найденные тренировки за последние 2 дня
+      // Сервер сам проверит дубликаты и вернет ошибку, если тренировка уже есть
       final now = DateTime.now();
-      final DateTime syncStartTime;
+      final syncStartTime = now.subtract(const Duration(days: 2));
       
-      if (lastSyncTime != null) {
-        // При последующих синхронизациях загружаем с момента последней синхронизации
-        syncStartTime = lastSyncTime;
-      } else {
-        // При первой синхронизации загружаем за последние 7 дней
-        // (чтобы найти последнюю тренировку)
-        syncStartTime = now.subtract(const Duration(days: 7));
-      }
+      developer.log(
+        '[HEALTH_SYNC] Поиск тренировок за последние 2 дня: '
+        'с ${syncStartTime.toIso8601String()} '
+        'по ${now.toIso8601String()}',
+        name: 'HealthSyncService',
+      );
       
       final workouts = await _health.getHealthDataFromTypes(
         types: types,
@@ -120,32 +121,51 @@ class HealthSyncService {
         endTime: now,
       );
       
+      developer.log(
+        '[HEALTH_SYNC] Получено тренировок от Health Connect: ${workouts.length}',
+        name: 'HealthSyncService',
+      );
+      
       if (workouts.isEmpty) {
         return const SyncResult(
           success: true,
           importedCount: 0,
-          message: 'Новых тренировок не найдено',
+          message: 'Тренировок за последние 2 дня не найдено',
         );
       }
       
-      // Фильтруем только новые тренировки (после последней синхронизации)
-      final List<dynamic> newWorkouts;
+      // Сортируем по дате начала по убыванию (новые первыми)
+      workouts.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
       
-      if (lastSyncTime != null) {
-        // При последующих синхронизациях фильтруем только новые тренировки
-        newWorkouts = workouts.where((w) {
-          return w.dateTo.isAfter(lastSyncTime) || w.dateFrom.isAfter(lastSyncTime);
-        }).toList();
+      // ────────────────────────────────────────────────────────────────
+      // 🔍 ЛОГИРОВАНИЕ: выводим информацию о всех найденных тренировках
+      // ────────────────────────────────────────────────────────────────
+      developer.log(
+        '[HEALTH_SYNC] Найдено тренировок за последние 2 дня: ${workouts.length}',
+        name: 'HealthSyncService',
+      );
+      
+      for (int i = 0; i < workouts.length; i++) {
+        final workout = workouts[i];
+        String workoutType = 'unknown';
+        if (workout.value is WorkoutHealthValue) {
+          final wv = workout.value as WorkoutHealthValue;
+          workoutType = wv.workoutActivityType.name;
+        }
         
-        // Сортируем по дате начала (старые первыми)
-        newWorkouts.sort((a, b) => a.dateFrom.compareTo(b.dateFrom));
-      } else {
-        // При первой синхронизации импортируем две последние тренировки
-        // Сортируем по дате начала по убыванию (новые первыми)
-        workouts.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
-        // Берем две последние тренировки (если таких ещё нет)
-        newWorkouts = workouts.take(2).toList();
+        developer.log(
+          '[HEALTH_SYNC] Тренировка ${i + 1}/${workouts.length}: '
+          'тип=$workoutType, '
+          'дата начала=${workout.dateFrom.toIso8601String()}, '
+          'дата окончания=${workout.dateTo.toIso8601String()}, '
+          'длительность=${workout.dateTo.difference(workout.dateFrom).inMinutes} мин',
+          name: 'HealthSyncService',
+        );
       }
+      
+      // Импортируем все найденные тренировки
+      // Сервер проверит дубликаты и вернет ошибку, если тренировка уже есть
+      final newWorkouts = workouts;
       
       if (newWorkouts.isEmpty) {
         return const SyncResult(
@@ -159,26 +179,62 @@ class HealthSyncService {
       int importedCount = 0;
       int failedCount = 0;
       
-      for (final workout in newWorkouts) {
+      developer.log(
+        '[HEALTH_SYNC] Начинаем импорт ${newWorkouts.length} тренировок',
+        name: 'HealthSyncService',
+      );
+      
+      for (int i = 0; i < newWorkouts.length; i++) {
+        final workout = newWorkouts[i];
+        String workoutType = 'unknown';
+        if (workout.value is WorkoutHealthValue) {
+          final wv = workout.value as WorkoutHealthValue;
+          workoutType = wv.workoutActivityType.name;
+        }
+        
+        developer.log(
+          '[HEALTH_SYNC] Импорт тренировки ${i + 1}/${newWorkouts.length}: '
+          'тип=$workoutType, '
+          'дата=${workout.dateFrom.toIso8601String()}',
+          name: 'HealthSyncService',
+        );
+        
         try {
           final result = await importWorkout(workout, _health, ref);
           
           if (result.success) {
             importedCount++;
+            developer.log(
+              '[HEALTH_SYNC] ✅ Тренировка ${i + 1} успешно импортирована',
+              name: 'HealthSyncService',
+            );
           } else {
             failedCount++;
+            developer.log(
+              '[HEALTH_SYNC] ❌ Ошибка импорта тренировки ${i + 1}: ${result.message}',
+              name: 'HealthSyncService',
+            );
           }
           
           // Небольшая задержка между импортами
           await Future.delayed(const Duration(milliseconds: 300));
         } catch (e) {
           failedCount++;
-          debugPrint('Ошибка импорта тренировки: $e');
+          developer.log(
+            '[HEALTH_SYNC] ❌ Исключение при импорте тренировки ${i + 1}: $e',
+            name: 'HealthSyncService',
+          );
         }
       }
       
-      // Сохраняем время последней синхронизации
-      if (importedCount > 0 || newWorkouts.isEmpty) {
+      developer.log(
+        '[HEALTH_SYNC] Импорт завершен: успешно=$importedCount, ошибок=$failedCount',
+        name: 'HealthSyncService',
+      );
+      
+      // Сохраняем время последней синхронизации только при успешном импорте
+      // Не сохраняем, если все тренировки уже были в базе (failedCount == newWorkouts.length)
+      if (importedCount > 0) {
         await setLastSyncTime(DateTime.now());
       }
       

@@ -515,7 +515,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     collapsedHeight: kToolbarHeight,
                     backgroundColor: AppColors.getSurfaceColor(
                       context,
-                    ).withOpacity(1 - headerOpacity),
+                    ).withValues(alpha: 1 - headerOpacity),
                     elevation: 0,
                     scrolledUnderElevation: 1,
                     forceElevated: headerOpacity < 1,
@@ -1161,7 +1161,7 @@ void _showInfoMessage(BuildContext context, String message) {
               borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),

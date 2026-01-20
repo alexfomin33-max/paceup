@@ -88,6 +88,7 @@ abstract class AppColors {
   static const Color shadowSoft = Color(0x14000000); // ~8%   (карточки)
   static const Color shadowMedium = Color(0x26000000); // ~15%  (всплывающие)
   static const Color shadowStrong = Color(0x40000000); // ~25%  (флоат-элементы)
+  static const Color twinshadow = Color(0xFFEAEAF5);
 
   // «Стекло» для блюра (фон и бордеры поверх blur)
   static const Color glassTint = Color(0x99FFFFFF); // 60% белый

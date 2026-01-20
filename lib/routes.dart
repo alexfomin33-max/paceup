@@ -101,7 +101,7 @@ Route<dynamic> onGenerateRoute(RouteSettings settings) {
       screen = (args is Map && args.containsKey('phone'))
           ? AddAccSmsScreen(
               phone: args['phone'] as String,
-              userId: (args is Map && args.containsKey('userId'))
+              userId: args.containsKey('userId')
                   ? args['userId'] as int?
                   : null,
             )
