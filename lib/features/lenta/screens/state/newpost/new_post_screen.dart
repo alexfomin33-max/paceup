@@ -268,7 +268,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                   aspectRatio: aspectRatio,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
-                  cropTitle: 'Обрезка фотографии',
+                  cropTitle: 'Обрезать',
                 );
                 if (processed == null || !mounted) return;
 
@@ -621,7 +621,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
-          title: 'Обрезка фотографии ${i + 1}',
+          title: 'Обрезать',
         );
 
         if (cropped == null)

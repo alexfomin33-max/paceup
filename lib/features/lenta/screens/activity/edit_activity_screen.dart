@@ -1416,7 +1416,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
-          title: 'Обрезка фотографии ${i + 1}',
+          title: 'Обрезать',
         );
 
         if (cropped == null) {

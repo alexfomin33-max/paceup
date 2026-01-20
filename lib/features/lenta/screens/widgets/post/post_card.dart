@@ -376,6 +376,22 @@ class _PostCardState extends ConsumerState<PostCard>
                         onTap: widget.onEdit ?? () {},
                       ),
                       MoreMenuItem(
+                        text: 'Пожаловаться',
+                        icon: CupertinoIcons.flag,
+                        iconColor: AppColors.warning,
+                        textStyle: const TextStyle(color: AppColors.warning),
+                        onTap: () {
+                          Navigator.of(context, rootNavigator: true).push(
+                            TransparentPageRoute(
+                              builder: (_) => ComplaintScreen(
+                                contentType: 'post',
+                                contentId: widget.post.id,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      MoreMenuItem(
                         text: _deleting ? 'Удаление…' : 'Удалить пост',
                         icon: CupertinoIcons.minus_circle,
                         iconColor: AppColors.error,
@@ -396,22 +412,6 @@ class _PostCardState extends ConsumerState<PostCard>
                                 // 2) Только теперь запускаем удаление
                                 await _handleDelete();
                               },
-                      ),
-                      MoreMenuItem(
-                        text: 'Пожаловаться',
-                        icon: CupertinoIcons.flag,
-                        iconColor: AppColors.warning,
-                        textStyle: const TextStyle(color: AppColors.warning),
-                        onTap: () {
-                          Navigator.of(context, rootNavigator: true).push(
-                            TransparentPageRoute(
-                              builder: (_) => ComplaintScreen(
-                                contentType: 'post',
-                                contentId: widget.post.id,
-                              ),
-                            ),
-                          );
-                        },
                       ),
                     ]);
                   } else {

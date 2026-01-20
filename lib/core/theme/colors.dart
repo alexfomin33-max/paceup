@@ -70,6 +70,7 @@ abstract class AppColors {
   static const Color twinphoto = Color(0xFFEDEEF5);
   static const Color chipBorder = Color(0xFFE3E6EA);
   static const Color chipText = textSecondary;
+  static const Color button = Color(0xFF25262B);
   // для «новое»/badge (синеватый)
   static const Color badgeBg = Color(0xFFEFF4FF);
   static const Color badgeText = Color(0xFF2B59C3);

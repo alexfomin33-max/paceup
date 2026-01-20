@@ -874,13 +874,12 @@ class ActivityBlock extends ConsumerWidget {
                           );
 
                           // Уменьшаем счетчик на 1 (но не меньше 0)
-                          final newCount = (latestActivity.comments - 1).clamp(0, double.infinity).toInt();
+                          final newCount = (latestActivity.comments - 1)
+                              .clamp(0, double.infinity)
+                              .toInt();
                           ref
                               .read(lentaProvider(currentUserId).notifier)
-                              .updateComments(
-                                activityItem.lentaId,
-                                newCount,
-                              );
+                              .updateComments(activityItem.lentaId, newCount);
                         },
                       );
                     },
@@ -889,9 +888,8 @@ class ActivityBlock extends ConsumerWidget {
                     onOpenTogether: () {
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (_) => TogetherScreen(
-                            activityId: updatedActivity.id,
-                          ),
+                          builder: (_) =>
+                              TogetherScreen(activityId: updatedActivity.id),
                         ),
                       );
                     },
@@ -979,7 +977,7 @@ Future<void> _handleAddPhotos({
         context: context,
         source: picked,
         aspectRatio: aspectRatio,
-        title: 'Обрезка фотографии ${i + 1}',
+        title: 'Обрезать',
       );
 
       if (cropped == null) {

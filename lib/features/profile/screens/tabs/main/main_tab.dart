@@ -282,6 +282,47 @@ class _MainTabState extends MainTabState
     );
   }
 
+  // ───────────────── Сортировка активности по дистанции ─────────────────
+  /// Сортирует список активности по убыванию дистанции.
+  /// Извлекает числовое значение из строки value (например, "12 км" → 12.0).
+  /// Карточки с большей дистанцией будут слева, с меньшей — справа.
+  List<ActItem> _sortActivityByDistance(List<ActItem> activity) {
+    // Создаем копию списка для сортировки
+    final sorted = List<ActItem>.from(activity);
+    
+    // Сортируем по убыванию дистанции
+    sorted.sort((a, b) {
+      final distanceA = _parseDistance(a.value);
+      final distanceB = _parseDistance(b.value);
+      // Сравниваем в обратном порядке для сортировки по убыванию
+      return distanceB.compareTo(distanceA);
+    });
+    
+    return sorted;
+  }
+
+  /// Парсит строку дистанции и возвращает числовое значение в километрах.
+  /// Обрабатывает форматы: "12 км", "5.5 км", "0", "12.3 км" и т.д.
+  /// Возвращает 0.0, если не удалось распарсить.
+  double _parseDistance(String value) {
+    if (value.isEmpty) return 0.0;
+    
+    // Удаляем все пробелы и приводим к нижнему регистру
+    final cleaned = value.replaceAll(' ', '').toLowerCase();
+    
+    // Пытаемся найти число (может быть с десятичной точкой или запятой)
+    final regex = RegExp(r'(\d+[.,]?\d*)');
+    final match = regex.firstMatch(cleaned);
+    
+    if (match != null) {
+      // Заменяем запятую на точку для парсинга
+      final numberStr = match.group(1)?.replaceAll(',', '.') ?? '0';
+      return double.tryParse(numberStr) ?? 0.0;
+    }
+    
+    return 0.0;
+  }
+
   // Метод для построения контента (вынесен для читаемости)
   List<Widget> _buildContentSlivers(MainTabData data) {
     // Определяем, является ли открытый профиль профилем текущего пользователя
@@ -298,13 +339,14 @@ class _MainTabState extends MainTabState
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
       // Преобразуем модели активности в простые элементы для карточек
-      // ───────────────── Временное скрытие первой карточки ─────────────────
-      // Комментарий: на время задачи исключаем первый элемент через skip(1),
-      // чтобы отображались только следующие три карточки.
+      // ───────────────── Сортировка по дистанции (убывание) ─────────────────
+      // Сортируем карточки слева направо по убыванию дистанции:
+      // слева карточка с наибольшим значением дистанции, затем меньше и меньше.
+      // ───────────────── Временное скрытие карточки "Ходьба" ─────────────────
       SliverToBoxAdapter(
         child: _ActivityScroller(
-          items: data.activity
-              .skip(1)
+          items: _sortActivityByDistance(data.activity)
+              .where((a) => a.asset != 'assets/walking.png') // Исключаем карточку "Ходьба"
               .map((a) => _ActItem(a.asset, a.value, a.label))
               .toList(growable: false),
         ),

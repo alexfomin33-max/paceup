@@ -534,14 +534,16 @@ class _ActivityDescriptionPageState
                 notification.metrics.axis == Axis.vertical) {
               // ──────────────────────────────────────────────────────────────
               // Плавно считаем прогресс схлопывания шапки
-              // Заголовок появляется только в конце скролла (после 70% прогресса)
+              // Заголовок появляется только в конце скролла (после 70%),
+              // фон (карта/картинка) начинает менять прозрачность
+              // также только в самом конце скролла, а не с нуля.
               // ──────────────────────────────────────────────────────────────
               final thresholdValue = threshold > 0 ? threshold : 1.0;
               final rawProgress = notification.metrics.pixels / thresholdValue;
               final clampedProgress = rawProgress.clamp(0.0, 1.0).toDouble();
 
-              // Заголовок начинает появляться только после 70% скролла
-              const titleStartProgress = 0.7;
+              // Заголовок начинает появляться только после 90% скролла
+              const titleStartProgress = 0.9;
               final titleProgress = clampedProgress < titleStartProgress
                   ? 0.0
                   : ((clampedProgress - titleStartProgress) /
@@ -550,7 +552,22 @@ class _ActivityDescriptionPageState
 
               final newOpacity = titleProgress;
               final newIsScrolled = clampedProgress >= 1;
-              final newHeaderOpacity = (1 - clampedProgress).clamp(0.0, 1.0);
+              // ──────────────────────────────────────────────────────────────
+              // Прозрачность фоновой картинки/карты:
+              // до 90% скролла фон полностью видимый (opacity = 1),
+              // затем в последней десятой части скролла плавно скрываем его.
+              // ──────────────────────────────────────────────────────────────
+              const headerFadeStartProgress = 0.9;
+              final headerFadeProgress =
+                  clampedProgress < headerFadeStartProgress
+                  ? 0.0
+                  : ((clampedProgress - headerFadeStartProgress) /
+                            (1.0 - headerFadeStartProgress))
+                        .clamp(0.0, 1.0);
+              final newHeaderOpacity = (1.0 - headerFadeProgress).clamp(
+                0.0,
+                1.0,
+              );
 
               if (newIsScrolled != _isScrolled ||
                   (newOpacity - _titleOpacity).abs() > 0.04 ||
@@ -947,15 +964,14 @@ class _ActivityDescriptionPageState
                                 );
 
                             // Уменьшаем счетчик на 1 (но не меньше 0)
-                            final newCount = (latestActivity.comments - 1).clamp(0, double.infinity).toInt();
+                            final newCount = (latestActivity.comments - 1)
+                                .clamp(0, double.infinity)
+                                .toInt();
                             ref
                                 .read(
                                   lentaProvider(widget.currentUserId).notifier,
                                 )
-                                .updateComments(
-                                  activityItem.lentaId,
-                                  newCount,
-                                );
+                                .updateComments(activityItem.lentaId, newCount);
                           },
                         );
                       },
@@ -1194,7 +1210,7 @@ class _ActivityDescriptionPageState
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
-          title: 'Обрезка фотографии ${i + 1}',
+          title: 'Обрезать',
         );
 
         if (cropped == null) {
@@ -1625,8 +1641,8 @@ class _TogetherInviteBottomBar extends ConsumerWidget {
                           backgroundColor: AppColors.brandPrimary,
                           foregroundColor:
                               Theme.of(context).brightness == Brightness.dark
-                                  ? AppColors.surface
-                                  : AppColors.getSurfaceColor(context),
+                              ? AppColors.surface
+                              : AppColors.getSurfaceColor(context),
                           elevation: 0,
                           shape: const StadiumBorder(),
                         ),
@@ -1667,8 +1683,9 @@ class _TogetherInviteBottomBar extends ConsumerWidget {
                           side: BorderSide(
                             color: AppColors.getBorderColor(context),
                           ),
-                          foregroundColor:
-                              AppColors.getTextPrimaryColor(context),
+                          foregroundColor: AppColors.getTextPrimaryColor(
+                            context,
+                          ),
                           shape: const StadiumBorder(),
                         ),
                         child: const Text(
@@ -2841,12 +2858,13 @@ class _CircleAppIcon extends StatelessWidget {
       (1 - fadeOpacity.clamp(0.0, 1.0)),
     );
 
-    // Цвет фона: темный с прозрачностью когда не скроллено, прозрачный когда скроллено
+    // Цвет фона: делаем кружок более прозрачным, чтобы меньше перекрывать фон
+    // при не прокрученной шапке; при скролле фон кружка полностью исчезает.
     final backgroundColor = isScrolled
         ? Colors.transparent
         : AppColors.getTextPrimaryColor(
             context,
-          ).withValues(alpha: 0.4 * fadeOpacity.clamp(0.0, 1.0));
+          ).withValues(alpha: 0.32 * fadeOpacity.clamp(0.0, 1.0));
 
     return SizedBox(
       width: 38.0,

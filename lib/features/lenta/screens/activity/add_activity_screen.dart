@@ -82,7 +82,6 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   int _selectedVisibility = 0;
 
   // Экипировка
-  bool _showEquipment = false;
   List<al.Equipment> _availableEquipment = [];
   al.Equipment? _selectedEquipment;
   bool _isLoadingEquipment = false;
@@ -158,7 +157,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   // 📁 ФАЙЛ GPX ТРЕНИРОВКИ
                   // ────────────────────────────────────────────────────────────────
                   const Text(
-                    'Файл тренировки (GPX)',
+                    'Файл тренировки (.gpx)',
                     style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
@@ -167,102 +166,110 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 🏃 2. ВИД ТРЕНИРОВКИ (выпадающий список)
+                  // 🏃 2–3. ПОЛЯ, КОТОРЫЕ СКРЫВАЕМ ПРИ НАЛИЧИИ GPX
                   // ────────────────────────────────────────────────────────────────
-                  const Text(
-                    'Вид тренировки',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildActivityTypeSelector(),
-
-                  const SizedBox(height: 24),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 📅 3. ДАТА И ВРЕМЯ ТРЕНИРОВКИ
-                  // ────────────────────────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Дата тренировки',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDateField(),
-                          ],
-                        ),
+                  if (_gpxFile == null) ...[
+                    // ────────────────────────────────────────────────────────────
+                    // 🏃 2. ВИД ТРЕНИРОВКИ (выпадающий список)
+                    // ────────────────────────────────────────────────────────────
+                    const Text(
+                      'Вид тренировки',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Время начала',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildTimeField(),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 8),
+                    _buildActivityTypeSelector(),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                  // ────────────────────────────────────────────────────────────────
-                  // 📏 ДИСТАНЦИЯ И ДЛИТЕЛЬНОСТЬ ТРЕНИРОВКИ
-                  // ────────────────────────────────────────────────────────────────
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Дистанция (км)',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
+                    // ────────────────────────────────────────────────────────────
+                    // 📅 3. ДАТА И ВРЕМЯ ТРЕНИРОВКИ
+                    // ────────────────────────────────────────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Дата тренировки',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDistanceField(),
-                          ],
+                              const SizedBox(height: 8),
+                              _buildDateField(),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Длительность',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Время начала',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            _buildDurationField(),
-                          ],
+                              const SizedBox(height: 8),
+                              _buildTimeField(),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 24),
+
+                    // ────────────────────────────────────────────────────────────
+                    // 📏 ДИСТАНЦИЯ И ДЛИТЕЛЬНОСТЬ ТРЕНИРОВКИ
+                    // ────────────────────────────────────────────────────────────
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Дистанция (км)',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildDistanceField(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Длительность',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildDurationField(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+                  ],
 
                   // ────────────────────────────────────────────────────────────────
                   // 📝 4. ОПИСАНИЕ ТРЕНИРОВКИ
@@ -277,60 +284,23 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👟 5. ДОБАВИТЬ ЭКИПИРОВКУ (чекбокс + EquipmentChip)
+                  // 👟 5. ДОБАВИТЬ ЭКИПИРОВКУ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
                   // Показываем только для "Бег" и "Велосипед"
                   if (_shouldShowEquipment()) ...[
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: Transform.scale(
-                            scale: 0.85, // Уменьшаем размер на 15%
-                            alignment: Alignment.centerLeft,
-                            child: Checkbox(
-                              value: _showEquipment,
-                              materialTapTargetSize:
-                                  MaterialTapTargetSize.shrinkWrap,
-                              visualDensity: VisualDensity.compact,
-                              activeColor:
-                                  AppColors.brandPrimary, // Цвет при выборе
-                              checkColor: AppColors.getSurfaceColor(
-                                context,
-                              ), // Цвет галочки
-                              side: BorderSide(
-                                color: AppColors.getIconSecondaryColor(
-                                  context,
-                                ), // Более светлый цвет границы
-                                width: 1.5,
-                              ),
-                              onChanged: (value) {
-                                setState(() {
-                                  _showEquipment = value ?? false;
-                                  if (_showEquipment &&
-                                      _availableEquipment.isEmpty) {
-                                    _loadEquipment();
-                                  }
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Добавить экипировку',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      _selectedActivityType == 'Велосипед'
+                          ? 'Добавить велосипед'
+                          : _selectedActivityType == 'Бег'
+                          ? 'Добавить кроссовки'
+                          : 'Добавить экипировку',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                    if (_showEquipment) ...[
-                      const SizedBox(height: 8),
-                      _buildEquipmentSection(),
-                    ],
+                    const SizedBox(height: 8),
+                    _buildEquipmentSection(),
                   ],
 
                   SizedBox(height: _shouldShowEquipment() ? 24 : 0),
@@ -625,21 +595,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                     _gpxFile = null;
                   });
                 },
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
-                    ),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
-                  ),
+                child: Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 22,
+                  color: AppColors.getTextPlaceholderColor(context),
                 ),
               ),
             ),
@@ -717,7 +676,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
           ),
           child: const Text(
-            'Прикрепить файл GPX',
+            'Прикрепить файл .gpx',
             style: AppTextStyles.h14w4Place,
           ),
         ),
@@ -778,10 +737,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                           _selectedActivityType = newValue;
                           // При смене типа тренировки сбрасываем выбранную экипировку
                           _selectedEquipment = null;
-                          // Если выбран "Плавание" — скрываем экипировку
-                          if (!_shouldShowEquipment()) {
-                            _showEquipment = false;
-                          } else if (_showEquipment) {
+                          // Если выбран "Бег" или "Велосипед" — загружаем экипировку
+                          if (_shouldShowEquipment()) {
                             _loadEquipment();
                           }
                         });
@@ -1188,59 +1145,138 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     }
 
     // Если экипировка не выбрана, показываем выпадающий список для выбора
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          // Мягкая тень вместо бордера
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
+        ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<al.Equipment>(
-          value: _selectedEquipment,
-          isExpanded: true,
-          hint: const Text('Выберите экипировку', style: AppTextStyles.h14w4),
-          onChanged: (al.Equipment? newValue) {
-            setState(() {
-              _selectedEquipment = newValue;
-            });
-          },
-          dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.getIconSecondaryColor(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 4,
           ),
-          items: _availableEquipment.map((equipment) {
-            final displayName = equipment.brand.isNotEmpty
-                ? '${equipment.brand} ${equipment.name}'
-                : equipment.name;
-            return DropdownMenuItem<al.Equipment>(
-              value: equipment,
-              child: Text(displayName, style: AppTextStyles.h14w4),
-            );
-          }).toList(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<al.Equipment>(
+            value: _selectedEquipment,
+            isExpanded: true,
+            hint: Text(
+              _selectedActivityType == 'Велосипед'
+                  ? 'Выберите велосипед'
+                  : _selectedActivityType == 'Бег'
+                  ? 'Выберите кроссовки'
+                  : 'Выберите экипировку',
+              style: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
+            ),
+            onChanged: (al.Equipment? newValue) {
+              setState(() {
+                _selectedEquipment = newValue;
+              });
+            },
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            items: _availableEquipment.map((equipment) {
+              final displayName = equipment.brand.isNotEmpty
+                  ? '${equipment.brand} ${equipment.name}'
+                  : equipment.name;
+              // Определяем тип экипировки для дефолтного изображения
+              final bool isBike =
+                  _activityTypeToEquipmentType(
+                    _activityTypeMap[_selectedActivityType] ?? 'run',
+                  ) ==
+                  'bike';
+              final String defaultImageAsset = isBike
+                  ? 'assets/add_bike.png'
+                  : 'assets/add_boots.png';
+              // Проверяем, является ли img валидным URL
+              final bool hasValidImageUrl =
+                  equipment.img.isNotEmpty &&
+                  (equipment.img.startsWith('http://') ||
+                      equipment.img.startsWith('https://'));
+
+              return DropdownMenuItem<al.Equipment>(
+                value: equipment,
+                child: Row(
+                  children: [
+                    // Изображение экипировки
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      child: SizedBox(
+                        height: 40,
+                        child: hasValidImageUrl
+                            ? CachedNetworkImage(
+                                imageUrl: equipment.img,
+                                fit: BoxFit.fitHeight,
+                                placeholder: (context, url) => Container(
+                                  width: 40,
+                                  height: 40,
+                                  color: AppColors.getBackgroundColor(context),
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 8,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                      defaultImageAsset,
+                                      height: 40,
+                                      fit: BoxFit.fitHeight,
+                                    ),
+                              )
+                            : Image.asset(
+                                defaultImageAsset,
+                                height: 40,
+                                fit: BoxFit.fitHeight,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Название экипировки
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: AppTextStyles.h14w4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -1339,7 +1375,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final button = ElevatedButton(
       onPressed: formState.isSubmitting ? null : _saveActivity,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.button,
         foregroundColor: textColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -1660,7 +1696,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     if (_gpxFile == null && _selectedActivityType == null) {
       ref
           .read(formStateProvider.notifier)
-          .setError('Выберите вид тренировки или загрузите GPX файл');
+          .setError('Выберите вид тренировки или загрузите .gpx файл');
       return;
     }
 
@@ -1779,7 +1815,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
         // Получаем equip_user_id из выбранной экипировки
         int equipUserId = 0;
-        if (_showEquipment && _selectedEquipment != null) {
+        if (_selectedEquipment != null) {
           equipUserId = _selectedEquipment!.equipUserId ?? 0;
         }
 
@@ -2007,7 +2043,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
-          title: 'Обрезка фотографии ${i + 1}',
+          title: 'Обрезать',
         );
 
         if (cropped == null) {

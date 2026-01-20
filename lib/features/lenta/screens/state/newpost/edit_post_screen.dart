@@ -377,7 +377,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                   aspectRatio: aspectRatio,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
-                  cropTitle: 'Обрезка фотографии',
+                  cropTitle: 'Обрезать',
                 );
                 if (processed == null || !mounted) return;
 
@@ -484,7 +484,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                   aspectRatio: aspectRatio,
                   maxSide: ImageCompressionPreset.post.maxSide,
                   jpegQuality: ImageCompressionPreset.post.quality,
-                  cropTitle: 'Обрезка фотографии',
+                  cropTitle: 'Обрезать',
                 );
                 if (processed == null || !mounted) return;
 
@@ -858,7 +858,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
           context: context,
           source: picked,
           aspectRatio: aspectRatio,
-          title: 'Обрезка фотографии ${i + 1}',
+          title: 'Обрезать',
         );
 
         if (cropped == null)
