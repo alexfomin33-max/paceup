@@ -246,7 +246,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                 // 💾 ЗАФИКСИРОВАННАЯ КНОПКА СОХРАНЕНИЯ ВНИЗУ ЭКРАНА
                 // ────────────────────────────────────────────────────────────────
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   color: AppColors.twinBg,
                   child: _buildSaveButton(),
                 ),

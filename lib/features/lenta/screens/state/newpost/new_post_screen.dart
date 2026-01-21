@@ -79,6 +79,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
+        resizeToAvoidBottomInset: false,
         appBar: const PaceAppBar(
           title: 'Новый пост',
           backgroundColor: AppColors.twinBg,
@@ -91,81 +92,96 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ────────────────────────────────────────────────────────────────
-                  // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Фотографии поста',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
+            child: Column(
+              children: [
+                // ────────────────────────────────────────────────────────────────
+                // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
+                // ────────────────────────────────────────────────────────────────
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // ────────────────────────────────────────────────────────────────
+                          // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Фотографии поста',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          _buildPhotoCarousel(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 📝 2. ОПИСАНИЕ ПОСТА
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Описание поста',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildDescriptionInput(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Кто видит пост',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildVisibilitySelector(),
+
+                          const SizedBox(height: 20),
+
+                          // Показываем ошибки, если есть
+                          Builder(
+                            builder: (context) {
+                              final formState = ref.watch(formStateProvider);
+                              if (formState.hasErrors) {
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: FormErrorDisplay(formState: formState),
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  _buildPhotoCarousel(),
+                ),
 
-                  const SizedBox(height: 24),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 📝 2. ОПИСАНИЕ ПОСТА
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Описание поста',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildDescriptionInput(),
-
-                  const SizedBox(height: 24),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 👁️ 3. КТО ВИДИТ ПОСТ (выпадающий список)
-                  // ────────────────────────────────────────────────────────────────
-                  Text(
-                    'Кто видит пост',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  _buildVisibilitySelector(),
-
-                  const SizedBox(height: 32),
-
-                  // Показываем ошибки, если есть
-                  Builder(
-                    builder: (context) {
-                      final formState = ref.watch(formStateProvider);
-                      if (formState.hasErrors) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: FormErrorDisplay(formState: formState),
-                        );
-                      }
-                      return const SizedBox.shrink();
-                    },
-                  ),
-
-                  // ────────────────────────────────────────────────────────────────
-                  // 💾 КНОПКА ПУБЛИКАЦИИ
-                  // ────────────────────────────────────────────────────────────────
-                  const SizedBox(height: 12),
-                  Center(child: _buildPublishButton()),
-                ],
-              ),
+                // ────────────────────────────────────────────────────────────────
+                // 💾 ЗАФИКСИРОВАННАЯ КНОПКА ПУБЛИКАЦИИ ВНИЗУ ЭКРАНА
+                // ────────────────────────────────────────────────────────────────
+                Container(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  color: AppColors.twinBg,
+                  child: _buildPublishButton(),
+                ),
+              ],
             ),
           ),
         ),
@@ -471,7 +487,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     final button = ElevatedButton(
       onPressed: isEnabled ? _submitPost : null,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.button,
         foregroundColor: textColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 30),

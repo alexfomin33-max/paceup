@@ -33,7 +33,7 @@ abstract class AppColors {
   // основная поверхность (карточки)
   static const Color surface = Color(0xFFFFFFFF);
   // слегка приглушённая поверхность
-  static const Color surfaceMuted = Color(0xFFFAFAFC);
+  static const Color surfaceMuted = Color(0xFFFAFAFC); 
   static const Color disabled = Color(0xFFF7F7FA);
 
   // ┌───────────────────────────────────────────────────────────────────────┐
@@ -70,6 +70,7 @@ abstract class AppColors {
   static const Color twinphoto = Color(0xFFEDEEF5);
   static const Color chipBorder = Color(0xFFE3E6EA);
   static const Color chipText = textSecondary;
+  static const Color yanchip = Color(0xFFF6F7F9);
   static const Color button = Color(0xFF25262B);
   // для «новое»/badge (синеватый)
   static const Color badgeBg = Color(0xFFEFF4FF);

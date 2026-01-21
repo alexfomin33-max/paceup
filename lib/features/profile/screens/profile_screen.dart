@@ -905,7 +905,7 @@ class _ProfileInfoCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: _SearchPill(
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => SearchPrefsPage(),
                               ),
@@ -1056,9 +1056,11 @@ class _SearchPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1096,33 +1098,38 @@ class _CountPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: AppColors.getTextSecondaryColor(context),
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12, 
+                  color: AppColors.getTextSecondaryColor(context),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$value',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: AppColors.getTextPrimaryColor(context),
+              const SizedBox(height: 4),
+              Text(
+                '$value',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1295,7 +1302,7 @@ Future<void> _showOwnProfileMenu({
       onTap: () {
         MoreMenuHub.hide();
         if (!context.mounted) return;
-        Navigator.of(context).push(
+        Navigator.of(context, rootNavigator: true).push(
           CupertinoPageRoute(
             builder: (_) => const SearchPrefsPage(startIndex: 0),
           ),

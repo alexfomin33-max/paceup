@@ -28,6 +28,9 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
   final List<Widget>? actions; // Правые иконки
 
   final bool showBottomDivider; // Разделитель снизу
+  /// Тень снизу (как у карточек). Если задана, разделитель не показывается,
+  /// elevation ставится 0.
+  final List<BoxShadow>? bottomShadow;
   final Color? backgroundColor; // Фон шапки
   final Color surfaceTintColor; // M3-тональный тинт
   final double elevation; // Тень в статике
@@ -45,6 +48,7 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.leadingWidth = 56,
     this.actions,
     this.showBottomDivider = true,
+    this.bottomShadow,
     this.backgroundColor,
     this.surfaceTintColor = Colors.transparent,
     this.elevation = 1,
@@ -70,8 +74,8 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
             : AppColors.shadowSoft);
     
     return AppBar(
-      elevation: elevation,
-      scrolledUnderElevation: scrolledUnderElevation,
+      elevation: bottomShadow != null ? 0 : elevation,
+      scrolledUnderElevation: bottomShadow != null ? 0 : scrolledUnderElevation,
       shadowColor: shadowColorValue,
       backgroundColor: bgColor,
       surfaceTintColor: surfaceTintColor,
@@ -104,17 +108,28 @@ class PaceAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       actions: actions,
 
-      // Тонкая линия снизу, если нужно
-      bottom: showBottomDivider
+      // Тень снизу или разделитель
+      bottom: bottomShadow != null
           ? PreferredSize(
-              preferredSize: const Size.fromHeight(0.5),
-              child: Divider(
-                height: 0.5,
-                thickness: 0.5,
-                color: borderColor,
+              preferredSize: const Size.fromHeight(1),
+              child: Container(
+                height: 1,
+                decoration: BoxDecoration(
+                  color: bgColor,
+                  boxShadow: bottomShadow,
+                ),
               ),
             )
-          : null,
+          : (showBottomDivider
+              ? PreferredSize(
+                  preferredSize: const Size.fromHeight(0.5),
+                  child: Divider(
+                    height: 0.5,
+                    thickness: 0.5,
+                    color: borderColor,
+                  ),
+                )
+              : null),
     );
   }
 }

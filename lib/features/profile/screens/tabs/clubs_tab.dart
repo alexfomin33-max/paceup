@@ -186,7 +186,7 @@ class _ClubsTabState extends ConsumerState<ClubsTab>
                   leading: const Icon(CupertinoIcons.search, size: 18),
                   width: MediaQuery.of(context).size.width / 2,
                   onPressed: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context, rootNavigator: true).push(
                       CupertinoPageRoute(
                         builder: (_) => const SearchPrefsPage(
                           startIndex: 1,

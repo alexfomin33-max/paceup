@@ -55,6 +55,12 @@ class SegmentedPill extends StatelessWidget {
   /// Тактильная отдача при переключении.
   final bool haptics;
 
+  /// Показывать рамку трека (по умолчанию true).
+  final bool showBorder;
+
+  /// Тень трека (если null — без тени).
+  final List<BoxShadow>? boxShadow;
+
   const SegmentedPill({
     super.key,
     required this.left,
@@ -71,6 +77,8 @@ class SegmentedPill extends StatelessWidget {
     this.activeTextColor,
     this.inactiveTextColor,
     this.haptics = false,
+    this.showBorder = true,
+    this.boxShadow,
   }) : assert(value == 0 || value == 1, 'value должен быть 0 или 1');
 
   @override
@@ -94,12 +102,13 @@ class SegmentedPill extends StatelessWidget {
       height: height,
       child: Stack(
         children: [
-          // ── Фон и рамка «пилюли»
+          // ── Фон, опционально рамка и тень «пилюли»
           Container(
             decoration: BoxDecoration(
               color: track,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(color: border, width: 1),
+              border: showBorder ? Border.all(color: border, width: 1) : null,
+              boxShadow: boxShadow,
             ),
           ),
 

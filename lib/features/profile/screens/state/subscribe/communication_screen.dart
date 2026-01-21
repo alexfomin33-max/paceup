@@ -64,7 +64,7 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
   ///
   /// ⚡ UX: открывает страницу поиска друзей/клубов при нажатии на иконку
   void _navigateToSearch() {
-    Navigator.of(context).push(
+    Navigator.of(context, rootNavigator: true).push(
       TransparentPageRoute(
         builder: (_) => const SearchPrefsPage(startIndex: 0),
       ),

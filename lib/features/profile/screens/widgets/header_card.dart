@@ -251,7 +251,7 @@ class HeaderCard extends ConsumerWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 4),
                           child: _SearchPill(
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => SearchPrefsPage(),
                               ),
@@ -307,13 +307,16 @@ class _SearchPill extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            'Поиск',
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Поиск',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
@@ -330,6 +333,7 @@ class _SearchPill extends StatelessWidget {
             ),
           ],
         ),
+      ),
     );
   }
 }
@@ -343,34 +347,38 @@ class _FollowStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Делаем удобную область тапа и не меняем внешний вид текста
+    // Делаем удобную область тапа на весь блок, не только на текст
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Center(
-        child: RichText(
-          text: TextSpan(
-            style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
-            children: [
-              TextSpan(
-                text: '$label: ',
-                style: TextStyle(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.textSecondary,
+      child: SizedBox(
+        width: double.infinity,
+        height: double.infinity,
+        child: Center(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              const TextSpan(
-                text: '\u200B',
-              ), // микропробел для ровного переноса
-              TextSpan(
-                text: value,
-                style: TextStyle(
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.getTextPrimaryColor(context),
+                const TextSpan(
+                  text: '\u200B',
+                ), // микропробел для ровного переноса
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

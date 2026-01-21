@@ -9,9 +9,16 @@ import '../../../../../../features/map/screens/clubs/club_detail_screen.dart';
 
 /// Контент вкладки «Клубы»
 /// Отображает клубы в сетке карточек 2xN (как во вкладке "Клубы" профиля).
+/// [customHeaderSlivers] — слайверы (пилюля, поле поиска) вставляются в начало
+/// скролла, когда экран поиска скроллит шапку вместе с контентом.
 class SearchClubsContent extends ConsumerStatefulWidget {
   final String query;
-  const SearchClubsContent({super.key, required this.query});
+  final List<Widget>? customHeaderSlivers;
+  const SearchClubsContent({
+    super.key,
+    required this.query,
+    this.customHeaderSlivers,
+  });
 
   @override
   ConsumerState<SearchClubsContent> createState() => _SearchClubsContentState();
@@ -56,7 +63,11 @@ class _SearchClubsContentState extends ConsumerState<SearchClubsContent> {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 12)),
+          if (widget.customHeaderSlivers != null) ...widget.customHeaderSlivers!,
+          if (widget.customHeaderSlivers != null)
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (widget.customHeaderSlivers == null)
+            const SliverToBoxAdapter(child: SizedBox(height: 12)),
           clubsAsync.when(
             data: (clubs) {
               if (clubs.isEmpty) {
@@ -212,16 +223,12 @@ class _ClubCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+        boxShadow: const [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
         ],
       ),
@@ -230,39 +237,26 @@ class _ClubCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Логотип клуба (круглый)
-          Container(
+          // Логотип клуба (круглый, без рамки)
+          SizedBox(
             height: 100,
             width: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.getBorderColor(context),
-                width: 0.5,
-              ),
-            ),
             child: ClipOval(child: _ClubLogoImage(logoUrl: club.logoUrl)),
           ),
           const SizedBox(height: 8),
 
-          // Название клуба с горизонтальным скроллом
-          // Центрируем короткие названия, длинные можно прокрутить
-          Align(
-            alignment: Alignment.center,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Text(
-                club.name,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
+          // Название клуба в одну строку с обрезкой
+          Text(
+            club.name,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              height: 1.2,
+              color: AppColors.getTextPrimaryColor(context),
             ),
           ),
           const SizedBox(height: 6),

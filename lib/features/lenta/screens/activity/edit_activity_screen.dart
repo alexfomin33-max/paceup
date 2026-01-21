@@ -1228,7 +1228,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     final button = ElevatedButton(
       onPressed: !isSubmitting ? _saveChanges : () {},
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.textPrimary,
+        backgroundColor: AppColors.button,
         foregroundColor: textColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 30),

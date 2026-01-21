@@ -45,7 +45,7 @@
     <application
         android:label="PaceUp"
         android:name="${applicationName}"
-        android:icon="@mipmap/paceup">
+        android:icon="@mipmap/icon_white">
 
         <!-- ────────────────────────────────────────────────────────────────
              ГЛАВНАЯ АКТИВИТИ ПРИЛОЖЕНИЯ

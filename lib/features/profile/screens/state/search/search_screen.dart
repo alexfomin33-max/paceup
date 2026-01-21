@@ -9,9 +9,8 @@ import 'tabs/clubs_content.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///                          Поиск: Друзья / Клубы
-///  • Свайп между вкладками: PageView + PageController
-///  • Пилюля со скользящим "thumb": AnimatedAlign
-///  • Двусторонняя синхронизация: тап → листание, свайп → активное состояние
+///  • Переключатель вкладок без анимации и свайпа
+///  • При смене вкладки отображается только выбранный контент (загрузка по факту)
 /// ─────────────────────────────────────────────────────────────────────────────
 class SearchPrefsPage extends StatefulWidget {
   /// 0 = Друзья (по умолчанию), 1 = Клубы
@@ -30,128 +29,123 @@ class _SearchPrefsPageState extends State<SearchPrefsPage> {
   final _controller = TextEditingController();
   final _focus = FocusNode();
 
-  // Пейджер для свайпа вкладок
-  late final PageController _page;
-
-  // Счетчик переключений вкладок для принудительного пересоздания виджетов
-  // Это гарантирует обновление данных при каждом переключении вкладок
-  int _tabSwitchCounter = 0;
+  // Поле поиска скрыто по умолчанию, показывается по тапу на иконку в AppBar
+  bool _searchFieldVisible = false;
 
   @override
   void initState() {
     super.initState();
     _index = widget.startIndex;
-    _page = PageController(initialPage: _index);
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _focus.dispose();
-    _page.dispose();
     super.dispose();
+  }
+
+  /// По тапу на иконку поиска в AppBar: показать/скрыть поле (без автофокуса)
+  void _onSearchIconTap() {
+    setState(() {
+      _searchFieldVisible = !_searchFieldVisible;
+      if (!_searchFieldVisible) {
+        _controller.clear();
+        _focus.unfocus();
+      }
+    });
+  }
+
+  /// Слайверы-шапка: пилюля и поле поиска, скроллятся вместе с контентом
+  List<Widget> _buildHeaderSlivers({required bool isFriends}) {
+    return [
+      SliverToBoxAdapter(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Center(
+            child: SegmentedPill(
+              left: 'Друзья',
+              right: 'Клубы',
+              value: _index,
+              duration: Duration.zero,
+              haptics: true,
+              showBorder: false,
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.twinshadow,
+                  blurRadius: 20,
+                  offset: Offset(0, 1),
+                ),
+              ],
+              onChanged: (v) {
+                setState(() {
+                  _index = v;
+                  _controller.clear();
+                  _focus.unfocus();
+                });
+              },
+            ),
+          ),
+        ),
+      ),
+      if (_searchFieldVisible) const SliverToBoxAdapter(child: SizedBox(height: 16)),
+      if (_searchFieldVisible)
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: _SearchField(
+              controller: _controller,
+              focusNode: _focus,
+              hintText: isFriends ? 'Поиск друзей' : 'Поиск клуба',
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+        ),
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isFriends = _index == 0;
-
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
-      // ── Глобальная шапка
-      appBar: const PaceAppBar(title: 'Поиск'),
+      // ── Глобальная шапка, справа — иконка поиска (показать/скрыть поле)
+      appBar: PaceAppBar(
+        title: 'Поиск',
+        backgroundColor: AppColors.twinBg,
+        showBottomDivider: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        actions: [
+          IconButton(
+            splashRadius: 22,
+            icon: Icon(
+              CupertinoIcons.search,
+              size: 22,
+              color: _searchFieldVisible
+                  ? AppColors.brandPrimary
+                  : AppColors.getIconPrimaryColor(context),
+            ),
+            onPressed: _onSearchIconTap,
+          ),
+        ],
+      ),
 
       // ───────────────────────────────────────────────────────────────────
-      // Тело: пилюля, поле поиска, затем контент как PageView (свайп!)
+      // Тело: один скролл — пилюля, поле поиска и контент скроллятся вместе
       // ───────────────────────────────────────────────────────────────────
       body: GestureDetector(
-        // 🔹 Скрываем клавиатуру при нажатии на пустую область экрана
         onTap: () => FocusScope.of(context).unfocus(),
         behavior: HitTestBehavior.translucent,
-        child: Column(
-          children: [
-            const SizedBox(height: 14),
-
-            // Переключатель "Друзья / Клубы" с анимированным thumb
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SegmentedPill(
-                  left: 'Друзья',
-                  right: 'Клубы',
-                  value: _index,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOutCubic, // тот же, что и для animateToPage
-                  haptics: true, // лёгкая отдача
-                  onChanged: (v) {
-                    setState(() {
-                      _index = v;
-                      _controller.clear();
-                      _focus.unfocus();
-                      // Увеличиваем счетчик для принудительного пересоздания виджетов
-                      _tabSwitchCounter++;
-                    });
-                    _page.animateToPage(
-                      v,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOutCubic,
-                    );
-                  },
-                ),
+        child: _index == 0
+            ? SearchFriendsContent(
+                query: _controller.text.trim(),
+                customHeaderSlivers: _buildHeaderSlivers(isFriends: true),
+              )
+            : SearchClubsContent(
+                query: _controller.text.trim(),
+                customHeaderSlivers: _buildHeaderSlivers(isFriends: false),
               ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Поисковое поле
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: _SearchField(
-                controller: _controller,
-                focusNode: _focus,
-                hintText: isFriends ? 'Поиск друзей' : 'Поиск клуба',
-                onChanged: (_) => setState(() {}),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            // Контент вкладок с горизонтальным свайпом
-            Expanded(
-              child: PageView(
-                controller: _page,
-                physics: const BouncingScrollPhysics(),
-                allowImplicitScrolling: true, // советую включить и здесь
-                onPageChanged: (i) {
-                  if (_index == i) return; // гард от лишнего перерендера
-                  setState(() {
-                    _index = i;
-                    _controller.clear(); // очищаем строку поиска
-                    _focus.unfocus(); // убираем клавиатуру/фокус
-                    // Увеличиваем счетчик для принудительного пересоздания виджетов
-                    _tabSwitchCounter++;
-                  });
-                },
-                children: [
-                  // ────────────────────────────────────────────────────────────────
-                  // Используем ValueKey с индексом вкладки и счетчиком переключений
-                  // для принудительного пересоздания виджетов при каждом переключении.
-                  // Это гарантирует вызов initState и обновление провайдеров.
-                  // ────────────────────────────────────────────────────────────────
-                  SearchFriendsContent(
-                    key: ValueKey('friends_${_index}_$_tabSwitchCounter'),
-                    query: _controller.text.trim(),
-                  ),
-                  SearchClubsContent(
-                    key: ValueKey('clubs_${_index}_$_tabSwitchCounter'),
-                    query: _controller.text.trim(),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -176,51 +170,55 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      focusNode: focusNode,
-      onChanged: onChanged,
-      cursorColor: AppColors.getTextSecondaryColor(context),
-      textInputAction: TextInputAction.search,
-      style: AppTextStyles.h14w4.copyWith(
-        color: AppColors.getTextPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          CupertinoIcons.search,
-          size: 18,
-          color: AppColors.getIconSecondaryColor(context),
+      child: TextField(
+        controller: controller,
+        focusNode: focusNode,
+        onChanged: onChanged,
+        cursorColor: AppColors.getTextSecondaryColor(context),
+        textInputAction: TextInputAction.search,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
         ),
-        isDense: true,
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        hintText: hintText,
-        hintStyle: AppTextStyles.h14w4Place.copyWith(
-          color: AppColors.getTextPlaceholderColor(context),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 17,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+        decoration: InputDecoration(
+          prefixIcon: Icon(
+            CupertinoIcons.search,
+            size: 18,
+            color: AppColors.getIconSecondaryColor(context),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          isDense: true,
+          filled: true,
+          fillColor: Colors.transparent,
+          hintText: hintText,
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 17,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none,
           ),
         ),
       ),

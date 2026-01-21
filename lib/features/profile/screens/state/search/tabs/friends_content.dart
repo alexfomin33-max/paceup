@@ -13,9 +13,16 @@ import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// Контент вкладки «Друзья»
 /// Переключатели уже в родительском экране. Здесь — секция и «табличный» блок.
+/// [customHeaderSlivers] — слайверы (пилюля, поле поиска) вставляются в начало
+/// скролла, когда экран поиска скроллит шапку вместе с контентом.
 class SearchFriendsContent extends ConsumerStatefulWidget {
   final String query;
-  const SearchFriendsContent({super.key, required this.query});
+  final List<Widget>? customHeaderSlivers;
+  const SearchFriendsContent({
+    super.key,
+    required this.query,
+    this.customHeaderSlivers,
+  });
 
   @override
   ConsumerState<SearchFriendsContent> createState() =>
@@ -111,7 +118,11 @@ class _SearchFriendsContentState extends ConsumerState<SearchFriendsContent> {
       child: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+          if (widget.customHeaderSlivers != null) ...widget.customHeaderSlivers!,
+          if (widget.customHeaderSlivers != null)
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          if (widget.customHeaderSlivers == null)
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           // ───── Контент: список друзей или результаты поиска
           friendsAsync.when(
@@ -387,16 +398,12 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+        boxShadow: const [
           BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
           ),
         ],
       ),
