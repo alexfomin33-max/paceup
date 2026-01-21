@@ -1,4 +1,9 @@
 {
+  // Отключаем Format on Save для Dart — избегаем «призрачных» правок
+  // (пустые строки, ///, CRLF) в diff при каждом сохранении
+  "[dart]": {
+    "editor.formatOnSave": false
+  },
   // Отключаем подтверждение синхронизации Git (pull/push)
   "git.confirmSync": false,
   "git.confirmForceSync": false,

@@ -24,7 +24,8 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
   bool get wantKeepAlive => true;
 
   void _openGallery(int index, List<String> photoUrls) {
-    Navigator.of(context).push(
+    // rootNavigator: true — галерея поверх bottom nav (как экран обрезки)
+    Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: true,
         barrierColor: AppColors.scrim40,
