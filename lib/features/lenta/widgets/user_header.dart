@@ -1,4 +1,5 @@
 // lib/widgets/user_header.dart
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/avatar.dart';
@@ -9,6 +10,8 @@ import '../../../../core/widgets/avatar.dart';
 /// Зачем: единый визуал для Поста и Активности.
 /// Что даст: единые отступы/стили, вертикальное выравнивание имени/даты
 /// по центру аватара, а нижний слот не влияет на выравнивание заголовка.
+/// [isUserDataLoading]: при true — плейсхолдер аватара (круг + индикатор)
+/// и индикатор вместо имени; дата отображается.
 class UserHeader extends StatelessWidget {
   final String userName;
   final String userAvatar; // url или asset
@@ -24,6 +27,9 @@ class UserHeader extends StatelessWidget {
   /// Размер аватара (по умолчанию 50 как в макете)
   final double avatarSize;
 
+  /// Показывать плейсхолдер аватара и индикатор загрузки вместо имени
+  final bool isUserDataLoading;
+
   const UserHeader({
     super.key,
     required this.userName,
@@ -37,6 +43,7 @@ class UserHeader extends StatelessWidget {
     this.bottom,
     this.bottomGap = 18.0,
     this.avatarSize = 50.0,
+    this.isUserDataLoading = false,
   });
 
   @override
@@ -50,10 +57,25 @@ class UserHeader extends StatelessWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // АВАТАР (кликабелен опционально)
+            // АВАТАР: при загрузке — плейсхолдер с индикатором, иначе Avatar
             GestureDetector(
-              onTap: onAvatarTap,
-              child: Avatar(image: userAvatar, size: avatarSize),
+              onTap: isUserDataLoading ? null : onAvatarTap,
+              child: isUserDataLoading
+                  ? Container(
+                      width: avatarSize,
+                      height: avatarSize,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: AppColors.getSurfaceColor(context),
+                      ),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: avatarSize * 0.2,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    )
+                  : Avatar(image: userAvatar, size: avatarSize),
             ),
             const SizedBox(width: 12),
 
@@ -64,7 +86,8 @@ class UserHeader extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // ──────────────────────────────────────────────────────────────
-                  // ЗАГОЛОВОК (ИМЯ + ДАТА): всегда по вертикальному центру аватара
+                  // ЗАГОЛОВОК (ИМЯ + ДАТА): всегда по вертикальному центру аватара.
+                  // При загрузке: индикатор вместо имени; дата показывается.
                   // ──────────────────────────────────────────────────────────────
                   SizedBox(
                     height: avatarSize,
@@ -72,21 +95,31 @@ class UserHeader extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // ──────────────────────────────────────────────────────────────
-                        // ИМЯ ПОЛЬЗОВАТЕЛЯ: кликабельно, если передан onNameTap
-                        // ──────────────────────────────────────────────────────────────
-                        GestureDetector(
-                          onTap: onNameTap ?? onAvatarTap,
-                          // Используем onAvatarTap как fallback для совместимости
-                          child: Text(
-                            userName,
-                            style: AppTextStyles.h15w5.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
+                        if (isUserDataLoading)
+                          SizedBox(
+                            height: 16,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: CupertinoActivityIndicator(
+                                radius: 8,
+                                color: AppColors.getIconSecondaryColor(
+                                  context,
+                                ),
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                          )
+                        else
+                          GestureDetector(
+                            onTap: onNameTap ?? onAvatarTap,
+                            child: Text(
+                              userName,
+                              style: AppTextStyles.h15w5.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
                         const SizedBox(height: 2),
                         Text(
                           dateText,

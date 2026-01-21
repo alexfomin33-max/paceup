@@ -433,13 +433,10 @@ class _ActivityDescriptionPageState
   // ────────────────────────────────────────────────────────────────
   double _getMapHeight(BuildContext context) {
     final a = _currentActivity;
-    final noRouteAndNoPhotos =
-        a.points.isEmpty && a.mediaImages.isEmpty;
+    final noRouteAndNoPhotos = a.points.isEmpty && a.mediaImages.isEmpty;
 
     // Блок показываем: есть маршрут/фото или нет ни того ни другого (дефолт по типу)
-    if (a.points.isNotEmpty ||
-        a.mediaImages.isNotEmpty ||
-        noRouteAndNoPhotos) {
+    if (a.points.isNotEmpty || a.mediaImages.isNotEmpty || noRouteAndNoPhotos) {
       // Нет маршрута и нет фото — дефолтная картинка, высота 350 px
       if (noRouteAndNoPhotos) {
         return 350.0;
@@ -699,8 +696,9 @@ class _ActivityDescriptionPageState
                           // Бег — nogps.jpg, Велосипед — nogsp_bike.jpg,
                           // Плавание — nogps_swim.jpg, Лыжи — nogps_ski.jpg
                           if (a.points.isEmpty && a.mediaImages.isEmpty) {
-                            final defaultImagePath =
-                                getDefaultNoRouteImagePath(a.type);
+                            final defaultImagePath = getDefaultNoRouteImagePath(
+                              a.type,
+                            );
                             return SizedBox(
                               height: 350.0,
                               width: double.infinity,
@@ -757,77 +755,114 @@ class _ActivityDescriptionPageState
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Шапка: аватар, имя, дата, метрики (как в ActivityBlock)
+                        // Шапка: при загрузке — плейсхолдер аватара и индикатор
+                        // имени; после загрузки — данные с fade-in.
                         Padding(
                           padding: const EdgeInsets.all(16),
-                          child: ActivityHeader(
-                            userId: widget
-                                .activity
-                                .userId, // ID владельца тренировки
-                            userName: _isLoadingUserData
-                                ? (a.userName.isNotEmpty
-                                      ? a.userName
-                                      : 'Аноним')
-                                : (_userFirstName != null &&
-                                          _userLastName != null
-                                      ? '$_userFirstName $_userLastName'.trim()
-                                      : (_userFirstName?.isNotEmpty == true
-                                            ? _userFirstName!
-                                            : (_userLastName?.isNotEmpty == true
-                                                  ? _userLastName!
-                                                  : (a.userName.isNotEmpty
-                                                        ? a.userName
-                                                        : 'Аноним')))),
-                            userAvatar: _isLoadingUserData
-                                ? a.userAvatar
-                                : (_userAvatar?.isNotEmpty == true
-                                      ? _userAvatar!
-                                      : a.userAvatar),
-                            dateStart: a.dateStart,
-                            dateTextOverride: a.postDateText,
-                            bottom: StatsRow(
-                              distanceMeters: stats?.distance,
-                              durationSec: stats?.duration,
-                              elevationGainM: stats?.cumulativeElevationGain,
-                              avgPaceMinPerKm: stats?.avgPace,
-                              avgHeartRate: stats?.avgHeartRate,
-                              avgCadence: stats?.avgCadence,
-                              calories: stats?.calories,
-                              totalSteps: stats?.totalSteps,
-                              // ────────────────────────────────────────────────────────────────
-                              // Тренировка добавлена вручную только если нет GPS-трека
-                              // И нет данных о пульсе/каденсе (значит действительно вручную)
-                              // ────────────────────────────────────────────────────────────────
-                              isManuallyAdded:
-                                  a.points.isEmpty &&
-                                  (stats?.avgHeartRate == null &&
-                                      stats?.avgCadence == null),
-                              // ────────────────────────────────────────────────────────────────
-                              // Показываем третью строку (Калории | Шаги | Скорость) на экране описания
-                              // 🚴 ДЛЯ ВЕЛОСИПЕДА: не показываем третью строку метрик
-                              // 🏊 ДЛЯ ПЛАВАНИЯ: не показываем третью строку метрик
-                              // ────────────────────────────────────────────────────────────────
-                              showExtendedStats:
-                                  !(a.type.toLowerCase() == 'bike' ||
-                                      a.type.toLowerCase() == 'bicycle' ||
-                                      a.type.toLowerCase() == 'cycling' ||
-                                      a.type.toLowerCase() == 'swim' ||
-                                      a.type.toLowerCase() == 'swimming'),
-                              // ────────────────────────────────────────────────────────────────
-                              // 📏 ПЕРЕДАЧА ТИПА АКТИВНОСТИ: для плавания расстояние показываем в метрах
-                              // ────────────────────────────────────────────────────────────────
-                              activityType: a.type,
-                              // ────────────────────────────────────────────────────────────────
-                              // 📏 УМЕНЬШАЕМ НИЖНИЙ PADDING: для уменьшения промежутка между метриками и картой
-                              // ────────────────────────────────────────────────────────────────
-                              bottomPadding: 0,
-                              // ────────────────────────────────────────────────────────────────
-                              // 🏊 ДЛЯ ПЛАВАНИЯ НА ЭКРАНЕ ОПИСАНИЯ: показываем вторую строку метрик
-                              // ────────────────────────────────────────────────────────────────
-                              hideSecondRowForSwimInFeed: false,
-                            ),
-                            bottomGap: 16.0,
-                          ),
+                          child: _isLoadingUserData
+                              ? ActivityHeader(
+                                  userId: widget.activity.userId,
+                                  userName: '',
+                                  userAvatar: '',
+                                  isUserDataLoading: true,
+                                  dateStart: a.dateStart,
+                                  dateTextOverride: a.postDateText,
+                                  bottom: StatsRow(
+                                    distanceMeters: stats?.distance,
+                                    durationSec: stats?.duration,
+                                    elevationGainM:
+                                        stats?.cumulativeElevationGain,
+                                    avgPaceMinPerKm: stats?.avgPace,
+                                    avgHeartRate: stats?.avgHeartRate,
+                                    avgCadence: stats?.avgCadence,
+                                    calories: stats?.calories,
+                                    totalSteps: stats?.totalSteps,
+                                    // ────────────────────────────────────────────────────────────────
+                                    // Тренировка добавлена вручную только если нет GPS-трека
+                                    // И нет данных о пульсе/каденсе (значит действительно вручную)
+                                    // ────────────────────────────────────────────────────────────────
+                                    isManuallyAdded:
+                                        a.points.isEmpty &&
+                                        (stats?.avgHeartRate == null &&
+                                            stats?.avgCadence == null),
+                                    // ────────────────────────────────────────────────────────────────
+                                    // Показываем третью строку (Калории | Шаги | Скорость) на экране описания
+                                    // 🚴 ДЛЯ ВЕЛОСИПЕДА: не показываем третью строку метрик
+                                    // 🏊 ДЛЯ ПЛАВАНИЯ: не показываем третью строку метрик
+                                    // ────────────────────────────────────────────────────────────────
+                                    showExtendedStats:
+                                        !(a.type.toLowerCase() == 'bike' ||
+                                            a.type.toLowerCase() == 'bicycle' ||
+                                            a.type.toLowerCase() == 'cycling' ||
+                                            a.type.toLowerCase() == 'swim' ||
+                                            a.type.toLowerCase() == 'swimming'),
+                                    // ────────────────────────────────────────────────────────────────
+                                    // 📏 ПЕРЕДАЧА ТИПА АКТИВНОСТИ: для плавания расстояние показываем в метрах
+                                    // ────────────────────────────────────────────────────────────────
+                                    activityType: a.type,
+                                    // ────────────────────────────────────────────────────────────────
+                                    // 📏 УМЕНЬШАЕМ НИЖНИЙ PADDING: для уменьшения промежутка между метриками и картой
+                                    // ────────────────────────────────────────────────────────────────
+                                    bottomPadding: 0,
+                                    // ────────────────────────────────────────────────────────────────
+                                    // 🏊 ДЛЯ ПЛАВАНИЯ НА ЭКРАНЕ ОПИСАНИЯ: показываем вторую строку метрик
+                                    // ────────────────────────────────────────────────────────────────
+                                    hideSecondRowForSwimInFeed: false,
+                                  ),
+                                  bottomGap: 16.0,
+                                )
+                              : _FadeInWidget(
+                                  child: ActivityHeader(
+                                    userId: widget.activity.userId,
+                                    userName:
+                                        _userFirstName != null &&
+                                            _userLastName != null
+                                        ? '$_userFirstName $_userLastName'
+                                              .trim()
+                                        : (_userFirstName?.isNotEmpty == true
+                                              ? _userFirstName!
+                                              : (_userLastName?.isNotEmpty ==
+                                                        true
+                                                    ? _userLastName!
+                                                    : (a.userName.isNotEmpty
+                                                          ? a.userName
+                                                          : 'Аноним'))),
+                                    userAvatar: _userAvatar?.isNotEmpty == true
+                                        ? _userAvatar!
+                                        : a.userAvatar,
+                                    isUserDataLoading: false,
+                                    dateStart: a.dateStart,
+                                    dateTextOverride: a.postDateText,
+                                    bottom: StatsRow(
+                                      distanceMeters: stats?.distance,
+                                      durationSec: stats?.duration,
+                                      elevationGainM:
+                                          stats?.cumulativeElevationGain,
+                                      avgPaceMinPerKm: stats?.avgPace,
+                                      avgHeartRate: stats?.avgHeartRate,
+                                      avgCadence: stats?.avgCadence,
+                                      calories: stats?.calories,
+                                      totalSteps: stats?.totalSteps,
+                                      isManuallyAdded:
+                                          a.points.isEmpty &&
+                                          (stats?.avgHeartRate == null &&
+                                              stats?.avgCadence == null),
+                                      showExtendedStats:
+                                          !(a.type.toLowerCase() == 'bike' ||
+                                              a.type.toLowerCase() ==
+                                                  'bicycle' ||
+                                              a.type.toLowerCase() ==
+                                                  'cycling' ||
+                                              a.type.toLowerCase() == 'swim' ||
+                                              a.type.toLowerCase() ==
+                                                  'swimming'),
+                                      activityType: a.type,
+                                      bottomPadding: 0,
+                                      hideSecondRowForSwimInFeed: false,
+                                    ),
+                                    bottomGap: 16.0,
+                                  ),
+                                ),
                         ),
                       ],
                     ),
@@ -1003,7 +1038,11 @@ class _ActivityDescriptionPageState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _ChartMetricsHeader(mode: 0, summary: _chartsSummary),
+                          _ChartMetricsHeader(
+                            mode: 0,
+                            summary: _chartsSummary,
+                            isLoading: _isLoadingCharts,
+                          ),
                           const SizedBox(height: 20),
                           SizedBox(
                             height: 210,
@@ -1014,11 +1053,13 @@ class _ActivityDescriptionPageState
                                       radius: 10,
                                     ),
                                   )
-                                : _SimpleLineChart(
-                                    mode: 0,
-                                    paceData: _paceData,
-                                    heartRateData: _heartRateData,
-                                    elevationData: _elevationData,
+                                : _FadeInWidget(
+                                    child: _SimpleLineChart(
+                                      mode: 0,
+                                      paceData: _paceData,
+                                      heartRateData: _heartRateData,
+                                      elevationData: _elevationData,
+                                    ),
                                   ),
                           ),
                         ],
@@ -1046,7 +1087,11 @@ class _ActivityDescriptionPageState
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _ChartMetricsHeader(mode: 1, summary: _chartsSummary),
+                          _ChartMetricsHeader(
+                            mode: 1,
+                            summary: _chartsSummary,
+                            isLoading: _isLoadingCharts,
+                          ),
                           const SizedBox(height: 20),
                           SizedBox(
                             height: 210,
@@ -1057,11 +1102,13 @@ class _ActivityDescriptionPageState
                                       radius: 10,
                                     ),
                                   )
-                                : _SimpleLineChart(
-                                    mode: 1,
-                                    paceData: _paceData,
-                                    heartRateData: _heartRateData,
-                                    elevationData: _elevationData,
+                                : _FadeInWidget(
+                                    child: _SimpleLineChart(
+                                      mode: 1,
+                                      paceData: _paceData,
+                                      heartRateData: _heartRateData,
+                                      elevationData: _elevationData,
+                                    ),
                                   ),
                           ),
                         ],
@@ -1094,6 +1141,7 @@ class _ActivityDescriptionPageState
                             _ChartMetricsHeader(
                               mode: 2,
                               summary: _chartsSummary,
+                              isLoading: _isLoadingCharts,
                             ),
                             const SizedBox(height: 20),
                             SizedBox(
@@ -1105,11 +1153,13 @@ class _ActivityDescriptionPageState
                                         radius: 10,
                                       ),
                                     )
-                                  : _SimpleLineChart(
-                                      mode: 2,
-                                      paceData: _paceData,
-                                      heartRateData: _heartRateData,
-                                      elevationData: _elevationData,
+                                  : _FadeInWidget(
+                                      child: _SimpleLineChart(
+                                        mode: 2,
+                                        paceData: _paceData,
+                                        heartRateData: _heartRateData,
+                                        elevationData: _elevationData,
+                                      ),
                                     ),
                             ),
                           ],
@@ -2520,6 +2570,40 @@ class _LinePainter extends CustomPainter {
 }
 
 /// ────────────────────────────────────────────────────────────────
+/// 🎬 FADE-IN: плавное появление контента после загрузки (opacity 0 → 1)
+/// ────────────────────────────────────────────────────────────────
+class _FadeInWidget extends StatefulWidget {
+  final Widget child;
+
+  const _FadeInWidget({required this.child});
+
+  @override
+  State<_FadeInWidget> createState() => _FadeInWidgetState();
+}
+
+class _FadeInWidgetState extends State<_FadeInWidget> {
+  double _opacity = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _opacity = 1);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedOpacity(
+      opacity: _opacity,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+      child: widget.child,
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────
 /// 📊 ЗАГОЛОВОК С МЕТРИКАМИ: отображает ключевые метрики над графиком
 /// В стиле скриншотов: два значения по центру с подписями
 /// ────────────────────────────────────────────────────────────────
@@ -2527,7 +2611,14 @@ class _ChartMetricsHeader extends StatelessWidget {
   final int mode; // 0 pace, 1 hr, 2 elev
   final Map<String, dynamic>? summary;
 
-  const _ChartMetricsHeader({required this.mode, this.summary});
+  /// При true — индикатор загрузки вместо прочерков в блоке метрик
+  final bool isLoading;
+
+  const _ChartMetricsHeader({
+    required this.mode,
+    this.summary,
+    this.isLoading = false,
+  });
 
   String _fmtSecToMinSec(double sec) {
     final s = sec.round();
@@ -2618,9 +2709,18 @@ class _ChartMetricsHeader extends StatelessWidget {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 🔹 ВИДЖЕТ С МЕТРИКАМИ: по центру справа
+    // 🔹 ВИДЖЕТ С МЕТРИКАМИ: по центру справа.
+    // При isLoading — индикатор загрузки вместо прочерков.
     // ────────────────────────────────────────────────────────────────
     Widget buildMetrics() {
+      if (isLoading) {
+        return Center(
+          child: CupertinoActivityIndicator(
+            radius: 10,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+        );
+      }
       if (summary == null) {
         // Если данных нет, показываем пустые значения
         if (mode == 0) {

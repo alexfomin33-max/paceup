@@ -28,6 +28,9 @@ class ActivityHeader extends StatelessWidget {
   /// Trailing виджет (например, кнопка меню с тремя точками)
   final Widget? trailing;
 
+  /// Данные пользователя (имя, аватар) ещё загружаются — плейсхолдеры
+  final bool isUserDataLoading;
+
   const ActivityHeader({
     super.key,
     required this.userId,
@@ -40,6 +43,7 @@ class ActivityHeader extends StatelessWidget {
     this.bottom,
     this.bottomGap = 18.0,
     this.trailing,
+    this.isUserDataLoading = false,
   });
 
   @override
@@ -73,6 +77,7 @@ class ActivityHeader extends StatelessWidget {
       bottom: bottom,
       bottomGap: bottomGap,
       trailing: trailing,
+      isUserDataLoading: isUserDataLoading,
     );
   }
 }
