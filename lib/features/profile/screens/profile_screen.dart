@@ -841,65 +841,83 @@ class _ProfileInfoCard extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(height: 20),
-                Divider(
-                  height: 1,
-                  thickness: 0.5,
-                  indent: 16,
-                  endIndent: 16,
-                  color: AppColors.getDividerColor(context),
-                ),
-                const SizedBox(height: 12),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
                       Expanded(
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: IntrinsicWidth(
-                            child: _CountPill(
-                              label: 'Подписки',
-                              value: following,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                    builder: (_) => CommunicationPrefsPage(
-                                      startIndex: 0,
-                                      userId: userId,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _CountPill(
+                            label: 'Подписки',
+                          value: following,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => CommunicationPrefsPage(
+                                  startIndex: 0,
+                                  userId: userId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         ),
                       ),
-                      const SizedBox(width: 24),
+                      const SizedBox(width: 8),
                       Expanded(
-                        child: Align(
-                          alignment: Alignment.center,
-                          child: IntrinsicWidth(
-                            child: _CountPill(
-                              label: 'Подписчики',
-                              value: followers,
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  CupertinoPageRoute(
-                                    builder: (_) => CommunicationPrefsPage(
-                                      startIndex: 1,
-                                      userId: userId,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _CountPill(
+                            label: 'Подписчики',
+                          value: followers,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => CommunicationPrefsPage(
+                                  startIndex: 1,
+                                  userId: userId,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _SearchPill(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => SearchPrefsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 0),
               ],
             ),
           ),
@@ -1029,6 +1047,44 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
+/// Блок «Поиск» с иконкой.
+class _SearchPill extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _SearchPill({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Поиск',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: AppColors.getTextSecondaryColor(context),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Icon(
+              CupertinoIcons.search,
+              size: 16,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Небольшая «пилюля» со счётчиком (подписки/подписчики).
 class _CountPill extends StatelessWidget {
   final String label;
@@ -1045,7 +1101,8 @@ class _CountPill extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
@@ -1061,7 +1118,7 @@ class _CountPill extends StatelessWidget {
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 15,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w500,
                 color: AppColors.getTextPrimaryColor(context),
               ),
             ),

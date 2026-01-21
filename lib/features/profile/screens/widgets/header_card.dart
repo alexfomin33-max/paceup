@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../state/subscribe/communication_screen.dart';
+import '../state/search/search_screen.dart';
 import '../../../../domain/models/user_profile_header.dart';
 import '../../../../core/widgets/avatar.dart';
 
@@ -190,37 +191,77 @@ class HeaderCard extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _FollowStat(
-                      label: 'Подписки',
-                      value: (p.following).toString(),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (_) => CommunicationPrefsPage(
-                              startIndex: 0,
-                              userId: userId,
-                            ), // Подписки
+                      Expanded(
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 24),
-                    _FollowStat(
-                      label: 'Подписчики',
-                      value: (p.followers).toString(),
-                      onTap: () {
-                        Navigator.of(context).push(
-                          CupertinoPageRoute(
-                            builder: (_) => CommunicationPrefsPage(
-                              startIndex: 1,
-                              userId: userId,
-                            ), // Подписчики
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _FollowStat(
+                            label: 'Подписки',
+                          value: (p.following).toString(),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => CommunicationPrefsPage(
+                                  startIndex: 0,
+                                  userId: userId,
+                                ), // Подписки
+                              ),
+                            );
+                          },
+                        ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _FollowStat(
+                            label: 'Подписчики',
+                          value: (p.followers).toString(),
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => CommunicationPrefsPage(
+                                  startIndex: 1,
+                                  userId: userId,
+                                ), // Подписчики
+                              ),
+                            );
+                          },
+                        ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Container(
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: AppColors.twinBg,
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: _SearchPill(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => SearchPrefsPage(),
+                              ),
+                            );
+                          },
+                        ),
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -255,6 +296,44 @@ class HeaderCard extends ConsumerWidget {
 }
 
 
+/// Блок «Поиск» с иконкой.
+class _SearchPill extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _SearchPill({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            'Поиск',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.darkTextSecondary
+                    : AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Icon(
+              CupertinoIcons.search,
+              size: 16,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ],
+        ),
+    );
+  }
+}
+
 class _FollowStat extends StatelessWidget {
   final String label;
   final String value;
@@ -268,8 +347,7 @@ class _FollowStat extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Center(
         child: RichText(
           text: TextSpan(
             style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
@@ -288,7 +366,7 @@ class _FollowStat extends StatelessWidget {
               TextSpan(
                 text: value,
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.getTextPrimaryColor(context),
                 ),
               ),
