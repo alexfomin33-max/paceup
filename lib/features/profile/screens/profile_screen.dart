@@ -416,6 +416,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Opacity(
               opacity: _headerOpacity,
               child: _FixedBackgroundCover(
+                key: ValueKey('profile_bg_${userId}_v$avatarVersion'),
                 userId: userId,
                 backgroundUrl: _cacheBustUrl(
                   profileState.profile?.background,
@@ -695,6 +696,7 @@ class _FixedBackgroundCover extends StatelessWidget {
   final double coverHeight;
 
   const _FixedBackgroundCover({
+    super.key,
     required this.userId,
     required this.backgroundUrl,
     required this.coverHeight,
@@ -706,10 +708,9 @@ class _FixedBackgroundCover extends StatelessWidget {
       opacity: 0.95,
       child: backgroundUrl != null && backgroundUrl!.isNotEmpty
           ? CachedNetworkImage(
-              // Привязываем ключ к userId + backgroundUrl, чтобы
-              // принудительно пересоздавать виджет и пробивать кэш
-              // при смене обложки после сохранения профиля.
-              key: ValueKey('profile_bg_fixed_${userId}_$backgroundUrl'),
+              // Используем backgroundUrl в ключе для принудительного
+              // пересоздания виджета при изменении URL (включая cache-busting параметры)
+              key: ValueKey('profile_bg_image_$backgroundUrl'),
               imageUrl: backgroundUrl!,
               width: double.infinity,
               height: coverHeight,

@@ -183,41 +183,28 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
     final newBackground = state.profile?.background;
 
     // ШАГ 4: Очистка кэша для принудительной перезагрузки
+    // Используем улучшенную функцию clearImageCacheForUrl, которая
+    // очищает кэш для всех вариантов URL (с параметрами и без)
     try {
       if (newAvatar != null && newAvatar.isNotEmpty) {
-        // Очищаем базовый URL
-        await CachedNetworkImage.evictFromCache(newAvatar);
+        // Очищаем новый URL (все варианты)
+        await clearImageCacheForUrl(newAvatar);
 
         // Очищаем старый URL (если был другой)
         if (oldAvatar != null && oldAvatar != newAvatar) {
-          await CachedNetworkImage.evictFromCache(oldAvatar);
+          await clearImageCacheForUrl(oldAvatar);
         }
-
-        // Полная очистка через ImageProvider
-        try {
-          final provider = CachedNetworkImageProvider(newAvatar);
-          await provider.evict();
-        } catch (_) {
-          // Игнорируем ошибки
-        }
-
-        // Очистка всех вариантов с cache-busting параметрами
-        await clearImageCacheForUrl(newAvatar);
       }
 
-      // Аналогично пробиваем кэш фоновой картинки, чтобы видеть новую обложку.
+      // Аналогично пробиваем кэш фоновой картинки, чтобы видеть новую обложку
       if (newBackground != null && newBackground.isNotEmpty) {
-        await CachedNetworkImage.evictFromCache(newBackground);
-        if (oldBackground != null && oldBackground != newBackground) {
-          await CachedNetworkImage.evictFromCache(oldBackground);
-        }
-        try {
-          final providerBg = CachedNetworkImageProvider(newBackground);
-          await providerBg.evict();
-        } catch (_) {
-          // Игнорируем ошибки
-        }
+        // Очищаем новый URL (все варианты)
         await clearImageCacheForUrl(newBackground);
+
+        // Очищаем старый URL (если был другой)
+        if (oldBackground != null && oldBackground != newBackground) {
+          await clearImageCacheForUrl(oldBackground);
+        }
       }
     } catch (e) {
       // Игнорируем ошибки очистки кэша

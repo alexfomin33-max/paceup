@@ -885,9 +885,9 @@ class _WorkoutCard extends ConsumerWidget {
             children: [
               // Мини-карта/изображение 80x70
               // Логика приоритетов:
-              // 1. Если есть трек И изображения → показываем трек
-              // 2. Если нет трека, но есть изображения → показываем первое изображение
-              // 3. Если нет трека И нет изображений → показываем заглушку
+              // 1. Если есть фотографии → показываем первую фотографию (приоритет над картой)
+              // 2. Если нет фотографий, но есть трек → показываем карту маршрута
+              // 3. Если нет фотографий И нет трека → показываем заглушку
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.xs),
                 child: SizedBox(
@@ -996,26 +996,16 @@ class _WorkoutCard extends ConsumerWidget {
   }
 
   /// Строит изображение для активности согласно логике приоритетов:
-  /// 1. Если есть валидный трек → показываем карту MapBox (независимо от наличия изображений)
-  /// 2. Если нет трека, но есть изображения → показываем первое изображение
-  /// 3. Если нет трека И нет изображений → показываем заглушку
+  /// 1. Если есть фотографии (firstImageUrl) → показываем первую фотографию
+  /// 2. Если нет фотографий, но есть валидный трек → показываем карту MapBox
+  /// 3. Если нет фотографий И нет трека → показываем заглушку
   static Widget _buildActivityImage(
     BuildContext context,
     _Workout item, {
     required int userId,
   }) {
-    // 1. Если есть валидный трек → показываем карту MapBox
-    if (item.hasValidTrack) {
-      return _buildStaticMiniMap(
-        context,
-        item.points,
-        activityId: item.id,
-        userId: userId,
-      );
-    }
-
-    // 2. Если нет трека, но есть изображения → показываем первое изображение
-    if (item.firstImageUrl != null) {
+    // 1. Если есть фотографии → показываем первую фотографию (приоритет над картой)
+    if (item.firstImageUrl != null && item.firstImageUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: item.firstImageUrl!,
         fit: BoxFit.cover,
@@ -1030,11 +1020,32 @@ class _WorkoutCard extends ConsumerWidget {
             ),
           ),
         ),
-        errorWidget: (context, url, error) => _buildPlaceholderImage(item.kind),
+        errorWidget: (context, url, error) {
+          // Если ошибка загрузки фотографии, показываем карту или заглушку
+          if (item.hasValidTrack) {
+            return _buildStaticMiniMap(
+              context,
+              item.points,
+              activityId: item.id,
+              userId: userId,
+            );
+          }
+          return _buildPlaceholderImage(item.kind);
+        },
       );
     }
 
-    // 3. Если нет трека И нет изображений → показываем заглушку
+    // 2. Если нет фотографий, но есть валидный трек → показываем карту MapBox
+    if (item.hasValidTrack) {
+      return _buildStaticMiniMap(
+        context,
+        item.points,
+        activityId: item.id,
+        userId: userId,
+      );
+    }
+
+    // 3. Если нет фотографий И нет трека → показываем заглушку
     return _buildPlaceholderImage(item.kind);
   }
 

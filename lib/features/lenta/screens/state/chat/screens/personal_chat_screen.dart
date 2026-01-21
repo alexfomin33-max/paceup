@@ -48,6 +48,7 @@ class ChatMessage {
   final DateTime createdAt;
   final bool isMine;
   final bool isRead;
+  final String? date; // Отформатированная дата с бэкенда (формат: 20.01.2026)
 
   const ChatMessage({
     required this.id,
@@ -57,6 +58,7 @@ class ChatMessage {
     required this.createdAt,
     required this.isMine,
     required this.isRead,
+    this.date,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -68,6 +70,7 @@ class ChatMessage {
       createdAt: DateTime.parse(json['created_at'] as String),
       isMine: json['is_mine'] as bool? ?? false,
       isRead: json['is_read'] as bool? ?? false,
+      date: json['date'] as String?,
     );
   }
 }
@@ -482,14 +485,16 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             'https://uploads.paceup.ru/$imagePath';
 
         // ─── Оптимистичное обновление: добавляем временное сообщение ───
+        final now = DateTime.now();
         final tempMessage = ChatMessage(
           id: -1, // Временный ID
           senderId: _currentUserId!,
           text: '', // Пустой текст для сообщения с изображением
           image: imageUrl, // Полный URL изображения
-          createdAt: DateTime.now(),
+          createdAt: now,
           isMine: true,
           isRead: false,
+          date: _formatDateForBackend(now), // Форматируем дату на клиенте для временного сообщения
         );
 
         setState(() {
@@ -523,6 +528,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         if (response['success'] == true) {
           final messageId = response['message_id'] as int;
           final createdAt = DateTime.parse(response['created_at'] as String);
+          final date = response['date'] as String? ??
+              _formatDateForBackend(createdAt);
 
           // Обновляем временное сообщение с реальными данными
           if (!mounted) return;
@@ -538,6 +545,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                 createdAt: createdAt,
                 isMine: true,
                 isRead: false,
+                date: date,
               );
             }
             _lastMessageId = messageId;
@@ -602,15 +610,17 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     final messageText = text;
     _ctrl.clear();
 
-    // Оптимистичное обновление UI
-    final tempMessage = ChatMessage(
-      id: -1, // Временный ID
-      senderId: _currentUserId!,
-      text: messageText,
-      createdAt: DateTime.now(),
-      isMine: true,
-      isRead: false,
-    );
+        // Оптимистичное обновление UI
+        final now = DateTime.now();
+        final tempMessage = ChatMessage(
+          id: -1, // Временный ID
+          senderId: _currentUserId!,
+          text: messageText,
+          createdAt: now,
+          isMine: true,
+          isRead: false,
+          date: _formatDateForBackend(now), // Форматируем дату на клиенте для временного сообщения
+        );
 
     setState(() {
       // При reverse: true новые сообщения кладем в начало, чтобы они были снизу
@@ -676,6 +686,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (response['success'] == true) {
         final messageId = response['message_id'] as int;
         final createdAt = DateTime.parse(response['created_at'] as String);
+        final date = response['date'] as String? ??
+            _formatDateForBackend(createdAt);
 
         // Обновляем временное сообщение с реальными данными
         if (!mounted) return;
@@ -690,6 +702,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
               createdAt: createdAt,
               isMine: true,
               isRead: false,
+              date: date,
             );
           }
           _lastMessageId = messageId;
@@ -832,6 +845,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     return DateFormat('H:mm').format(dt);
   }
 
+  /// ─── Форматирование даты для бэкенда (формат: дд.мм.гггг) ───
+  /// Используется для временных сообщений до получения ответа от сервера
+  String _formatDateForBackend(DateTime dt) {
+    return DateFormat('dd.MM.yyyy').format(dt);
+  }
+
   /// ─── Форматирование даты сообщения (без времени) ───
   String _formatMessageDate(DateTime dt) {
     final now = DateTime.now();
@@ -878,27 +897,47 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     return months[month - 1];
   }
 
-  /// ─── Проверка, нужно ли показывать разделитель даты между сообщениями ───
+  /// ─── Проверка, нужно ли показывать разделитель даты после сообщения ───
+  /// При reverse: true дата показывается ПОСЛЕ последнего сообщения за эту дату,
+  /// чтобы визуально отображаться НАД всеми сообщениями за эту дату
   bool _shouldShowDateSeparator(int currentIndex) {
-    if (currentIndex == 0) return false; // Первое сообщение
     if (currentIndex >= _messages.length) return false;
 
     try {
       final currentMsg = _messages[currentIndex];
-      final previousMsg = _messages[currentIndex - 1];
+      
+      // Если у сообщения нет даты с бэкенда, не показываем разделитель
+      if (currentMsg.date == null || currentMsg.date!.isEmpty) {
+        return false;
+      }
 
+      // Если это последнее сообщение в списке, показываем дату после него
+      if (currentIndex == _messages.length - 1) {
+        return true;
+      }
+
+      // Если следующее сообщение имеет другую дату, показываем дату после текущего
+      // (это последнее сообщение за текущую дату)
+      final nextMsg = _messages[currentIndex + 1];
+      
+      // Сравниваем даты по полю date (если оно есть)
+      if (nextMsg.date != null && nextMsg.date!.isNotEmpty) {
+        return currentMsg.date != nextMsg.date;
+      }
+
+      // Если у следующего сообщения нет date, сравниваем по createdAt
       final currentDay = DateTime(
         currentMsg.createdAt.year,
         currentMsg.createdAt.month,
         currentMsg.createdAt.day,
       );
-      final previousDay = DateTime(
-        previousMsg.createdAt.year,
-        previousMsg.createdAt.month,
-        previousMsg.createdAt.day,
+      final nextDay = DateTime(
+        nextMsg.createdAt.year,
+        nextMsg.createdAt.month,
+        nextMsg.createdAt.day,
       );
 
-      return currentDay != previousDay;
+      return currentDay != nextDay;
     } catch (_) {
       return false;
     }
@@ -907,8 +946,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   /// ─── Подсчет общего количества элементов (сообщения + разделители дат) ───
   int _calculateTotalItemsCount() {
     int count = _messages.length;
-    // Добавляем разделители дат перед каждым сообщением, кроме первого
-    for (int i = 1; i < _messages.length; i++) {
+    // Добавляем разделители дат над первым сообщением каждой даты
+    for (int i = 0; i < _messages.length; i++) {
       if (_shouldShowDateSeparator(i)) {
         count++;
       }
@@ -1167,29 +1206,34 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                             }
 
                             // ─── Вычисляем, какой элемент показывать ───
+                            // При reverse: true элементы отображаются снизу вверх
+                            // Поэтому дата должна идти ПОСЛЕ сообщения в коде,
+                            // чтобы визуально отображаться НАД ним на экране
                             int messageIndex = 0;
                             int currentItem = 0;
 
                             for (int i = 0; i < _messages.length; i++) {
-                              // ─── Показываем разделитель даты перед сообщением (кроме первого) ───
-                              if (i > 0 && _shouldShowDateSeparator(i)) {
-                                if (currentItem == index) {
-                                  // Это разделитель даты
-                                  return _DateSeparator(
-                                    text: _formatMessageDate(
-                                      _messages[i].createdAt,
-                                    ),
-                                  );
-                                }
-                                currentItem++;
-                              }
-
                               // ─── Показываем само сообщение ───
                               if (currentItem == index) {
                                 messageIndex = i;
                                 break;
                               }
                               currentItem++;
+
+                              // ─── Показываем разделитель даты НАД сообщением ───
+                              // При reverse: true дата показывается ПОСЛЕ сообщения в коде,
+                              // чтобы визуально отображаться НАД ним на экране
+                              if (_shouldShowDateSeparator(i)) {
+                                if (currentItem == index) {
+                                  // Это разделитель даты
+                                  final dateText = _messages[i].date ??
+                                      _formatMessageDate(
+                                        _messages[i].createdAt,
+                                      );
+                                  return _DateSeparator(text: dateText);
+                                }
+                                currentItem++;
+                              }
                             }
 
                             if (messageIndex >= _messages.length) {
@@ -1199,23 +1243,24 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                             // При reverse: true последний элемент списка - это первый в массиве
                             final message = _messages[messageIndex];
 
-                            // ─── Фиксированный отступ между пузырями ───
-                            // Проверяем, есть ли предыдущее сообщение (не разделитель даты)
-                            bool hasMessageAbove = false;
-                            for (int i = messageIndex - 1; i >= 0; i--) {
+                            // ─── Отступы между пузырями ───
+                            // При reverse: true проверяем, есть ли следующее сообщение
+                            // (которое визуально будет выше на экране)
+                            bool hasMessageBelow = false;
+                            for (int i = messageIndex + 1; i < _messages.length; i++) {
                               if (!_shouldShowDateSeparator(i)) {
-                                hasMessageAbove = true;
+                                hasMessageBelow = true;
                                 break;
                               }
                             }
-                            final isBottomBubble = index == 0;
-                            // Увеличенный верхний отступ для самого нижнего пузыря,
-                            // чтобы освободить место над ним
-                            final topSpacing = isBottomBubble
-                                ? 8.0
-                                : (hasMessageAbove ? 8.0 : 0.0);
-                            // Нижний отступ оставляем минимальным
-                            final bottomSpacing = isBottomBubble ? 8.0 : 0.0;
+                            
+                            // Восстанавливаем нормальные отступы между сообщениями
+                            // При reverse: true:
+                            // - top padding визуально снизу (отступ от нижней панели)
+                            // - bottom padding визуально сверху (отступ между сообщениями)
+                            final topSpacing = 0.0;
+                            // Всегда добавляем отступ снизу (визуально сверху) для разделения сообщений
+                            final bottomSpacing = 8.0;
 
                             return message.isMine
                                 ? _BubbleRight(
@@ -1287,15 +1332,17 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 /// Вспомогательные виджеты
 /// ────────────────────────────────────────────────────────────────────────
 
-/// ─── Разделитель даты между сообщениями ───
+/// ─── Разделитель даты над сообщениями каждой даты ───
+/// Дата отображается по центру серым цветом (как время в сообщениях)
 class _DateSeparator extends StatelessWidget {
   final String text;
   const _DateSeparator({required this.text});
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 16, bottom: 4),
+    padding: const EdgeInsets.only(top: 8, bottom: 8),
     child: Container(
       alignment: Alignment.center,
+      width: double.infinity,
       child: Text(
         text,
         style: TextStyle(
