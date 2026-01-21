@@ -77,10 +77,6 @@ class ActivityBlock extends ConsumerWidget {
         stats?.avgHeartRate != null || stats?.avgCadence != null;
     final isManuallyAdded =
         updatedActivity.points.isEmpty && !hasHeartRateOrCadence;
-    final isImportedWithoutRoute =
-        hasHeartRateOrCadence &&
-        updatedActivity.points.isEmpty &&
-        updatedActivity.mediaImages.isEmpty;
 
     // ────────────────────────────────────────────────────────────────
     // ⚡ ОПТИМИЗАЦИЯ: кэшируем преобразование points в LatLng
@@ -98,13 +94,11 @@ class ActivityBlock extends ConsumerWidget {
     final activityDistanceKm = (stats?.distance ?? 0.0) / 1000.0;
 
     // ────────────────────────────────────────────────────────────────
-    // ⚡ ОПТИМИЗАЦИЯ: кэшируем вычисление defaultImagePath
+    // ⚡ ОПТИМИЗАЦИЯ: кэшируем дефолтное фото (нет маршрута и нет фото)
+    // Бег — nogps.jpg, Велосипед — nogsp_bike.jpg, Плавание — nogps_swim.jpg, Лыжи — nogps_ski.jpg
     // ────────────────────────────────────────────────────────────────
-    final activityTypeLower = updatedActivity.type.toLowerCase();
     final defaultImagePath =
-        (activityTypeLower == 'swim' || activityTypeLower == 'swimming')
-        ? 'assets/nogps_swim.jpg'
-        : 'assets/nogps.jpg';
+        getDefaultNoRouteImagePath(updatedActivity.type);
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 КЛЮЧ ДЛЯ МЕНЮ: создаем стабильный GlobalKey на основе lentaId
@@ -144,13 +138,14 @@ class ActivityBlock extends ConsumerWidget {
           // ────────────────────────────────────────────────────────────────
           // 📊 ОПРЕДЕЛЕНИЕ: показываются ли метрики поверх карты маршрута
           // ────────────────────────────────────────────────────────────────
-          // Метрики показываются поверх карты, если есть маршрут или изображения
-          // В этом случае скрываем первую строку метрик в шапке
+          // Метрики показываются поверх карты, если есть маршрут, изображения,
+          // или при отсутствии того и другого (дефолтное фото по типу тренировки)
           // ────────────────────────────────────────────────────────────────
           final hasRouteOrImages =
               updatedActivity.points.isNotEmpty ||
               updatedActivity.mediaImages.isNotEmpty ||
-              isImportedWithoutRoute;
+              (updatedActivity.points.isEmpty &&
+                  updatedActivity.mediaImages.isEmpty);
 
           // ────────────────────────────────────────────────────────────────
           // 📊 СОЗДАНИЕ ВИДЖЕТА СТАТИСТИКИ: используется в разных местах
@@ -639,15 +634,18 @@ class ActivityBlock extends ConsumerWidget {
                       );
                     }
 
-                    // Показываем блок, если есть маршрут, изображения или импортированная тренировка без маршрута
+                    // Показываем блок, если есть маршрут, изображения, или нет ни того ни другого
+                    // (дефолтное фото: импорт без маршрута, ручное добавление без фото)
                     if (updatedActivity.points.isNotEmpty ||
                         updatedActivity.mediaImages.isNotEmpty ||
-                        isImportedWithoutRoute) {
+                        (updatedActivity.points.isEmpty &&
+                            updatedActivity.mediaImages.isEmpty)) {
                       // ────────────────────────────────────────────────────────────────
-                      // 🖼️ ДЕФОЛТНАЯ КАРТИНКА: для импортированных тренировок без маршрута
+                      // 🖼️ ДЕФОЛТНАЯ КАРТИНКА: нет маршрута и нет фото — по типу: бег/вело/плавание/лыжи
                       // высота фиксированная — 350 пикселей
                       // ────────────────────────────────────────────────────────────────
-                      if (isImportedWithoutRoute) {
+                      if (updatedActivity.points.isEmpty &&
+                          updatedActivity.mediaImages.isEmpty) {
                         // ────────────────────────────────────────────────────────────────
                         // ⚡ ОПТИМИЗАЦИЯ: используем предвычисленный defaultImagePath
                         // ────────────────────────────────────────────────────────────────

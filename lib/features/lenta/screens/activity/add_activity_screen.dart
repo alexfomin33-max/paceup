@@ -1365,18 +1365,23 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   }
 
   /// Кнопка сохранения
+  /// При загрузке: только индикатор (без текста), тёмный фон, блокировка нажатий.
   Widget _buildSaveButton() {
     final formState = ref.watch(formStateProvider);
     final textColor = AppColors.getSurfaceColor(context);
+    final isLoading = formState.isSubmitting;
 
     // ────────────────────────────────────────────────────────────────
     // 💾 КНОПКА СОХРАНЕНИЯ (единый стиль с экраном редактирования)
     // ────────────────────────────────────────────────────────────────
+    // disabledBackgroundColor = AppColors.button — кнопка остаётся тёмной при загрузке
     final button = ElevatedButton(
-      onPressed: formState.isSubmitting ? null : _saveActivity,
+      onPressed: isLoading ? null : _saveActivity,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.button,
         foregroundColor: textColor,
+        disabledBackgroundColor: AppColors.button,
+        disabledForegroundColor: textColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 30),
         shape: const StadiumBorder(),
@@ -1384,26 +1389,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
-      child: formState.isSubmitting
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: CupertinoActivityIndicator(
-                    radius: 9,
-                    color: textColor,
-                  ),
-                ),
-                Text(
-                  'Добавить',
-                  style: AppTextStyles.h15w5.copyWith(
-                    color: textColor,
-                    height: 1.0,
-                  ),
-                ),
-              ],
-            )
+      child: isLoading
+          ? CupertinoActivityIndicator(radius: 9, color: textColor)
           : Text(
               'Добавить',
               style: AppTextStyles.h15w5.copyWith(
@@ -1413,7 +1400,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             ),
     );
 
-    if (formState.isSubmitting) {
+    // Блокировка нажатий во время загрузки (onPressed: null уже отключает, дублируем на всякий)
+    if (isLoading) {
       return IgnorePointer(child: button);
     }
 
