@@ -112,6 +112,7 @@ Refer to Flutter, Riverpod, and MySQL documentation for Widgets, State Managemen
 - Polyline color = AppColors.brandPrimary, strokeWidth = 3. 
 
 ## ── Refactoring & Edits
+- **Surgical edits only:** When changing existing files, use minimal, targeted edits (e.g. search_replace with a small `old_string`/`new_string`). NEVER overwrite the entire file (e.g. via `write`) to change one line, a few lines, or an import — this wastes tokens and produces huge diffs (−2000+ lines).
 - NEVER modify visuals unless the task explicitly requires it.  
 - For performance changes: briefly describe the expected effect.  
 - For API-related changes: separate them clearly and flag for review.  

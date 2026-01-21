@@ -136,8 +136,10 @@ class ImagePickerHelper {
     }
     if (!context.mounted) return null;
 
-    // ── запускаем экран обрезки и ждём результат от пользователя
-    final croppedBytes = await Navigator.of(context).push<Uint8List>(
+    // ── экран обрезки на root Navigator, чтобы скрыть нижнюю навбар (как в
+    //    AddActivityScreen)
+    final croppedBytes = await Navigator.of(context, rootNavigator: true)
+        .push<Uint8List>(
       MaterialPageRoute(
         fullscreenDialog: true,
         builder: (_) => ImageCropScreen(
