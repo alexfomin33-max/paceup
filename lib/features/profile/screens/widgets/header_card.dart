@@ -203,7 +203,7 @@ class HeaderCard extends ConsumerWidget {
                             label: 'Подписки',
                           value: (p.following).toString(),
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => CommunicationPrefsPage(
                                   startIndex: 0,
@@ -228,7 +228,7 @@ class HeaderCard extends ConsumerWidget {
                             label: 'Подписчики',
                           value: (p.followers).toString(),
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => CommunicationPrefsPage(
                                   startIndex: 1,

@@ -2,10 +2,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_theme.dart';
-import '../../../../../core/widgets/segmented_pill.dart'; // ← глобальная пилюля
 import '../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
-import '../../../../../core/widgets/transparent_route.dart';
-import '../search/search_screen.dart'; // ← страница поиска друзей
 import 'tabs/subscriptions/subscriptions_content.dart';
 import 'tabs/subscribers/subscribers_content.dart';
 
@@ -26,49 +23,49 @@ class CommunicationPrefsPage extends StatefulWidget {
   State<CommunicationPrefsPage> createState() => _CommunicationPrefsPageState();
 }
 
-class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
-  // motion-токены (как в остальных экранах)
-  static const Duration _kTabAnim = Duration(milliseconds: 300);
-  static const Curve _kTabCurve = Curves.easeOutCubic;
-
-  late int _index;
-  late final PageController _page;
+class _CommunicationPrefsPageState extends State<CommunicationPrefsPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tab;
 
   final _controller = TextEditingController();
   final _focus = FocusNode();
 
+  // Поле поиска скрыто по умолчанию, показывается по тапу на иконку в AppBar
+  bool _searchFieldVisible = false;
+
   @override
   void initState() {
     super.initState();
-    _index = widget.startIndex;
-    _page = PageController(initialPage: _index);
+    _tab = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: widget.startIndex,
+    );
+    _tab.addListener(() {
+      if (_tab.indexIsChanging) {
+        _controller.clear();
+        _focus.unfocus();
+      }
+    });
   }
 
   @override
   void dispose() {
-    _page.dispose();
+    _tab.dispose();
     _controller.dispose();
     _focus.dispose();
     super.dispose();
   }
 
-  void _switchTo(int i) {
-    if (_index == i) return;
-    _controller.clear();
-    _focus.unfocus();
-    setState(() => _index = i);
-    _page.animateToPage(i, duration: _kTabAnim, curve: _kTabCurve);
-  }
-
-  /// Навигация на страницу поиска друзей
-  ///
-  /// ⚡ UX: открывает страницу поиска друзей/клубов при нажатии на иконку
-  void _navigateToSearch() {
-    Navigator.of(context, rootNavigator: true).push(
-      TransparentPageRoute(
-        builder: (_) => const SearchPrefsPage(startIndex: 0),
-      ),
-    );
+  /// По тапу на иконку поиска в AppBar: показать/скрыть поле (без автофокуса)
+  void _onSearchIconTap() {
+    setState(() {
+      _searchFieldVisible = !_searchFieldVisible;
+      if (!_searchFieldVisible) {
+        _controller.clear();
+        _focus.unfocus();
+      }
+    });
   }
 
   @override
@@ -76,80 +73,76 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
     final query = _controller.text.trim();
 
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.getSurfaceColor(context),
       appBar: PaceAppBar(
         title: 'Связи',
-        // дефолтная «назад», центрированный титул, нижний разделитель — уже настроены
+        showBottomDivider: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         actions: [
           IconButton(
             splashRadius: 22,
             icon: Icon(
-              CupertinoIcons.person_add,
+              CupertinoIcons.search,
               size: 22,
-              color: AppColors.getIconPrimaryColor(context),
+              color: _searchFieldVisible
+                  ? AppColors.brandPrimary
+                  : AppColors.getIconPrimaryColor(context),
             ),
-            onPressed: _navigateToSearch,
+            onPressed: _onSearchIconTap,
           ),
           const SizedBox(width: 6),
         ],
       ),
       body: Column(
         children: [
-          const SizedBox(height: 14),
+          // ── Вкладки: TabBar в стиле favorites_screen
+          Container(
+            color: AppColors.getSurfaceColor(context),
+            child: TabBar(
+              controller: _tab,
+              isScrollable: false,
+              labelColor: AppColors.brandPrimary,
+              unselectedLabelColor: AppColors.getTextSecondaryColor(context),
+              indicator: const BoxDecoration(),
+              dividerColor: AppColors.getBorderColor(context),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+              tabs: const [
+                Tab(text: 'Подписки'),
+                Tab(text: 'Подписчики'),
+              ],
+            ),
+          ),
 
-          // Пилюля — глобальный виджет с синхронизацией с PageView
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Center(
-              child: SegmentedPill(
-                left: 'Подписки',
-                right: 'Подписчики',
-                value: _index,
-                width: 280,
-                height: 40,
-                duration: _kTabAnim,
-                curve: _kTabCurve,
-                haptics: true,
-                onChanged: _switchTo,
+          // Поиск — общий для текущей вкладки (показывается только при _searchFieldVisible)
+          if (_searchFieldVisible) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: _SearchField(
+                controller: _controller,
+                focusNode: _focus,
+                hintText: 'Поиск',
+                onChanged: (_) => setState(() {}), // обновим query
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+          ],
 
-          const SizedBox(height: 16),
-
-          // Поиск — общий для текущей вкладки
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: _SearchField(
-              controller: _controller,
-              focusNode: _focus,
-              hintText: 'Поиск',
-              onChanged: (_) => setState(() {}), // обновим query
-            ),
-          ),
-
-          const SizedBox(height: 8),
-
-          // Контент с горизонтальными свайпами
+          // Контент с TabBarView
           Expanded(
-            child: PageView(
-              controller: _page,
+            child: TabBarView(
+              controller: _tab,
               physics: const BouncingScrollPhysics(),
-              allowImplicitScrolling: true,
-              onPageChanged: (i) {
-                if (_index == i) return; // гард от лишнего setState
-                setState(() => _index = i);
-              },
               children: [
-                // ключи сохраняют вертикальный скролл внутри вкладок
-                _PageKeepAlive(
+                _KeepAliveWrapper(
                   child: SubscriptionsContent(
                     key: const ValueKey('subscriptions'),
                     query: query,
                     userId: widget.userId,
                   ),
                 ),
-                _PageKeepAlive(
+                _KeepAliveWrapper(
                   child: SubscribersContent(
                     key: const ValueKey('subscribers'),
                     query: query,
@@ -165,16 +158,17 @@ class _CommunicationPrefsPageState extends State<CommunicationPrefsPage> {
   }
 }
 
-/// Обёртка для сохранения состояния дочерних списков внутри PageView.
-class _PageKeepAlive extends StatefulWidget {
+/// Обёртка для сохранения состояния вкладок в TabBarView
+class _KeepAliveWrapper extends StatefulWidget {
+  const _KeepAliveWrapper({required this.child});
+
   final Widget child;
-  const _PageKeepAlive({required this.child});
 
   @override
-  State<_PageKeepAlive> createState() => _PageKeepAliveState();
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
 }
 
-class _PageKeepAliveState extends State<_PageKeepAlive>
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
     with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
@@ -203,7 +197,19 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: TextField(
       controller: controller,
       focusNode: focusNode,
       onChanged: onChanged,
@@ -233,26 +239,17 @@ class _SearchField extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+          borderSide: BorderSide.none,
         ),
-      ),
+      ),),
     );
   }
 }

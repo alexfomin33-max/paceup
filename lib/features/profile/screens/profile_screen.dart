@@ -857,7 +857,7 @@ class _ProfileInfoCard extends StatelessWidget {
                             label: 'Подписки',
                           value: following,
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => CommunicationPrefsPage(
                                   startIndex: 0,
@@ -882,7 +882,7 @@ class _ProfileInfoCard extends StatelessWidget {
                             label: 'Подписчики',
                           value: followers,
                           onTap: () {
-                            Navigator.of(context).push(
+                            Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
                                 builder: (_) => CommunicationPrefsPage(
                                   startIndex: 1,

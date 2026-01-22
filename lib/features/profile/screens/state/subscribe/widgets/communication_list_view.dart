@@ -223,6 +223,7 @@ class _UsersSliver extends StatelessWidget {
           child: _CommunicationUserTile(
             key: ValueKey('comm_user_${user.id}_${tab.name}'),
             user: user,
+            tab: tab,
             onToggle: () => notifier.toggleSubscription(user.id),
           ),
         );
@@ -236,10 +237,12 @@ class _CommunicationUserTile extends StatelessWidget {
   const _CommunicationUserTile({
     super.key,
     required this.user,
+    required this.tab,
     required this.onToggle,
   });
 
   final CommunicationUser user;
+  final CommunicationTab tab;
   final VoidCallback onToggle;
 
   @override
@@ -282,19 +285,25 @@ class _CommunicationUserTile extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                onPressed: onToggle,
-                splashRadius: 24,
-                icon: Icon(
-                  user.isSubscribedByMe
-                      ? CupertinoIcons.person_crop_circle_badge_xmark
-                      : CupertinoIcons.person_crop_circle_badge_plus,
-                  size: 26,
-                  color: user.isSubscribedByMe
-                      ? AppColors.error
-                      : AppColors.brandPrimary,
-                ),
-              ),
+              // Логика отображения кнопок/иконок в зависимости от вкладки
+              if (tab == CommunicationTab.subscriptions)
+                // Во вкладке "Подписки": кнопка "Отписаться" если подписан, иначе иконка подписки
+                user.isSubscribedByMe
+                    ? _UnsubscribeButton(onPressed: onToggle)
+                    : IconButton(
+                        onPressed: onToggle,
+                        splashRadius: 24,
+                        icon: Icon(
+                          CupertinoIcons.person_crop_circle_badge_plus,
+                          size: 26,
+                          color: AppColors.brandPrimary,
+                        ),
+                      )
+              else
+                // Во вкладке "Подписчики": кнопка "Подписаться" если не подписан, иначе ничего
+                user.isSubscribedByMe
+                    ? const SizedBox.shrink()
+                    : _SubscribeButton(onPressed: onToggle),
             ],
           ),
         ),
@@ -310,6 +319,72 @@ class _CommunicationUserTile extends StatelessWidget {
       return '${user.age} лет';
     }
     return user.city.isEmpty ? 'Город не указан' : user.city;
+  }
+}
+
+/// ────────────── Кнопка "Отписаться" ──────────────
+class _UnsubscribeButton extends StatelessWidget {
+  const _UnsubscribeButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.getTextPrimaryColor(context).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 1,
+            ),
+          ),
+          child: Text(
+            'Отписаться',
+            style: AppTextStyles.h14w5.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ────────────── Кнопка "Подписаться" ──────────────
+class _SubscribeButton extends StatelessWidget {
+  const _SubscribeButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.button,
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+          ),
+          child: Text(
+            'Подписаться',
+            style: AppTextStyles.h14w5.copyWith(
+              color: AppColors.surface,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
