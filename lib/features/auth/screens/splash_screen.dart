@@ -4,7 +4,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/garmin_sync_service.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../providers/services/fcm_provider.dart';
 
@@ -246,6 +248,54 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
+  /// 🔹 Автоматическая синхронизация Garmin в фоне
+  /// Запускается при запуске приложения, если Garmin подключен
+  /// Не блокирует переход на основной экран
+  Future<void> _syncGarminInBackground() async {
+    try {
+      final garminService = ref.read(garminSyncServiceProvider);
+      
+      // Проверяем, подключен ли Garmin
+      final connectionStatus = await garminService.checkConnection();
+      
+      if (connectionStatus['success'] == true && connectionStatus['connected'] == true) {
+        // Логи отключены
+        // if (kDebugMode) {
+        //   debugPrint('🔄 [Garmin] Запуск автоматической синхронизации...');
+        // }
+        
+        // Синхронизируем 1 последнюю тренировку в фоне (для теста)
+        final syncResult = await garminService.syncAllActivities(limit: 1);
+        
+        // Логи отключены
+        // if (kDebugMode) {
+        //   final syncedCount = syncResult['synced_count'] ?? 0;
+        //   final message = syncResult['message'] ?? 'Синхронизация завершена';
+        //   final unsupportedCount = syncResult['unsupported_count'] ?? 0;
+        //   
+        //   if (syncedCount > 0) {
+        //     debugPrint('✅ [Garmin] Синхронизация завершена. Синхронизировано тренировок: $syncedCount');
+        //   } else if (unsupportedCount > 0) {
+        //     debugPrint('ℹ️ [Garmin] $message');
+        //   } else {
+        //     debugPrint('ℹ️ [Garmin] $message');
+        //   }
+        // }
+      } else {
+        // Логи отключены
+        // if (kDebugMode) {
+        //   debugPrint('ℹ️ [Garmin] Garmin не подключен, синхронизация пропущена');
+        // }
+      }
+    } catch (e) {
+      // Ошибки синхронизации не должны блокировать запуск приложения
+      // Логи отключены
+      // if (kDebugMode) {
+      //   debugPrint('⚠️ [Garmin] Ошибка автоматической синхронизации: $e');
+      // }
+    }
+  }
+
   /// 🔹 Метод проверки авторизации
   /// 1. Проверяет наличие сохраненных токенов (быстро, без сети)
   /// 2. Если токены есть - переходит на основной экран (даже без интернета)
@@ -326,6 +376,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           }
         }
       }
+
+      // ────────── Автоматическая синхронизация Garmin ──────────
+      // Запускаем в фоне, не блокируя переход на основной экран
+      _syncGarminInBackground();
 
       // Синхронизация будет запущена в LentaScreen после загрузки экрана
       // (там пользователь уже точно авторизован и данные готовы)

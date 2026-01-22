@@ -437,27 +437,35 @@ class ApiService {
     final cleaned = raw.replaceFirst(RegExp(r'^\uFEFF'), '').trim();
 
     // ─────────────────────────────────────────────────────────────────────
-    // 🔹 ЛОГИРОВАНИЕ ОШИБОК ОТ БЭКЕНДА
+    // 🔹 ЛОГИ ОТКЛЮЧЕНЫ
     // ─────────────────────────────────────────────────────────────────────
-    if (response.statusCode >= 400) {
-      if (kDebugMode) {
-        debugPrint('❌ [API] HTTP ${response.statusCode} ошибка');
-        debugPrint('❌ [API] URL: ${response.request?.url}');
-        try {
-          if (cleaned.isNotEmpty) {
-            final errorData = json.decode(cleaned);
-            if (errorData is Map<String, dynamic>) {
-              debugPrint('❌ [API] Ошибка от бэкенда: ${errorData.toString()}');
-            } else {
-              debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
-            }
-          }
-        } catch (e) {
-          debugPrint('❌ [API] Не удалось распарсить ошибку: $e');
-          debugPrint('❌ [API] Тело ответа (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
-        }
-      }
-    }
+    // if (kDebugMode) {
+    //   debugPrint('🔹 [API] HTTP ${response.statusCode} ответ от ${response.request?.url}');
+    //   debugPrint('🔹 [API] Полный ответ (первые 2000 символов): ${cleaned.length > 2000 ? cleaned.substring(0, 2000) + "..." : cleaned}');
+    // }
+    
+    // ─────────────────────────────────────────────────────────────────────
+    // 🔹 ЛОГИ ОТКЛЮЧЕНЫ
+    // ─────────────────────────────────────────────────────────────────────
+    // if (response.statusCode >= 400) {
+    //   if (kDebugMode) {
+    //     debugPrint('❌ [API] HTTP ${response.statusCode} ошибка');
+    //     debugPrint('❌ [API] URL: ${response.request?.url}');
+    //     try {
+    //       if (cleaned.isNotEmpty) {
+    //         final errorData = json.decode(cleaned);
+    //         if (errorData is Map<String, dynamic>) {
+    //           debugPrint('❌ [API] Ошибка от бэкенда: ${errorData.toString()}');
+    //         } else {
+    //           debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+    //         }
+    //       }
+    //     } catch (e) {
+    //       debugPrint('❌ [API] Не удалось распарсить ошибку: $e');
+    //       debugPrint('❌ [API] Тело ответа (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+    //     }
+    //   }
+    // }
 
     // Проверяем успешность HTTP запроса
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -475,24 +483,25 @@ class ApiService {
           final jsonMatch = RegExp(r'\{.*\}', dotAll: true).firstMatch(cleaned);
           if (jsonMatch != null) {
             jsonContent = jsonMatch.group(0)!;
-            if (kDebugMode) {
-              debugPrint(
-                '⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа',
-              );
-            }
+            // Логи отключены
+            // if (kDebugMode) {
+            //   debugPrint(
+            //     '⚠️ API: Обнаружен HTML перед JSON, извлечен JSON из ответа',
+            //   );
+            // }
           } else {
-            // Логируем первые 500 символов HTML для отладки
-            if (kDebugMode) {
-              final htmlPreview = cleaned.length > 500
-                  ? '${cleaned.substring(0, 500)}...'
-                  : cleaned;
-              debugPrint(
-                '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
-              );
-              debugPrint(
-                '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
-              );
-            }
+            // Логи отключены
+            // if (kDebugMode) {
+            //   final htmlPreview = cleaned.length > 500
+            //       ? '${cleaned.substring(0, 500)}...'
+            //       : cleaned;
+            //   debugPrint(
+            //     '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
+            //   );
+            //   debugPrint(
+            //     '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
+            //   );
+            // }
             throw ApiException(
               "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
             );
@@ -506,20 +515,34 @@ class ApiService {
           return {'data': decoded};
         }
 
+        // 🔹 ЛОГИ ОТКЛЮЧЕНЫ
+        // if (kDebugMode && response.request?.url.toString().contains('garmin') == true) {
+        //   debugPrint('🔹 [API] Garmin ответ получен:');
+        //   debugPrint('🔹 [API] Полный JSON ответ: ${json.encode(decoded)}');
+        //   if (decoded.containsKey('debug')) {
+        //     debugPrint('🔹 [API] DEBUG поле найдено: ${json.encode(decoded['debug'])}');
+        //   }
+        //   if (decoded.containsKey('version')) {
+        //     debugPrint('🔹 [API] Версия: ${decoded['version']}');
+        //   }
+        // }
+
         // Проверяем поля "ok" или "success" если есть
         final data = decoded;
         if (data.containsKey('ok') && data['ok'] == false) {
           final errorMsg = data['error']?.toString() ?? 'API вернул ошибку';
-          if (kDebugMode) {
-            debugPrint('❌ [API] Ошибка от бэкенда (ok=false): $errorMsg');
-          }
+          // Логи отключены
+          // if (kDebugMode) {
+          //   debugPrint('❌ [API] Ошибка от бэкенда (ok=false): $errorMsg');
+          // }
           throw ApiException(errorMsg);
         }
         if (data.containsKey('success') && data['success'] == false) {
           final errorMsg = data['message']?.toString() ?? 'API вернул ошибку';
-          if (kDebugMode) {
-            debugPrint('❌ [API] Ошибка от бэкенда (success=false): $errorMsg');
-          }
+          // Логи отключены
+          // if (kDebugMode) {
+          //   debugPrint('❌ [API] Ошибка от бэкенда (success=false): $errorMsg');
+          // }
           throw ApiException(errorMsg);
         }
         
@@ -531,9 +554,10 @@ class ApiService {
           final errorMsg = data['error'].toString();
           // Если ошибка не пустая и не является частью успешного ответа
           if (errorMsg.isNotEmpty && !errorMsg.toLowerCase().contains('null')) {
-            if (kDebugMode) {
-              debugPrint('❌ [API] Ошибка от бэкенда (поле error): $errorMsg');
-            }
+            // Логи отключены
+            // if (kDebugMode) {
+            //   debugPrint('❌ [API] Ошибка от бэкенда (поле error): $errorMsg');
+            // }
             throw ApiException(errorMsg);
           }
         }
@@ -541,9 +565,10 @@ class ApiService {
             data['message'] != null && 
             data['message'].toString().toLowerCase().contains('ошибка')) {
           final errorMsg = data['message'].toString();
-          if (kDebugMode) {
-            debugPrint('❌ [API] Ошибка от бэкенда (поле message): $errorMsg');
-          }
+          // Логи отключены
+          // if (kDebugMode) {
+          //   debugPrint('❌ [API] Ошибка от бэкенда (поле message): $errorMsg');
+          // }
           throw ApiException(errorMsg);
         }
 
@@ -557,11 +582,12 @@ class ApiService {
             try {
               final jsonContent = jsonMatch.group(0)!;
               final decoded = json.decode(jsonContent);
-              if (kDebugMode) {
-                debugPrint(
-                  '⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга',
-                );
-              }
+              // Логи отключены
+              // if (kDebugMode) {
+              //   debugPrint(
+              //     '⚠️ API: Обнаружен HTML перед JSON, успешно извлечен JSON после ошибки парсинга',
+              //   );
+              // }
               if (decoded is! Map<String, dynamic>) {
                 return {'data': decoded};
               }
@@ -583,26 +609,27 @@ class ApiService {
             }
           }
 
-          // Логируем первые 500 символов HTML для отладки
-          if (kDebugMode) {
-            final htmlPreview = cleaned.length > 500
-                ? '${cleaned.substring(0, 500)}...'
-                : cleaned;
-            debugPrint(
-              '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
-            );
-            debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
-          }
+          // Логи отключены
+          // if (kDebugMode) {
+          //   final htmlPreview = cleaned.length > 500
+          //       ? '${cleaned.substring(0, 500)}...'
+          //       : cleaned;
+          //   debugPrint(
+          //     '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
+          //   );
+          //   debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
+          // }
           throw ApiException(
             "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
           );
         }
-        if (kDebugMode) {
-          debugPrint('❌ API: Ошибка парсинга JSON: $e');
-          debugPrint(
-            '❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}',
-          );
-        }
+        // Логи отключены
+        // if (kDebugMode) {
+        //   debugPrint('❌ API: Ошибка парсинга JSON: $e');
+        //   debugPrint(
+        //     '❌ API: Ответ сервера (первые 500 символов): ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}',
+        //   );
+        // }
         throw ApiException("Некорректный JSON: $e");
       }
     }
@@ -619,18 +646,20 @@ class ApiService {
               errorData['error']?.toString() ??
               errorData['message']?.toString() ??
               errorMessage;
-          if (kDebugMode) {
-            debugPrint('❌ [API] Ошибка HTTP ${response.statusCode}: $errorMessage');
-            debugPrint('❌ [API] Полный ответ: ${errorData.toString()}');
-          }
+          // Логи отключены
+          // if (kDebugMode) {
+          //   debugPrint('❌ [API] Ошибка HTTP ${response.statusCode}: $errorMessage');
+          //   debugPrint('❌ [API] Полный ответ: ${errorData.toString()}');
+          // }
         }
       }
     } catch (e) {
-      // Игнорируем ошибки парсинга, но логируем
-      if (kDebugMode) {
-        debugPrint('❌ [API] Не удалось распарсить ошибку HTTP ${response.statusCode}: $e');
-        debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
-      }
+      // Игнорируем ошибки парсинга
+      // Логи отключены
+      // if (kDebugMode) {
+      //   debugPrint('❌ [API] Не удалось распарсить ошибку HTTP ${response.statusCode}: $e');
+      //   debugPrint('❌ [API] Тело ответа: ${cleaned.length > 500 ? '${cleaned.substring(0, 500)}...' : cleaned}');
+      // }
     }
 
     throw ApiException(errorMessage);

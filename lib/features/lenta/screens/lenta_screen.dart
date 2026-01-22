@@ -387,17 +387,20 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         }
       }
 
+      // ЗАКОММЕНТИРОВАНО: Strava синхронизация временно отключена
       // Синхронизируем тренировки из Strava (если настроена синхронизация)
-      _syncStravaActivities();
+      // _syncStravaActivities();
     } catch (e) {
       _isSyncingHealthData = false;
     }
   }
 
+  /// ЗАКОММЕНТИРОВАНО: Strava синхронизация временно отключена
   /// Синхронизирует тренировки из Strava
   ///
   /// Вызывается автоматически при загрузке экрана, если у пользователя
   /// настроена синхронизация со Strava
+  /*
   Future<void> _syncStravaActivities() async {
     // Предотвращаем двойной запуск синхронизации
     if (_isSyncingStrava) return;
@@ -423,6 +426,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       _isSyncingStrava = false;
     }
   }
+  */
 
   // ———————————— Refresh через Riverpod ————————————
 
