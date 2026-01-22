@@ -28,6 +28,13 @@ class LeaderboardTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tableRows = _buildTableRows();
+    
+    // ── Если нет строк для отображения, не рендерим контейнер
+    if (tableRows.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -42,7 +49,7 @@ class LeaderboardTable extends StatelessWidget {
         // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
         // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
         // ── Таблица начинается с 4-го места
-        children: _buildTableRows(),
+        children: tableRows,
       ),
     );
   }

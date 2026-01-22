@@ -79,7 +79,7 @@ class ActiveContent extends ConsumerWidget {
 
                   // Захардкоженные задачи (пока оставляем)
                   if (tasksByMonth.isEmpty) ...[
-                    const _MonthLabel('Июнь 2025'),
+                    const _MonthLabel('Январь 2026'),
                     const SizedBox(height: 8),
                   ],
                   const TaskCard(
