@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/segmented_pill.dart';
 import '../../../core/widgets/app_bar.dart'; // ← глобальная шапка
 import '../../../core/widgets/transparent_route.dart'; // ← для прозрачного перехода
 import '../../../providers/services/auth_provider.dart'; // ← для проверки userId
@@ -25,22 +24,23 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen> {
-  static const Duration _kTabAnim = Duration(milliseconds: 300);
-  static const Curve _kTabCurve = Curves.easeOutCubic;
-
-  int _index = 0;
-  late final PageController _page;
+class _TasksScreenState extends ConsumerState<TasksScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tab;
 
   @override
   void initState() {
     super.initState();
-    _page = PageController(initialPage: _index);
+    _tab = TabController(
+      length: 2,
+      vsync: this,
+      initialIndex: 0,
+    );
   }
 
   @override
   void dispose() {
-    _page.dispose();
+    _tab.dispose();
     super.dispose();
   }
 
@@ -50,12 +50,15 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
     final userIdAsync = ref.watch(currentUserIdProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
       // ── Глобальная шапка
       appBar: PaceAppBar(
         title: 'Задачи',
         showBack: false, // на этом экране «назад» не нужен
+        showBottomDivider: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         leadingWidth: 56, // одна иконка слева
         // слева — иконка плюса (только для пользователя с id=1)
         leading: userIdAsync.when(
@@ -95,65 +98,72 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         ),
       ),
 
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 14),
+      body: Column(
+        children: [
+          // ── Вкладки: TabBar в стиле communication_screen
+          Container(
+            color: AppColors.getSurfaceColor(context),
+            child: TabBar(
+              controller: _tab,
+              isScrollable: false,
+              labelColor: AppColors.brandPrimary,
+              unselectedLabelColor: AppColors.getTextSecondaryColor(context),
+              indicator: const BoxDecoration(),
+              dividerColor: AppColors.getBorderColor(context),
+              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+              tabs: const [
+                Tab(text: 'Активные'),
+                Tab(text: 'Доступные'),
+              ],
+            ),
+          ),
 
-            // Пилюля как глобальный виджет
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Center(
-                child: SegmentedPill(
-                  left: 'Активные',
-                  right: 'Доступные',
-                  value: _index,
-                  width: 280,
-                  height: 40,
-                  duration: _kTabAnim,
-                  curve: _kTabCurve,
-                  haptics: true,
-                  onChanged: (v) {
-                    if (_index == v) return;
-                    setState(() => _index = v);
-                    _page.animateToPage(
-                      v,
-                      duration: _kTabAnim,
-                      curve: _kTabCurve,
-                    );
-                  },
+          // Контент с TabBarView
+          Expanded(
+            child: TabBarView(
+              controller: _tab,
+              physics: const BouncingScrollPhysics(),
+              children: const [
+                _KeepAliveWrapper(
+                  child: ActiveContent(key: ValueKey('tasks_active')),
                 ),
-              ),
+                _KeepAliveWrapper(
+                  child: AvailableContent(key: ValueKey('tasks_available')),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 16),
-
-            // PageView БЕЗ внешнего padding (жесты по краю работают)
-            Expanded(
-              child: PageView(
-                controller: _page,
-                physics: const BouncingScrollPhysics(),
-                allowImplicitScrolling: true,
-                onPageChanged: (i) {
-                  if (_index == i) return; // гард от лишних setState
-                  setState(() => _index = i);
-                },
-                children: const [
-                  ActiveContent(key: PageStorageKey('tasks_active')),
-                  AvailableContent(key: PageStorageKey('tasks_available')),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 // ————————————————————————————————————————————————————————————————
-//                 Мелкие утилиты UI: иконка
+//                 Мелкие утилиты UI: иконка и обёртки
 // ————————————————————————————————————————————————————————————————
+
+/// Обёртка для сохранения состояния вкладок в TabBarView
+class _KeepAliveWrapper extends StatefulWidget {
+  const _KeepAliveWrapper({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
+}
+
+class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
+  }
+}
 
 /// Единый вид для иконок в AppBar — размер 22, tap-target 42×42
 class _NavIcon extends StatelessWidget {

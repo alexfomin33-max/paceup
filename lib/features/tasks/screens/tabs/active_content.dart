@@ -308,12 +308,11 @@ class TaskCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 1,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
             offset: Offset(0, 1),
           ),
         ],
@@ -406,12 +405,11 @@ class ExpeditionCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        border: Border.all(color: AppColors.getBorderColor(context)),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: const [
           BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 1,
+            color: AppColors.twinshadow,
+            blurRadius: 20,
             offset: Offset(0, 1),
           ),
         ],

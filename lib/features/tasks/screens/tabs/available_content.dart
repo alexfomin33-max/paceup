@@ -260,12 +260,11 @@ class AvailableTaskCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          border: Border.all(color: AppColors.getBorderColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: const [
             BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 1,
+              color: AppColors.twinshadow,
+              blurRadius: 20,
               offset: Offset(0, 1),
             ),
           ],
@@ -349,12 +348,11 @@ class AvailableExpeditionCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          border: Border.all(color: AppColors.getBorderColor(context)),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: const [
             BoxShadow(
-              color: AppColors.shadowSoft,
-              blurRadius: 1,
+              color: AppColors.twinshadow,
+              blurRadius: 20,
               offset: Offset(0, 1),
             ),
           ],

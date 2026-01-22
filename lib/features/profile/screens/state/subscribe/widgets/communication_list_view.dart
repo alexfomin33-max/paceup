@@ -293,7 +293,7 @@ class _CommunicationUserTile extends StatelessWidget {
                     : IconButton(
                         onPressed: onToggle,
                         splashRadius: 24,
-                        icon: Icon(
+                        icon: const Icon(
                           CupertinoIcons.person_crop_circle_badge_plus,
                           size: 26,
                           color: AppColors.brandPrimary,
@@ -312,12 +312,6 @@ class _CommunicationUserTile extends StatelessWidget {
   }
 
   static String _subtitle(CommunicationUser user) {
-    if (user.age > 0 && user.city.isNotEmpty) {
-      return '${user.age} лет  ·  ${user.city}';
-    }
-    if (user.age > 0) {
-      return '${user.age} лет';
-    }
     return user.city.isEmpty ? 'Город не указан' : user.city;
   }
 }
