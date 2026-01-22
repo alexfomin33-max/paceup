@@ -12,7 +12,12 @@ import '../../../providers/things_notifier.dart';
 import 'widgets/market_things_card.dart';
 
 class ThingsContent extends ConsumerStatefulWidget {
-  const ThingsContent({super.key});
+  final bool isFiltersVisible;
+
+  const ThingsContent({
+    super.key,
+    this.isFiltersVisible = false,
+  });
 
   @override
   ConsumerState<ThingsContent> createState() => _ThingsContentState();
@@ -71,7 +76,8 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
     final thingsState = ref.watch(thingsProvider);
     final items = thingsState.items;
 
-    const headerCount = 1; // только селектор категории
+    // Количество элементов заголовка (селектор категории показывается только если isFiltersVisible)
+    final headerCount = widget.isFiltersVisible ? 1 : 0;
 
     // ── показываем индикатор загрузки
     if (thingsState.isLoading && items.isEmpty) {
@@ -121,21 +127,33 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
           parent: BouncingScrollPhysics(),
         ),
         itemCount: items.length + headerCount + (thingsState.hasMore ? 1 : 0),
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        separatorBuilder: (_, index) {
+          // Убираем отступ после выпадающего меню
+          if (widget.isFiltersVisible && index == 0) {
+            return const SizedBox.shrink();
+          }
+          return const SizedBox(height: 10);
+        },
         itemBuilder: (_, index) {
-          if (index == 0) {
-            return _CategoryDropdown(
-              value: _selected,
-              options: _categories,
-              onChanged: (v) async {
-                setState(() => _selected = v ?? 'Все');
-                await _updateCategoryFilter();
-              },
+          if (index == 0 && widget.isFiltersVisible) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+              child: _CategoryDropdown(
+                value: _selected,
+                options: _categories,
+                onChanged: (v) async {
+                  setState(() => _selected = v ?? 'Все');
+                  await _updateCategoryFilter();
+                },
+              ),
             );
           }
 
+          // Если меню фильтров скрыто, корректируем индекс для элементов списка
+          final itemIndex = widget.isFiltersVisible ? index - headerCount : index;
+
           // ── кнопка загрузки следующей страницы
-          if (index == items.length + headerCount) {
+          if (itemIndex == items.length) {
             if (thingsState.isLoadingMore) {
               return const Center(
                 child: Padding(
@@ -157,15 +175,20 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
             return const SizedBox.shrink();
           }
 
-          final i = index - headerCount;
-          if (i >= items.length) return const SizedBox.shrink();
+          if (itemIndex >= items.length) return const SizedBox.shrink();
 
-          final isOpen = _expanded.contains(items[i].id);
+          final isOpen = _expanded.contains(items[itemIndex].id);
 
-          return GoodsCard(
-            item: items[i],
-            expanded: isOpen,
-            onToggle: () => setState(() => _expanded.toggle(items[i].id)),
+          // Добавляем отступ над первой карточкой
+          final isFirstCard = itemIndex == 0;
+
+          return Padding(
+            padding: EdgeInsets.only(top: isFirstCard ? 16 : 0),
+            child: GoodsCard(
+              item: items[itemIndex],
+              expanded: isOpen,
+              onToggle: () => setState(() => _expanded.toggle(items[itemIndex].id)),
+            ),
           );
         },
       ),
@@ -188,60 +211,47 @@ class _CategoryDropdown extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final dropdownWidth = screenWidth * 0.35;
-
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: SizedBox(
-          width: dropdownWidth,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.getSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              border: Border.all(
-                color: AppColors.getBorderColor(context),
-                width: 0.7,
-              ),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: value,
-                isDense: true,
-                icon: Icon(
-                  CupertinoIcons.chevron_down,
-                  size: 14,
-                  color: AppColors.getIconPrimaryColor(context),
-                ),
-                dropdownColor: AppColors.getSurfaceColor(context),
-                menuMaxHeight: 300,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 13,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isDense: true,
+          isExpanded: true,
+          icon: Icon(
+            CupertinoIcons.chevron_down,
+            size: 18,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+          dropdownColor: AppColors.getSurfaceColor(context),
+          menuMaxHeight: 300,
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+          onChanged: onChanged,
+          items: options.map((String option) {
+            return DropdownMenuItem<String>(
+              value: option,
+              child: Text(
+                option,
+                style: AppTextStyles.h14w4.copyWith(
                   color: AppColors.getTextPrimaryColor(context),
                 ),
-                onChanged: onChanged,
-                items: options.map((String option) {
-                  return DropdownMenuItem<String>(
-                    value: option,
-                    child: Text(
-                      option,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        color: AppColors.getTextPrimaryColor(context),
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  );
-                }).toList(),
               ),
-            ),
-          ),
+            );
+          }).toList(),
         ),
       ),
     );

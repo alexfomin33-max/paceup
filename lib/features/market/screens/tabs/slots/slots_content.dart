@@ -17,7 +17,12 @@ import '../../../models/event_option.dart';
 import 'widgets/market_slot_card.dart';
 
 class SlotsContent extends ConsumerStatefulWidget {
-  const SlotsContent({super.key});
+  final bool isSearchVisible;
+
+  const SlotsContent({
+    super.key,
+    this.isSearchVisible = false,
+  });
 
   @override
   ConsumerState<SlotsContent> createState() => _SlotsContentState();
@@ -164,25 +169,27 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     // Это не вызывает пересоздание виджета при изменении фильтра
     final slotsState = ref.watch(slotsProvider);
 
-    const headerCount = 1; // только строка поиска
+    // Количество элементов заголовка (строка поиска показывается только если isSearchVisible)
+    final headerCount = widget.isSearchVisible ? 1 : 0;
 
     // Состояние загрузки (начальная загрузка)
     if (slotsState.isLoading && slotsState.items.isEmpty) {
       return Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: _EventDropdownField(
-              key: const ValueKey('event_dropdown_field'),
-              controller: _searchCtrl,
-              focusNode: _searchFocusNode,
-              hintText: 'Поиск события',
-              selectedEvent: _selectedEvent,
-              onEventSelected: _onEventSelected,
-              onClear: _onClear,
-              searchFunction: _searchEvents,
+          if (widget.isSearchVisible)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+              child: _EventDropdownField(
+                key: const ValueKey('event_dropdown_field'),
+                controller: _searchCtrl,
+                focusNode: _searchFocusNode,
+                hintText: 'Поиск события',
+                selectedEvent: _selectedEvent,
+                onEventSelected: _onEventSelected,
+                onClear: _onClear,
+                searchFunction: _searchEvents,
+              ),
             ),
-          ),
           const SizedBox(height: 40),
           const CupertinoActivityIndicator(),
           const SizedBox(height: 16),
@@ -200,19 +207,20 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.error != null && slotsState.items.isEmpty) {
       return Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: _EventDropdownField(
-              key: const ValueKey('event_dropdown_field'),
-              controller: _searchCtrl,
-              focusNode: _searchFocusNode,
-              hintText: 'Поиск события',
-              selectedEvent: _selectedEvent,
-              onEventSelected: _onEventSelected,
-              onClear: _onClear,
-              searchFunction: _searchEvents,
+          if (widget.isSearchVisible)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+              child: _EventDropdownField(
+                key: const ValueKey('event_dropdown_field'),
+                controller: _searchCtrl,
+                focusNode: _searchFocusNode,
+                hintText: 'Поиск события',
+                selectedEvent: _selectedEvent,
+                onEventSelected: _onEventSelected,
+                onClear: _onClear,
+                searchFunction: _searchEvents,
+              ),
             ),
-          ),
           const SizedBox(height: 40),
           Icon(
             CupertinoIcons.exclamationmark_triangle,
@@ -251,19 +259,20 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     if (slotsState.items.isEmpty) {
       return Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: _EventDropdownField(
-              key: const ValueKey('event_dropdown_field'),
-              controller: _searchCtrl,
-              focusNode: _searchFocusNode,
-              hintText: 'Поиск события',
-              selectedEvent: _selectedEvent,
-              onEventSelected: _onEventSelected,
-              onClear: _onClear,
-              searchFunction: _searchEvents,
+          if (widget.isSearchVisible)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+              child: _EventDropdownField(
+                key: const ValueKey('event_dropdown_field'),
+                controller: _searchCtrl,
+                focusNode: _searchFocusNode,
+                hintText: 'Поиск события',
+                selectedEvent: _selectedEvent,
+                onEventSelected: _onEventSelected,
+                onClear: _onClear,
+                searchFunction: _searchEvents,
+              ),
             ),
-          ),
           const SizedBox(height: 40),
           Text(
             'Слоты не найдены',
@@ -293,25 +302,37 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
             slotsState.items.length +
             headerCount +
             (slotsState.hasMore ? 1 : 0),
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        separatorBuilder: (_, index) {
+          // Убираем отступ после поля поиска
+          if (widget.isSearchVisible && index == 0) {
+            return const SizedBox.shrink();
+          }
+          return const SizedBox(height: 10);
+        },
         itemBuilder: (_, index) {
-          if (index == 0) {
+          if (index == 0 && widget.isSearchVisible) {
             return RepaintBoundary(
-              child: _EventDropdownField(
-                key: const ValueKey('event_dropdown_field'),
-                controller: _searchCtrl,
-                focusNode: _searchFocusNode,
-                hintText: 'Поиск события',
-                selectedEvent: _selectedEvent,
-                onEventSelected: _onEventSelected,
-                onClear: _onClear,
-                searchFunction: _searchEvents,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
+                child: _EventDropdownField(
+                  key: const ValueKey('event_dropdown_field'),
+                  controller: _searchCtrl,
+                  focusNode: _searchFocusNode,
+                  hintText: 'Поиск события',
+                  selectedEvent: _selectedEvent,
+                  onEventSelected: _onEventSelected,
+                  onClear: _onClear,
+                  searchFunction: _searchEvents,
+                ),
               ),
             );
           }
 
+          // Если поле поиска скрыто, корректируем индекс для элементов списка
+          final itemIndex = widget.isSearchVisible ? index - headerCount : index;
+
           // Индикатор загрузки следующей страницы в конце списка
-          if (index == slotsState.items.length + headerCount) {
+          if (itemIndex == slotsState.items.length) {
             return slotsState.isLoadingMore
                 ? const Padding(
                     padding: EdgeInsets.all(16.0),
@@ -320,19 +341,24 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
                 : const SizedBox.shrink();
           }
 
-          final i = index - headerCount;
-          final item = slotsState.items[i];
-          final isOpen = _expanded.contains(i);
+          final item = slotsState.items[itemIndex];
+          final isOpen = _expanded.contains(itemIndex);
 
-          return MarketSlotCard(
-            item: item,
-            expanded: isOpen,
-            onToggle: () => setState(() => _expanded.toggle(i)),
-            onChatClosed: () {
-              // Обновляем список слотов после возврата из экрана чата
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.loadInitial();
-            },
+          // Добавляем отступ над первой карточкой
+          final isFirstCard = itemIndex == 0;
+
+          return Padding(
+            padding: EdgeInsets.only(top: isFirstCard ? 16 : 0),
+            child: MarketSlotCard(
+              item: item,
+              expanded: isOpen,
+              onToggle: () => setState(() => _expanded.toggle(itemIndex)),
+              onChatClosed: () {
+                // Обновляем список слотов после возврата из экрана чата
+                final notifier = ref.read(slotsProvider.notifier);
+                notifier.loadInitial();
+              },
+            ),
           );
         },
       ),
@@ -686,69 +712,72 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
 
     return CompositedTransformTarget(
       link: _layerLink,
-      child: TextField(
-        key: _fieldKey,
-        controller: widget.controller,
-        focusNode: widget.focusNode,
-        onSubmitted: (String value) {
-          _hideOptions();
-        },
-        cursorColor: AppColors.getTextSecondaryColor(context),
-        textInputAction: TextInputAction.search,
-        enableInteractiveSelection: true,
-        style: AppTextStyles.h14w4.copyWith(
-          color: AppColors.getTextPrimaryColor(context),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.twinshadow,
+              blurRadius: 20,
+              offset: Offset(0, 1),
+            ),
+          ],
         ),
-        decoration: InputDecoration(
-          hintText: widget.hintText,
-          hintStyle: AppTextStyles.h14w4Place.copyWith(
-            color: AppColors.getTextPlaceholderColor(context),
+        child: TextField(
+          key: _fieldKey,
+          controller: widget.controller,
+          focusNode: widget.focusNode,
+          onSubmitted: (String value) {
+            _hideOptions();
+          },
+          cursorColor: AppColors.getTextSecondaryColor(context),
+          textInputAction: TextInputAction.search,
+          enableInteractiveSelection: true,
+          style: AppTextStyles.h14w4.copyWith(
+            color: AppColors.getTextPrimaryColor(context),
           ),
-          isDense: true,
-          filled: true,
-          fillColor: AppColors.getSurfaceColor(context),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 17,
-          ),
-          prefixIcon: Icon(
-            CupertinoIcons.search,
-            size: 18,
-            color: AppColors.getIconSecondaryColor(context),
-          ),
-          suffixIcon: hasText
-              ? IconButton(
-                  icon: Icon(
-                    CupertinoIcons.xmark_circle_fill,
-                    size: 18,
-                    color: AppColors.getIconSecondaryColor(context),
-                  ),
-                  onPressed: () {
-                    widget.controller.clear();
-                    _hideOptions();
-                    widget.onClear();
-                  },
-                )
-              : null,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            hintStyle: AppTextStyles.h14w4Place.copyWith(
+              color: AppColors.getTextPlaceholderColor(context),
             ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            isDense: true,
+            filled: true,
+            fillColor: AppColors.getSurfaceColor(context),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 17,
             ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            prefixIcon: Icon(
+              CupertinoIcons.search,
+              size: 18,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            suffixIcon: hasText
+                ? IconButton(
+                    icon: Icon(
+                      CupertinoIcons.xmark_circle_fill,
+                      size: 18,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                    onPressed: () {
+                      widget.controller.clear();
+                      _hideOptions();
+                      widget.onClear();
+                    },
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderSide: BorderSide.none,
             ),
           ),
         ),
