@@ -440,6 +440,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
         // ─── Глобальный AppBar ───
         appBar: PaceAppBar(
+          showBottomDivider: false,
+          elevation: 0,
           title: 'Чаты',
           actions: [
             GestureDetector(

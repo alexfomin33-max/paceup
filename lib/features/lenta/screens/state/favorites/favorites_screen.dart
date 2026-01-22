@@ -31,7 +31,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
       backgroundColor: AppColors.getBackgroundColor(context),
 
       // ── Глобальная шапка без нижнего бордера
-      appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false),
+      appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false, elevation: 0,),
 
       body: Column(
         children: [

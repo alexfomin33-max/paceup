@@ -346,15 +346,6 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
 
           // Загружаем обновленный список оповещений
           await _loadAlerts();
-
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Оповещение создано'),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
         }
       } else {
         // ─── Ошибка от сервера ───
@@ -603,17 +594,32 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
                           ),
                         )
                       else
-                        ..._alerts.map(
-                          (alert) => Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
-                            child: _AlertCard(
-                              alert: alert,
-                              onOpen: alert.eventId != null
-                                  ? () => _openEvent(alert.eventId!)
-                                  : null,
-                              onDelete: () => _deleteAlert(alert.id),
-                            ),
-                          ),
+                        ..._alerts.asMap().entries.map(
+                          (entry) {
+                            final index = entry.key;
+                            final alert = entry.value;
+                            return TweenAnimationBuilder<double>(
+                              key: ValueKey('alert_${alert.id}_${_alerts.length}'),
+                              tween: Tween<double>(begin: 0.0, end: 1.0),
+                              duration: Duration(milliseconds: 500 + (index * 50)),
+                              curve: Curves.easeIn,
+                              builder: (context, opacity, child) {
+                                return Opacity(
+                                  opacity: opacity,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: _AlertCard(
+                                      alert: alert,
+                                      onOpen: alert.eventId != null
+                                          ? () => _openEvent(alert.eventId!)
+                                          : null,
+                                      onDelete: () => _deleteAlert(alert.id),
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
                         ),
                     ],
                   ),

@@ -65,13 +65,13 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Начать общение'),
+        backgroundColor: AppColors.getSurfaceColor(context),
+        appBar: const PaceAppBar(title: 'Начать общение', showBottomDivider: false, elevation: 0,),
         body: Column(
           children: [
             // ─── Поле поиска ───
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
               child: _SearchField(
                 controller: _searchController,
                 hintText: 'Поиск пользователей',
@@ -113,49 +113,52 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      cursorColor: AppColors.getTextSecondaryColor(context),
-      textInputAction: TextInputAction.search,
-      style: AppTextStyles.h14w4.copyWith(
-        color: AppColors.getTextPrimaryColor(context),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      decoration: InputDecoration(
-        prefixIcon: Icon(
-          CupertinoIcons.search,
-          size: 18,
-          color: AppColors.getIconSecondaryColor(context),
+      child: TextField(
+        controller: controller,
+        cursorColor: AppColors.getTextSecondaryColor(context),
+        textInputAction: TextInputAction.search,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
         ),
-        isDense: true,
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        hintText: hintText,
-        hintStyle: AppTextStyles.h14w4Place.copyWith(
-          color: AppColors.getTextPlaceholderColor(context),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 17,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+        decoration: InputDecoration(
+          prefixIcon: Icon(
+            CupertinoIcons.search,
+            size: 18,
+            color: AppColors.getIconSecondaryColor(context),
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          hintText: hintText,
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 17,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderSide: BorderSide.none
           ),
         ),
       ),
@@ -237,15 +240,9 @@ class _PeopleList extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: AppColors.getSurfaceColor(context),
-              border: Border(
-                top: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 0.5,
-                ),
-                bottom: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 0.5,
-                ),
+              border: const Border(
+                top: BorderSide.none,
+                bottom: BorderSide.none
               ),
             ),
             child: Column(
@@ -426,7 +423,7 @@ class _RowTileState extends State<_RowTile> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${widget.user.age} лет, ${widget.user.city}',
+                      '${widget.user.city}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -440,16 +437,30 @@ class _RowTileState extends State<_RowTile> {
               ),
             ),
 
-            // ─── Остальная зона карточки → чат ───
-            IconButton(
-              tooltip: 'Написать',
-              splashRadius: 22,
-              icon: const Icon(
-                CupertinoIcons.chat_bubble_text,
-                size: 20,
-                color: AppColors.brandPrimary,
+            // ─── Кнопка "Написать" → чат ───
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _openChat(context),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.brandPrimary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                   
+                  ),
+                  child: Text(
+                    'Написать',
+                    style: AppTextStyles.h14w5.copyWith(
+                      color: AppColors.brandPrimary,
+                    ),
+                  ),
+                ),
               ),
-              onPressed: () => _openChat(context),
             ),
           ],
         ),

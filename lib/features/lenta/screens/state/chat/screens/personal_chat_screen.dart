@@ -994,7 +994,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                   ? AppColors.getSurfaceColor(context)
                   : AppColors.surface,
               surfaceTintColor: Colors.transparent,
-              elevation: 0.5,
+              
+              elevation: 0,
               scrolledUnderElevation: 0, // ─── Убираем тень при скролле ───
               leadingWidth: 40,
               leading: Transform.translate(
