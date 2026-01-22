@@ -33,6 +33,8 @@ class MarketScreen extends ConsumerStatefulWidget {
 class _MarketScreenState extends ConsumerState<MarketScreen> {
   int _index = 0; // 0 — «Слоты», 1 — «Вещи»
   late final PageController _page = PageController(initialPage: _index);
+  bool _isSearchVisible = false; // Видимость поля поиска во вкладке «Слоты»
+  bool _isFiltersVisible = false; // Видимость меню фильтров во вкладке «Вещи»
 
   @override
   void dispose() {
@@ -49,10 +51,13 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
       // ─── Верхняя панель: глобальный PaceAppBar ───
       appBar: PaceAppBar(
+        backgroundColor: AppColors.twinBg,
+        showBottomDivider: false,
+        elevation: 0,
         title: 'Маркет',
         showBack: false,
         leadingWidth: 90,
@@ -92,22 +97,56 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            tooltip: 'Уведомления',
-            onPressed: () {
-              Navigator.of(context, rootNavigator: true).push(
-                TransparentPageRoute(
-                  builder: (_) => const AlertCreationScreen(),
-                ),
-              );
-            },
-            icon: Icon(
-              CupertinoIcons.bell,
-              size: 22,
-              color: AppColors.getIconPrimaryColor(context),
+          // Иконка поиска (только во вкладке «Слоты»)
+          if (_index == 0)
+            IconButton(
+              tooltip: 'Поиск',
+              onPressed: () {
+                setState(() {
+                  _isSearchVisible = !_isSearchVisible;
+                });
+              },
+              icon: Icon(
+                CupertinoIcons.search,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              splashRadius: 22,
             ),
-            splashRadius: 22,
-          ),
+          // Иконка уведомлений (только во вкладке «Слоты»)
+          if (_index == 0)
+            IconButton(
+              tooltip: 'Уведомления',
+              onPressed: () {
+                Navigator.of(context, rootNavigator: true).push(
+                  TransparentPageRoute(
+                    builder: (_) => const AlertCreationScreen(),
+                  ),
+                );
+              },
+              icon: Icon(
+                CupertinoIcons.bell,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              splashRadius: 22,
+            ),
+          // Иконка фильтров (только во вкладке «Вещи»)
+          if (_index == 1)
+            IconButton(
+              tooltip: 'Фильтры',
+              onPressed: () {
+                setState(() {
+                  _isFiltersVisible = !_isFiltersVisible;
+                });
+              },
+              icon: Icon(
+                CupertinoIcons.slider_horizontal_3,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              splashRadius: 22,
+            ),
           const SizedBox(width: 6),
         ],
       ),
@@ -115,7 +154,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       // ─── Пилюля под AppBar + контент вкладок со свайпом ───
       body: Column(
         children: [
-          const SizedBox(height: 14),
+          const SizedBox(height: 4),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(
@@ -128,11 +167,19 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 duration: _kTabAnim,
                 curve: _kTabCurve,
                 haptics: true,
+                showBorder: false,
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.twinshadow,
+                    blurRadius: 20,
+                    offset: Offset(0, 1),
+                  ),
+                ],
                 onChanged: _onSegChanged,
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          
 
           Expanded(
             child: PageView(
@@ -141,11 +188,27 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
               allowImplicitScrolling: true,
               onPageChanged: (i) {
                 if (_index == i) return; // гард от лишних setState
-                setState(() => _index = i);
+                setState(() {
+                  _index = i;
+                  // Скрываем поле поиска при переключении на другую вкладку
+                  if (i != 0) {
+                    _isSearchVisible = false;
+                  }
+                  // Скрываем меню фильтров при переключении на другую вкладку
+                  if (i != 1) {
+                    _isFiltersVisible = false;
+                  }
+                });
               },
-              children: const [
-                SlotsContent(key: PageStorageKey('market_slots')),
-                ThingsContent(key: PageStorageKey('market_things')),
+              children: [
+                SlotsContent(
+                  key: const PageStorageKey('market_slots'),
+                  isSearchVisible: _isSearchVisible,
+                ),
+                ThingsContent(
+                  key: const PageStorageKey('market_things'),
+                  isFiltersVisible: _isFiltersVisible,
+                ),
               ],
             ),
           ),
