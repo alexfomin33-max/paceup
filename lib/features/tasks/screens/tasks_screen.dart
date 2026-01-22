@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_bar.dart'; // ← глобальная шапка
 import '../../../core/widgets/transparent_route.dart'; // ← для прозрачного перехода
+import '../../../core/widgets/segmented_pill.dart'; // ← пилюля для вкладок
 import '../../../providers/services/auth_provider.dart'; // ← для проверки userId
 
 // контенты по вкладкам
@@ -17,6 +18,10 @@ import '../providers/tasks_provider.dart';
 const double _kAppBarIconSize = 22.0; // сама иконка ~20–22pt
 const double _kAppBarTapTarget = 42.0; // кликабельная область 42×42
 
+// ── Константы для анимации переключения вкладок
+const _kTabAnim = Duration(milliseconds: 300);
+const _kTabCurve = Curves.easeOut;
+
 class TasksScreen extends ConsumerStatefulWidget {
   const TasksScreen({super.key});
 
@@ -24,24 +29,20 @@ class TasksScreen extends ConsumerStatefulWidget {
   ConsumerState<TasksScreen> createState() => _TasksScreenState();
 }
 
-class _TasksScreenState extends ConsumerState<TasksScreen>
-    with SingleTickerProviderStateMixin {
-  late final TabController _tab;
-
-  @override
-  void initState() {
-    super.initState();
-    _tab = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: 0,
-    );
-  }
+class _TasksScreenState extends ConsumerState<TasksScreen> {
+  int _index = 0; // 0 — «Активные», 1 — «Доступные»
+  late final PageController _page = PageController(initialPage: _index);
 
   @override
   void dispose() {
-    _tab.dispose();
+    _page.dispose();
     super.dispose();
+  }
+
+  void _onSegChanged(int v) {
+    if (_index == v) return;
+    setState(() => _index = v);
+    _page.animateToPage(v, duration: _kTabAnim, curve: _kTabCurve);
   }
 
   @override
@@ -55,6 +56,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
       // ── Глобальная шапка
       appBar: PaceAppBar(
         title: 'Задачи',
+        backgroundColor: AppColors.twinBg,
         showBack: false, // на этом экране «назад» не нужен
         showBottomDivider: false,
         elevation: 0,
@@ -100,35 +102,48 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
 
       body: Column(
         children: [
-          // ── Вкладки: TabBar в стиле communication_screen
-          Container(
-            color: AppColors.getSurfaceColor(context),
-            child: TabBar(
-              controller: _tab,
-              isScrollable: false,
-              labelColor: AppColors.brandPrimary,
-              unselectedLabelColor: AppColors.getTextSecondaryColor(context),
-              indicator: const BoxDecoration(),
-              dividerColor: AppColors.getBorderColor(context),
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: const [
-                Tab(text: 'Активные'),
-                Tab(text: 'Доступные'),
-              ],
+          // ── Пилюля под AppBar + контент вкладок со свайпом
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Center(
+              child: SegmentedPill(
+                left: 'Активные',
+                right: 'Доступные',
+                value: _index,
+                width: 280,
+                height: 40,
+                duration: _kTabAnim,
+                curve: _kTabCurve,
+                haptics: true,
+                showBorder: false,
+                boxShadow: const [
+                  BoxShadow(
+                    color: AppColors.twinshadow,
+                    blurRadius: 20,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+                onChanged: _onSegChanged,
+              ),
             ),
           ),
 
-          // Контент с TabBarView
+          // ── Контент с PageView
           Expanded(
-            child: TabBarView(
-              controller: _tab,
+            child: PageView(
+              controller: _page,
               physics: const BouncingScrollPhysics(),
+              allowImplicitScrolling: true,
+              onPageChanged: (i) {
+                if (_index == i) return; // гард от лишних setState
+                setState(() => _index = i);
+              },
               children: const [
-                _KeepAliveWrapper(
-                  child: ActiveContent(key: ValueKey('tasks_active')),
+                ActiveContent(
+                  key: PageStorageKey('tasks_active'),
                 ),
-                _KeepAliveWrapper(
-                  child: AvailableContent(key: ValueKey('tasks_available')),
+                AvailableContent(
+                  key: PageStorageKey('tasks_available'),
                 ),
               ],
             ),
@@ -140,30 +155,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen>
 }
 
 // ————————————————————————————————————————————————————————————————
-//                 Мелкие утилиты UI: иконка и обёртки
+//                 Мелкие утилиты UI: иконка
 // ————————————————————————————————————————————————————————————————
-
-/// Обёртка для сохранения состояния вкладок в TabBarView
-class _KeepAliveWrapper extends StatefulWidget {
-  const _KeepAliveWrapper({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_KeepAliveWrapper> createState() => _KeepAliveWrapperState();
-}
-
-class _KeepAliveWrapperState extends State<_KeepAliveWrapper>
-    with AutomaticKeepAliveClientMixin {
-  @override
-  bool get wantKeepAlive => true;
-
-  @override
-  Widget build(BuildContext context) {
-    super.build(context);
-    return widget.child;
-  }
-}
 
 /// Единый вид для иконок в AppBar — размер 22, tap-target 42×42
 class _NavIcon extends StatelessWidget {

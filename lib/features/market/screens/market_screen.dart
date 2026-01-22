@@ -154,7 +154,7 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
       // ─── Пилюля под AppBar + контент вкладок со свайпом ───
       body: Column(
         children: [
-          const SizedBox(height: 4),
+       
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Center(

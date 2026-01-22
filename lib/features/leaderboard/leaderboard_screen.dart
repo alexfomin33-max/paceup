@@ -41,6 +41,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
         title: 'Лидерборд',
         showBack: false,
         showBottomDivider: false,
+        elevation: 0,
       ),
 
       body: Column(
