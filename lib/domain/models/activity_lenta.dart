@@ -325,7 +325,15 @@ class ActivityStats {
           : _asDouble(j['avgHeartRate']),
       avgCadence: j['avgCad'] == null ? null : _asDouble(j['avgCad']),
       calories: j['calories'] == null ? null : _asDouble(j['calories']),
-      totalSteps: j['totalSteps'] == null ? null : _asInt(j['totalSteps']),
+      // ────────────────────────────────────────────────────────────────
+      // 🏃 ПАРСИНГ ШАГОВ: поддерживаем оба варианта (totalSteps и steps)
+      // В базе данных в поле params может быть как totalSteps, так и steps
+      // ────────────────────────────────────────────────────────────────
+      totalSteps: j['totalSteps'] != null
+          ? _asInt(j['totalSteps'])
+          : j['steps'] != null
+              ? _asInt(j['steps'])
+              : null,
       heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
       pacePerKm: _parseNumMap(j['pacePerKm']),
     );
