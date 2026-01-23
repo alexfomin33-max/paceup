@@ -1564,11 +1564,11 @@ class _PublishingPostPlaceholder extends StatelessWidget {
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
-      child: Row(
+      child: const Row(
         children: [
-          const CupertinoActivityIndicator(),
-          const SizedBox(width: 12),
-          const Expanded(
+          CupertinoActivityIndicator(),
+          SizedBox(width: 12),
+          Expanded(
             child: Text(
               'Публикуем пост…',
               style: AppTextStyles.h14w4,

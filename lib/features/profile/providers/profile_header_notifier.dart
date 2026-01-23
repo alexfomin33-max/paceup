@@ -10,7 +10,6 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/cache_service.dart';
 import '../../../domain/models/user_profile_header.dart';

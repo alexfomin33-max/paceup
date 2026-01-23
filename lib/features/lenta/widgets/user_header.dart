@@ -1,6 +1,5 @@
 // lib/widgets/user_header.dart
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/avatar.dart';
 

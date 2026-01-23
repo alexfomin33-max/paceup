@@ -4,20 +4,44 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../core/theme/app_theme.dart';
-import '../../../models/market_models.dart' show Gender;
-import '../../../../../core/widgets/primary_button.dart';
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/services/auth_service.dart';
-import '../../../../../core/utils/error_handler.dart';
-import '../../../providers/slots_provider.dart';
 
-/// Контент вкладки «Продажа слота»
-class SaleSlotsContent extends ConsumerStatefulWidget {
-  const SaleSlotsContent({super.key});
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/app_bar.dart';
+import '../../../../core/services/api_service.dart';
+import '../../../../core/services/auth_service.dart';
+import '../../../../core/utils/error_handler.dart';
+import '../../models/market_models.dart' show Gender;
+import '../../providers/slots_provider.dart';
+
+/// Экран продажи слотов (отдельная страница без переключателя вкладок)
+class SaleSlotsScreen extends ConsumerWidget {
+  const SaleSlotsScreen({super.key});
 
   @override
-  ConsumerState<SaleSlotsContent> createState() => _SaleSlotsContentState();
+  Widget build(BuildContext context, WidgetRef ref) {
+    return const Scaffold(
+      backgroundColor: AppColors.twinBg,
+      resizeToAvoidBottomInset: false,
+      appBar: PaceAppBar(
+        backgroundColor: AppColors.twinBg,
+        title: 'Продажа слота',
+        showBack: true,
+        showBottomDivider: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      body: _SaleSlotsContent(),
+    );
+  }
+}
+
+/// Контент формы продажи слота
+class _SaleSlotsContent extends ConsumerStatefulWidget {
+  const _SaleSlotsContent();
+
+  @override
+  ConsumerState<_SaleSlotsContent> createState() =>
+      _SaleSlotsContentState();
 }
 
 // ─── Модель события для автопоиска ───
@@ -37,7 +61,7 @@ class _EventOption {
   });
 }
 
-class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
+class _SaleSlotsContentState extends ConsumerState<_SaleSlotsContent> {
   final nameCtrl = TextEditingController();
   final descCtrl = TextEditingController();
   final priceCtrl = TextEditingController();
@@ -272,7 +296,7 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
                 content: Text('Объявление о продаже слота успешно размещено'),
               ),
             );
-            Navigator.pop(context);
+            Navigator.pop(context, true);
           }
         }
       } else {
@@ -305,132 +329,199 @@ class _SaleSlotsContentState extends ConsumerState<SaleSlotsContent> {
       onTap: () {
         FocusScope.of(context).unfocus();
       },
-      behavior: HitTestBehavior.opaque,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+      behavior: HitTestBehavior.translucent,
+      child: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _EventAutocompleteField(
-              label: 'Название события',
-              hint: 'Начните вводить название события',
-              controller: nameCtrl,
-              selectedLogoUrl: _selectedEventLogoUrl,
-              onEventSelected: (event) {
-                // Устанавливаем флаг, чтобы слушатель не сработал
-                _isSettingEventFromDropdown = true;
-                setState(() {
-                  _selectedEventId = event.id;
-                  _isEventSelectedFromDropdown =
-                      true; // Устанавливаем флаг, что выбрано из списка
-                  _selectedEventLogoUrl = event.logoUrl;
-                  // Устанавливаем текст события
-                  if (nameCtrl.text != event.name) {
-                    nameCtrl.text = event.name;
-                  }
-                });
-                // Сбрасываем флаг после небольшой задержки
-                Future.microtask(() {
-                  _isSettingEventFromDropdown = false;
-                });
-                _loadEventDistances(event.id);
-              },
-              searchFunction: _searchEvents,
-              onClear: () {
-                setState(() {
-                  _isEventSelectedFromDropdown = false;
-                  _selectedEventId = null;
-                  _distances = [];
-                  _distanceIndex = 0;
-                  _isLoadingDistances = false;
-                  _selectedEventLogoUrl = null;
-                });
-              },
-            ),
-            const SizedBox(height: 20),
+            // ────────────────────────────────────────────────────────────────
+            // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
+            // ────────────────────────────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _EventAutocompleteField(
+                      label: 'Название события',
+                      hint: 'Начните вводить название события',
+                      controller: nameCtrl,
+                      selectedLogoUrl: _selectedEventLogoUrl,
+                      onEventSelected: (event) {
+                        // Устанавливаем флаг, чтобы слушатель не сработал
+                        _isSettingEventFromDropdown = true;
+                        setState(() {
+                          _selectedEventId = event.id;
+                          _isEventSelectedFromDropdown =
+                              true; // Устанавливаем флаг, что выбрано из списка
+                          _selectedEventLogoUrl = event.logoUrl;
+                          // Устанавливаем текст события
+                          if (nameCtrl.text != event.name) {
+                            nameCtrl.text = event.name;
+                          }
+                        });
+                        // Сбрасываем флаг после небольшой задержки
+                        Future.microtask(() {
+                          _isSettingEventFromDropdown = false;
+                        });
+                        _loadEventDistances(event.id);
+                      },
+                      searchFunction: _searchEvents,
+                      onClear: () {
+                        setState(() {
+                          _isEventSelectedFromDropdown = false;
+                          _selectedEventId = null;
+                          _distances = [];
+                          _distanceIndex = 0;
+                          _isLoadingDistances = false;
+                          _selectedEventLogoUrl = null;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 20),
 
-            const _SmallLabel('Пол'),
-            const SizedBox(height: 8),
-            _GenderRow(
-              maleSelected: _gender == Gender.male,
-              femaleSelected: _gender == Gender.female,
-              onMaleTap: () => setState(() => _gender = Gender.male),
-              onFemaleTap: () => setState(() => _gender = Gender.female),
-            ),
-            const SizedBox(height: 20),
+                    const _SmallLabel('Пол'),
+                    const SizedBox(height: 8),
+                    _GenderRow(
+                      maleSelected: _gender == Gender.male,
+                      femaleSelected: _gender == Gender.female,
+                      onMaleTap: () => setState(() => _gender = Gender.male),
+                      onFemaleTap: () => setState(() => _gender = Gender.female),
+                    ),
+                    const SizedBox(height: 20),
 
-            // ─── Показываем список дистанций только если выбрано событие ───
-            if (_selectedEventId != null) ...[
-              const _SmallLabel('Дистанция'),
-              const SizedBox(height: 8),
-              if (_isLoadingDistances)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: CupertinoActivityIndicator(),
-                  ),
-                )
-              else if (_distances.isEmpty)
-                Text(
-                  'У этого события нет доступных дистанций',
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                )
-              else
-                _ChipsRow(
-                  items: _distances,
-                  selectedIndex: _distanceIndex,
-                  onSelected: (i) => setState(() => _distanceIndex = i),
+                    // ─── Показываем список дистанций только если выбрано событие ───
+                    if (_selectedEventId != null) ...[
+                      const _SmallLabel('Дистанция'),
+                      const SizedBox(height: 8),
+                      if (_isLoadingDistances)
+                        const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: CupertinoActivityIndicator(),
+                          ),
+                        )
+                      else if (_distances.isEmpty)
+                        Text(
+                          'У этого события нет доступных дистанций',
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
+                        )
+                      else
+                        _ChipsRow(
+                          items: _distances,
+                          selectedIndex: _distanceIndex,
+                          onSelected: (i) => setState(() => _distanceIndex = i),
+                        ),
+                      const SizedBox(height: 20),
+                    ],
+
+                    _PriceField(
+                      controller: priceCtrl,
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 20),
+
+                    _LabeledTextField(
+                      label: 'Описание',
+                      hint:
+                          'Опишите варианты передачи слота, кластер и другую информацию',
+                      controller: descCtrl,
+                      minLines: 7, // ── минимальная высота поля 7 строк
+                      maxLines: 12,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // ─── Отображение ошибки ───
+                    if (_errorMessage != null) ...[
+                      SelectableText.rich(
+                        TextSpan(
+                          text: _errorMessage,
+                          style: const TextStyle(
+                            color: AppColors.error,
+                            fontSize: 14,
+                            fontFamily: 'Inter',
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                    const SizedBox(height: 20),
+                  ],
                 ),
-              const SizedBox(height: 20),
-            ],
-
-            _PriceField(
-              controller: priceCtrl,
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
-
-            _LabeledTextField(
-              label: 'Описание',
-              hint:
-                  'Опишите варианты передачи слота, кластер и другую информацию',
-              controller: descCtrl,
-              minLines: 7, // ── минимальная высота поля 7 строк
-              maxLines: 12,
-            ),
-            const SizedBox(height: 24),
-
-            // ─── Отображение ошибки ───
-            if (_errorMessage != null) ...[
-              SelectableText.rich(
-                TextSpan(
-                  text: _errorMessage,
-                  style: const TextStyle(
-                    color: AppColors.error,
-                    fontSize: 14,
-                    fontFamily: 'Inter',
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
-            ],
+            ),
 
-            Center(
-              child: PrimaryButton(
-                text: 'Разместить продажу',
-                onPressed: _isSubmitting ? () {} : () => _submit(),
-                width: 220,
-                isLoading: _isSubmitting,
-              ),
+            // ────────────────────────────────────────────────────────────────
+            // 💾 ЗАФИКСИРОВАННАЯ КНОПКА ВНИЗУ ЭКРАНА
+            // ────────────────────────────────────────────────────────────────
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: AppColors.twinBg,
+              child: _buildSubmitButton(),
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Кнопка отправки формы
+  Widget _buildSubmitButton() {
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: !_isSubmitting && _isValid ? _submit : () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: _isSubmitting
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Разместить продажу',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              'Разместить продажу',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+
+    if (_isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
   }
 }
 
@@ -490,106 +581,109 @@ class _EventAutocompleteField extends StatelessWidget {
                     final hasText = value.text.isNotEmpty;
                     final hasLogo =
                         selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
-                    return TextFormField(
-                      controller: textEditingController,
-                      focusNode: focusNode,
-                      onFieldSubmitted: (String _) {
-                        onFieldSubmitted();
-                      },
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        boxShadow: [
+                          const BoxShadow(
+                            color: AppColors.twinshadow,
+                            blurRadius: 20,
+                            offset: Offset(0, 1),
+                          ),
+                        ],
                       ),
-                      decoration: InputDecoration(
-                        hintText: hint,
-                        hintStyle: AppTextStyles.h14w4Place.copyWith(
-                          color: AppColors.getTextPlaceholderColor(context),
+                      child: TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        onFieldSubmitted: (String _) {
+                          onFieldSubmitted();
+                        },
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        // Показываем мини-лого выбранного события в поле
-                        prefixIcon: hasLogo
-                            ? Padding(
-                                padding: const EdgeInsets.only(
-                                  left: 6,
-                                  right: 6,
-                                  top: 6,
-                                  bottom: 6,
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.xs,
+                        decoration: InputDecoration(
+                          hintText: hint,
+                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                            color: AppColors.getTextPlaceholderColor(context),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          // Показываем мини-лого выбранного события в поле
+                          prefixIcon: hasLogo
+                              ? Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 6,
+                                    right: 6,
+                                    top: 6,
+                                    bottom: 6,
                                   ),
-                                  child: CachedNetworkImage(
-                                    imageUrl: selectedLogoUrl!,
-                                    width: 30,
-                                    height: 30,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xs,
+                                    ),
+                                    child: CachedNetworkImage(
+                                      imageUrl: selectedLogoUrl!,
                                       width: 30,
                                       height: 30,
-                                      color: AppColors.getBackgroundColor(
-                                        context,
-                                      ),
-                                      child: Center(
-                                        child: CupertinoActivityIndicator(
-                                          radius: 8,
-                                          color: AppColors.getIconSecondaryColor(
-                                            context,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        width: 30,
+                                        height: 30,
+                                        color: AppColors.getBackgroundColor(
+                                          context,
+                                        ),
+                                        child: Center(
+                                          child: CupertinoActivityIndicator(
+                                            radius: 8,
+                                            color: AppColors.getIconSecondaryColor(
+                                              context,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                    errorWidget: (context, url, error) => Icon(
-                                      CupertinoIcons.calendar,
-                                      size: 18,
-                                      color: AppColors.getIconSecondaryColor(
-                                        context,
+                                      errorWidget: (context, url, error) => Icon(
+                                        CupertinoIcons.calendar,
+                                        size: 18,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              )
-                            : null,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 17,
-                        ),
-                        suffixIcon: hasText
-                            ? IconButton(
-                                icon: Icon(
-                                  CupertinoIcons.xmark_circle_fill,
-                                  size: 18,
-                                  color: AppColors.getIconSecondaryColor(
-                                    context,
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 17,
+                          ),
+                          suffixIcon: hasText
+                              ? IconButton(
+                                  icon: Icon(
+                                    CupertinoIcons.xmark_circle_fill,
+                                    size: 18,
+                                    color: AppColors.getIconSecondaryColor(
+                                      context,
+                                    ),
                                   ),
-                                ),
-                                onPressed: () {
-                                  textEditingController.clear();
-                                  controller.clear();
-                                  onClear();
-                                  focusNode.requestFocus();
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                                  onPressed: () {
+                                    textEditingController.clear();
+                                    controller.clear();
+                                    onClear();
+                                    focusNode.requestFocus();
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide.none,
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide.none,
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -776,43 +870,46 @@ class _LabeledTextField extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          minLines: minLines,
-          maxLines: maxLines,
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            boxShadow: [
+              const BoxShadow(
+                color: AppColors.twinshadow,
+                blurRadius: 20,
+                offset: Offset(0, 1),
+              ),
+            ],
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.h14w4Place.copyWith(
-              color: AppColors.getTextPlaceholderColor(context),
+          child: TextFormField(
+            controller: controller,
+            minLines: minLines,
+            maxLines: maxLines,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
             ),
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 17,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 17,
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
@@ -867,48 +964,51 @@ class _PriceField extends StatelessWidget {
         const SizedBox(height: 8),
         SizedBox(
           width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-          child: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            inputFormatters: [_PriceInputFormatter()],
-            onChanged: onChanged,
-            style: AppTextStyles.h14w4.copyWith(
-              color: AppColors.getTextPrimaryColor(context),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              boxShadow: [
+                const BoxShadow(
+                  color: AppColors.twinshadow,
+                  blurRadius: 20,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
-            decoration: InputDecoration(
-              hintText: '0',
-              hintStyle: AppTextStyles.h14w4Place.copyWith(
-                color: AppColors.getTextPlaceholderColor(context),
-              ),
-              suffixText: '₽',
-              suffixStyle: AppTextStyles.h14w4.copyWith(
+            child: TextFormField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [_PriceInputFormatter()],
+              onChanged: onChanged,
+              style: AppTextStyles.h14w4.copyWith(
                 color: AppColors.getTextPrimaryColor(context),
               ),
-              filled: true,
-              fillColor: AppColors.getSurfaceColor(context),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 17,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+              decoration: InputDecoration(
+                hintText: '0',
+                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                  color: AppColors.getTextPlaceholderColor(context),
                 ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+                suffixText: '₽',
+                suffixStyle: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 17,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
@@ -974,11 +1074,20 @@ class _ChipsRow extends StatelessWidget {
                   ? AppColors.brandPrimary
                   : AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: sel
-                    ? AppColors.brandPrimary
-                    : AppColors.getBorderColor(context),
-              ),
+              border: sel
+                  ? Border.all(
+                      color: AppColors.brandPrimary,
+                    )
+                  : null,
+              boxShadow: sel
+                  ? null
+                  : [
+                      const BoxShadow(
+                        color: AppColors.twinshadow,
+                        blurRadius: 20,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
             ),
             child: Text(
               items[i],
@@ -1028,11 +1137,20 @@ class _OvalToggle extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: selected
-                ? AppColors.brandPrimary
-                : AppColors.getBorderColor(context),
-          ),
+          border: selected
+              ? Border.all(
+                  color: AppColors.brandPrimary,
+                )
+              : null,
+          boxShadow: selected
+              ? null
+              : [
+                  const BoxShadow(
+                    color: AppColors.twinshadow,
+                    blurRadius: 20,
+                    offset: Offset(0, 1),
+                  ),
+                ],
         ),
         child: Text(
           label,

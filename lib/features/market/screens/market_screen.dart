@@ -14,7 +14,8 @@ import '../../../core/widgets/segmented_pill.dart';
 
 import 'tabs/slots/slots_content.dart';
 import 'tabs/things/things_content.dart';
-import 'state/sale_screen.dart';
+import 'state/sale_slots_screen.dart';
+import 'state/sale_things_screen.dart';
 import 'state/alert_creation_screen.dart';
 import '../../../core/widgets/transparent_route.dart';
 import '../providers/things_provider.dart';
@@ -63,15 +64,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
         leadingWidth: 90,
         leading: GestureDetector(
           onTap: () async {
-            // ── передаем текущую вкладку в SaleScreen
-            // если открываем из вкладки "Вещи" (_index == 1),
-            // то сразу активируем закладку "Продажа вещи"
+            // ── открываем соответствующий экран продажи в зависимости от текущей вкладки
             final created = await Navigator.of(
               context,
               rootNavigator: true,
             ).push<bool>(
               CupertinoPageRoute(
-                builder: (_) => SaleScreen(initialTab: _index),
+                builder: (_) => _index == 0
+                    ? const SaleSlotsScreen()
+                    : const SaleThingsScreen(),
               ),
             );
 
@@ -80,6 +81,8 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
             if (created == true && mounted && _index == 1) {
               await ref.read(thingsProvider.notifier).loadInitial();
             }
+            // ── если из формы вернулись с успешным созданием и мы на вкладке «Слоты»,
+            //     список слотов обновляется автоматически через slotsProvider в SaleSlotsContent
           },
           child: Padding(
             padding: const EdgeInsets.only(left: 16),

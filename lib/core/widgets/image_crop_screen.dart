@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:crop_your_image/crop_your_image.dart';
 import '../theme/app_theme.dart';
 import 'app_bar.dart';
-import 'primary_button.dart';
 
 class ImageCropScreen extends StatefulWidget {
   /// Байты исходного изображения для обрезки

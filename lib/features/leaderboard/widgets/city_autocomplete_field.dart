@@ -168,19 +168,28 @@ class _CityAutocompleteFieldState extends State<CityAutocompleteField> {
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(color: borderColor, width: 1),
                         )
-                      : InputBorder.none,
+                      : OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide.none,
+                        ),
                   enabledBorder: widget.showBorder
                       ? OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(color: borderColor, width: 1),
                         )
-                      : InputBorder.none,
+                      : OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide.none,
+                        ),
                   focusedBorder: widget.showBorder
                       ? OutlineInputBorder(
                           borderRadius: BorderRadius.circular(AppRadius.sm),
                           borderSide: BorderSide(color: borderColor, width: 1),
                         )
-                      : InputBorder.none,
+                      : OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderSide: BorderSide.none,
+                        ),
                   errorText: widget.hasError
                       ? (widget.errorText ?? 'Выберите город из списка')
                       : null,
