@@ -259,40 +259,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       final connectionStatus = await garminService.checkConnection();
       
       if (connectionStatus['success'] == true && connectionStatus['connected'] == true) {
-        // Логи отключены
-        // if (kDebugMode) {
-        //   debugPrint('🔄 [Garmin] Запуск автоматической синхронизации...');
-        // }
+        if (kDebugMode) {
+          debugPrint('🔄 [Garmin] Запуск автоматической синхронизации последней тренировки...');
+        }
         
-        // Синхронизируем 1 последнюю тренировку в фоне (для теста)
-        final syncResult = await garminService.syncAllActivities(limit: 1);
+        // Синхронизируем последнюю тренировку из Garmin
+        final syncResult = await garminService.syncLastActivity();
         
-        // Логи отключены
-        // if (kDebugMode) {
-        //   final syncedCount = syncResult['synced_count'] ?? 0;
-        //   final message = syncResult['message'] ?? 'Синхронизация завершена';
-        //   final unsupportedCount = syncResult['unsupported_count'] ?? 0;
-        //   
-        //   if (syncedCount > 0) {
-        //     debugPrint('✅ [Garmin] Синхронизация завершена. Синхронизировано тренировок: $syncedCount');
-        //   } else if (unsupportedCount > 0) {
-        //     debugPrint('ℹ️ [Garmin] $message');
-        //   } else {
-        //     debugPrint('ℹ️ [Garmin] $message');
-        //   }
-        // }
+        if (kDebugMode) {
+          if (syncResult['success'] == true) {
+            final message = syncResult['message'] ?? 'Синхронизация завершена';
+            debugPrint('✅ [Garmin] Синхронизация завершена: $message');
+          } else {
+            final message = syncResult['message'] ?? 'Ошибка синхронизации';
+            debugPrint('ℹ️ [Garmin] $message');
+          }
+        }
       } else {
-        // Логи отключены
-        // if (kDebugMode) {
-        //   debugPrint('ℹ️ [Garmin] Garmin не подключен, синхронизация пропущена');
-        // }
+        if (kDebugMode) {
+          debugPrint('ℹ️ [Garmin] Garmin не подключен, синхронизация пропущена');
+        }
       }
     } catch (e) {
       // Ошибки синхронизации не должны блокировать запуск приложения
-      // Логи отключены
-      // if (kDebugMode) {
-      //   debugPrint('⚠️ [Garmin] Ошибка автоматической синхронизации: $e');
-      // }
+      if (kDebugMode) {
+        debugPrint('⚠️ [Garmin] Ошибка автоматической синхронизации: $e');
+      }
     }
   }
 
@@ -379,11 +371,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
       // ────────── Автоматическая синхронизация Garmin ──────────
       // Запускаем в фоне, не блокируя переход на основной экран
+      // Используем unawaited для запуска в фоне без ожидания завершения
       _syncGarminInBackground();
 
-      // Синхронизация будет запущена в LentaScreen после загрузки экрана
-      // (там пользователь уже точно авторизован и данные готовы)
       // 🔹 Переходим на основной экран с данными пользователя
+      // Синхронизация Garmin продолжит выполняться в фоне
       Navigator.pushReplacementNamed(
         context,
         '/lenta', // Можно заменить на HomeShell для bottom nav
