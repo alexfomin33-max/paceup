@@ -122,7 +122,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
       },
       child: ListView.separated(
         key: const ValueKey('things_list'),
-        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
@@ -132,7 +132,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
           if (widget.isFiltersVisible && index == 0) {
             return const SizedBox.shrink();
           }
-          return const SizedBox(height: 10);
+          return const SizedBox(height: 12);
         },
         itemBuilder: (_, index) {
           if (index == 0 && widget.isFiltersVisible) {
@@ -216,13 +216,17 @@ class _CategoryDropdown extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(

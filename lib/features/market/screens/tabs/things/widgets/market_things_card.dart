@@ -67,16 +67,20 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.twinshadow,
-              blurRadius: 20,
-              offset: Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+          // boxShadow: const [
+          //   BoxShadow(
+          //     color: AppColors.twinshadow,
+          //     blurRadius: 20,
+          //     offset: Offset(0, 1),
+          //   ),
+          // ],
         ),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.fromLTRB(10,10,10,10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -116,7 +120,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                 ],
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // Горизонтальная лента миниатюр — каждая кликабельна
             SizedBox(
@@ -146,7 +150,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                         height: 80,
                         clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: AppColors.getBorderColor(context),
                             width: 0.5,
@@ -182,7 +186,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
 
             // Чипы: цена • пол • город
             Row(

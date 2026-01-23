@@ -578,10 +578,10 @@ class _EventAutocompleteField extends StatelessWidget {
                         selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
                     return Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.5,
+                          width: 0.7,
                         ),
                         // boxShadow: [
                         //   const BoxShadow(
@@ -597,12 +597,12 @@ class _EventAutocompleteField extends StatelessWidget {
                         onFieldSubmitted: (String _) {
                           onFieldSubmitted();
                         },
-                        style: AppTextStyles.h14w4.copyWith(
+                        style: AppTextStyles.h15w4.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                         decoration: InputDecoration(
                           hintText: hint,
-                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                          hintStyle: AppTextStyles.h15w4.copyWith(
                             color: AppColors.getTextPlaceholderColor(context),
                           ),
                           filled: true,
@@ -611,23 +611,23 @@ class _EventAutocompleteField extends StatelessWidget {
                           prefixIcon: hasLogo
                               ? Padding(
                                   padding: const EdgeInsets.only(
-                                    left: 6,
+                                    left: 12,
                                     right: 6,
                                     top: 6,
                                     bottom: 6,
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(
-                                      AppRadius.xs,
+                                      AppRadius.sm,
                                     ),
                                     child: CachedNetworkImage(
                                       imageUrl: selectedLogoUrl!,
-                                      width: 30,
-                                      height: 30,
+                                      width: 40,
+                                      height: 40,
                                       fit: BoxFit.cover,
                                       placeholder: (context, url) => Container(
-                                        width: 30,
-                                        height: 30,
+                                        width: 40,
+                                        height: 40,
                                         color: AppColors.getBackgroundColor(
                                           context,
                                         ),
@@ -653,7 +653,7 @@ class _EventAutocompleteField extends StatelessWidget {
                               : null,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 17,
+                            vertical: 21,
                           ),
                           suffixIcon: hasText
                               ? IconButton(
@@ -673,15 +673,15 @@ class _EventAutocompleteField extends StatelessWidget {
                                 )
                               : null,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             borderSide: BorderSide.none,
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             borderSide: BorderSide.none,
                           ),
                         ),
@@ -738,7 +738,7 @@ class _EventAutocompleteField extends StatelessWidget {
                                     height: 40,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(
-                                        AppRadius.xs,
+                                        AppRadius.sm,
                                       ),
                                       color: AppColors.getBackgroundColor(
                                         context,
@@ -871,7 +871,7 @@ class _LabeledTextField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
@@ -893,7 +893,7 @@ class _LabeledTextField extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: AppTextStyles.h14w4Place.copyWith(
+              hintStyle: AppTextStyles.h15w4.copyWith(
                 color: AppColors.getTextPlaceholderColor(context),
               ),
               filled: true,
@@ -903,15 +903,15 @@ class _LabeledTextField extends StatelessWidget {
                 vertical: 17,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -965,11 +965,9 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        SizedBox(
-          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-          child: Container(
+        Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
@@ -987,40 +985,36 @@ class _PriceField extends StatelessWidget {
               keyboardType: TextInputType.number,
               inputFormatters: [_PriceInputFormatter()],
               onChanged: onChanged,
-              style: AppTextStyles.h14w4.copyWith(
+              style: AppTextStyles.h15w5.copyWith(
                 color: AppColors.getTextPrimaryColor(context),
               ),
               decoration: InputDecoration(
-                hintText: '0',
-                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                hintText: '0 ₽',
+                hintStyle: AppTextStyles.h15w4.copyWith(
                   color: AppColors.getTextPlaceholderColor(context),
                 ),
-                suffixText: '₽',
-                suffixStyle: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
+                
                 filled: true,
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 17,
+                  horizontal: 16,
+                  vertical: 21,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1099,7 +1093,7 @@ class _ChipsRow extends StatelessWidget {
               items[i],
               style: TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w400,
                 color: sel
                     ? (Theme.of(context).brightness == Brightness.dark
@@ -1161,7 +1155,7 @@ class _OvalToggle extends StatelessWidget {
           label,
           style: TextStyle(
             fontFamily: 'Inter',
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
             color: fg,
           ),
