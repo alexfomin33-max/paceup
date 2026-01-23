@@ -15,6 +15,7 @@ class TrainingActivity {
   final double distance; // км
   final String distanceText; // "21,24 км"
   final int duration; // секунды
+  final int? movingDuration; // секунды - время в движении (если есть и > 0, используется вместо duration)
   final String durationText; // "1:48:52"
   final double pace; // средний темп
   final String paceText; // "4:15 /км"
@@ -44,6 +45,7 @@ class TrainingActivity {
     required this.distance,
     required this.distanceText,
     required this.duration,
+    this.movingDuration,
     required this.durationText,
     required this.pace,
     required this.paceText,
@@ -63,6 +65,17 @@ class TrainingActivity {
     this.elevationPerKm = const {},
     this.stats,
   });
+
+  /// ────────────────────────────────────────────────────────────────
+  /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
+  /// используем его, иначе используем duration
+  /// ────────────────────────────────────────────────────────────────
+  int get effectiveDuration {
+    if (movingDuration != null && movingDuration! > 0) {
+      return movingDuration!;
+    }
+    return duration;
+  }
 
   factory TrainingActivity.fromJson(Map<String, dynamic> json) {
     // Парсим дату/время
@@ -154,6 +167,7 @@ class TrainingActivity {
       distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
       distanceText: json['distanceText'] as String? ?? '0 км',
       duration: (json['duration'] as num?)?.toInt() ?? 0,
+      movingDuration: json['movingDuration'] != null ? (json['movingDuration'] as num).toInt() : null,
       durationText: json['durationText'] as String? ?? '0:00',
       pace: (json['pace'] as num?)?.toDouble() ?? 0.0,
       paceText: json['paceText'] as String? ?? '',

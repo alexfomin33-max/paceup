@@ -807,7 +807,7 @@ class _ActivityDescriptionPageState
                                   dateTextOverride: a.postDateText,
                                   bottom: StatsRow(
                                     distanceMeters: stats?.distance,
-                                    durationSec: stats?.duration,
+                                    durationSec: stats?.effectiveDuration,
                                     elevationGainM:
                                         stats?.cumulativeElevationGain,
                                     avgPaceMinPerKm: stats?.avgPace,
@@ -874,7 +874,7 @@ class _ActivityDescriptionPageState
                                     dateTextOverride: a.postDateText,
                                     bottom: StatsRow(
                                       distanceMeters: stats?.distance,
-                                      durationSec: stats?.duration,
+                                      durationSec: stats?.effectiveDuration,
                                       elevationGainM:
                                           stats?.cumulativeElevationGain,
                                       avgPaceMinPerKm: stats?.avgPace,

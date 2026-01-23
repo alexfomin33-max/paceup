@@ -236,9 +236,15 @@ class StatsRow extends StatelessWidget {
       calculatedCadence = (totalSteps! / duration) * 60;
     }
     // Используем рассчитанный каденс, если avgCadence не задан
+    // ──────────────────────────────────────────────────────────────
+    // ✅ ВЫВОДИМ КАДЕНС ТОЧНО КАК В БАЗЕ ДАННЫХ: если avgCadence задан,
+    // выводим его значение без преобразований, округляя до целого для отображения
+    // ──────────────────────────────────────────────────────────────
     final effectiveCadence = avgCadence ?? calculatedCadence;
     final cadenceText = effectiveCadence != null
-        ? effectiveCadence.toStringAsFixed(0)
+        ? (avgCadence != null 
+            ? avgCadence!.round().toString() // Используем значение из базы данных, округляем до целого
+            : effectiveCadence.round().toString()) // Для рассчитанного - округляем до целого
         : '—';
     final caloriesText = calories != null ? calories!.toStringAsFixed(0) : '—';
     final stepsText = totalSteps != null ? totalSteps.toString() : '—';

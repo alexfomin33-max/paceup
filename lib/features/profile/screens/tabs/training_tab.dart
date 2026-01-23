@@ -1300,6 +1300,7 @@ class _Workout {
   final List<LatLng> points; // Точки маршрута для карты
   final double distance; // км для конвертации
   final int duration; // секунды для конвертации
+  final int? movingDuration; // секунды - время в движении (если есть и > 0, используется вместо duration)
   final double pace; // темп для конвертации
   final bool hasValidTrack; // Есть ли валидный трек маршрута
   final String? firstImageUrl; // URL первого изображения (если есть)
@@ -1332,6 +1333,7 @@ class _Workout {
     this.points = const [],
     this.hasValidTrack = false,
     this.firstImageUrl,
+    this.movingDuration,
     this.avgHeartRate,
     this.avgCadence,
     this.cumulativeElevationGain,
@@ -1379,12 +1381,12 @@ class _Workout {
 
     if (activity.sportType == 2) {
       // Для плавания пересчитываем темп в формат "мин/100м"
-      if (activity.distance > 0 && activity.duration > 0) {
+      if (activity.distance > 0 && activity.effectiveDuration > 0) {
         // Рассчитываем темп из расстояния и времени: (время в сек * 100) / (расстояние в м * 60)
         final distanceMeters =
             activity.distance * 1000; // конвертируем км в метры
         final paceMinPer100m =
-            (activity.duration * 100) / (distanceMeters * 60);
+            (activity.effectiveDuration * 100) / (distanceMeters * 60);
         paceText = formatPace(paceMinPer100m);
         pace = paceMinPer100m;
       } else if (activity.pace > 0) {
@@ -1408,6 +1410,7 @@ class _Workout {
       latLngPoints,
       activity.hasValidTrack,
       activity.firstImageUrl,
+      activity.movingDuration,
       // ────────────────────────────────────────────────────────────────
       // ✅ ПЕРЕДАЕМ ПОЛНЫЕ ДАННЫЕ из TrainingActivity
       // ────────────────────────────────────────────────────────────────
@@ -1424,6 +1427,17 @@ class _Workout {
       activity.elevationPerKm,
       activity.stats,
     );
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
+  /// используем его, иначе используем duration
+  /// ────────────────────────────────────────────────────────────────
+  int get effectiveDuration {
+    if (movingDuration != null && movingDuration! > 0) {
+      return movingDuration!;
+    }
+    return duration;
   }
 
   /// Конвертирует в Activity для description_screen
@@ -1503,7 +1517,7 @@ class _Workout {
     
     // Извлекаем startedAt и finishedAt из stats если есть
     DateTime? startedAt = when;
-    DateTime? finishedAt = when.add(Duration(seconds: duration));
+    DateTime? finishedAt = when.add(Duration(seconds: effectiveDuration));
     if (statsData != null) {
       if (statsData.containsKey('startedAt') && statsData['startedAt'] != null) {
         try {
@@ -1578,6 +1592,7 @@ class _Workout {
       finishedAt: finishedAt,
       finishedAtCoords: finishedAtCoords,
       duration: duration,
+      movingDuration: this.movingDuration,
       bounds: boundsList,
       avgHeartRate: this.avgHeartRate,
       avgCadence: this.avgCadence,
@@ -1596,7 +1611,7 @@ class _Workout {
       id: id,
       type: sportTypeStr,
       dateStart: when,
-      dateEnd: when.add(Duration(seconds: duration)),
+      dateEnd: when.add(Duration(seconds: effectiveDuration)),
       lentaId: id, // Используем id активности как lentaId
       lentaDate: when,
       userId: userId,

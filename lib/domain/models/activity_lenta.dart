@@ -315,6 +315,7 @@ class ActivityStats {
   final DateTime? finishedAt; // ISO with timezone
   final Coord? finishedAtCoords;
   final int duration; // seconds
+  final int? movingDuration; // seconds - время в движении (если есть и > 0, используется вместо duration)
   final List<Coord> bounds; // usually 2 points
   final double? avgHeartRate;
   final double? avgCadence; // шагов в минуту (spm)
@@ -339,6 +340,7 @@ class ActivityStats {
     required this.finishedAt,
     required this.finishedAtCoords,
     required this.duration,
+    this.movingDuration,
     required this.bounds,
     required this.avgHeartRate,
     this.avgCadence,
@@ -373,6 +375,7 @@ class ActivityStats {
           ? Coord.fromJson(j['finishedAtCoords'] as Map<String, dynamic>)
           : null,
       duration: _asInt(j['duration']),
+      movingDuration: j['movingDuration'] != null ? _asInt(j['movingDuration']) : null,
       bounds: _parseCoordList(j['bounds']),
       avgHeartRate: j['avgHeartRate'] == null
           ? null
@@ -415,6 +418,17 @@ class ActivityStats {
 
   /// Проверяет, есть ли данные о пульсе для сегментов
   bool hasHeartRateSplits() => heartRatePerKm.isNotEmpty;
+
+  /// ────────────────────────────────────────────────────────────────
+  /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
+  /// используем его, иначе используем duration
+  /// ────────────────────────────────────────────────────────────────
+  int get effectiveDuration {
+    if (movingDuration != null && movingDuration! > 0) {
+      return movingDuration!;
+    }
+    return duration;
+  }
 }
 
 // ======== NETWORK ========

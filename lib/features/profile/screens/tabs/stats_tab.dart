@@ -244,9 +244,9 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
   }
 
-  /// Форматирует каденс, умножая значение на 2
+  /// Форматирует каденс
   /// Принимает строку из API (может быть число или "—")
-  /// Возвращает отформатированную строку с удвоенным значением
+  /// Возвращает отформатированную строку (значение уже скорректировано на бэкенде)
   String _formatCadence(String? cadence) {
     if (cadence == null || cadence.isEmpty || cadence == '—') {
       return '—';
@@ -256,9 +256,8 @@ class _ByTypeContentState extends State<_ByTypeContent> {
       // Парсим число из строки
       final number = double.tryParse(cadence);
       if (number != null) {
-        // Умножаем на 2 и округляем до целого
-        final doubledValue = (number * 2).round();
-        return doubledValue.toString();
+        // Округляем до целого (значение уже скорректировано на бэкенде)
+        return number.round().toString();
       }
 
       // Если не удалось распарсить, возвращаем как есть

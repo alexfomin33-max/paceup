@@ -661,7 +661,7 @@ class ShareImageGenerator {
       );
 
       // КОЛОНКА 2: Время
-      final timeValue = _formatDurationForShareNew(stats.duration);
+      final timeValue = _formatDurationForShareNew(stats.effectiveDuration);
       final column2X = column1X + columnSpacing;
 
       // Значение времени (самый нижний элемент)
@@ -687,9 +687,9 @@ class ShareImageGenerator {
         // avgPace в секундах на км, конвертируем в минуты на км
         double paceMinPerKm;
         if (stats.avgPace < 60) {
-          if (stats.distance > 0 && stats.duration > 0) {
+          if (stats.distance > 0 && stats.effectiveDuration > 0) {
             final distanceKm = stats.distance / 1000.0;
-            final timeMinutes = stats.duration / 60.0;
+            final timeMinutes = stats.effectiveDuration / 60.0;
             paceMinPerKm = timeMinutes / distanceKm;
           } else {
             paceMinPerKm = stats.avgPace;
