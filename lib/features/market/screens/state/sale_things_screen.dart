@@ -1081,11 +1081,6 @@ class _OvalToggle extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: selected
-              ? Border.all(
-                  color: AppColors.brandPrimary,
-                )
-              : null,
           boxShadow: selected
               ? null
               : [

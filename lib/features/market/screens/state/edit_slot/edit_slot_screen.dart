@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart';
-import '../../../../../core/widgets/primary_button.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/services/api_service.dart';
 import '../../../../../core/services/auth_service.dart';
@@ -36,6 +36,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
   // ─── Состояние выбранного события ───
   int? _selectedEventId;
+  String? _selectedEventLogoUrl;
   bool _isLoadingDistances = false;
 
   // ─── Состояние загрузки и ошибок ───
@@ -114,11 +115,14 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
           eventName != null &&
           eventName.toString().isNotEmpty &&
           eventId is int) {
+        final eventLogoUrl = slot['event_logo_url'] ?? slot['logo_url'] ?? '';
+        
         final eventOption = _EventOption(
           id: eventId,
           name: eventName as String,
           place: eventPlace as String,
           eventDate: eventDate as String,
+          logoUrl: eventLogoUrl.isNotEmpty ? eventLogoUrl as String? : null,
         );
 
         // Устанавливаем название события в контроллер напрямую
@@ -126,6 +130,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
         setState(() {
           _selectedEventId = eventOption.id;
+          _selectedEventLogoUrl = eventOption.logoUrl;
           _isLoading = false;
         });
 
@@ -146,6 +151,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         final currentDistance = slot['distance'] ?? '';
         setState(() {
           _selectedEventId = null;
+          _selectedEventLogoUrl = null;
           _currentDistance = currentDistance.isNotEmpty
               ? currentDistance
               : null;
@@ -222,6 +228,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
             name: e['name'] as String,
             place: e['place'] as String? ?? '',
             eventDate: e['event_date'] as String? ?? '',
+            logoUrl: (e['logo_url'] ?? e['logo'] ?? '') as String?,
           );
         });
       }
@@ -415,31 +422,6 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return InteractiveBackSwipe(
-        child: Scaffold(
-          backgroundColor: AppColors.getBackgroundColor(context),
-          appBar: PaceAppBar(
-            title: 'Редактирование слота',
-            showBack: true,
-            showBottomDivider: true,
-            actions: [
-              IconButton(
-                splashRadius: 22,
-                icon: const Icon(
-                  CupertinoIcons.delete,
-                  size: 20,
-                  color: AppColors.error,
-                ),
-                onPressed: _handleDelete,
-              ),
-            ],
-          ),
-          body: const Center(child: CupertinoActivityIndicator()),
-        ),
-      );
-    }
-
     // 🔻 умный нижний паддинг: клавиатура (viewInsets) > 0 ? берём её : берём safe-area
     final media = MediaQuery.of(context);
     final bottomInset = media.viewInsets.bottom; // клавиатура
@@ -448,48 +430,76 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
-          title: 'Редактирование слота',
+          backgroundColor: AppColors.twinBg,
+          title: 'Редактирование',
           showBack: true,
-          showBottomDivider: true,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _handleDelete,
             ),
           ],
         ),
-        body: GestureDetector(
-          // ── снимаем фокус с текстовых полей при клике вне их
-          onTap: () {
-            FocusScope.of(context).unfocus();
-          },
-          behavior: HitTestBehavior.opaque,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(12, 20, 12, bottomPad),
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+        body: Stack(
+          children: [
+            // ─── Индикатор загрузки ───
+            if (_isLoading)
+              const Center(
+                child: CupertinoActivityIndicator(),
+              ),
+
+            // ─── Форма с эффектом fade-in ───
+            IgnorePointer(
+              ignoring: _isLoading,
+              child: AnimatedOpacity(
+                opacity: _isLoading ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 300),
+                child: GestureDetector(
+                // ── снимаем фокус с текстовых полей при клике вне их
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                },
+                behavior: HitTestBehavior.opaque,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(16, 20, 16, bottomPad),
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                 _EventAutocompleteField(
                   label: 'Название события',
                   hint: 'Начните вводить название события',
                   controller: nameCtrl,
                   focusNode: _nameFocusNode,
+                  selectedLogoUrl: _selectedEventLogoUrl,
                   onEventSelected: (event) {
                     setState(() {
                       _selectedEventId = event.id;
+                      _selectedEventLogoUrl = event.logoUrl;
                       nameCtrl.text = event.name;
                     });
                     _loadEventDistances(event.id);
                   },
                   searchFunction: _searchEvents,
+                  onClear: () {
+                    setState(() {
+                      _selectedEventId = null;
+                      _selectedEventLogoUrl = null;
+                      _distances = [];
+                      _distanceIndex = 0;
+                      _isLoadingDistances = false;
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
 
@@ -568,20 +578,66 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                 // ────────────────────────────────────────────────────────────────
                 // 💾 КНОПКА СОХРАНЕНИЯ
                 // ────────────────────────────────────────────────────────────────
-                Center(
-                  child: PrimaryButton(
-                    text: 'Сохранить изменения',
-                    onPressed: _isSubmitting || _isDeleting
-                        ? () {}
-                        : () => _save(),
-                    width: 230,
-                    isLoading: _isSubmitting,
-                    enabled: _isValid && !_isSubmitting && !_isDeleting,
+                Builder(
+                  builder: (context) {
+                    final isSubmitting = _isSubmitting || _isDeleting;
+                    final textColor = AppColors.getSurfaceColor(context);
+
+                    final button = ElevatedButton(
+                      onPressed: !isSubmitting && _isValid ? _save : () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.button,
+                        foregroundColor: textColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        shape: const StadiumBorder(),
+                        minimumSize: const Size(double.infinity, 50),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.center,
+                      ),
+                      child: isSubmitting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: CupertinoActivityIndicator(
+                                    radius: 9,
+                                    color: textColor,
+                                  ),
+                                ),
+                                Text(
+                                  'Сохранить изменения',
+                                  style: AppTextStyles.h15w5.copyWith(
+                                    color: textColor,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'Сохранить изменения',
+                              style: AppTextStyles.h15w5.copyWith(
+                                color: textColor,
+                                height: 1.0,
+                              ),
+                            ),
+                    );
+
+                    if (isSubmitting) {
+                      return IgnorePointer(child: button);
+                    }
+
+                    return button;
+                  },
+                ),
+                    ],
                   ),
                 ),
-              ],
+                ),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -596,12 +652,14 @@ class _EventOption {
   final String name;
   final String place;
   final String eventDate;
+  final String? logoUrl;
 
   const _EventOption({
     required this.id,
     required this.name,
     required this.place,
     required this.eventDate,
+    this.logoUrl,
   });
 }
 
@@ -611,16 +669,20 @@ class _EventAutocompleteField extends StatelessWidget {
   final String hint;
   final TextEditingController controller;
   final FocusNode focusNode;
+  final String? selectedLogoUrl;
   final ValueChanged<_EventOption> onEventSelected;
   final Future<Iterable<_EventOption>> Function(String) searchFunction;
+  final VoidCallback? onClear;
 
   const _EventAutocompleteField({
     required this.label,
     required this.hint,
     required this.controller,
     required this.focusNode,
+    required this.selectedLogoUrl,
     required this.onEventSelected,
     required this.searchFunction,
+    this.onClear,
   });
 
   @override
@@ -648,48 +710,129 @@ class _EventAutocompleteField extends StatelessWidget {
                 FocusNode focusNode,
                 VoidCallback onFieldSubmitted,
               ) {
-                return TextFormField(
-                  controller: textEditingController,
-                  focusNode: focusNode,
-                  onFieldSubmitted: (String value) {
-                    onFieldSubmitted();
+                // Синхронизируем контроллер Autocomplete с внешним контроллером
+                if (textEditingController.text != controller.text) {
+                  textEditingController.value = controller.value;
+                }
+
+                return ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: textEditingController,
+                  builder: (context, value, _) {
+                    final hasText = value.text.isNotEmpty;
+                    final hasLogo =
+                        selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
+                    return Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+                        // boxShadow: [
+                        //   const BoxShadow(
+                        //     color: AppColors.twinshadow,
+                        //     blurRadius: 20,
+                        //     offset: Offset(0, 1),
+                        //   ),
+                        // ],
+                      ),
+                      child: TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        onFieldSubmitted: (String _) {
+                          onFieldSubmitted();
+                        },
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                        decoration: InputDecoration(
+                          hintText: hint,
+                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                            color: AppColors.getTextPlaceholderColor(context),
+                          ),
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          // Показываем мини-лого выбранного события в поле
+                          prefixIcon: hasLogo
+                              ? Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 6,
+                                    right: 6,
+                                    top: 6,
+                                    bottom: 6,
+                                  ),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xs,
+                                    ),
+                                    child: CachedNetworkImage(
+                                      imageUrl: selectedLogoUrl!,
+                                      width: 30,
+                                      height: 30,
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
+                                        width: 30,
+                                        height: 30,
+                                        color: AppColors.getBackgroundColor(
+                                          context,
+                                        ),
+                                        child: Center(
+                                          child: CupertinoActivityIndicator(
+                                            radius: 8,
+                                            color: AppColors.getIconSecondaryColor(
+                                              context,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => Icon(
+                                        CupertinoIcons.calendar,
+                                        size: 18,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              : null,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 21,
+                          ),
+                          suffixIcon: hasText && onClear != null
+                              ? IconButton(
+                                  icon: Icon(
+                                    CupertinoIcons.xmark_circle_fill,
+                                    size: 18,
+                                    color: AppColors.getTextTertiaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    textEditingController.clear();
+                                    controller.clear();
+                                    onClear!();
+                                    focusNode.requestFocus();
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                      ),
+                    );
                   },
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
-                  decoration: InputDecoration(
-                    hintText: hint,
-                    hintStyle: AppTextStyles.h14w4Place.copyWith(
-                      color: AppColors.getTextPlaceholderColor(context),
-                    ),
-                    filled: true,
-                    fillColor: AppColors.getSurfaceColor(context),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 17,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                      borderSide: BorderSide(
-                        color: AppColors.getBorderColor(context),
-                        width: 1,
-                      ),
-                    ),
-                  ),
                 );
               },
           optionsViewBuilder:
@@ -698,54 +841,121 @@ class _EventAutocompleteField extends StatelessWidget {
                 AutocompleteOnSelected<_EventOption> onSelected,
                 Iterable<_EventOption> options,
               ) {
+                // ─── Преобразуем Iterable в List для использования в ListView ───
+                final optionsList = options.toList();
+
                 return Align(
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 200),
+                      constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
+                        padding: EdgeInsets.zero,
                         shrinkWrap: true,
-                        itemCount: options.length,
+                        itemCount: optionsList.length,
                         itemBuilder: (BuildContext context, int index) {
-                          final option = options.elementAt(index);
+                          final option = optionsList[index];
+                          final hasLogo =
+                              option.logoUrl != null &&
+                              option.logoUrl!.isNotEmpty;
                           return InkWell(
                             onTap: () => onSelected(option),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                border: Border(
-                                  bottom: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 0.5,
-                                  ),
-                                ),
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                right: 16,
+                                top: 10,
+                                bottom: 10,
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              child: Row(
                                 children: [
-                                  Text(
-                                    option.name,
-                                    style: AppTextStyles.h14w5.copyWith(
-                                      color: AppColors.getTextPrimaryColor(
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.xs,
+                                      ),
+                                      color: AppColors.getBackgroundColor(
                                         context,
                                       ),
                                     ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: hasLogo
+                                        ? CachedNetworkImage(
+                                            imageUrl: option.logoUrl!,
+                                            fit: BoxFit.cover,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                              width: 40,
+                                              height: 40,
+                                              color: AppColors.getBackgroundColor(
+                                                context,
+                                              ),
+                                              child: Center(
+                                                child:
+                                                    CupertinoActivityIndicator(
+                                                  radius: 8,
+                                                  color: AppColors
+                                                      .getIconSecondaryColor(
+                                                    context,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            errorWidget:
+                                                (context, url, error) => Icon(
+                                              CupertinoIcons.calendar,
+                                              size: 18,
+                                              color: AppColors
+                                                  .getIconSecondaryColor(
+                                                context,
+                                              ),
+                                            ),
+                                          )
+                                        : Icon(
+                                            CupertinoIcons.calendar,
+                                            size: 18,
+                                            color:
+                                                AppColors.getIconSecondaryColor(
+                                                  context,
+                                                ),
+                                          ),
                                   ),
-                                  if (option.place.isNotEmpty) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      option.place,
-                                      style: AppTextStyles.h14w4.copyWith(
-                                        color: AppColors.getTextSecondaryColor(
-                                          context,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          option.name,
+                                          style: AppTextStyles.h14w5.copyWith(
+                                            color:
+                                                AppColors.getTextPrimaryColor(
+                                                  context,
+                                                ),
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        fontSize: 12,
-                                      ),
+                                        if (option.place.isNotEmpty) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            option.place,
+                                            style: AppTextStyles.h12w4.copyWith(
+                                              color:
+                                                  AppColors.getTextSecondaryColor(
+                                                    context,
+                                                  ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ],
                               ),
                             ),
@@ -797,43 +1007,50 @@ class _LabeledTextField extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          minLines: minLines,
-          maxLines: maxLines,
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+            // boxShadow: [
+            //   const BoxShadow(
+            //     color: AppColors.twinshadow,
+            //     blurRadius: 20,
+            //     offset: Offset(0, 1),
+            //   ),
+            // ],
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.h14w4Place.copyWith(
-              color: AppColors.getTextPlaceholderColor(context),
+          child: TextFormField(
+            controller: controller,
+            minLines: minLines,
+            maxLines: maxLines,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
             ),
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 17,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 17,
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
@@ -902,48 +1119,55 @@ class _PriceField extends StatelessWidget {
         const SizedBox(height: 8),
         SizedBox(
           width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-          child: TextFormField(
-            controller: controller,
-            keyboardType: TextInputType.number,
-            inputFormatters: [_PriceInputFormatter()],
-            onChanged: onChanged,
-            style: AppTextStyles.h14w4.copyWith(
-              color: AppColors.getTextPrimaryColor(context),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+              // boxShadow: [
+              //   const BoxShadow(
+              //     color: AppColors.twinshadow,
+              //     blurRadius: 20,
+              //     offset: Offset(0, 1),
+              //   ),
+              // ],
             ),
-            decoration: InputDecoration(
-              hintText: '0',
-              hintStyle: AppTextStyles.h14w4Place.copyWith(
-                color: AppColors.getTextPlaceholderColor(context),
-              ),
-              suffixText: '₽',
-              suffixStyle: AppTextStyles.h14w4.copyWith(
+            child: TextFormField(
+              controller: controller,
+              keyboardType: TextInputType.number,
+              inputFormatters: [_PriceInputFormatter()],
+              onChanged: onChanged,
+              style: AppTextStyles.h14w4.copyWith(
                 color: AppColors.getTextPrimaryColor(context),
               ),
-              filled: true,
-              fillColor: AppColors.getSurfaceColor(context),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 17,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+              decoration: InputDecoration(
+                hintText: '0',
+                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                  color: AppColors.getTextPlaceholderColor(context),
                 ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+                suffixText: '₽',
+                suffixStyle: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
+                filled: true,
+                fillColor: AppColors.getSurfaceColor(context),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 17,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
@@ -1009,11 +1233,19 @@ class _ChipsRow extends StatelessWidget {
                   ? AppColors.brandPrimary
                   : AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: Border.all(
-                color: sel
-                    ? AppColors.brandPrimary
-                    : AppColors.getBorderColor(context),
-              ),
+               border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+              boxShadow: sel
+                  ? null
+                  : [
+                      // const BoxShadow(
+                      //   color: AppColors.twinshadow,
+                      //   blurRadius: 20,
+                      //   offset: Offset(0, 1),
+                      // ),
+                    ],
             ),
             child: Text(
               items[i],
@@ -1062,11 +1294,19 @@ class _OvalToggle extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: selected
-                ? AppColors.brandPrimary
-                : AppColors.getBorderColor(context),
-          ),
+           border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+          boxShadow: selected
+              ? null
+              : [
+                  // const BoxShadow(
+                  //   color: AppColors.twinshadow,
+                  //   blurRadius: 20,
+                  //   offset: Offset(0, 1),
+                  // ),
+                ],
         ),
         child: Text(
           label,

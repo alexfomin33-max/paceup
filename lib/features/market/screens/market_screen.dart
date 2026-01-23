@@ -170,14 +170,15 @@ class _MarketScreenState extends ConsumerState<MarketScreen> {
                 duration: _kTabAnim,
                 curve: _kTabCurve,
                 haptics: true,
-                showBorder: false,
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.twinshadow,
-                    blurRadius: 20,
-                    offset: Offset(0, 1),
-                  ),
-                ],
+                showBorder: true,
+                borderColor: AppColors.twinchip,
+                // boxShadow: const [
+                //   BoxShadow(
+                //     color: AppColors.twinshadow,
+                //     blurRadius: 20,
+                //     offset: Offset(0, 1),
+                //   ),
+                // ],
                 onChanged: _onSegChanged,
               ),
             ),

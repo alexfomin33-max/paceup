@@ -291,11 +291,6 @@ class _SaleSlotsContentState extends ConsumerState<_SaleSlotsContent> {
           await slotsNotifier.loadInitial();
 
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Объявление о продаже слота успешно размещено'),
-              ),
-            );
             Navigator.pop(context, true);
           }
         }
@@ -339,7 +334,7 @@ class _SaleSlotsContentState extends ConsumerState<_SaleSlotsContent> {
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 20),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -583,14 +578,18 @@ class _EventAutocompleteField extends StatelessWidget {
                         selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
                     return Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow: [
-                          const BoxShadow(
-                            color: AppColors.twinshadow,
-                            blurRadius: 20,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
+                        // boxShadow: [
+                        //   const BoxShadow(
+                        //     color: AppColors.twinshadow,
+                        //     blurRadius: 20,
+                        //     offset: Offset(0, 1),
+                        //   ),
+                        // ],
                       ),
                       child: TextFormField(
                         controller: textEditingController,
@@ -674,15 +673,15 @@ class _EventAutocompleteField extends StatelessWidget {
                                 )
                               : null,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: BorderSide.none,
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             borderSide: BorderSide.none,
                           ),
                         ),
@@ -872,14 +871,18 @@ class _LabeledTextField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            boxShadow: [
-              const BoxShadow(
-                color: AppColors.twinshadow,
-                blurRadius: 20,
-                offset: Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+            // boxShadow: [
+            //   const BoxShadow(
+            //     color: AppColors.twinshadow,
+            //     blurRadius: 20,
+            //     offset: Offset(0, 1),
+            //   ),
+            // ],
           ),
           child: TextFormField(
             controller: controller,
@@ -900,15 +903,15 @@ class _LabeledTextField extends StatelessWidget {
                 vertical: 17,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -966,14 +969,18 @@ class _PriceField extends StatelessWidget {
           width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              boxShadow: [
-                const BoxShadow(
-                  color: AppColors.twinshadow,
-                  blurRadius: 20,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+              // boxShadow: [
+              //   const BoxShadow(
+              //     color: AppColors.twinshadow,
+              //     blurRadius: 20,
+              //     offset: Offset(0, 1),
+              //   ),
+              // ],
             ),
             child: TextFormField(
               controller: controller,
@@ -999,15 +1006,15 @@ class _PriceField extends StatelessWidget {
                   vertical: 17,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -1074,19 +1081,18 @@ class _ChipsRow extends StatelessWidget {
                   ? AppColors.brandPrimary
                   : AppColors.getSurfaceColor(context),
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: sel
-                  ? Border.all(
-                      color: AppColors.brandPrimary,
-                    )
-                  : null,
+              border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
               boxShadow: sel
                   ? null
                   : [
-                      const BoxShadow(
-                        color: AppColors.twinshadow,
-                        blurRadius: 20,
-                        offset: Offset(0, 1),
-                      ),
+                      // const BoxShadow(
+                      //   color: AppColors.twinshadow,
+                      //   blurRadius: 20,
+                      //   offset: Offset(0, 1),
+                      // ),
                     ],
             ),
             child: Text(
@@ -1137,19 +1143,18 @@ class _OvalToggle extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: selected
-              ? Border.all(
-                  color: AppColors.brandPrimary,
-                )
-              : null,
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
           boxShadow: selected
               ? null
               : [
-                  const BoxShadow(
-                    color: AppColors.twinshadow,
-                    blurRadius: 20,
-                    offset: Offset(0, 1),
-                  ),
+                  // const BoxShadow(
+                  //   color: AppColors.twinshadow,
+                  //   blurRadius: 20,
+                  //   offset: Offset(0, 1),
+                  // ),
                 ],
         ),
         child: Text(

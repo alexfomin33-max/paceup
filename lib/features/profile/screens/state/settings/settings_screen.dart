@@ -51,11 +51,15 @@ class SettingsScreen extends ConsumerWidget {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
 
         // ── глобальный PaceAppBar с переключателем темы справа
         appBar: PaceAppBar(
+          backgroundColor: AppColors.twinBg,
           title: 'Настройки',
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             // Переключатель темы
             Padding(
@@ -80,7 +84,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
 
         body: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           children: [
             // Карточка подписки PacePro
             _SubscriptionCard(
@@ -465,7 +469,7 @@ class _SettingsTile extends StatelessWidget {
       onTap: onTap ?? () {},
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
         child: Row(
           children: [
             Container(
@@ -606,17 +610,17 @@ class _Divider extends StatelessWidget {
 BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
   color: AppColors.getSurfaceColor(context),
   borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-  border: Border.fromBorderSide(
-    BorderSide(color: AppColors.getBorderColor(context), width: 0.5),
+  border: const Border.fromBorderSide(
+    BorderSide(color: AppColors.twinchip, width: 0.5),
   ),
-  boxShadow: [
-    BoxShadow(
-      color: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.darkShadowSoft
-          : AppColors.shadowSoft,
-      offset: const Offset(0, 1),
-      blurRadius: 1,
-      spreadRadius: 0,
-    ),
-  ],
+  // boxShadow: [
+  //   BoxShadow(
+  //     color: Theme.of(context).brightness == Brightness.dark
+  //         ? AppColors.darkShadowSoft
+  //         : AppColors.shadowSoft,
+  //     offset: const Offset(0, 1),
+  //     blurRadius: 1,
+  //     spreadRadius: 0,
+  //   ),
+  // ],
 );

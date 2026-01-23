@@ -632,11 +632,14 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
+          backgroundColor: AppColors.twinBg,
           title: 'Редактирование объявления',
           showBack: true,
-          showBottomDivider: true,
+          showBottomDivider: false,
+          elevation: 0,
+        scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
