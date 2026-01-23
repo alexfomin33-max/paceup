@@ -28,8 +28,9 @@ class TrainingTabState extends ConsumerState<TrainingTab>
   // Текущий месяц
   late DateTime _month;
 
-  // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи
-  Set<int> _sports = {0, 1, 2, 3};
+  // Мультиселект видов спорта: 0 бег(включая indoor-running), 1 вело(включая indoor-cycling), 2 плавание, 3 лыжи, 6 walking, 7 hiking
+  // indoor-cycling и indoor-running не показываются отдельно, они суммируются с bike и run соответственно
+  Set<int> _sports = {0, 1, 2, 3, 6, 7};
 
   // Флаг для инициализации месяца только один раз при первой загрузке
   bool _monthInitialized = false;
@@ -346,6 +347,20 @@ class _MonthToolbar extends StatelessWidget {
           sportType: 3,
           onTap: () => onToggleSport(3),
         ),
+        const SizedBox(width: 8),
+        _SportIcon(
+          selected: sports.contains(6),
+          icon: Icons.directions_walk,
+          sportType: 6,
+          onTap: () => onToggleSport(6),
+        ),
+        const SizedBox(width: 8),
+        _SportIcon(
+          selected: sports.contains(7),
+          icon: Icons.terrain,
+          sportType: 7,
+          onTap: () => onToggleSport(7),
+        ),
       ],
     );
   }
@@ -394,7 +409,7 @@ class _NavIcon extends StatelessWidget {
 class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
-  final int sportType; // 0 бег, 1 вело, 2 плавание, 3 лыжи
+  final int sportType; // 0 бег(включая indoor-running), 1 вело(включая indoor-cycling), 2 плавание, 3 лыжи, 6 walking, 7 hiking
   final VoidCallback onTap;
   const _SportIcon({
     required this.selected,
@@ -406,13 +421,15 @@ class _SportIcon extends StatelessWidget {
   /// Получить цвет активной иконки в зависимости от типа спорта
   Color _getActiveColor() {
     switch (sportType) {
-      case 1: // велосипед
+      case 1: // велосипед (включая indoor-cycling)
         return AppColors.female; // Розовый цвет, как в main_tab.dart
       case 2: // плавание
         return AppColors.green;
       case 3: // лыжи
         return AppColors.warning; // Оранжевый цвет для лыж
-      default: // бег (0)
+      case 6: // walking
+      case 7: // hiking
+      default: // бег (0, включая indoor-running)
         return AppColors.brandPrimary;
     }
   }
@@ -556,7 +573,7 @@ class _MonthGrid extends StatelessWidget {
   BoxDecoration _getBubbleDecoration(int sportType) {
     Color color;
     switch (sportType) {
-      case 1: // велосипед
+      case 1: // велосипед (включая indoor-cycling)
         color = AppColors.female;
         break;
       case 2: // плавание
@@ -565,7 +582,9 @@ class _MonthGrid extends StatelessWidget {
       case 3: // лыжи
         color = AppColors.warning;
         break;
-      default: // бег (0)
+      case 6: // walking
+      case 7: // hiking
+      default: // бег (0, включая indoor-running)
         color = AppColors.brandPrimary;
     }
     return BoxDecoration(

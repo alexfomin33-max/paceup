@@ -37,9 +37,13 @@ String formatPace(double paceMinPerKm) {
 String getDefaultNoRouteImagePath(String activityType) {
   final t = activityType.toLowerCase();
   if (t == 'swim' || t == 'swimming') return 'assets/nogps_swim.jpg';
-  if (t == 'bike' || t == 'bicycle' || t == 'cycling') {
+  if (t == 'bike' || t == 'bicycle' || t == 'cycling' || t == 'indoor-cycling') {
     return 'assets/nogsp_bike.jpg';
   }
   if (t == 'ski') return 'assets/nogps_ski.jpg';
+  // Для indoor-running, walking, hiking используем дефолтное изображение для бега
+  if (t == 'indoor-running' || t == 'walking' || t == 'hiking') {
+    return 'assets/nogps.jpg';
+  }
   return 'assets/nogps.jpg'; // run, running, прочее
 }

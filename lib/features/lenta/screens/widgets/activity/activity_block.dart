@@ -414,10 +414,14 @@ class ActivityBlock extends ConsumerWidget {
                     final isBike =
                         activityTypeLower == 'bike' ||
                         activityTypeLower == 'bicycle' ||
-                        activityTypeLower == 'cycling';
+                        activityTypeLower == 'cycling' ||
+                        activityTypeLower == 'indoor-cycling';
                     final isRun =
                         activityTypeLower == 'run' ||
-                        activityTypeLower == 'running';
+                        activityTypeLower == 'running' ||
+                        activityTypeLower == 'indoor-running' ||
+                        activityTypeLower == 'walking' ||
+                        activityTypeLower == 'hiking';
 
                     // Форматирование расстояния
                     String formatSwimDistance(double meters) {
