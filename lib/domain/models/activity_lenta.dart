@@ -5,6 +5,7 @@
 // - Parses points from ["LatLng(lat, lng)"] strings
 // - Network helper with utf8 decode, timeout, error handling
 
+import 'dart:convert';
 import '../../core/services/api_service.dart';
 
 // ======== MODELS ========
@@ -79,6 +80,61 @@ class Activity {
       }
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // 🔧 ИСПРАВЛЕНИЕ ПАРСИНГА PARAMS: поддерживаем оба формата
+    // 1. Объект напрямую: {"distance": 1000, "avgHeartRate": 140, ...}
+    // 2. Массив с объектом stats: [{"stats": {"distance": 1000, ...}}]
+    // 3. Строка JSON (нужно декодировать)
+    // ────────────────────────────────────────────────────────────────
+    ActivityStats? stats;
+    if (paramsRaw != null) {
+      Map<String, dynamic>? statsMap;
+      
+      // Если это строка JSON, декодируем
+      if (paramsRaw is String) {
+        try {
+          final decoded = jsonDecode(paramsRaw);
+          if (decoded is Map<String, dynamic>) {
+            statsMap = decoded;
+          } else if (decoded is List && decoded.isNotEmpty) {
+            // Массив: [{"stats": {...}}]
+            final firstItem = decoded[0];
+            if (firstItem is Map<String, dynamic>) {
+              statsMap = firstItem['stats'] as Map<String, dynamic>?;
+            }
+          }
+        } catch (e) {
+          // Ошибка декодирования - игнорируем
+        }
+      }
+      // Если это уже Map
+      else if (paramsRaw is Map<String, dynamic>) {
+        statsMap = paramsRaw;
+      }
+      // Если это массив
+      else if (paramsRaw is List && paramsRaw.isNotEmpty) {
+        final firstItem = paramsRaw[0];
+        if (firstItem is Map<String, dynamic>) {
+          // Проверяем, есть ли вложенный объект stats
+          if (firstItem.containsKey('stats') && firstItem['stats'] is Map<String, dynamic>) {
+            statsMap = firstItem['stats'] as Map<String, dynamic>;
+          } else {
+            // Если нет вложенного stats, используем сам объект
+            statsMap = firstItem;
+          }
+        }
+      }
+      
+      // Создаем ActivityStats из извлеченного объекта
+      if (statsMap != null) {
+        try {
+          stats = ActivityStats.fromJson(statsMap);
+        } catch (e) {
+          // Ошибка парсинга - оставляем null
+        }
+      }
+    }
+
     return Activity(
       id: _asInt(j['id']),
       type: j['type']?.toString() ?? '',
@@ -96,9 +152,7 @@ class Activity {
       userGroup: _asInt(j['user_group']),
       togetherCount: j['together_count'] == null ? 1 : _asInt(j['together_count']),
       equipments: _parseEquipments(j['equpments']),
-      stats: paramsRaw is Map<String, dynamic>
-          ? ActivityStats.fromJson(paramsRaw)
-          : null,
+      stats: stats,
       points: _parsePoints(j['points']),
       postDateText: j['dates']?.toString() ?? '',
       postMediaUrl: j['media']?.toString() ?? '',
