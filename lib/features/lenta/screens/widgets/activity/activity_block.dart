@@ -160,7 +160,7 @@ class ActivityBlock extends ConsumerWidget {
           final statsWidget = RepaintBoundary(
             child: StatsRow(
               distanceMeters: stats?.distance,
-              durationSec: stats?.duration,
+              durationSec: stats?.effectiveDuration,
               elevationGainM: stats?.cumulativeElevationGain,
               avgPaceMinPerKm: stats?.avgPace,
               avgSpeed:
@@ -414,10 +414,14 @@ class ActivityBlock extends ConsumerWidget {
                     final isBike =
                         activityTypeLower == 'bike' ||
                         activityTypeLower == 'bicycle' ||
-                        activityTypeLower == 'cycling';
+                        activityTypeLower == 'cycling' ||
+                        activityTypeLower == 'indoor-cycling';
                     final isRun =
                         activityTypeLower == 'run' ||
-                        activityTypeLower == 'running';
+                        activityTypeLower == 'running' ||
+                        activityTypeLower == 'indoor-running' ||
+                        activityTypeLower == 'walking' ||
+                        activityTypeLower == 'hiking';
 
                     // Форматирование расстояния
                     String formatSwimDistance(double meters) {
@@ -439,8 +443,8 @@ class ActivityBlock extends ConsumerWidget {
                         : '—';
 
                     // Форматирование времени
-                    final durationText = stats?.duration != null
-                        ? formatDuration(stats!.duration)
+                    final durationText = stats?.effectiveDuration != null
+                        ? formatDuration(stats!.effectiveDuration)
                         : '—';
 
                     // Форматирование темпа/скорости
@@ -450,10 +454,10 @@ class ActivityBlock extends ConsumerWidget {
                       if (stats?.avgPace != null && stats!.avgPace > 0) {
                         paceText = formatPace(stats.avgPace / 10.0);
                       } else if (stats?.distance != null &&
-                          stats?.duration != null &&
+                          stats?.effectiveDuration != null &&
                           stats!.distance > 0 &&
-                          (stats.duration as num).toDouble() > 0) {
-                        final duration = (stats.duration as num).toDouble();
+                          stats.effectiveDuration > 0) {
+                        final duration = stats.effectiveDuration.toDouble();
                         final paceMinPer100m =
                             (duration * 100) / (stats.distance * 60);
                         paceText = formatPace(paceMinPer100m);
@@ -471,18 +475,18 @@ class ActivityBlock extends ConsumerWidget {
                       if (stats?.avgSpeed != null && stats!.avgSpeed > 0) {
                         speedKmh = stats.avgSpeed;
                       } else if (stats?.distance != null &&
-                          stats?.duration != null &&
+                          stats?.effectiveDuration != null &&
                           stats!.distance > 0 &&
-                          (stats.duration as num).toDouble() > 0) {
-                        final duration = (stats.duration as num).toDouble();
+                          stats.effectiveDuration > 0) {
+                        final duration = stats.effectiveDuration.toDouble();
                         speedKmh = (stats.distance / duration) * 3.6;
                       }
                     } else {
                       if (stats?.distance != null &&
-                          stats?.duration != null &&
+                          stats?.effectiveDuration != null &&
                           stats!.distance > 0 &&
-                          (stats.duration as num).toDouble() > 0) {
-                        final duration = (stats.duration as num).toDouble();
+                          stats.effectiveDuration > 0) {
+                        final duration = stats.effectiveDuration.toDouble();
                         speedKmh = (stats.distance / duration) * 3.6;
                       }
                     }

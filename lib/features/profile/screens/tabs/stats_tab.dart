@@ -103,7 +103,15 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         'За год': 'year',
       };
 
-      final sportTypeMap = {0: 'run', 1: 'bike', 2: 'swim', 3: 'ski'};
+      // indoor-cycling суммируется с bike, indoor-running с run
+      final sportTypeMap = {
+        0: 'run', // включает indoor-running
+        1: 'bike', // включает indoor-cycling
+        2: 'swim',
+        3: 'ski',
+        6: 'walking',
+        7: 'hiking',
+      };
 
       final period = periodMap[_period] ?? 'year';
       final sportType = sportTypeMap[_sport];
@@ -152,13 +160,17 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   String? _getSportTypeApi() {
     switch (_sport) {
       case 0:
-        return 'run';
+        return 'run'; // включает indoor-running
       case 1:
-        return 'bike';
+        return 'bike'; // включает indoor-cycling
       case 2:
         return 'swim';
       case 3:
         return 'ski';
+      case 6:
+        return 'walking';
+      case 7:
+        return 'hiking';
       default:
         return null;
     }
@@ -232,9 +244,9 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     }
   }
 
-  /// Форматирует каденс, умножая значение на 2
+  /// Форматирует каденс
   /// Принимает строку из API (может быть число или "—")
-  /// Возвращает отформатированную строку с удвоенным значением
+  /// Возвращает отформатированную строку (значение уже скорректировано на бэкенде)
   String _formatCadence(String? cadence) {
     if (cadence == null || cadence.isEmpty || cadence == '—') {
       return '—';
@@ -244,9 +256,8 @@ class _ByTypeContentState extends State<_ByTypeContent> {
       // Парсим число из строки
       final number = double.tryParse(cadence);
       if (number != null) {
-        // Умножаем на 2 и округляем до целого
-        final doubledValue = (number * 2).round();
-        return doubledValue.toString();
+        // Округляем до целого (значение уже скорректировано на бэкенде)
+        return number.round().toString();
       }
 
       // Если не удалось распарсить, возвращаем как есть
@@ -349,6 +360,37 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           Icons.speed_outlined,
           'Средняя скорость',
           metrics.avgSpeed ?? '—',
+        ),
+        _MetricRowData(
+          Icons.terrain_outlined,
+          'Набор высоты',
+          _formatElevationGain(metrics.elevationGain),
+        ),
+      ];
+    } else if (sportType == 'walking' || sportType == 'hiking') {
+      // walking и hiking используют ту же логику, что и run
+      return [
+        _MetricRowData(
+          Icons.directions_walk_outlined,
+          sportType == 'walking' ? 'Прогулок' : 'Походов',
+          metrics.activitiesCount,
+        ),
+        _MetricRowData(Icons.timer_outlined, 'Общее время', metrics.totalTime),
+        _MetricRowData(Icons.place_outlined, 'Расстояние', metrics.distance),
+        _MetricRowData(
+          Icons.favorite_border,
+          'Средний пульс',
+          metrics.avgHeartRate ?? '—',
+        ),
+        _MetricRowData(
+          Icons.speed_outlined,
+          'Средний темп',
+          metrics.avgPace ?? '—',
+        ),
+        _MetricRowData(
+          Icons.directions_walk_outlined,
+          'Средний каденс',
+          _formatCadence(metrics.avgCadence),
         ),
         _MetricRowData(
           Icons.terrain_outlined,
@@ -634,6 +676,26 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                   _loadStats();
                 },
               ),
+              const SizedBox(width: 8),
+              _SportIcon(
+                selected: _sport == 6,
+                icon: Icons.directions_walk_outlined,
+                sportType: 6,
+                onTap: () {
+                  setState(() => _sport = 6);
+                  _loadStats();
+                },
+              ),
+              const SizedBox(width: 8),
+              _SportIcon(
+                selected: _sport == 7,
+                icon: Icons.terrain_outlined,
+                sportType: 7,
+                onTap: () {
+                  setState(() => _sport = 7);
+                  _loadStats();
+                },
+              ),
             ],
           ),
         ),
@@ -757,7 +819,7 @@ class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
   final VoidCallback onTap;
-  final int? sportType; // 0 бег, 1 вело, 2 плавание, 3 лыжи
+  final int? sportType; // 0 бег(включая indoor-running), 1 вело(включая indoor-cycling), 2 плавание, 3 лыжи, 6 walking, 7 hiking
   const _SportIcon({
     required this.selected,
     required this.icon,
@@ -769,13 +831,15 @@ class _SportIcon extends StatelessWidget {
   Color _getActiveColor() {
     if (sportType == null) return AppColors.brandPrimary;
     switch (sportType!) {
-      case 1: // велосипед
+      case 1: // велосипед (включая indoor-cycling)
         return AppColors.female;
       case 2: // плавание
         return AppColors.accentTeal;
       case 3: // лыжи
         return AppColors.success;
-      default: // бег (0)
+      case 6: // walking
+      case 7: // hiking
+      default: // бег (0, включая indoor-running)
         return AppColors.brandPrimary;
     }
   }
@@ -982,8 +1046,10 @@ class _MetricsList extends StatelessWidget {
           width: 1.0,
         ),
       ),
-      child: Column(
-        children: List.generate(metrics.length * 2 - 1, (i) {
+      child: metrics.isEmpty
+          ? const SizedBox.shrink()
+          : Column(
+              children: List.generate(metrics.length * 2 - 1, (i) {
           if (i.isOdd) {
             return Divider(
               height: 1,
@@ -1037,7 +1103,7 @@ class _MetricsList extends StatelessWidget {
             ),
           );
         }),
-      ),
+            ),
     );
   }
 }

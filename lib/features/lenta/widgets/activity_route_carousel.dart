@@ -77,15 +77,23 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     super.initState();
     _pageController = PageController();
 
-    // Проверяем кеш сервиса синхронно (если есть в кеше - используем сразу)
+    // ────────────────────────────────────────────────────────────────
+    // ✅ ПРОВЕРКА КЕША И СЕРВЕРА: проверяем синхронно кеш, затем сервер
+    // ────────────────────────────────────────────────────────────────
     if (widget.activityId != null && widget.points.isNotEmpty) {
+      // Проверяем кеш сервиса синхронно (если есть в кеше - используем сразу)
       final cachedUrl = _routeMapService.getCachedRouteMapUrl(
         widget.activityId!,
       );
       if (cachedUrl != null) {
         _savedRouteMapUrl = cachedUrl;
       } else {
-        // Если нет в кеше - проверяем сервер в фоне для следующей загрузки
+        // ────────────────────────────────────────────────────────────────
+        // ✅ ПРИОРИТЕТНАЯ ПРОВЕРКА СЕРВЕРА: проверяем сервер сразу, не ждем
+        // Это важно для правильного отображения карты при открытии из профиля
+        // ────────────────────────────────────────────────────────────────
+        // Проверяем сервер асинхронно и обновляем состояние сразу после получения
+        // Используем unawaited для немедленного запуска без ожидания
         _checkSavedRouteMapInBackground();
       }
     }
@@ -98,16 +106,30 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   }
 
   /// Проверяет наличие сохраненного изображения карты маршрута в фоне
-  /// Не блокирует UI - используется только для кеширования на будущее
+  /// Обновляет состояние виджета, если карта найдена на сервере
+  /// Вызывается сразу при initState для быстрой загрузки карты
   Future<void> _checkSavedRouteMapInBackground() async {
     if (widget.activityId == null) return;
 
     try {
+      // ────────────────────────────────────────────────────────────────
+      // ✅ ПРИОРИТЕТНАЯ ПРОВЕРКА: проверяем сервер сразу при инициализации
+      // Это важно для правильного отображения карты при открытии из профиля
+      // ────────────────────────────────────────────────────────────────
       final savedUrl = await _routeMapService.getRouteMapUrl(
         widget.activityId!,
       );
-      // URL сохраняется в кеш сервиса автоматически
-      // При следующей загрузке виджета он будет использован из кеша
+      // ────────────────────────────────────────────────────────────────
+      // ✅ ОБНОВЛЯЕМ СОСТОЯНИЕ: если карта найдена на сервере, используем её
+      // Это устраняет задержку и улучшает отображение карты
+      // ────────────────────────────────────────────────────────────────
+      if (savedUrl != null && mounted) {
+        // Обновляем состояние сразу после получения URL
+        // Это переключит карту с Mapbox на сохраненное изображение
+        setState(() {
+          _savedRouteMapUrl = savedUrl;
+        });
+      }
     } catch (e) {
       // Игнорируем ошибки проверки в фоне
     }
@@ -317,10 +339,28 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           final bool shouldSaveAfterLoad;
           final bool useSavedImage;
 
+          // ────────────────────────────────────────────────────────────────
+          // ✅ ПРОВЕРКА СОХРАНЕННОГО ИЗОБРАЖЕНИЯ: проверяем состояние и кеш
+          // ────────────────────────────────────────────────────────────────
           // Проверяем наличие сохраненного изображения в кеше (проверено синхронно в initState)
-          if (_savedRouteMapUrl != null) {
+          // Также проверяем кеш сервиса еще раз на случай, если состояние обновилось
+          String? savedUrl = _savedRouteMapUrl;
+          if (savedUrl == null && widget.activityId != null) {
+            // Дополнительная проверка кеша сервиса (на случай, если состояние не обновилось)
+            final cachedUrl = _routeMapService.getCachedRouteMapUrl(
+              widget.activityId!,
+            );
+            if (cachedUrl != null) {
+              // Обновляем состояние сразу, если нашли в кеше
+              // Используем синхронное обновление для немедленного отображения
+              _savedRouteMapUrl = cachedUrl;
+              savedUrl = cachedUrl;
+            }
+          }
+
+          if (savedUrl != null) {
             // Используем сохраненное изображение с сервера (приоритет)
-            finalMapUrl = _savedRouteMapUrl!;
+            finalMapUrl = savedUrl;
             useSavedImage = true;
             shouldSaveAfterLoad = false; // Не нужно сохранять, уже сохранено
           } else {
@@ -366,11 +406,21 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 ],
               ),
             ),
-            // Сохраняем изображение на сервер после успешной загрузки (только если не используем сохраненное)
+            // ────────────────────────────────────────────────────────────────
+            // ✅ СОХРАНЕНИЕ КАРТЫ: сохраняем изображение на сервер после загрузки
+            // Это нужно для ускорения последующих загрузок
+            // ────────────────────────────────────────────────────────────────
             imageBuilder: shouldSaveAfterLoad && !useSavedImage
                 ? (context, imageProvider) {
                     // Сохраняем изображение асинхронно в фоне, не блокируя UI
-                    _saveRouteMapImage(finalMapUrl);
+                    // После сохранения обновляем состояние для использования сохраненного URL
+                    _saveRouteMapImage(finalMapUrl).then((savedUrl) {
+                      if (savedUrl != null && mounted) {
+                        setState(() {
+                          _savedRouteMapUrl = savedUrl;
+                        });
+                      }
+                    });
                     return Image(image: imageProvider);
                   }
                 : null,
@@ -381,26 +431,26 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   }
 
   /// Сохраняет изображение карты маршрута на сервер в фоне
-  /// Не вызывает перерисовку - URL сохраняется в кеш сервиса для следующей загрузки
-  Future<void> _saveRouteMapImage(String mapboxUrl) async {
-    if (widget.activityId == null || widget.userId == null) return;
+  /// Возвращает URL сохраненного изображения для обновления состояния
+  Future<String?> _saveRouteMapImage(String mapboxUrl) async {
+    if (widget.activityId == null || widget.userId == null) return null;
 
     // Проверяем, что изображение еще не сохранено
-    if (_savedRouteMapUrl != null) return;
+    if (_savedRouteMapUrl != null) return _savedRouteMapUrl;
 
     try {
       // Сохраняем изображение на сервер в фоне
       // URL автоматически сохраняется в кеш сервиса для следующей загрузки
-      await _routeMapService.saveRouteMapFromUrl(
+      final savedUrl = await _routeMapService.saveRouteMapFromUrl(
         activityId: widget.activityId!,
         userId: widget.userId!,
         mapboxUrl: mapboxUrl,
       );
 
-      // НЕ обновляем состояние - не вызываем перерисовку
-      // При следующей загрузке виджета URL будет взят из кеша сервиса
+      return savedUrl;
     } catch (e) {
       // Игнорируем ошибки сохранения (не критично)
+      return null;
     }
   }
 

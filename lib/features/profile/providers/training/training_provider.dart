@@ -15,12 +15,28 @@ class TrainingActivity {
   final double distance; // км
   final String distanceText; // "21,24 км"
   final int duration; // секунды
+  final int? movingDuration; // секунды - время в движении (если есть и > 0, используется вместо duration)
   final String durationText; // "1:48:52"
   final double pace; // средний темп
   final String paceText; // "4:15 /км"
   final List<RoutePoint> points; // Точки маршрута для карты
   final bool hasValidTrack; // Есть ли валидный трек маршрута
   final String? firstImageUrl; // URL первого изображения (если есть)
+  // ────────────────────────────────────────────────────────────────
+  // ✅ ПОЛНЫЕ ДАННЫЕ: пульс, каденс, набор высоты, разбивка по км
+  // ────────────────────────────────────────────────────────────────
+  final double? avgHeartRate;
+  final double? avgCadence;
+  final double? cumulativeElevationGain;
+  final double? cumulativeElevationLoss;
+  final double? minAltitude;
+  final double? maxAltitude;
+  final double? calories;
+  final int? steps;
+  final Map<String, double> heartRatePerKm;
+  final Map<String, double> pacePerKm;
+  final Map<String, double> elevationPerKm;
+  final Map<String, dynamic>? stats; // Полный объект stats для совместимости
 
   TrainingActivity({
     required this.id,
@@ -29,13 +45,37 @@ class TrainingActivity {
     required this.distance,
     required this.distanceText,
     required this.duration,
+    this.movingDuration,
     required this.durationText,
     required this.pace,
     required this.paceText,
     required this.points,
     required this.hasValidTrack,
     this.firstImageUrl,
+    this.avgHeartRate,
+    this.avgCadence,
+    this.cumulativeElevationGain,
+    this.cumulativeElevationLoss,
+    this.minAltitude,
+    this.maxAltitude,
+    this.calories,
+    this.steps,
+    this.heartRatePerKm = const {},
+    this.pacePerKm = const {},
+    this.elevationPerKm = const {},
+    this.stats,
   });
+
+  /// ────────────────────────────────────────────────────────────────
+  /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
+  /// используем его, иначе используем duration
+  /// ────────────────────────────────────────────────────────────────
+  int get effectiveDuration {
+    if (movingDuration != null && movingDuration! > 0) {
+      return movingDuration!;
+    }
+    return duration;
+  }
 
   factory TrainingActivity.fromJson(Map<String, dynamic> json) {
     // Парсим дату/время
@@ -60,6 +100,66 @@ class TrainingActivity {
       }
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // ✅ ПАРСИНГ ПОЛНЫХ ДАННЫХ: пульс, каденс, набор высоты, разбивка по км
+    // ────────────────────────────────────────────────────────────────
+    final avgHeartRate = json['avgHeartRate'] != null 
+        ? (json['avgHeartRate'] as num).toDouble() 
+        : null;
+    final avgCadence = json['avgCadence'] != null 
+        ? (json['avgCadence'] as num).toDouble() 
+        : null;
+    final cumulativeElevationGain = json['cumulativeElevationGain'] != null 
+        ? (json['cumulativeElevationGain'] as num).toDouble() 
+        : null;
+    final cumulativeElevationLoss = json['cumulativeElevationLoss'] != null 
+        ? (json['cumulativeElevationLoss'] as num).toDouble() 
+        : null;
+    final minAltitude = json['minAltitude'] != null 
+        ? (json['minAltitude'] as num).toDouble() 
+        : null;
+    final maxAltitude = json['maxAltitude'] != null 
+        ? (json['maxAltitude'] as num).toDouble() 
+        : null;
+    final calories = json['calories'] != null 
+        ? (json['calories'] as num).toDouble() 
+        : null;
+    final steps = json['steps'] != null 
+        ? (json['steps'] as num).toInt() 
+        : null;
+    
+    // Парсим разбивку по километрам
+    final heartRatePerKm = <String, double>{};
+    if (json['heartRatePerKm'] is Map) {
+      (json['heartRatePerKm'] as Map).forEach((key, value) {
+        if (value is num) {
+          heartRatePerKm[key.toString()] = value.toDouble();
+        }
+      });
+    }
+    
+    final pacePerKm = <String, double>{};
+    if (json['pacePerKm'] is Map) {
+      (json['pacePerKm'] as Map).forEach((key, value) {
+        if (value is num) {
+          pacePerKm[key.toString()] = value.toDouble();
+        }
+      });
+    }
+    
+    final elevationPerKm = <String, double>{};
+    if (json['elevationPerKm'] is Map) {
+      (json['elevationPerKm'] as Map).forEach((key, value) {
+        if (value is num) {
+          elevationPerKm[key.toString()] = value.toDouble();
+        }
+      });
+    }
+    
+    final stats = json['stats'] is Map<String, dynamic> 
+        ? json['stats'] as Map<String, dynamic> 
+        : null;
+
     return TrainingActivity(
       id: (json['id'] as num?)?.toInt() ?? 0,
       when: whenDate,
@@ -67,12 +167,25 @@ class TrainingActivity {
       distance: (json['distance'] as num?)?.toDouble() ?? 0.0,
       distanceText: json['distanceText'] as String? ?? '0 км',
       duration: (json['duration'] as num?)?.toInt() ?? 0,
+      movingDuration: json['movingDuration'] != null ? (json['movingDuration'] as num).toInt() : null,
       durationText: json['durationText'] as String? ?? '0:00',
       pace: (json['pace'] as num?)?.toDouble() ?? 0.0,
       paceText: json['paceText'] as String? ?? '',
       points: pointsList,
       hasValidTrack: (json['hasValidTrack'] as bool?) ?? false,
       firstImageUrl: json['firstImageUrl'] as String?,
+      avgHeartRate: avgHeartRate,
+      avgCadence: avgCadence,
+      cumulativeElevationGain: cumulativeElevationGain,
+      cumulativeElevationLoss: cumulativeElevationLoss,
+      minAltitude: minAltitude,
+      maxAltitude: maxAltitude,
+      calories: calories,
+      steps: steps,
+      heartRatePerKm: heartRatePerKm,
+      pacePerKm: pacePerKm,
+      elevationPerKm: elevationPerKm,
+      stats: stats,
     );
   }
 }

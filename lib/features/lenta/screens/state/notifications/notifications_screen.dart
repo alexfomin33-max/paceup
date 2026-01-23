@@ -170,11 +170,17 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (text.contains('закончил заплыв') || text.contains('заплыв')) {
       return Icons.pool;
     }
-    if (text.contains('закончил заезд') || text.contains('заезд')) {
+    if (text.contains('закончил заезд') || text.contains('заезд') || text.contains('велотренажер')) {
       return Icons.pedal_bike;
     }
-    if (text.contains('закончил забег') || text.contains('забег')) {
+    if (text.contains('закончил забег') || text.contains('забег') || text.contains('беговой дорожке')) {
       return Icons.directions_run;
+    }
+    if (text.contains('закончил прогулку') || text.contains('прогулку')) {
+      return Icons.directions_walk;
+    }
+    if (text.contains('закончил поход') || text.contains('поход')) {
+      return Icons.terrain;
     }
 
     // Если это не тренировка, используем стандартную логику по icon коду

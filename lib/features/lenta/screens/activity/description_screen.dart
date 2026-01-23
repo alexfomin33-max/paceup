@@ -11,6 +11,7 @@ import 'package:flutter/cupertino.dart'
         showCupertinoDialog;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart' show ImageProvider, NetworkImage, ImageConfiguration;
 import 'dart:ui' as ui; // для ui.Path
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -51,6 +52,7 @@ import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../providers/lenta_provider.dart';
 import 'together/together_providers.dart';
+import '../../../../core/services/route_map_service.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -119,6 +121,42 @@ class _ActivityDescriptionPageState
     super.initState();
     _loadUserData();
     _loadChartsData();
+    // ────────────────────────────────────────────────────────────────
+    // 🗺️ ПРЕДЗАГРУЗКА КАРТЫ: проверяем наличие сохраненного изображения
+    // для ускорения отображения карты при открытии из профиля
+    // ────────────────────────────────────────────────────────────────
+    _preloadRouteMap();
+  }
+
+  /// Предзагружает карту маршрута в фоне для ускорения отображения
+  /// Загружает изображение заранее, чтобы оно было готово к отображению
+  Future<void> _preloadRouteMap() async {
+    final a = widget.activity;
+    // Предзагружаем только если есть точки маршрута и activityId
+    if (a.points.isNotEmpty && a.id > 0) {
+      try {
+        final routeMapService = RouteMapService();
+        // Проверяем наличие сохраненного изображения на сервере
+        // Это заполнит кеш сервиса для быстрого доступа в ActivityRouteCarousel
+        final savedUrl = await routeMapService.getRouteMapUrl(a.id);
+        
+        // ────────────────────────────────────────────────────────────────
+        // ✅ ПРЕДЗАГРУЗКА ИЗОБРАЖЕНИЯ: если карта найдена, предзагружаем её
+        // Это устраняет задержку при отображении карты
+        // ────────────────────────────────────────────────────────────────
+        if (savedUrl != null) {
+          // Предзагружаем изображение в кеш CachedNetworkImage
+          try {
+            final imageProvider = NetworkImage(savedUrl);
+            await imageProvider.resolve(const ImageConfiguration());
+          } catch (e) {
+            // Игнорируем ошибки предзагрузки изображения
+          }
+        }
+      } catch (e) {
+        // Игнорируем ошибки предзагрузки (не критично)
+      }
+    }
   }
 
   /// Загружает данные пользователя (владельца тренировки) из базы данных
@@ -769,7 +807,7 @@ class _ActivityDescriptionPageState
                                   dateTextOverride: a.postDateText,
                                   bottom: StatsRow(
                                     distanceMeters: stats?.distance,
-                                    durationSec: stats?.duration,
+                                    durationSec: stats?.effectiveDuration,
                                     elevationGainM:
                                         stats?.cumulativeElevationGain,
                                     avgPaceMinPerKm: stats?.avgPace,
@@ -794,6 +832,7 @@ class _ActivityDescriptionPageState
                                         !(a.type.toLowerCase() == 'bike' ||
                                             a.type.toLowerCase() == 'bicycle' ||
                                             a.type.toLowerCase() == 'cycling' ||
+                                            a.type.toLowerCase() == 'indoor-cycling' ||
                                             a.type.toLowerCase() == 'swim' ||
                                             a.type.toLowerCase() == 'swimming'),
                                     // ────────────────────────────────────────────────────────────────
@@ -835,7 +874,7 @@ class _ActivityDescriptionPageState
                                     dateTextOverride: a.postDateText,
                                     bottom: StatsRow(
                                       distanceMeters: stats?.distance,
-                                      durationSec: stats?.duration,
+                                      durationSec: stats?.effectiveDuration,
                                       elevationGainM:
                                           stats?.cumulativeElevationGain,
                                       avgPaceMinPerKm: stats?.avgPace,
@@ -1833,7 +1872,7 @@ class _SplitsTableFull extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     // Для типов "run" и "ski" преобразуем ключи из "km_1" в "1"
     // ────────────────────────────────────────────────────────────────
-    if (activityType == 'run' || activityType == 'ski') {
+    if (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking') {
       final normalizedPacePerKm = <String, double>{};
       final normalizedHeartRatePerKm = <String, double>{};
 
@@ -1974,7 +2013,7 @@ class _SplitsTableFull extends StatelessWidget {
 
     // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
     final paceValuesForComparison =
-        (activityType == 'run' || activityType == 'ski')
+        (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking')
         ? paceValues
               .map(
                 (v) => (v.floor() * 60 + ((v - v.floor()) * 60).round())
@@ -1999,7 +2038,7 @@ class _SplitsTableFull extends StatelessWidget {
     String fmtPace(double paceValue) {
       if (paceValue <= 0) return '-';
 
-      if (activityType == 'run' || activityType == 'ski') {
+      if (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking') {
         // Формат: 5.7 означает 5 минут и 7 десятых от минуты = 5:42 мин/км
         final minutes = paceValue.floor();
         final seconds = ((paceValue - minutes) * 60).round();
@@ -2072,7 +2111,7 @@ class _SplitsTableFull extends StatelessWidget {
           // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
           // ────────────────────────────────────────────────────────────────
           final paceSecForVisual =
-              (activityType == 'run' || activityType == 'ski')
+              (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking')
               ? (paceValue.floor() * 60 +
                         ((paceValue - paceValue.floor()) * 60).round())
                     .toDouble()

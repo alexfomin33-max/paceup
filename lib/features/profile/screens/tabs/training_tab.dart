@@ -28,8 +28,9 @@ class TrainingTabState extends ConsumerState<TrainingTab>
   // Текущий месяц
   late DateTime _month;
 
-  // Мультиселект видов спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи
-  Set<int> _sports = {0, 1, 2, 3};
+  // Мультиселект видов спорта: 0 бег(включая indoor-running), 1 вело(включая indoor-cycling), 2 плавание, 3 лыжи, 6 walking, 7 hiking
+  // indoor-cycling и indoor-running не показываются отдельно, они суммируются с bike и run соответственно
+  Set<int> _sports = {0, 1, 2, 3, 6, 7};
 
   // Флаг для инициализации месяца только один раз при первой загрузке
   bool _monthInitialized = false;
@@ -346,6 +347,20 @@ class _MonthToolbar extends StatelessWidget {
           sportType: 3,
           onTap: () => onToggleSport(3),
         ),
+        const SizedBox(width: 8),
+        _SportIcon(
+          selected: sports.contains(6),
+          icon: Icons.directions_walk,
+          sportType: 6,
+          onTap: () => onToggleSport(6),
+        ),
+        const SizedBox(width: 8),
+        _SportIcon(
+          selected: sports.contains(7),
+          icon: Icons.terrain,
+          sportType: 7,
+          onTap: () => onToggleSport(7),
+        ),
       ],
     );
   }
@@ -394,7 +409,7 @@ class _NavIcon extends StatelessWidget {
 class _SportIcon extends StatelessWidget {
   final bool selected;
   final IconData icon;
-  final int sportType; // 0 бег, 1 вело, 2 плавание, 3 лыжи
+  final int sportType; // 0 бег(включая indoor-running), 1 вело(включая indoor-cycling), 2 плавание, 3 лыжи, 6 walking, 7 hiking
   final VoidCallback onTap;
   const _SportIcon({
     required this.selected,
@@ -406,13 +421,15 @@ class _SportIcon extends StatelessWidget {
   /// Получить цвет активной иконки в зависимости от типа спорта
   Color _getActiveColor() {
     switch (sportType) {
-      case 1: // велосипед
+      case 1: // велосипед (включая indoor-cycling)
         return AppColors.female; // Розовый цвет, как в main_tab.dart
       case 2: // плавание
         return AppColors.green;
       case 3: // лыжи
         return AppColors.warning; // Оранжевый цвет для лыж
-      default: // бег (0)
+      case 6: // walking
+      case 7: // hiking
+      default: // бег (0, включая indoor-running)
         return AppColors.brandPrimary;
     }
   }
@@ -556,7 +573,7 @@ class _MonthGrid extends StatelessWidget {
   BoxDecoration _getBubbleDecoration(int sportType) {
     Color color;
     switch (sportType) {
-      case 1: // велосипед
+      case 1: // велосипед (включая indoor-cycling)
         color = AppColors.female;
         break;
       case 2: // плавание
@@ -565,7 +582,9 @@ class _MonthGrid extends StatelessWidget {
       case 3: // лыжи
         color = AppColors.warning;
         break;
-      default: // бег (0)
+      case 6: // walking
+      case 7: // hiking
+      default: // бег (0, включая indoor-running)
         color = AppColors.brandPrimary;
     }
     return BoxDecoration(
@@ -1281,9 +1300,25 @@ class _Workout {
   final List<LatLng> points; // Точки маршрута для карты
   final double distance; // км для конвертации
   final int duration; // секунды для конвертации
+  final int? movingDuration; // секунды - время в движении (если есть и > 0, используется вместо duration)
   final double pace; // темп для конвертации
   final bool hasValidTrack; // Есть ли валидный трек маршрута
   final String? firstImageUrl; // URL первого изображения (если есть)
+  // ────────────────────────────────────────────────────────────────
+  // ✅ ПОЛНЫЕ ДАННЫЕ: пульс, каденс, набор высоты, разбивка по км
+  // ────────────────────────────────────────────────────────────────
+  final double? avgHeartRate;
+  final double? avgCadence;
+  final double? cumulativeElevationGain;
+  final double? cumulativeElevationLoss;
+  final double? minAltitude;
+  final double? maxAltitude;
+  final double? calories;
+  final int? steps;
+  final Map<String, double> heartRatePerKm;
+  final Map<String, double> pacePerKm;
+  final Map<String, double> elevationPerKm;
+  final Map<String, dynamic>? stats; // Полный объект stats для совместимости
 
   _Workout(
     this.id,
@@ -1298,6 +1333,19 @@ class _Workout {
     this.points = const [],
     this.hasValidTrack = false,
     this.firstImageUrl,
+    this.movingDuration,
+    this.avgHeartRate,
+    this.avgCadence,
+    this.cumulativeElevationGain,
+    this.cumulativeElevationLoss,
+    this.minAltitude,
+    this.maxAltitude,
+    this.calories,
+    this.steps,
+    this.heartRatePerKm = const {},
+    this.pacePerKm = const {},
+    this.elevationPerKm = const {},
+    this.stats,
   ]);
 
   /// Создаёт из TrainingActivity
@@ -1333,12 +1381,12 @@ class _Workout {
 
     if (activity.sportType == 2) {
       // Для плавания пересчитываем темп в формат "мин/100м"
-      if (activity.distance > 0 && activity.duration > 0) {
+      if (activity.distance > 0 && activity.effectiveDuration > 0) {
         // Рассчитываем темп из расстояния и времени: (время в сек * 100) / (расстояние в м * 60)
         final distanceMeters =
             activity.distance * 1000; // конвертируем км в метры
         final paceMinPer100m =
-            (activity.duration * 100) / (distanceMeters * 60);
+            (activity.effectiveDuration * 100) / (distanceMeters * 60);
         paceText = formatPace(paceMinPer100m);
         pace = paceMinPer100m;
       } else if (activity.pace > 0) {
@@ -1362,7 +1410,34 @@ class _Workout {
       latLngPoints,
       activity.hasValidTrack,
       activity.firstImageUrl,
+      activity.movingDuration,
+      // ────────────────────────────────────────────────────────────────
+      // ✅ ПЕРЕДАЕМ ПОЛНЫЕ ДАННЫЕ из TrainingActivity
+      // ────────────────────────────────────────────────────────────────
+      activity.avgHeartRate,
+      activity.avgCadence,
+      activity.cumulativeElevationGain,
+      activity.cumulativeElevationLoss,
+      activity.minAltitude,
+      activity.maxAltitude,
+      activity.calories,
+      activity.steps,
+      activity.heartRatePerKm,
+      activity.pacePerKm,
+      activity.elevationPerKm,
+      activity.stats,
     );
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
+  /// используем его, иначе используем duration
+  /// ────────────────────────────────────────────────────────────────
+  int get effectiveDuration {
+    if (movingDuration != null && movingDuration! > 0) {
+      return movingDuration!;
+    }
+    return duration;
   }
 
   /// Конвертирует в Activity для description_screen
@@ -1374,36 +1449,157 @@ class _Workout {
               ? 'bike'
               : (kind == 2 ? 'swim' : (kind == 3 ? 'ski' : 'run')));
 
+    // ────────────────────────────────────────────────────────────────
+    // ✅ ИСПОЛЬЗУЕМ РЕАЛЬНЫЕ ДАННЫЕ из TrainingActivity вместо null
+    // ────────────────────────────────────────────────────────────────
+    // Вычисляем avgSpeed из pace или используем данные из stats
+    double calculatedAvgSpeed = 0.0;
+    if (pace > 0) {
+      calculatedAvgSpeed = 60.0 / pace; // км/ч (приблизительно)
+    }
+    
+    // Если есть полный объект stats, используем его для извлечения данных
+    Map<String, dynamic>? statsData = this.stats;
+    if (statsData != null) {
+      // Извлекаем avgSpeed из stats если есть
+      if (statsData.containsKey('avgSpeed') && statsData['avgSpeed'] != null) {
+        final speedValue = statsData['avgSpeed'];
+        if (speedValue is num) {
+          calculatedAvgSpeed = speedValue.toDouble();
+        }
+      }
+    }
+    
+    // Извлекаем координаты для min/max altitude из stats если есть
+    al.Coord? minAltitudeCoords;
+    al.Coord? maxAltitudeCoords;
+    if (statsData != null) {
+      if (statsData.containsKey('minAltitudeCoords') && statsData['minAltitudeCoords'] is Map) {
+        final coords = statsData['minAltitudeCoords'] as Map;
+        if (coords.containsKey('lat') && coords.containsKey('lng')) {
+          minAltitudeCoords = al.Coord(
+            lat: (coords['lat'] as num).toDouble(),
+            lng: (coords['lng'] as num).toDouble(),
+          );
+        }
+      }
+      if (statsData.containsKey('maxAltitudeCoords') && statsData['maxAltitudeCoords'] is Map) {
+        final coords = statsData['maxAltitudeCoords'] as Map;
+        if (coords.containsKey('lat') && coords.containsKey('lng')) {
+          maxAltitudeCoords = al.Coord(
+            lat: (coords['lat'] as num).toDouble(),
+            lng: (coords['lng'] as num).toDouble(),
+          );
+        }
+      }
+    }
+    
+    // Извлекаем bounds из stats если есть
+    List<al.Coord> boundsList = [];
+    if (statsData != null && statsData.containsKey('bounds') && statsData['bounds'] is List) {
+      final bounds = statsData['bounds'] as List;
+      for (final bound in bounds) {
+        if (bound is Map && bound.containsKey('lat') && bound.containsKey('lng')) {
+          boundsList.add(al.Coord(
+            lat: (bound['lat'] as num).toDouble(),
+            lng: (bound['lng'] as num).toDouble(),
+          ));
+        }
+      }
+    }
+    // Если bounds нет в stats, используем первую и последнюю точку
+    if (boundsList.isEmpty && points.length >= 2) {
+      boundsList = [
+        al.Coord(lat: points.first.latitude, lng: points.first.longitude),
+        al.Coord(lat: points.last.latitude, lng: points.last.longitude),
+      ];
+    }
+    
+    // Извлекаем startedAt и finishedAt из stats если есть
+    DateTime? startedAt = when;
+    DateTime? finishedAt = when.add(Duration(seconds: effectiveDuration));
+    if (statsData != null) {
+      if (statsData.containsKey('startedAt') && statsData['startedAt'] != null) {
+        try {
+          startedAt = DateTime.parse(statsData['startedAt'].toString());
+        } catch (e) {
+          // Игнорируем ошибку парсинга
+        }
+      }
+      if (statsData.containsKey('finishedAt') && statsData['finishedAt'] != null) {
+        try {
+          finishedAt = DateTime.parse(statsData['finishedAt'].toString());
+        } catch (e) {
+          // Игнорируем ошибку парсинга
+        }
+      }
+    }
+    
+    // Извлекаем startedAtCoords и finishedAtCoords из stats если есть
+    al.Coord? startedAtCoords;
+    al.Coord? finishedAtCoords;
+    if (statsData != null) {
+      if (statsData.containsKey('startedAtCoords') && statsData['startedAtCoords'] is Map) {
+        final coords = statsData['startedAtCoords'] as Map;
+        if (coords.containsKey('lat') && coords.containsKey('lng')) {
+          startedAtCoords = al.Coord(
+            lat: (coords['lat'] as num).toDouble(),
+            lng: (coords['lng'] as num).toDouble(),
+          );
+        }
+      }
+      if (statsData.containsKey('finishedAtCoords') && statsData['finishedAtCoords'] is Map) {
+        final coords = statsData['finishedAtCoords'] as Map;
+        if (coords.containsKey('lat') && coords.containsKey('lng')) {
+          finishedAtCoords = al.Coord(
+            lat: (coords['lat'] as num).toDouble(),
+            lng: (coords['lng'] as num).toDouble(),
+          );
+        }
+      }
+    }
+    // Если координаты не найдены в stats, используем первую и последнюю точку
+    if (startedAtCoords == null && points.isNotEmpty) {
+      startedAtCoords = al.Coord(lat: points.first.latitude, lng: points.first.longitude);
+    }
+    if (finishedAtCoords == null && points.isNotEmpty) {
+      finishedAtCoords = al.Coord(lat: points.last.latitude, lng: points.last.longitude);
+    }
+    
+    // Извлекаем realDistance из stats если есть
+    double realDistance = distance * 1000; // км -> метры
+    if (statsData != null && statsData.containsKey('realDistance') && statsData['realDistance'] != null) {
+      final realDistValue = statsData['realDistance'];
+      if (realDistValue is num) {
+        realDistance = realDistValue.toDouble();
+      }
+    }
+    
     // Создаём ActivityStats из доступных данных
     final stats = al.ActivityStats(
       distance: distance * 1000, // км -> метры
-      realDistance: distance * 1000,
-      avgSpeed: pace > 0 ? 60.0 / pace : 0.0, // км/ч (приблизительно)
+      realDistance: realDistance,
+      avgSpeed: calculatedAvgSpeed,
       avgPace: pace,
-      minAltitude: 0.0,
-      minAltitudeCoords: null,
-      maxAltitude: 0.0,
-      maxAltitudeCoords: null,
-      cumulativeElevationGain: 0.0,
-      cumulativeElevationLoss: 0.0,
-      startedAt: when,
-      startedAtCoords: points.isNotEmpty
-          ? al.Coord(lat: points.first.latitude, lng: points.first.longitude)
-          : null,
-      finishedAt: when.add(Duration(seconds: duration)),
-      finishedAtCoords: points.isNotEmpty
-          ? al.Coord(lat: points.last.latitude, lng: points.last.longitude)
-          : null,
+      minAltitude: this.minAltitude ?? 0.0,
+      minAltitudeCoords: minAltitudeCoords,
+      maxAltitude: this.maxAltitude ?? 0.0,
+      maxAltitudeCoords: maxAltitudeCoords,
+      cumulativeElevationGain: this.cumulativeElevationGain ?? 0.0,
+      cumulativeElevationLoss: this.cumulativeElevationLoss ?? 0.0,
+      startedAt: startedAt,
+      startedAtCoords: startedAtCoords,
+      finishedAt: finishedAt,
+      finishedAtCoords: finishedAtCoords,
       duration: duration,
-      bounds: points.length >= 2
-          ? [
-              al.Coord(lat: points.first.latitude, lng: points.first.longitude),
-              al.Coord(lat: points.last.latitude, lng: points.last.longitude),
-            ]
-          : [],
-      avgHeartRate: null,
-      heartRatePerKm: {},
-      pacePerKm: {},
+      movingDuration: this.movingDuration,
+      bounds: boundsList,
+      avgHeartRate: this.avgHeartRate,
+      avgCadence: this.avgCadence,
+      heartRatePerKm: this.heartRatePerKm,
+      pacePerKm: this.pacePerKm,
+      calories: this.calories,
+      totalSteps: this.steps,
     );
 
     // Конвертируем LatLng в Coord
@@ -1415,7 +1611,7 @@ class _Workout {
       id: id,
       type: sportTypeStr,
       dateStart: when,
-      dateEnd: when.add(Duration(seconds: duration)),
+      dateEnd: when.add(Duration(seconds: effectiveDuration)),
       lentaId: id, // Используем id активности как lentaId
       lentaDate: when,
       userId: userId,
