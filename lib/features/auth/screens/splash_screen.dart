@@ -248,13 +248,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
-  /// 🔹 Автоматическая синхронизация Garmin в фоне
-  /// Запускается при запуске приложения, если Garmin подключен
-  /// Не блокирует переход на основной экран
-  Future<void> _syncGarminInBackground() async {
+  /// 🔹 Автоматическая синхронизация Garmin в фоне (внутренний метод с сервисом)
+  /// Принимает уже полученный сервис, чтобы избежать проблем с ref после размонтирования
+  Future<void> _syncGarminInBackgroundWithService(GarminSyncService garminService) async {
     try {
-      final garminService = ref.read(garminSyncServiceProvider);
-      
       // Проверяем, подключен ли Garmin
       final connectionStatus = await garminService.checkConnection();
       
@@ -263,16 +260,51 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
           debugPrint('🔄 [Garmin] Запуск автоматической синхронизации последней тренировки...');
         }
         
-        // Синхронизируем последнюю тренировку из Garmin
-        final syncResult = await garminService.syncLastActivity();
+        // 🔹 Синхронизируем последнюю тренировку из Garmin с retry логикой
+        // Повторяем попытку до 2 раз при сетевых ошибках
+        Map<String, dynamic>? syncResult;
+        int retryCount = 0;
+        const maxRetries = 2;
         
-        if (kDebugMode) {
-          if (syncResult['success'] == true) {
-            final message = syncResult['message'] ?? 'Синхронизация завершена';
-            debugPrint('✅ [Garmin] Синхронизация завершена: $message');
-          } else {
-            final message = syncResult['message'] ?? 'Ошибка синхронизации';
-            debugPrint('ℹ️ [Garmin] $message');
+        while (retryCount <= maxRetries) {
+          try {
+            syncResult = await garminService.syncLastActivity();
+            break; // Успешно - выходим из цикла
+          } catch (e) {
+            retryCount++;
+            final errorString = e.toString().toLowerCase();
+            
+            // Проверяем, является ли это сетевой ошибкой
+            final isNetworkError = errorString.contains('host lookup') ||
+                errorString.contains('failed to resolve') ||
+                errorString.contains('connection') ||
+                errorString.contains('timeout') ||
+                errorString.contains('timed out') ||
+                errorString.contains('network') ||
+                errorString.contains('http connection timed out');
+            
+            if (isNetworkError && retryCount <= maxRetries) {
+              // Сетевая ошибка - ждем и повторяем
+              if (kDebugMode) {
+                debugPrint('⚠️ [Garmin] Сетевая ошибка, повторная попытка $retryCount/$maxRetries...');
+              }
+              await Future.delayed(Duration(seconds: retryCount * 2)); // Увеличиваем задержку с каждой попыткой
+            } else {
+              // Не сетевая ошибка или превышен лимит попыток - пробрасываем ошибку
+              rethrow;
+            }
+          }
+        }
+        
+        if (syncResult != null) {
+          if (kDebugMode) {
+            if (syncResult['success'] == true) {
+              final message = syncResult['message'] ?? 'Синхронизация завершена';
+              debugPrint('✅ [Garmin] Синхронизация завершена: $message');
+            } else {
+              final message = syncResult['message'] ?? 'Ошибка синхронизации';
+              debugPrint('ℹ️ [Garmin] $message');
+            }
           }
         }
       } else {
@@ -370,17 +402,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       }
 
       // ────────── Автоматическая синхронизация Garmin ──────────
-      // Запускаем в фоне, не блокируя переход на основной экран
-      // Используем unawaited для запуска в фоне без ожидания завершения
-      _syncGarminInBackground();
-
+      // Получаем провайдер ДО навигации (после навигации виджет размонтируется)
+      // Запускаем синхронизацию в фоне с задержкой для полной инициализации
+      final garminService = ref.read(garminSyncServiceProvider);
+      
       // 🔹 Переходим на основной экран с данными пользователя
-      // Синхронизация Garmin продолжит выполняться в фоне
       Navigator.pushReplacementNamed(
         context,
         '/lenta', // Можно заменить на HomeShell для bottom nav
         arguments: {'userId': userId},
       );
+
+      // Запускаем синхронизацию ПОСЛЕ навигации, используя уже полученный сервис
+      // Это гарантирует, что HTTP клиент и провайдеры полностью готовы
+      // Увеличена задержка до 3 секунд для полной инициализации HTTP клиента
+      Future.delayed(const Duration(seconds: 3), () {
+        _syncGarminInBackgroundWithService(garminService);
+      });
     } else {
       // 🔹 fallback: userId не найден, переходим на общий HomeScreen
       if (kDebugMode) {
