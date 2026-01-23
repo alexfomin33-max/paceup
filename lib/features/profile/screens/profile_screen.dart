@@ -907,7 +907,7 @@ class _ProfileInfoCard extends StatelessWidget {
                           onTap: () {
                             Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
-                                builder: (_) => SearchPrefsPage(),
+                                builder: (_) => const SearchPrefsPage(),
                               ),
                             );
                           },
