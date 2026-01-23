@@ -37,9 +37,10 @@ class AuthService {
       final userIdStr = await storage.read(key: "user_id");
       final userId = userIdStr != null ? int.tryParse(userIdStr) : null;
       
-      if (kDebugMode && userId != null) {
-        debugPrint('🔹 UserId прочитан: $userId');
-      }
+      // Логи отключены
+      // if (kDebugMode && userId != null) {
+      //   debugPrint('🔹 UserId прочитан: $userId');
+      // }
       
       return userId;
     } catch (e) {
