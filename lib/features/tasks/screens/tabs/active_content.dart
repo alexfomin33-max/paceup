@@ -311,14 +311,18 @@ class TaskCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // BoxShadow(
+        //   //   color: AppColors.twinshadow,
+        //   //   blurRadius: 20,
+        //   //   offset: Offset(0, 1),
+        //   // ),
+        // ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       child: Row(
@@ -409,13 +413,17 @@ class ExpeditionCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Row(
         children: [
@@ -562,15 +570,18 @@ class _IconBadge extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                 color: AppColors.getSurfaceColor(context),
-                border: Border.all(color: AppColors.getBorderColor(context)),
+                border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                boxShadow: const [
-                  BoxShadow(
-                    color: AppColors.shadowSoft,
-                    blurRadius: 1,
-                    offset: Offset(0, 1),
-                  ),
-                ],
+                // boxShadow: const [
+                //   BoxShadow(
+                //     color: AppColors.shadowSoft,
+                //     blurRadius: 1,
+                //     offset: Offset(0, 1),
+                //   ),
+                // ],
               ),
               child: Text(
                 text,

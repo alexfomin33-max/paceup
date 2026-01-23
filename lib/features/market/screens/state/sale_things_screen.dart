@@ -385,7 +385,7 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
       },
       behavior: HitTestBehavior.opaque,
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(12, 12, 12, bottomPad),
+        padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
         physics: const BouncingScrollPhysics(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -438,45 +438,49 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
             ),
             const SizedBox(height: 20),
 
-            // ── динамические поля для ввода городов передачи (в два столбца)
+            // ── динамические поля для ввода городов передачи
             const _SmallLabel('Город передачи'),
             const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
+            Column(
               children: List.generate(
                 _cityControllers.length.clamp(0, 2),
                 (index) {
-                  return SizedBox(
-                    width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow: [
-                          const BoxShadow(
-                            color: AppColors.twinshadow,
-                            blurRadius: 20,
-                            offset: Offset(0, 1),
+                  return Column(
+                    children: [
+                      if (index > 0) const SizedBox(height: 12),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(
+                            color: AppColors.twinchip,
+                            width: 0.7,
                           ),
-                        ],
+                          // boxShadow: [
+                          //   const BoxShadow(
+                          //     color: AppColors.twinshadow,
+                          //     blurRadius: 20,
+                          //     offset: Offset(0, 1),
+                          //   ),
+                          // ],
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: CityAutocompleteField(
+                          controller: _cityControllers[index],
+                          suggestions: _cities,
+                          hintText: 'Населенный пункт',
+                          showBorder: false,
+                          onSelected: (city) {
+                            setState(() {
+                              _selectedCities[index] = city;
+                              _cityControllers[index].text = city;
+                            });
+                          },
+                        ),
                       ),
-                      clipBehavior: Clip.antiAlias,
-                      child: CityAutocompleteField(
-                        controller: _cityControllers[index],
-                        suggestions: _cities,
-                        hintText: 'Населенный пункт',
-                        showBorder: false,
-                        onSelected: (city) {
-                          setState(() {
-                            _selectedCities[index] = city;
-                            _cityControllers[index].text = city;
-                          });
-                        },
-                      ),
-                    ),
+                    ],
                   );
                 },
-              ),
+              ).expand((widget) => [widget]).toList(),
             ),
             // ── кнопка "добавить ещё" (показываем только если меньше 2 полей)
             if (_cityControllers.length < 2) ...[
@@ -690,7 +694,7 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
                 width: size,
                 height: size,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   color: AppColors.getBackgroundColor(context),
                 ),
                 clipBehavior: Clip.hardEdge,
@@ -719,7 +723,7 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
                   height: 24,
                   decoration: BoxDecoration(
                     color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: AppColors.getBorderColor(context),
                     ),
@@ -782,14 +786,18 @@ class _LabeledTextField extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            boxShadow: [
-              const BoxShadow(
-                color: AppColors.twinshadow,
-                blurRadius: 20,
-                offset: Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+            // boxShadow: [
+            //   const BoxShadow(
+            //     color: AppColors.twinshadow,
+            //     blurRadius: 20,
+            //     offset: Offset(0, 1),
+            //   ),
+            // ],
           ),
           child: TextFormField(
             controller: controller,
@@ -808,18 +816,18 @@ class _LabeledTextField extends StatelessWidget {
               fillColor: AppColors.getSurfaceColor(context),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 17,
+                vertical: 21,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -854,14 +862,18 @@ class _DropdownField extends StatelessWidget {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            boxShadow: [
-              const BoxShadow(
-                color: AppColors.twinshadow,
-                blurRadius: 20,
-                offset: Offset(0, 1),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+            // boxShadow: [
+            //   const BoxShadow(
+            //     color: AppColors.twinshadow,
+            //     blurRadius: 20,
+            //     offset: Offset(0, 1),
+            //   ),
+            // ],
           ),
           child: InputDecorator(
             decoration: InputDecoration(
@@ -869,18 +881,18 @@ class _DropdownField extends StatelessWidget {
               fillColor: AppColors.getSurfaceColor(context),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 4,
+                vertical: 8,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide.none,
               ),
             ),
@@ -899,7 +911,7 @@ class _DropdownField extends StatelessWidget {
                     : null,
                 dropdownColor: AppColors.getSurfaceColor(context),
                 menuMaxHeight: 300,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 icon: Icon(
                   Icons.arrow_drop_down,
                   color: AppColors.getIconSecondaryColor(context),
@@ -965,18 +977,20 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        SizedBox(
-          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-          child: Container(
+        Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              boxShadow: [
-                const BoxShadow(
-                  color: AppColors.twinshadow,
-                  blurRadius: 20,
-                  offset: Offset(0, 1),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+              // boxShadow: [
+              //   const BoxShadow(
+              //     color: AppColors.twinshadow,
+              //     blurRadius: 20,
+              //     offset: Offset(0, 1),
+              //   ),
+              // ],
             ),
             child: TextFormField(
               controller: controller,
@@ -987,36 +1001,32 @@ class _PriceField extends StatelessWidget {
                 color: AppColors.getTextPrimaryColor(context),
               ),
               decoration: InputDecoration(
-                hintText: '0',
+                hintText: '0 ₽',
                 hintStyle: AppTextStyles.h14w4Place.copyWith(
                   color: AppColors.getTextPlaceholderColor(context),
                 ),
-                suffixText: '₽',
-                suffixStyle: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
+               
                 filled: true,
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 17,
+                  vertical: 21,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1081,14 +1091,18 @@ class _OvalToggle extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
           boxShadow: selected
               ? null
               : [
-                  const BoxShadow(
-                    color: AppColors.twinshadow,
-                    blurRadius: 20,
-                    offset: Offset(0, 1),
-                  ),
+                  // const BoxShadow(
+                  //   color: AppColors.twinshadow,
+                  //   blurRadius: 20,
+                  //   offset: Offset(0, 1),
+                  // ),
                 ],
         ),
         child: Text(

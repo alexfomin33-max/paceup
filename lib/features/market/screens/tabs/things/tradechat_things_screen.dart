@@ -1624,7 +1624,7 @@ class _BubbleRight extends StatelessWidget {
           ConstrainedBox(
             constraints: BoxConstraints(maxWidth: max),
             child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+              padding: const EdgeInsets.fromLTRB(12, 20, 12, 4),
               decoration: BoxDecoration(
                 color: Theme.of(context).brightness == Brightness.dark
                     ? AppColors.brandPrimary.withValues(alpha: 0.2)
