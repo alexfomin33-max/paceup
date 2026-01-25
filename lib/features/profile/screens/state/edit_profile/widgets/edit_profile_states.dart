@@ -7,7 +7,7 @@
 
 import 'package:flutter/cupertino.dart';
 
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/theme/app_theme.dart';
 
 /// ───────────────────────────── Панель загрузки ─────────────────────────────
 

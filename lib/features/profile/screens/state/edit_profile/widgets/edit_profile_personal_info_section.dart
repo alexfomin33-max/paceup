@@ -12,8 +12,8 @@ import 'package:flutter/cupertino.dart';
 import 'edit_profile_form_fields.dart';
 import 'edit_profile_avatar_section.dart';
 import 'edit_profile_avatar_section.dart' as avatar;
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../leaderboard/widgets/city_autocomplete_field.dart';
+import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../leaderboard/widgets/city_autocomplete_field.dart';
 
 /// ───────────────────────────── Секция личной информации ─────────────────────────────
 

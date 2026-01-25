@@ -5,7 +5,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../providers/services/api_provider.dart';
+import '../../../../../../providers/services/api_provider.dart';
 import 'edit_profile_notifier.dart';
 import 'edit_profile_state.dart';
 

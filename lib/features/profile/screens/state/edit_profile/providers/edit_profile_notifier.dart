@@ -11,14 +11,14 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/services/api_service.dart';
-import '../../../../../core/utils/error_handler.dart';
-import '../../../../../core/utils/image_picker_helper.dart';
-import '../../../../../core/utils/local_image_compressor.dart'
+import '../../../../../../core/services/api_service.dart';
+import '../../../../../../core/utils/error_handler.dart';
+import '../../../../../../core/utils/image_picker_helper.dart';
+import '../../../../../../core/utils/local_image_compressor.dart'
     show ImageCompressionPreset;
-import '../../../../../core/providers/form_state_provider.dart';
-import '../../../../../providers/avatar_version_provider.dart';
-import '../../../providers/profile_header_provider.dart';
+import '../../../../../../core/providers/form_state_provider.dart';
+import '../../../../../../providers/avatar_version_provider.dart';
+import '../../../../providers/profile_header_provider.dart';
 import 'edit_profile_state.dart';
 
 /// ───────────────────────────── Notifier ─────────────────────────────
