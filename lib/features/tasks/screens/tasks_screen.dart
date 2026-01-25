@@ -62,11 +62,11 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leadingWidth: 56, // одна иконка слева
-        // слева — иконка плюса (только для пользователя с id=1)
+        // слева — иконка плюса (только для пользователей с id=1, 16, 17)
         leading: userIdAsync.when(
           data: (userId) {
-            // Показываем иконку только если userId == 1
-            if (userId == 1) {
+            // Показываем иконку только если userId == 1, 16 или 17
+            if (userId == 1 || userId == 16 || userId == 17) {
               return Padding(
                 padding: const EdgeInsets.only(left: 6),
                 child: _NavIcon(
@@ -180,7 +180,7 @@ class _NavIcon extends StatelessWidget {
           minWidth: _kAppBarTapTarget,
           minHeight: _kAppBarTapTarget,
         ),
-        icon: Icon(icon, size: _kAppBarIconSize, color: AppColors.brandPrimary),
+        icon: Icon(icon, size: _kAppBarIconSize, color: AppColors.textPrimary),
         splashRadius: 22,
       ),
     );

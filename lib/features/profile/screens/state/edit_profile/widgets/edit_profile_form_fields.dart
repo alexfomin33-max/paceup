@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/theme/app_theme.dart';
 
 /// Ширина лейбла для полей формы
 const double kEditProfileLabelWidth = 170.0;
@@ -26,21 +26,21 @@ class EditProfileGroupBlock extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
+          color: AppColors.twinchip,
+          width: 0.7,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Theme.of(context).brightness == Brightness.dark
+        //         ? AppColors.darkShadowSoft
+        //         : AppColors.shadowSoft,
+        //     offset: const Offset(0, 1),
+        //     blurRadius: 1,
+        //     spreadRadius: 0,
+        //   ),
+        // ],
       ),
       child: Column(
         children: [
@@ -160,7 +160,7 @@ class EditProfileFieldRow extends StatelessWidget {
 
       case EditProfileFieldRowType.picker:
         return InkWell(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: onTap,
           child: Row(
             children: [
@@ -196,7 +196,7 @@ class EditProfileFieldRow extends StatelessWidget {
             ),
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             style: TextStyle(
               color: value == null || value!.isEmpty
                   ? AppColors.getTextTertiaryColor(context)
@@ -281,21 +281,21 @@ class EditProfileNameBlock extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
+          color: AppColors.twinchip,
+          width: 0.7,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Theme.of(context).brightness == Brightness.dark
+        //         ? AppColors.darkShadowSoft
+        //         : AppColors.shadowSoft,
+        //     offset: const Offset(0, 1),
+        //     blurRadius: 1,
+        //     spreadRadius: 0,
+        //   ),
+        // ],
       ),
       child: Column(
         children: [

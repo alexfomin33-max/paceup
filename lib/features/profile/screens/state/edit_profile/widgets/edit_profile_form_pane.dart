@@ -10,7 +10,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/theme/app_theme.dart';
 import 'edit_profile_personal_info_section.dart';
 import 'edit_profile_physical_info_section.dart';
 
@@ -83,7 +83,7 @@ class EditProfileFormPane extends StatelessWidget {
       physics: const BouncingScrollPhysics(
         parent: AlwaysScrollableScrollPhysics(),
       ),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -163,24 +163,24 @@ class _BackgroundImageSection extends StatelessWidget {
             height: calculatedHeight,
             decoration: BoxDecoration(
               color: AppColors.getSurfaceColor(context),
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
-                color: AppColors.getBorderColor(context),
-                width: 0.5,
+                color: AppColors.twinBg,
+                width: 0.7,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkShadowSoft
-                      : AppColors.shadowSoft,
-                  offset: const Offset(0, 1),
-                  blurRadius: 1,
-                  spreadRadius: 0,
-                ),
-              ],
+              // boxShadow: [
+              //   BoxShadow(
+              //     color: Theme.of(context).brightness == Brightness.dark
+              //         ? AppColors.darkShadowSoft
+              //         : AppColors.shadowSoft,
+              //     offset: const Offset(0, 1),
+              //     blurRadius: 1,
+              //     spreadRadius: 0,
+              //   ),
+              // ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: backgroundBytes != null
                   ? Image.memory(
                       backgroundBytes!,

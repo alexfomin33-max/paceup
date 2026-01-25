@@ -11,15 +11,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/app_bar.dart';
-import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../core/providers/form_state_provider.dart';
-import '../../../providers/services/api_provider.dart';
-import 'edit_profile/providers/edit_profile_provider.dart';
-import 'edit_profile/providers/edit_profile_state.dart';
-import 'edit_profile/widgets/edit_profile_states.dart';
-import 'edit_profile/widgets/edit_profile_form_pane.dart';
+import '../../../../../core/theme/app_theme.dart';
+import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../providers/services/api_provider.dart';
+import 'providers/edit_profile_provider.dart';
+import 'providers/edit_profile_state.dart';
+import 'widgets/edit_profile_states.dart';
+import 'widgets/edit_profile_form_pane.dart';
 
 /// Экран редактирования профиля
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -342,9 +342,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           title: 'Профиль',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             TextButton(
               onPressed: formState.isSubmitting || formState.isLoading

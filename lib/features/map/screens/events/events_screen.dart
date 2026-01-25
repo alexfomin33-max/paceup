@@ -168,11 +168,11 @@ class EventsFloatingButtons extends ConsumerWidget {
               );
             },
           ),
-          // Правая сторона: кнопка "Official" (если ID=1) и кнопка "Добавить"
+          // Правая сторона: кнопка "Платные" (если ID=1, 16 или 17) и кнопка "Добавить"
           userIdAsync.when(
             data: (userId) {
-              // Если ID пользователя равен 1, показываем обе кнопки в Column
-              if (userId == 1) {
+              // Если ID пользователя равен 1, 16 или 17, показываем обе кнопки в Column
+              if (userId == 1 || userId == 16 || userId == 17) {
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -217,7 +217,7 @@ class EventsFloatingButtons extends ConsumerWidget {
                   ],
                 );
               } else {
-                // Если ID не равен 1, показываем только кнопку "Добавить"
+                // Если ID не равен 1, 16 или 17, показываем только кнопку "Добавить"
                 return _SolidPillButton(
                   icon: Icons.add_circle_outline,
                   label: 'Добавить',

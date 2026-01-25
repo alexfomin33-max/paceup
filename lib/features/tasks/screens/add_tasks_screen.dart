@@ -9,7 +9,6 @@ import '../../../core/utils/local_image_compressor.dart'
     show ImageCompressionPreset;
 import '../../../core/widgets/app_bar.dart';
 import '../../../core/widgets/interactive_back_swipe.dart';
-import '../../../core/widgets/primary_button.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
 import '../../../core/providers/form_state_provider.dart';
@@ -321,21 +320,78 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     );
   }
 
+  /// Кнопка сохранения
+  /// При загрузке: только индикатор (без текста), тёмный фон, блокировка нажатий.
+  /// Активна только когда все поля заполнены и меню выбраны.
+  Widget _buildSaveButton() {
+    final formState = ref.watch(formStateProvider);
+    final textColor = AppColors.getSurfaceColor(context);
+    final isLoading = formState.isSubmitting;
+    final isValid = isFormValid;
+
+    // ────────────────────────────────────────────────────────────────
+    // 💾 КНОПКА СОХРАНЕНИЯ (единый стиль с экраном редактирования)
+    // ────────────────────────────────────────────────────────────────
+    // disabledBackgroundColor = AppColors.button — кнопка остаётся тёмной при загрузке
+    // При невалидной форме: уменьшенная непрозрачность для визуальной индикации
+    final button = Opacity(
+      opacity: isValid ? 1.0 : 0.5,
+      child: ElevatedButton(
+        onPressed: isLoading || !isValid ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.button,
+          foregroundColor: textColor,
+          disabledBackgroundColor: AppColors.button,
+          disabledForegroundColor: textColor,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 30),
+          shape: const StadiumBorder(),
+          minimumSize: const Size(double.infinity, 50),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          alignment: Alignment.center,
+        ),
+        child: isLoading
+            ? CupertinoActivityIndicator(radius: 9, color: textColor)
+            : Text(
+                'Создать задачу',
+                style: AppTextStyles.h15w5.copyWith(
+                  color: textColor,
+                  height: 1.0,
+                ),
+              ),
+      ),
+    );
+
+    // Блокировка нажатий во время загрузки (onPressed: null уже отключает, дублируем на всякий)
+    if (isLoading) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
+  }
+
   @override
   Widget build(BuildContext context) {
     final formState = ref.watch(formStateProvider);
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Создание задачи'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(
+          title: 'Создание задачи',
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
         body: GestureDetector(
           // ── скрываем клавиатуру при нажатии на пустую область экрана
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -404,45 +460,41 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: nameCtrl,
-                    style: AppTextStyles.h14w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: formState.fieldErrors.containsKey('name')
+                            ? AppColors.error
+                            : AppColors.twinchip,
+                        width: 0.7,
+                      ),
                     ),
-                    decoration: InputDecoration(
-                      hintText: 'Введите название задачи',
-                      hintStyle: AppTextStyles.h14w4Place,
-                      filled: true,
-                      fillColor: AppColors.getSurfaceColor(context),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 17,
+                    child: TextField(
+                      controller: nameCtrl,
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextPrimaryColor(context),
                       ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: formState.fieldErrors.containsKey('name')
-                              ? AppColors.error
-                              : AppColors.getBorderColor(context),
-                          width: 1,
+                      decoration: InputDecoration(
+                        hintText: 'Введите название задачи',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 22,
                         ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: formState.fieldErrors.containsKey('name')
-                              ? AppColors.error
-                              : AppColors.getBorderColor(context),
-                          width: 1,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: formState.fieldErrors.containsKey('name')
-                              ? AppColors.error
-                              : AppColors.getBorderColor(context),
-                          width: 1,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
@@ -459,95 +511,91 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => InputDecorator(
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: formState.fieldErrors.containsKey('activity')
+                            ? AppColors.error
+                            : AppColors.twinchip,
+                        width: 0.7,
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: activity,
-                          isExpanded: true,
-                          hint: const Text(
-                            'Выберите вид активности',
-                            style: AppTextStyles.h14w4Place,
+                    ),
+                    child: Builder(
+                      builder: (context) => InputDecorator(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                activity = newValue;
-                                _clearFieldError('activity');
-                              });
-                            }
-                          },
-                          dropdownColor: AppColors.getSurfaceColor(context),
-                          menuMaxHeight: 300,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          icon: Icon(
-                            Icons.arrow_drop_down,
-                            color: AppColors.getIconSecondaryColor(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                          items: const [
-                            DropdownMenuItem<String>(
-                              value: 'general',
-                              child: Text('Общий'),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: activity,
+                            isExpanded: true,
+                            hint: const Text(
+                              'Выберите вид активности',
+                              style: AppTextStyles.h14w4Place,
                             ),
-                            DropdownMenuItem<String>(
-                              value: 'run',
-                              child: Text('Бег'),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() {
+                                  activity = newValue;
+                                  _clearFieldError('activity');
+                                });
+                              }
+                            },
+                            dropdownColor: AppColors.getSurfaceColor(context),
+                            menuMaxHeight: 300,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.getIconSecondaryColor(context),
                             ),
-                            DropdownMenuItem<String>(
-                              value: 'bike',
-                              child: Text('Велосипед'),
+                            style: AppTextStyles.h14w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
                             ),
-                            DropdownMenuItem<String>(
-                              value: 'swim',
-                              child: Text('Плавание'),
-                            ),
-                            DropdownMenuItem<String>(
-                              value: 'walk',
-                              child: Text('Ходьба'),
-                            ),
-                            DropdownMenuItem<String>(
-                              value: 'ski',
-                              child: Text('Лыжи'),
-                            ),
-                          ],
+                            items: const [
+                              DropdownMenuItem<String>(
+                                value: 'general',
+                                child: Text('Общий'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'run',
+                                child: Text('Бег'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'bike',
+                                child: Text('Велосипед'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'swim',
+                                child: Text('Плавание'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'walk',
+                                child: Text('Ходьба'),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: 'ski',
+                                child: Text('Лыжи'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -564,161 +612,64 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => InputDecorator(
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey('periodType')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey('periodType')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey('periodType')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: periodType,
-                          isExpanded: true,
-                          hint: const Text(
-                            'Выберите период',
-                            style: AppTextStyles.h14w4Place,
-                          ),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() {
-                                periodType = newValue;
-                                if (newValue != 'Месяц') {
-                                  selectedMonth = null;
-                                }
-                                if (newValue != 'Выбранный период') {
-                                  startDateCtrl.clear();
-                                  endDateCtrl.clear();
-                                }
-                                _clearFieldError('periodType');
-                              });
-                            }
-                          },
-                          dropdownColor: AppColors.getSurfaceColor(context),
-                          menuMaxHeight: 300,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          icon: Icon(
-                            Icons.arrow_drop_down,
-                            color: AppColors.getIconSecondaryColor(context),
-                          ),
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
-                          items: const [
-                            DropdownMenuItem<String>(
-                              value: 'Месяц',
-                              child: Text('Месяц'),
-                            ),
-                            DropdownMenuItem<String>(
-                              value: 'Выбранный период',
-                              child: Text('Выбранный период'),
-                            ),
-                          ],
-                        ),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: formState.fieldErrors.containsKey('periodType')
+                            ? AppColors.error
+                            : AppColors.twinchip,
+                        width: 0.7,
                       ),
                     ),
-                  ),
-                  // ── Выпадающий список месяцев (появляется при выборе "Месяц")
-                  if (periodType == 'Месяц') ...[
-                    const SizedBox(height: 8),
-                    Builder(
+                    child: Builder(
                       builder: (context) => InputDecorator(
                         decoration: InputDecoration(
                           filled: true,
                           fillColor: AppColors.getSurfaceColor(context),
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 4,
+                            vertical: 8,
                           ),
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color:
-                                  formState.fieldErrors.containsKey(
-                                    'selectedMonth',
-                                  )
-                                  ? AppColors.error
-                                  : AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                           enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color:
-                                  formState.fieldErrors.containsKey(
-                                    'selectedMonth',
-                                  )
-                                  ? AppColors.error
-                                  : AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                           focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            borderSide: BorderSide(
-                              color:
-                                  formState.fieldErrors.containsKey(
-                                    'selectedMonth',
-                                  )
-                                  ? AppColors.error
-                                  : AppColors.getBorderColor(context),
-                              width: 1,
-                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<String>(
-                            value: selectedMonth,
+                            value: periodType,
                             isExpanded: true,
                             hint: const Text(
-                              'Выберите месяц',
+                              'Выберите период',
                               style: AppTextStyles.h14w4Place,
                             ),
                             onChanged: (String? newValue) {
                               if (newValue != null) {
                                 setState(() {
-                                  selectedMonth = newValue;
-                                  _clearFieldError('selectedMonth');
+                                  periodType = newValue;
+                                  if (newValue != 'Месяц') {
+                                    selectedMonth = null;
+                                  }
+                                  if (newValue != 'Выбранный период') {
+                                    startDateCtrl.clear();
+                                    endDateCtrl.clear();
+                                  }
+                                  _clearFieldError('periodType');
                                 });
                               }
                             },
                             dropdownColor: AppColors.getSurfaceColor(context),
                             menuMaxHeight: 300,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             icon: Icon(
                               Icons.arrow_drop_down,
                               color: AppColors.getIconSecondaryColor(context),
@@ -728,54 +679,133 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                             ),
                             items: const [
                               DropdownMenuItem<String>(
-                                value: '1',
-                                child: Text('Январь'),
+                                value: 'Месяц',
+                                child: Text('Месяц'),
                               ),
                               DropdownMenuItem<String>(
-                                value: '2',
-                                child: Text('Февраль'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '3',
-                                child: Text('Март'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '4',
-                                child: Text('Апрель'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '5',
-                                child: Text('Май'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '6',
-                                child: Text('Июнь'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '7',
-                                child: Text('Июль'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '8',
-                                child: Text('Август'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '9',
-                                child: Text('Сентябрь'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '10',
-                                child: Text('Октябрь'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '11',
-                                child: Text('Ноябрь'),
-                              ),
-                              DropdownMenuItem<String>(
-                                value: '12',
-                                child: Text('Декабрь'),
+                                value: 'Выбранный период',
+                                child: Text('Выбранный период'),
                               ),
                             ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ── Выпадающий список месяцев (появляется при выборе "Месяц")
+                  if (periodType == 'Месяц') ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: formState.fieldErrors.containsKey(
+                            'selectedMonth',
+                          )
+                              ? AppColors.error
+                              : AppColors.twinchip,
+                          width: 0.7,
+                        ),
+                      ),
+                      child: Builder(
+                        builder: (context) => InputDecorator(
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: AppColors.getSurfaceColor(context),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: selectedMonth,
+                              isExpanded: true,
+                              hint: const Text(
+                                'Выберите месяц',
+                                style: AppTextStyles.h14w4Place,
+                              ),
+                              onChanged: (String? newValue) {
+                                if (newValue != null) {
+                                  setState(() {
+                                    selectedMonth = newValue;
+                                    _clearFieldError('selectedMonth');
+                                  });
+                                }
+                              },
+                              dropdownColor: AppColors.getSurfaceColor(context),
+                              menuMaxHeight: 300,
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              icon: Icon(
+                                Icons.arrow_drop_down,
+                                color: AppColors.getIconSecondaryColor(context),
+                              ),
+                              style: AppTextStyles.h14w4.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                              items: const [
+                                DropdownMenuItem<String>(
+                                  value: '1',
+                                  child: Text('Январь'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '2',
+                                  child: Text('Февраль'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '3',
+                                  child: Text('Март'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '4',
+                                  child: Text('Апрель'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '5',
+                                  child: Text('Май'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '6',
+                                  child: Text('Июнь'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '7',
+                                  child: Text('Июль'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '8',
+                                  child: Text('Август'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '9',
+                                  child: Text('Сентябрь'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '10',
+                                  child: Text('Октябрь'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '11',
+                                  child: Text('Ноябрь'),
+                                ),
+                                DropdownMenuItem<String>(
+                                  value: '12',
+                                  child: Text('Декабрь'),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -835,124 +865,113 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                               ),
                             ),
                             const SizedBox(height: 8),
-                            Builder(
-                              builder: (context) => InputDecorator(
-                                decoration: InputDecoration(
-                                  filled: true,
-                                  fillColor: AppColors.getSurfaceColor(context),
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 4,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color:
-                                          formState.fieldErrors.containsKey(
-                                            'activityParameter',
-                                          )
-                                          ? AppColors.error
-                                          : AppColors.getBorderColor(context),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color:
-                                          formState.fieldErrors.containsKey(
-                                            'activityParameter',
-                                          )
-                                          ? AppColors.error
-                                          : AppColors.getBorderColor(context),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.sm,
-                                    ),
-                                    borderSide: BorderSide(
-                                      color:
-                                          formState.fieldErrors.containsKey(
-                                            'activityParameter',
-                                          )
-                                          ? AppColors.error
-                                          : AppColors.getBorderColor(context),
-                                      width: 1,
-                                    ),
-                                  ),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                border: Border.all(
+                                  color: formState.fieldErrors.containsKey(
+                                    'activityParameter',
+                                  )
+                                      ? AppColors.error
+                                      : AppColors.twinchip,
+                                  width: 0.7,
                                 ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: activityParameter,
-                                    isExpanded: true,
-                                    hint: const Text(
-                                      'Выберите параметр',
-                                      style: AppTextStyles.h14w4Place,
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 1,
+                              ),
+                              child: Builder(
+                                builder: (context) => InputDecorator(
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: AppColors.getSurfaceColor(context),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
                                     ),
-                                    onChanged: (String? newValue) {
-                                      if (newValue != null) {
-                                        setState(() {
-                                          activityParameter = newValue;
-                                          _clearFieldError('activityParameter');
-                                        });
-                                      }
-                                    },
-                                    dropdownColor: AppColors.getSurfaceColor(
-                                      context,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    menuMaxHeight: 300,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.md,
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
                                     ),
-                                    icon: Icon(
-                                      Icons.arrow_drop_down,
-                                      color: AppColors.getIconSecondaryColor(
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: activityParameter,
+                                      isExpanded: true,
+                                      hint: const Text(
+                                        'Выберите параметр',
+                                        style: AppTextStyles.h14w4Place,
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                      onChanged: (String? newValue) {
+                                        if (newValue != null) {
+                                          setState(() {
+                                            activityParameter = newValue;
+                                            _clearFieldError('activityParameter');
+                                          });
+                                        }
+                                      },
+                                      dropdownColor: AppColors.getSurfaceColor(
                                         context,
                                       ),
+                                      menuMaxHeight: 300,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      icon: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                      items: const [
+                                        DropdownMenuItem<String>(
+                                          value: 'distance',
+                                          child: Text('Дистанция'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'elevation',
+                                          child: Text('Набор высоты'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'duration',
+                                          child: Text('Длительность'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'steps',
+                                          child: Text('Количество шагов'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'count',
+                                          child: Text('Количество'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'days',
+                                          child: Text('Количество дней'),
+                                        ),
+                                        DropdownMenuItem<String>(
+                                          value: 'weeks',
+                                          child: Text('Количество недель'),
+                                        ),
+                                      ],
                                     ),
-                                    style: AppTextStyles.h14w4.copyWith(
-                                      color: AppColors.getTextPrimaryColor(
-                                        context,
-                                      ),
-                                    ),
-                                    items: const [
-                                      DropdownMenuItem<String>(
-                                        value: 'distance',
-                                        child: Text('Дистанция'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'elevation',
-                                        child: Text('Набор высоты'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'duration',
-                                        child: Text('Длительность'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'steps',
-                                        child: Text('Количество шагов'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'count',
-                                        child: Text('Количество'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'days',
-                                        child: Text('Количество дней'),
-                                      ),
-                                      DropdownMenuItem<String>(
-                                        value: 'weeks',
-                                        child: Text('Количество недель'),
-                                      ),
-                                    ],
                                   ),
                                 ),
                               ),
@@ -965,77 +984,66 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                       Expanded(
                         child: Padding(
                           padding: const EdgeInsets.only(top: 31),
-                          child: Builder(
-                            builder: (context) => TextField(
-                              controller: parameterValueCtrl,
-                              keyboardType: TextInputType.number,
-                              textInputAction: TextInputAction.next,
-                              style: AppTextStyles.h14w4.copyWith(
-                                color: AppColors.getTextPrimaryColor(context),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: formState.fieldErrors.containsKey(
+                                  'parameterValue',
+                                )
+                                    ? AppColors.error
+                                    : AppColors.twinchip,
+                                width: 0.7,
                               ),
-                              decoration: InputDecoration(
-                                hintText: activityParameter == 'distance'
-                                    ? '0 км'
-                                    : activityParameter == 'elevation'
-                                    ? '0 метров'
-                                    : activityParameter == 'duration'
-                                    ? '0 минут'
-                                    : activityParameter == 'steps'
-                                    ? '0 шагов'
-                                    : activityParameter == 'count'
-                                    ? '0'
-                                    : activityParameter == 'days'
-                                    ? '0 дней'
-                                    : activityParameter == 'weeks'
-                                    ? '0 недель'
-                                    : '0',
-                                hintStyle: AppTextStyles.h14w4Place,
-                                filled: true,
-                                fillColor: AppColors.getSurfaceColor(context),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 17,
+                            ),
+                            child: Builder(
+                              builder: (context) => TextField(
+                                controller: parameterValueCtrl,
+                                keyboardType: TextInputType.number,
+                                textInputAction: TextInputAction.next,
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
                                 ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
+                                decoration: InputDecoration(
+                                  hintText: activityParameter == 'distance'
+                                      ? '0 км'
+                                      : activityParameter == 'elevation'
+                                      ? '0 метров'
+                                      : activityParameter == 'duration'
+                                      ? '0 минут'
+                                      : activityParameter == 'steps'
+                                      ? '0 шагов'
+                                      : activityParameter == 'count'
+                                      ? '0'
+                                      : activityParameter == 'days'
+                                      ? '0 дней'
+                                      : activityParameter == 'weeks'
+                                      ? '0 недель'
+                                      : '0',
+                                  hintStyle: AppTextStyles.h14w4Place,
+                                  filled: true,
+                                  fillColor: AppColors.getSurfaceColor(context),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 22,
                                   ),
-                                  borderSide: BorderSide(
-                                    color:
-                                        formState.fieldErrors.containsKey(
-                                          'parameterValue',
-                                        )
-                                        ? AppColors.error
-                                        : AppColors.getBorderColor(context),
-                                    width: 1,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  borderSide: BorderSide(
-                                    color:
-                                        formState.fieldErrors.containsKey(
-                                          'parameterValue',
-                                        )
-                                        ? AppColors.error
-                                        : AppColors.getBorderColor(context),
-                                    width: 1,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color:
-                                        formState.fieldErrors.containsKey(
-                                          'parameterValue',
-                                        )
-                                        ? AppColors.error
-                                        : AppColors.getBorderColor(context),
-                                    width: 1,
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
                                 ),
                               ),
@@ -1057,55 +1065,46 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => TextField(
-                      controller: descCtrl,
-                      maxLines: 12,
-                      minLines: 7,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: formState.fieldErrors.containsKey(
+                          'full_description',
+                        )
+                            ? AppColors.error
+                            : AppColors.twinchip,
+                        width: 0.7,
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Введите полное описание задачи',
-                        hintStyle: AppTextStyles.h14w4Place,
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey(
-                                  'full_description',
-                                )
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                    ),
+                    child: Builder(
+                      builder: (context) => TextField(
+                        controller: descCtrl,
+                        maxLines: 12,
+                        minLines: 8,
+                        textAlignVertical: TextAlignVertical.top,
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey(
-                                  'full_description',
-                                )
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
+                        decoration: InputDecoration(
+                          hintText: 'Введите полное описание задачи',
+                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                            color: AppColors.getTextPlaceholderColor(context),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color:
-                                formState.fieldErrors.containsKey(
-                                  'full_description',
-                                )
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.all(12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -1119,17 +1118,8 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  Align(
-                    alignment: Alignment.center,
-                    child: PrimaryButton(
-                      text: 'Создать задачу',
-                      onPressed: () {
-                        if (!formState.isSubmitting) _submit();
-                      },
-                      expanded: false,
-                      isLoading: formState.isSubmitting,
-                      enabled: isFormValid && !formState.isSubmitting,
-                    ),
+                  Center(
+                    child: _buildSaveButton(),
                   ),
                 ],
               ),
@@ -1170,9 +1160,12 @@ class _MediaTile extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
+            ),
           ),
           child: Center(
             child: Icon(
@@ -1192,7 +1185,7 @@ class _MediaTile extends StatelessWidget {
         GestureDetector(
           onTap: onPick,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             child: Image.file(
               file!,
               fit: BoxFit.cover,
@@ -1222,7 +1215,9 @@ class _MediaTile extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppColors.getSurfaceColor(context),
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.getBorderColor(context)),
+                border: Border.all(
+                  color: AppColors.getBorderColor(context),
+                ),
               ),
               child: const Icon(
                 CupertinoIcons.clear_circled_solid,

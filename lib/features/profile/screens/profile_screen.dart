@@ -43,7 +43,7 @@ import 'state/search/search_screen.dart';
 import 'state/settings/settings_screen.dart';
 
 // экран редактирования профиля
-import 'edit_profile_screen.dart';
+import 'state/edit_profile/edit_profile_screen.dart';
 
 // экран подписок и подписчиков
 import 'state/subscribe/communication_screen.dart';
@@ -1282,7 +1282,7 @@ Future<void> _showOwnProfileMenu({
       onTap: () async {
         MoreMenuHub.hide();
         if (!context.mounted) return;
-        final changed = await Navigator.of(context).push<bool>(
+        final changed = await Navigator.of(context, rootNavigator: true).push<bool>(
           TransparentPageRoute(
             builder: (_) => EditProfileScreen(userId: userId),
           ),

@@ -208,9 +208,10 @@ class ClubsFloatingButtons extends StatelessWidget {
             onTap: () {
               showModalBottomSheet(
                 context: context,
+                useRootNavigator: true,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
-                builder: (context) => ClubsFiltersBottomSheet(
+                builder: (_) => ClubsFiltersBottomSheet(
                   initialParams: currentFilterParams,
                   onApplyFilters: (params) {
                     // Вызываем callback для применения фильтров

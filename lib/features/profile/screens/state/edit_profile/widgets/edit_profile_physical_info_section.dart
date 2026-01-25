@@ -7,7 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../../../core/theme/app_theme.dart';
+import '../../../../../../core/theme/app_theme.dart';
 import 'edit_profile_form_fields.dart';
 
 /// ───────────────────────────── Секция физических параметров ─────────────────────────────

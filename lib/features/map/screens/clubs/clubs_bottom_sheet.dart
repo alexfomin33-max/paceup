@@ -245,19 +245,19 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
       final card = Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: shadowColor,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
+          // boxShadow: [
+          //   BoxShadow(
+          //     color: shadowColor,
+          //     offset: const Offset(0, 1),
+          //     blurRadius: 1,
+          //     spreadRadius: 0,
+          //   ),
+          // ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
         child: Column(

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/primary_button.dart';
 
 /// ──────────── Bottom Sheet для фильтров клубов ────────────
 ///
@@ -75,6 +74,7 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
+      bottom: false,
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
@@ -184,14 +184,27 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
                   const SizedBox(height: 34),
 
                   // ──── Кнопка "Применить" ────
-                  Center(
-                    child: PrimaryButton(
-                      text: 'Применить',
-                      onPressed: _applyFilters,
-                      width: MediaQuery.of(context).size.width * 0.5,
+                  ElevatedButton(
+                    onPressed: _applyFilters,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.button,
+                      foregroundColor: AppColors.getSurfaceColor(context),
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      shape: const StadiumBorder(),
+                      minimumSize: const Size(double.infinity, 50),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      alignment: Alignment.center,
+                    ),
+                    child: Text(
+                      'Применить',
+                      style: AppTextStyles.h15w5.copyWith(
+                        color: AppColors.getSurfaceColor(context),
+                        height: 1.0,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 26),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

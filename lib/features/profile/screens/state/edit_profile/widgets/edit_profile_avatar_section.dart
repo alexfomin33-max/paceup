@@ -10,8 +10,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../../core/theme/app_theme.dart';
-import '../../../../../providers/avatar_version_provider.dart';
+import '../../../../../../core/theme/app_theme.dart';
+import '../../../../../../providers/avatar_version_provider.dart';
 
 /// Размер аватара по умолчанию
 const double kEditProfileAvatarSize = 88.0;
