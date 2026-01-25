@@ -35,9 +35,9 @@ class TopThreeLeaders extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
         ),
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(

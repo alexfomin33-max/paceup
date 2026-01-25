@@ -54,24 +54,24 @@ class DateField extends StatelessWidget {
           vertical: 17,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+                          width: 0.7,
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+                          width: 0.7,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+                          width: 0.7,
           ),
         ),
       ),

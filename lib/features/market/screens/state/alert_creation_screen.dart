@@ -425,11 +425,12 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: const PaceAppBar(
-          title: 'Создание оповещения',
+          title: 'Оповещение',
           backgroundColor: AppColors.twinBg,
           showBack: true,
           showBottomDivider: false,
           elevation: 0,
+          scrolledUnderElevation: 0,
         ),
         body: GestureDetector(
           // ── снимаем фокус с текстовых полей при клике вне их
@@ -709,14 +710,18 @@ class _EventAutocompleteField extends StatelessWidget {
                         selectedLogoUrl != null && selectedLogoUrl!.isNotEmpty;
                     return Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        boxShadow: [
-                          const BoxShadow(
-                            color: AppColors.twinshadow,
-                            blurRadius: 20,
-                            offset: Offset(0, 1),
-                          ),
-                        ],
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                         border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+                        // boxShadow: [
+                        //   const BoxShadow(
+                        //     color: AppColors.twinshadow,
+                        //     blurRadius: 20,
+                        //     offset: Offset(0, 1),
+                        //   ),
+                        // ],
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ClipRRect(
@@ -741,7 +746,7 @@ class _EventAutocompleteField extends StatelessWidget {
                             prefixIcon: hasLogo
                                 ? Padding(
                                     padding: const EdgeInsets.only(
-                                      left: 6,
+                                      left:12,
                                       right: 6,
                                       top: 6,
                                       bottom: 6,
@@ -752,12 +757,12 @@ class _EventAutocompleteField extends StatelessWidget {
                                       ),
                                       child: CachedNetworkImage(
                                         imageUrl: selectedLogoUrl!,
-                                        width: 30,
-                                        height: 30,
+                                        width: 40,
+                                        height: 40,
                                         fit: BoxFit.cover,
                                         placeholder: (context, url) => Container(
-                                          width: 30,
-                                          height: 30,
+                                          width: 40,
+                                          height: 40,
                                           color: AppColors.getBackgroundColor(
                                             context,
                                           ),
@@ -783,14 +788,14 @@ class _EventAutocompleteField extends StatelessWidget {
                                 : null,
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 17,
+                              vertical: 20,
                             ),
                             suffixIcon: hasText
                                 ? IconButton(
                                     icon: Icon(
                                       CupertinoIcons.xmark_circle_fill,
                                       size: 18,
-                                      color: AppColors.getIconSecondaryColor(
+                                      color: AppColors.getTextTertiaryColor(
                                         context,
                                       ),
                                     ),
@@ -823,8 +828,8 @@ class _EventAutocompleteField extends StatelessWidget {
                 return Align(
                   alignment: Alignment.topLeft,
                   child: Material(
-                    elevation: 4.0,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
@@ -1006,19 +1011,12 @@ class _ChipsRow extends StatelessWidget {
                 Radius.circular(AppRadius.xl),
               ),
               border: sel
-                  ? Border.all(
-                      color: AppColors.brandPrimary,
-                    )
-                  : null,
-              boxShadow: sel
                   ? null
-                  : [
-                      const BoxShadow(
-                        color: AppColors.twinshadow,
-                        blurRadius: 20,
-                        offset: Offset(0, 1),
-                      ),
-                    ],
+                  : Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        
             ),
             child: Text(
               items[i],
@@ -1069,19 +1067,12 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: const BorderRadius.all(Radius.circular(AppRadius.xl)),
           border: selected
-              ? Border.all(
-                  color: AppColors.brandPrimary,
-                )
-              : null,
-          boxShadow: selected
               ? null
-              : [
-                  const BoxShadow(
-                    color: AppColors.twinshadow,
-                    blurRadius: 20,
-                    offset: Offset(0, 1),
-                  ),
-                ],
+              : Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+
         ),
         child: Text(
           label,
@@ -1115,13 +1106,17 @@ class _AlertCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       padding: const EdgeInsets.all(6),
       child: Row(

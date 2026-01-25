@@ -115,11 +115,15 @@ class _SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.5,
+                        ),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
+            color: AppColors.twinchip,
+            blurRadius: 10,
             offset: Offset(0, 1),
           ),
         ],
@@ -146,18 +150,18 @@ class _SearchField extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 17,
+            vertical: 22,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none
           ),
         ),

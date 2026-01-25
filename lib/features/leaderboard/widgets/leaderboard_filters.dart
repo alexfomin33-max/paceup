@@ -34,24 +34,25 @@ class ParameterDropdown extends StatelessWidget {
             vertical: 4,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
+            
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
           ),
         ),
@@ -66,7 +67,7 @@ class ParameterDropdown extends StatelessWidget {
             onChanged: onChanged,
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),
@@ -120,24 +121,25 @@ class PeriodDropdown extends StatelessWidget {
             vertical: 4,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
+            
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            borderSide: BorderSide(
-              color: AppColors.getBorderColor(context),
-              width: 1,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: const BorderSide(
+              color: AppColors.twinchip,
+                          width: 0.7,
             ),
           ),
         ),
@@ -152,7 +154,7 @@ class PeriodDropdown extends StatelessWidget {
             onChanged: onChanged,
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),
@@ -200,7 +202,7 @@ class SportIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: 36,
         height: 36,
@@ -210,9 +212,10 @@ class SportIcon extends StatelessWidget {
               : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+            color: AppColors.twinchip,
+                          width: 0.7,
           ),
+          
         ),
         child: Icon(
           icon,
@@ -246,7 +249,7 @@ class GenderIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: 36,
         height: 36,
@@ -256,8 +259,8 @@ class GenderIcon extends StatelessWidget {
               : AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+            color: AppColors.twinchip,
+                          width: 0.7,
           ),
         ),
         child: Center(
@@ -296,7 +299,7 @@ class ApplyDateIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: enabled ? onTap : null,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Opacity(
         opacity: enabled ? 1.0 : 0.5,
         child: Container(
@@ -308,9 +311,9 @@ class ApplyDateIcon extends StatelessWidget {
                 : AppColors.getSurfaceColor(context),
             borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
+            color: AppColors.twinchip,
+                          width: 0.7,
+          ),
           ),
           child: Icon(
             Icons.check,

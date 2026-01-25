@@ -28,10 +28,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       // ── Фон из темы: в светлой теме — surface, в темной — из темы
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
       // ── Глобальная шапка без нижнего бордера
-      appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false, elevation: 0,),
+      appBar: const PaceAppBar(title: 'Избранное', showBottomDivider: false, elevation: 0, scrolledUnderElevation: 0,),
 
       body: Column(
         children: [

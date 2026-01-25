@@ -34,7 +34,7 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       // ── Фон из темы: в светлой теме — surface, в темной — из темы
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
       // ── Глобальная шапка без нижнего бордера
       appBar: const PaceAppBar(
@@ -59,7 +59,11 @@ class _LeaderboardScreenState extends ConsumerState<LeaderboardScreen>
               unselectedLabelColor: AppColors.getTextSecondaryColor(context),
               indicatorColor: AppColors.brandPrimary,
               indicatorWeight: 1,
+              // ── Разделитель под TabBar: менее заметный (30% прозрачности)
+              dividerColor: AppColors.twinchip,
+                 
               labelPadding: const EdgeInsets.symmetric(horizontal: 0),
+              
               tabs: const [
                 Tab(text: 'Подписки'),
                 Tab(text: 'Все пользователи'),

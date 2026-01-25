@@ -39,17 +39,20 @@ class LeaderboardTable extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 1,
-        ),
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
       ),
-      child: Column(
-        // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
-        // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
-        // ── Таблица начинается с 4-го места
-        children: tableRows,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Column(
+          // ── Если пользователей меньше 3 и showAllIfLessThanThree = true, показываем всех
+          // ── Иначе пропускаем первые 3 места (они показываются в топ-3 лидерах)
+          // ── Таблица начинается с 4-го места
+          children: tableRows,
+        ),
       ),
     );
   }

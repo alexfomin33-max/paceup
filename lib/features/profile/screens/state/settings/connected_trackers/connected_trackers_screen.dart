@@ -44,17 +44,18 @@ class _ConnectedTrackersScreenState
               padding: const EdgeInsets.only(top: 16, bottom: 12),
               child: Text(
                 'Подключенные',
-                style: AppTextStyles.h16w6,
+                style: AppTextStyles.h15w6,
               ),
             ),
 
             // Сообщение о том, что трекеры не подключены
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16,22,16,22),
               decoration: BoxDecoration(
                 color: AppColors.surface,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                border: Border.all(color: AppColors.border, width: 1),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                border: Border.all(color: AppColors.twinchip,
+                          width: 0.7,),
               ),
               child: Text(
                 'Вы ещё не подключили ни один трекер',
@@ -69,7 +70,7 @@ class _ConnectedTrackersScreenState
               padding: const EdgeInsets.only(bottom: 12),
               child: Text(
                 'Доступные',
-                style: AppTextStyles.h16w6,
+                style: AppTextStyles.h15w6,
               ),
             ),
 
@@ -77,7 +78,7 @@ class _ConnectedTrackersScreenState
             _TrackerTile(
               title: 'Health Connect',
               onTap: () {
-                Navigator.of(context).push(
+                Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => const HealthConnectScreen(),
                   ),
@@ -88,7 +89,7 @@ class _ConnectedTrackersScreenState
             _TrackerTile(
               title: 'Garmin',
               onTap: () {
-                Navigator.of(context).push(
+                Navigator.of(context, rootNavigator: true).push(
                   MaterialPageRoute(
                     builder: (_) => const GarminScreen(),
                   ),
@@ -137,13 +138,14 @@ class _TrackerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16,22,16,22),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border, width: 1),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.twinchip,
+                          width: 0.7,),
         ),
         child: Row(
           children: [

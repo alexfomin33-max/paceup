@@ -1320,6 +1320,7 @@ Future<void> _showOwnProfileMenu({
         if (!context.mounted) return;
         Navigator.of(
           context,
+          rootNavigator: true,
         ).push(TransparentPageRoute(builder: (_) => const SettingsScreen()));
       },
     ),

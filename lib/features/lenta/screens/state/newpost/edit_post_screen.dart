@@ -549,13 +549,17 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: TextField(
         controller: _descriptionController,
@@ -601,14 +605,18 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: InputDecorator(
         decoration: InputDecoration(
@@ -616,18 +624,18 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
           fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 4,
+            vertical: 8,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -649,7 +657,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             },
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),

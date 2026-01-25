@@ -405,7 +405,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
@@ -427,15 +427,15 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
             vertical: 8,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -456,7 +456,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
             },
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),

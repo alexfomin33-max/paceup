@@ -557,15 +557,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     if (_gpxFile != null) {
       return Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          boxShadow: const [
-            // Мягкая тень вместо бордера
-            BoxShadow(
-              color: AppColors.twinshadow,
-              blurRadius: 20,
-              offset: Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+          // boxShadow: const [
+          //   // Мягкая тень вместо бордера
+          //   BoxShadow(
+          //     color: AppColors.twinshadow,
+          //     blurRadius: 20,
+          //     offset: Offset(0, 1),
+          //   ),
+          // ],
         ),
         child: InputDecorator(
           decoration: InputDecoration(
@@ -573,7 +577,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 18,
+              vertical: 20,
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 12, right: 6),
@@ -607,15 +611,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               minHeight: 24,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
           ),
@@ -630,15 +634,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: GestureDetector(
         onTap: _handlePickGpxFile,
@@ -648,7 +656,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 18,
+              vertical: 22,
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 12, right: 6),
@@ -663,15 +671,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               minHeight: 20,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
           ),
@@ -689,15 +697,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final isEnabled = _gpxFile == null;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
@@ -707,18 +719,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 4,
+              vertical: 8,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
           ),
@@ -747,7 +759,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   : null,
               dropdownColor: AppColors.getSurfaceColor(context),
               menuMaxHeight: 300,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               icon: Icon(
                 Icons.arrow_drop_down,
                 color: AppColors.getIconSecondaryColor(context),
@@ -771,15 +783,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final isEnabled = _gpxFile == null;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
@@ -792,7 +808,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 18,
+                  vertical: 22,
                 ),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.only(left: 12, right: 6),
@@ -807,15 +823,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   minHeight: 18,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -841,15 +857,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final isEnabled = _gpxFile == null;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
@@ -862,7 +882,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 18,
+                  vertical: 22,
                 ),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.only(left: 12, right: 6),
@@ -877,15 +897,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   minHeight: 18,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -911,15 +931,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final isEnabled = _gpxFile == null;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера, как на экране редактирования
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера, как на экране редактирования
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
@@ -936,7 +960,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 17,
+              vertical: 22,
             ),
             prefixIcon: Padding(
               padding: const EdgeInsets.only(left: 12, right: 6),
@@ -951,15 +975,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
               minHeight: 18,
             ),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide.none,
             ),
           ),
@@ -973,15 +997,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     final isEnabled = _gpxFile == null;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера, как на экране редактирования
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера, как на экране редактирования
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
@@ -994,7 +1022,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 18,
+                  vertical: 22,
                 ),
                 prefixIcon: Padding(
                   padding: const EdgeInsets.only(left: 12, right: 6),
@@ -1009,15 +1037,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   minHeight: 18,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -1038,21 +1066,25 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   Widget _buildDescriptionInput() {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера, как в edit_activity_screen
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера, как в edit_activity_screen
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: TextField(
         controller: _descriptionController,
         focusNode: _descriptionFocusNode,
         maxLines: 12,
-        minLines: 7,
+        minLines: 8,
         textAlignVertical: TextAlignVertical.top,
         style: AppTextStyles.h14w4.copyWith(
           color: AppColors.getTextPrimaryColor(context),
@@ -1066,15 +1098,15 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           fillColor: AppColors.getSurfaceColor(context),
           contentPadding: const EdgeInsets.all(12),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -1147,15 +1179,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     // Если экипировка не выбрана, показываем выпадающий список для выбора
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: InputDecorator(
         decoration: InputDecoration(
@@ -1163,18 +1199,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           fillColor: AppColors.getSurfaceColor(context),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 4,
+            vertical: 8,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -1199,7 +1235,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             },
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),
@@ -1292,15 +1328,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: const [
-          // Мягкая тень вместо бордера, как в edit_activity_screen
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: const [
+        //   // Мягкая тень вместо бордера, как в edit_activity_screen
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: InputDecorator(
         decoration: InputDecoration(
@@ -1308,18 +1348,18 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
           fillColor: AppColors.getSurfaceColor(context),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 4,
+            vertical: 8,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -1339,7 +1379,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             },
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),

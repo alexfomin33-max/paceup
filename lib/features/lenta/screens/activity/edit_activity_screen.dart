@@ -69,7 +69,6 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   int? _draggedIndex;
 
   // Экипировка (для добавления, если не выбрана)
-  bool _showEquipment = false;
   List<Equipment> _availableEquipment = [];
   Equipment? _selectedEquipment;
   bool _isLoadingEquipment = false;
@@ -100,10 +99,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     // Предполагаем: 0 = публичная, 1 = подписчики, 2 = только я
     _selectedVisibility = widget.activity.userGroup.clamp(0, 2);
 
-    // Инициализируем состояние экипировки
-    // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+    // Загружаем экипировку автоматически, если экипировка не выбрана и тип активности позволяет выбрать экипировку
     if (widget.activity.equipments.isEmpty && _shouldShowEquipment()) {
-      _showEquipment = false; // По умолчанию чекбокс выключен
+      _loadEquipment();
     }
 
     // Слушаем изменения для определения, есть ли изменения
@@ -263,63 +261,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const SizedBox(height: 24),
-                                    Row(
-                                      children: [
-                                        SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: Transform.scale(
-                                            scale: 0.85,
-                                            alignment: Alignment.centerLeft,
-                                            child: Checkbox(
-                                              value: _showEquipment,
-                                              materialTapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                              activeColor:
-                                                  AppColors.brandPrimary,
-                                              checkColor:
-                                                  AppColors.getSurfaceColor(
-                                                    context,
-                                                  ),
-                                              side: BorderSide(
-                                                color:
-                                                    AppColors.getIconSecondaryColor(
-                                                      context,
-                                                    ),
-                                                width: 1.5,
-                                              ),
-                                              onChanged: (value) {
-                                                setState(() {
-                                                  _showEquipment =
-                                                      value ?? false;
-                                                  if (_showEquipment &&
-                                                      _availableEquipment
-                                                          .isEmpty) {
-                                                    _loadEquipment();
-                                                  }
-                                                });
-                                              },
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        const Text(
-                                          'Добавить экипировку',
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
+                                    const SizedBox(height: 30),
+                                    const Text(
+                                      'Экипировка',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                    if (_showEquipment) ...[
-                                      const SizedBox(height: 8),
-                                      _buildEquipmentSelectionSection(),
-                                    ],
+                                    const SizedBox(height: 8),
+                                    _buildEquipmentSelectionSection(),
                                   ],
                                 );
                               }
@@ -555,9 +506,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
         color: AppColors.getBackgroundColor(context),
-        border: isDragging
-            ? Border.all(color: AppColors.brandPrimary, width: 2)
-            : Border.all(color: AppColors.getBorderColor(context)),
+
       ),
       clipBehavior: Clip.antiAlias,
       child: points.isEmpty
@@ -616,15 +565,29 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
       memCacheWidth: widthPx,
       maxWidthDiskCache: widthPx,
       placeholder: (context, url) => Container(
-        color: AppColors.getSurfaceColor(context),
-        child: const Center(child: CupertinoActivityIndicator()),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.map,
+            size: 24,
+            color: AppColors.scrim20,
+          ),
+        ),
       ),
       errorWidget: (context, url, error) => Container(
-        color: AppColors.getSurfaceColor(context),
-        child: Icon(
-          CupertinoIcons.map,
-          size: 24,
-          color: AppColors.getIconSecondaryColor(context),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.map,
+            size: 24,
+            color: AppColors.scrim20,
+          ),
         ),
       ),
     );
@@ -825,19 +788,23 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: TextField(
         controller: _descriptionController,
         focusNode: _descriptionFocusNode,
         maxLines: 14,
-        minLines: 7,
+        minLines: 8,
         textAlignVertical: TextAlignVertical.top,
         style: AppTextStyles.h14w4.copyWith(
           color: AppColors.getTextPrimaryColor(context),
@@ -851,15 +818,15 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.all(12),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -879,14 +846,18 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: EquipmentChip(
         items: updatedActivity.equipments,
@@ -952,14 +923,18 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     if (_selectedEquipment != null) {
       return Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: [
-            const BoxShadow(
-              color: AppColors.twinshadow,
-              blurRadius: 20,
-              offset: Offset(0, 1),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+          // boxShadow: [
+          //   const BoxShadow(
+          //     color: AppColors.twinshadow,
+          //     blurRadius: 20,
+          //     offset: Offset(0, 1),
+          //   ),
+          // ],
         ),
         child: EquipmentChip(
           items: [_selectedEquipment!],
@@ -993,59 +968,82 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     }
 
     // Если экипировка не выбрана, показываем выпадающий список для выбора
-    return InputDecorator(
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: AppColors.getSurfaceColor(context),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(
-            color: AppColors.getBorderColor(context),
-            width: 1,
-          ),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<Equipment>(
-          value: _selectedEquipment,
-          isExpanded: true,
-          hint: const Text('Выберите экипировку', style: AppTextStyles.h14w4),
-          onChanged: (Equipment? newValue) {
-            setState(() {
-              _selectedEquipment = newValue;
-            });
-          },
-          dropdownColor: AppColors.getSurfaceColor(context),
-          menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          icon: Icon(
-            Icons.arrow_drop_down,
-            color: AppColors.getIconSecondaryColor(context),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 8,
           ),
-          items: _availableEquipment.map((equipment) {
-            final displayName = equipment.brand.isNotEmpty
-                ? '${equipment.brand} ${equipment.name}'
-                : equipment.name;
-            return DropdownMenuItem<Equipment>(
-              value: equipment,
-              child: Text(displayName, style: AppTextStyles.h14w4),
-            );
-          }).toList(),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<Equipment>(
+            value: _selectedEquipment,
+            isExpanded: true,
+            hint: Text(
+              'Выберите экипировку',
+              style: AppTextStyles.h14w4.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
+              ),
+            ),
+            onChanged: (Equipment? newValue) {
+              setState(() {
+                _selectedEquipment = newValue;
+              });
+            },
+            dropdownColor: AppColors.getSurfaceColor(context),
+            menuMaxHeight: 300,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            icon: Icon(
+              Icons.arrow_drop_down,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+            items: _availableEquipment.map((equipment) {
+              final displayName = equipment.brand.isNotEmpty
+                  ? '${equipment.brand} ${equipment.name}'
+                  : equipment.name;
+              return DropdownMenuItem<Equipment>(
+                value: equipment,
+                child: Text(
+                  displayName,
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
         ),
       ),
     );
@@ -1147,14 +1145,18 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 20,
-            offset: Offset(0, 1),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 20,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: InputDecorator(
         decoration: InputDecoration(
@@ -1162,18 +1164,18 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           fillColor: AppColors.surface,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 4,
+            vertical: 8,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
           ),
         ),
@@ -1194,7 +1196,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             },
             dropdownColor: AppColors.getSurfaceColor(context),
             menuMaxHeight: 300,
-            borderRadius: BorderRadius.circular(AppRadius.md),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             icon: Icon(
               Icons.arrow_drop_down,
               color: AppColors.getIconSecondaryColor(context),
@@ -1305,8 +1307,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         }
 
         // Получаем equip_user_id из выбранной экипировки
-        // Отправляем только если чекбокс включен и экипировка выбрана
-        if (_showEquipment && _selectedEquipment != null) {
+        // Отправляем только если экипировка выбрана
+        if (_selectedEquipment != null) {
           final equipUserId = _selectedEquipment!.equipUserId ?? 0;
           if (equipUserId > 0) {
             body['equip_user_id'] = equipUserId.toString();

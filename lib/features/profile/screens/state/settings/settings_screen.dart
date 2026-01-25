@@ -103,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
                   iconColor: AppColors.brandPrimary,
                   title: 'Подключенные трекеры',
                   onTap: () {
-                    Navigator.of(context).push(
+                    Navigator.of(context, rootNavigator: true).push(
                       TransparentPageRoute(
                         builder: (_) => const ConnectedTrackersScreen(),
                       ),
@@ -382,10 +382,10 @@ class _SubscriptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         decoration: _cardDecoration(context),
-        padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
+        padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
         child: Row(
           children: [
             ClipRRect(
@@ -467,9 +467,9 @@ class _SettingsTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap ?? () {},
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
         child: Row(
           children: [
             Container(
@@ -545,13 +545,13 @@ class _SettingsTileWithFadeState extends State<_SettingsTileWithFade> {
         widget.iconColor ?? AppColors.getIconPrimaryColor(context);
     final defaultTextColor = Theme.of(context).brightness == Brightness.dark
         ? AppColors.darkTextTertiary
-        : AppColors.textTertiary;
+        : AppColors.textPlaceholder;
 
     return InkWell(
       onTap: widget.onTap ?? () {},
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
         child: Row(
           children: [
             Container(
@@ -609,9 +609,9 @@ class _Divider extends StatelessWidget {
 
 BoxDecoration _cardDecoration(BuildContext context) => BoxDecoration(
   color: AppColors.getSurfaceColor(context),
-  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
+  borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
   border: const Border.fromBorderSide(
-    BorderSide(color: AppColors.twinchip, width: 0.5),
+    BorderSide(color: AppColors.twinchip, width: 0.7),
   ),
   // boxShadow: [
   //   BoxShadow(

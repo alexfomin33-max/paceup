@@ -43,6 +43,9 @@ class SegmentedPill extends StatelessWidget {
   /// Цвет рамки трека (по умолчанию — AppColors.border).
   final Color? borderColor;
 
+  /// Ширина рамки трека (по умолчанию — 1.0).
+  final double borderWidth;
+
   /// Цвет «капсулы» (по умолчанию — AppColors.textPrimary).
   final Color? thumbColor;
 
@@ -73,6 +76,7 @@ class SegmentedPill extends StatelessWidget {
     this.curve = Curves.easeOutCubic,
     this.trackColor,
     this.borderColor,
+    this.borderWidth = 1.0,
     this.thumbColor,
     this.activeTextColor,
     this.inactiveTextColor,
@@ -107,7 +111,9 @@ class SegmentedPill extends StatelessWidget {
             decoration: BoxDecoration(
               color: track,
               borderRadius: BorderRadius.circular(AppRadius.xl),
-              border: showBorder ? Border.all(color: border, width: 1) : null,
+              border: showBorder
+                  ? Border.all(color: border, width: borderWidth)
+                  : null,
               boxShadow: boxShadow,
             ),
           ),

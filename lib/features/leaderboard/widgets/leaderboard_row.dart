@@ -45,7 +45,7 @@ class LeaderboardRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final row = Padding(
-      padding: const EdgeInsets.only(left: 8, right: 12, top: 8, bottom: 8),
+      padding: const EdgeInsets.only(left: 8, right: 16, top: 8, bottom: 8),
       child: Row(
         children: [
           SizedBox(
@@ -63,7 +63,7 @@ class LeaderboardRow extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           // Кликабельный аватар
           GestureDetector(
             onTap: userId != null ? () => _navigateToProfile(context) : null,
@@ -135,14 +135,14 @@ class LeaderboardRow extends StatelessWidget {
     return Column(
       children: [
         row,
-        if (!isLast)
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            indent: 12,
-            endIndent: 12,
-            color: AppColors.getDividerColor(context),
-          ),
+        // if (!isLast)
+        //   Divider(
+        //     height: 1,
+        //     thickness: 0.5,
+        //     indent: 12,
+        //     endIndent: 12,
+        //     color: AppColors.getDividerColor(context),
+        //   ),
       ],
     );
   }

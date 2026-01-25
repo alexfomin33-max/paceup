@@ -653,14 +653,14 @@ class _EventAutocompleteField extends StatelessWidget {
                               : null,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12,
-                            vertical: 21,
+                            vertical: 20,
                           ),
                           suffixIcon: hasText
                               ? IconButton(
                                   icon: Icon(
                                     CupertinoIcons.xmark_circle_fill,
                                     size: 18,
-                                    color: AppColors.getIconSecondaryColor(
+                                    color: AppColors.getTextTertiaryColor(
                                       context,
                                     ),
                                   ),
@@ -710,7 +710,7 @@ class _EventAutocompleteField extends StatelessWidget {
                   alignment: Alignment.topLeft,
                   child: Material(
                     elevation: 4.0,
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxHeight: 240),
                       child: ListView.builder(
