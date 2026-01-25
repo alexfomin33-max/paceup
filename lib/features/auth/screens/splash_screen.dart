@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/garmin_sync_service.dart';
+import '../../../core/services/sync_provider_service.dart';
+import '../../../core/services/health_sync_service.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../providers/services/api_provider.dart';
 import '../../../providers/services/auth_provider.dart';
@@ -248,10 +250,52 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
     }
   }
 
-  /// 🔹 Автоматическая синхронизация Garmin в фоне (внутренний метод с сервисом)
-  /// Принимает уже полученный сервис, чтобы избежать проблем с ref после размонтирования
-  Future<void> _syncGarminInBackgroundWithService(GarminSyncService garminService) async {
+  /// 🔹 Автоматическая синхронизация в фоне на основе sync_provider из базы
+  /// Проверяет актуальный способ синхронизации и запускает соответствующую синхронизацию
+  Future<void> _syncInBackground() async {
     try {
+      // Получаем актуальный способ синхронизации из базы
+      final syncProviderService = ref.read(syncProviderServiceProvider);
+      final syncProvider = await syncProviderService.getSyncProvider();
+      
+      if (syncProvider == null) {
+        if (kDebugMode) {
+          debugPrint('ℹ️ [Sync] Активный способ синхронизации не установлен');
+        }
+        return;
+      }
+      
+      if (kDebugMode) {
+        debugPrint('🔄 [Sync] Запуск автоматической синхронизации для: $syncProvider');
+      }
+      
+      // Запускаем соответствующую синхронизацию
+      switch (syncProvider) {
+        case 'garmin':
+          await _syncGarminInBackground();
+          break;
+        case 'health_connect':
+        case 'apple_health':
+          await _syncHealthInBackground();
+          break;
+        default:
+          if (kDebugMode) {
+            debugPrint('ℹ️ [Sync] Синхронизация для $syncProvider не реализована');
+          }
+      }
+    } catch (e) {
+      // Ошибки синхронизации не должны блокировать запуск приложения
+      if (kDebugMode) {
+        debugPrint('⚠️ [Sync] Ошибка автоматической синхронизации: $e');
+      }
+    }
+  }
+
+  /// 🔹 Автоматическая синхронизация Garmin в фоне
+  Future<void> _syncGarminInBackground() async {
+    try {
+      final garminService = ref.read(garminSyncServiceProvider);
+      
       // Проверяем, подключен ли Garmin
       final connectionStatus = await garminService.checkConnection();
       
@@ -316,6 +360,32 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       // Ошибки синхронизации не должны блокировать запуск приложения
       if (kDebugMode) {
         debugPrint('⚠️ [Garmin] Ошибка автоматической синхронизации: $e');
+      }
+    }
+  }
+
+  /// 🔹 Автоматическая синхронизация Health Connect/Apple Health в фоне
+  Future<void> _syncHealthInBackground() async {
+    try {
+      final healthSyncService = ref.read(healthSyncServiceProvider);
+      
+      if (kDebugMode) {
+        debugPrint('🔄 [Health] Запуск автоматической синхронизации...');
+      }
+      
+      final result = await healthSyncService.syncNewWorkouts(ref);
+      
+      if (kDebugMode) {
+        if (result.success) {
+          debugPrint('✅ [Health] Синхронизация завершена: ${result.message}');
+        } else {
+          debugPrint('ℹ️ [Health] ${result.message}');
+        }
+      }
+    } catch (e) {
+      // Ошибки синхронизации не должны блокировать запуск приложения
+      if (kDebugMode) {
+        debugPrint('⚠️ [Health] Ошибка автоматической синхронизации: $e');
       }
     }
   }
@@ -401,11 +471,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         }
       }
 
-      // ────────── Автоматическая синхронизация Garmin ──────────
-      // Получаем провайдер ДО навигации (после навигации виджет размонтируется)
-      // Запускаем синхронизацию в фоне с задержкой для полной инициализации
-      final garminService = ref.read(garminSyncServiceProvider);
-      
       // 🔹 Переходим на основной экран с данными пользователя
       Navigator.pushReplacementNamed(
         context,
@@ -413,11 +478,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
         arguments: {'userId': userId},
       );
 
-      // Запускаем синхронизацию ПОСЛЕ навигации, используя уже полученный сервис
+      // ────────── Автоматическая синхронизация на основе sync_provider ──────────
+      // Запускаем синхронизацию ПОСЛЕ навигации
       // Это гарантирует, что HTTP клиент и провайдеры полностью готовы
       // Увеличена задержка до 3 секунд для полной инициализации HTTP клиента
       Future.delayed(const Duration(seconds: 3), () {
-        _syncGarminInBackgroundWithService(garminService);
+        _syncInBackground();
       });
     } else {
       // 🔹 fallback: userId не найден, переходим на общий HomeScreen
