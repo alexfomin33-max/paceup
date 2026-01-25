@@ -80,7 +80,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         behavior: HitTestBehavior.opaque,
         child: Scaffold(
           backgroundColor: AppColors.getSurfaceColor(context),
-          appBar: const PaceAppBar(title: 'Жалоба'),
+          appBar: const PaceAppBar(title: 'Жалоба', showBottomDivider: false, elevation: 0, scrolledUnderElevation: 0,),
           body: SafeArea(
             top: false,
             bottom: false,
@@ -95,7 +95,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                       parent: AlwaysScrollableScrollPhysics(),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 28, 12, 12),
+                      padding: const EdgeInsets.fromLTRB(16, 20, 12, 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -104,7 +104,7 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                           // ──────────────────────────────────────────────────────────────
                           Text(
                             'Что именно вам кажется недопустимым?',
-                            style: AppTextStyles.h17w6.copyWith(
+                            style: AppTextStyles.h16w6.copyWith(
                               color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
@@ -200,36 +200,35 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                 contentPadding: const EdgeInsets.all(16),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
+                                    AppRadius.lg,
                                   ),
-                                  borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
+                                  borderSide: const BorderSide(
+                                  color: AppColors.twinchip,
+                          width: 0.7,
                                   ),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
+                                    AppRadius.lg,
                                   ),
-                                  borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
+                                  borderSide: const BorderSide(
+                                   color: AppColors.twinchip,
+                          width: 0.7,
                                   ),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
+                                    AppRadius.lg,
                                   ),
                                   borderSide: const BorderSide(
-                                    color: AppColors.brandPrimary,
-                                    width: 1,
+                                   color: AppColors.twinchip,
+                          width: 0.7,
                                   ),
                                 ),
                                 filled: true,
-                                fillColor: AppColors.getBackgroundColor(
-                                  context,
+                                fillColor: AppColors.twinBg,
                                 ),
-                              ),
+                              
                             ),
                           ],
                         ],
@@ -247,21 +246,21 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.getSurfaceColor(context),
-                      border: Border(
-                        top: BorderSide(
-                          width: 0.5,
-                          color: AppColors.getBorderColor(context),
-                        ),
-                      ),
+                      // border: Border(
+                      //   top: BorderSide(
+                      //     width: 0.5,
+                      //     color: AppColors.getBorderColor(context),
+                      //   ),
+                      // ),
                     ),
                     child: Material(
                       color:
                           _selectedReason != null &&
                               (_selectedReason != 'Другое' ||
                                   _otherReasonController.text.trim().isNotEmpty)
-                          ? AppColors.textPrimary
-                          : AppColors.textPrimary.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                          ? AppColors.button
+                          : AppColors.button.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       elevation: 0,
                       child: InkWell(
                         onTap:
@@ -273,10 +272,10 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                         .isNotEmpty)
                             ? _handleSubmit
                             : null,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         child: Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          height: 50,
                           decoration: BoxDecoration(
                             color:
                                 _selectedReason != null &&
@@ -284,9 +283,9 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
                                         _otherReasonController.text
                                             .trim()
                                             .isNotEmpty)
-                                ? AppColors.textPrimary
-                                : AppColors.textPrimary.withValues(alpha: 0.5),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                                ? AppColors.button
+                                : AppColors.button.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           child: Center(
                             child: _isSubmitting

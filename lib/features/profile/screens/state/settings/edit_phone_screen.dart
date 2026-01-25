@@ -5,7 +5,6 @@ import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import 'package:mask_input_formatter/mask_input_formatter.dart';
 import 'user_settings_provider.dart';
@@ -96,8 +95,8 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Телефон'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Телефон', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода
           onTap: () {
@@ -105,100 +104,169 @@ class _EditPhoneScreenState extends ConsumerState<EditPhoneScreen> {
           },
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
+            top: false,
+            bottom: false,
             child: Form(
               key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              child: Column(
                 children: [
-                  // Поле ввода телефона
-                  TextFormField(
-                    controller: _phoneController,
-                    focusNode: _focusNode,
-                    inputFormatters: [_maskFormatter],
-                    keyboardType: TextInputType.phone,
-                    textInputAction: TextInputAction.done,
-                    textCapitalization: TextCapitalization.none,
-                    decoration: InputDecoration(
-                      labelText: 'Телефон',
-                      labelStyle: AppTextStyles.h14w4Sec.copyWith(
-                        color: AppColors.getTextSecondaryColor(context),
+                  // ──────────────────────────────────────────────────────────────
+                  // ПРОКРУЧИВАЕМЫЙ КОНТЕНТ
+                  // ──────────────────────────────────────────────────────────────
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
                       ),
-                      floatingLabelStyle: TextStyle(
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                      floatingLabelBehavior: FloatingLabelBehavior.auto,
-                      alignLabelWithHint: true,
-                      hintText: '+7 (999) 123-45-67',
-                      hintStyle: TextStyle(
-                        color: AppColors.getTextPlaceholderColor(context),
-                      ),
-                      errorText: _error,
-                      filled: true,
-                      fillColor: AppColors.getBackgroundColor(context),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                          // Поле ввода телефона
+                          TextFormField(
+                            controller: _phoneController,
+                            focusNode: _focusNode,
+                            inputFormatters: [_maskFormatter],
+                            keyboardType: TextInputType.phone,
+                            textInputAction: TextInputAction.done,
+                            textCapitalization: TextCapitalization.none,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontFamily: 'Inter',
+                            ),
+                            decoration: InputDecoration(
+                              hintText: '+7 (999) 123-45-67',
+                              hintStyle: TextStyle(
+                                color: AppColors.getTextPlaceholderColor(context),
+                                fontSize: 15,
+                              ),
+                              errorText: _error,
+                              filled: true,
+                              fillColor: AppColors.getSurfaceColor(context),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 22,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderSide: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderSide: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderSide: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                              ),
+                              errorBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderSide: const BorderSide(color: AppColors.error),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Введите телефон';
+                              }
+                              // Убираем все нецифры для проверки
+                              final digits = value.replaceAll(RegExp(r'\D'), '');
+                              if (digits.length < 10) {
+                                return 'Некорректный формат телефона';
+                              }
+                              return null;
+                            },
+                            onFieldSubmitted: (_) => _savePhone(),
+                          ),
+
+                          const SizedBox(height: 30),
+
+                          // Показываем ошибку, если есть
+                          if (_error != null)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 20),
+                              child: SelectableText.rich(
+                                TextSpan(
+                                  text: _error!,
+                                  style: const TextStyle(
+                                    color: AppColors.error,
+                                    fontSize: 14,
+                                    fontFamily: 'Inter',
+                                  ),
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                        ),
-                      ),
-                      errorBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        borderSide: const BorderSide(color: AppColors.error),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Введите телефон';
-                      }
-                      // Убираем все нецифры для проверки
-                      final digits = value.replaceAll(RegExp(r'\D'), '');
-                      if (digits.length < 10) {
-                        return 'Некорректный формат телефона';
-                      }
-                      return null;
-                    },
-                    onFieldSubmitted: (_) => _savePhone(),
                   ),
-
-                  const SizedBox(height: 30),
-
-                  // Показываем ошибку, если есть
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
-                      child: SelectableText.rich(
-                        TextSpan(
-                          text: _error!,
-                          style: const TextStyle(
-                            color: AppColors.error,
-                            fontSize: 14,
-                            fontFamily: 'Inter',
+                  // ──────────────────────────────────────────────────────────────
+                  // КНОПКА "СОХРАНИТЬ"
+                  // ──────────────────────────────────────────────────────────────
+                  SafeArea(
+                    top: false,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.twinBg,
+                      ),
+                      child: Material(
+                        color: _isFormValid && !_isSubmitting
+                            ? AppColors.button
+                            : AppColors.button.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        elevation: 0,
+                        child: InkWell(
+                          onTap: _isFormValid && !_isSubmitting
+                              ? _savePhone
+                              : null,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          child: Container(
+                            width: double.infinity,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _isFormValid && !_isSubmitting
+                                  ? AppColors.button
+                                  : AppColors.button.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                            child: Center(
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.surface,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Сохранить',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.surface,
+                                      ),
+                                    ),
+                            ),
                           ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                    ),
-
-                  // Кнопка сохранения
-                  Center(
-                    child: PrimaryButton(
-                      text: 'Сохранить',
-                      onPressed: _savePhone,
-                      isLoading: _isSubmitting,
-                      enabled: _isFormValid && !_isSubmitting,
-                      horizontalPadding: 68,
                     ),
                   ),
                 ],

@@ -6,6 +6,7 @@ import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../../providers/theme_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import 'connected_trackers/connected_trackers_screen.dart';
 import 'edit_phone_screen.dart';
 import 'edit_email_screen.dart';
@@ -42,6 +43,61 @@ class SettingsScreen extends ConsumerWidget {
     final domain = parts[1];
     if (name.length <= 2) return email;
     return '${name.substring(0, 2)}***@$domain';
+  }
+
+  /// 🔹 Обработка выхода из аккаунта
+  /// Показывает диалог подтверждения, затем очищает токены и перенаправляет на экран входа
+  Future<void> _handleLogout(BuildContext context, WidgetRef ref) async {
+    // ─────────── Показываем диалог подтверждения ───────────
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text('Выйти из аккаунта?'),
+        content: const Text('Вы уверены, что хотите выйти?'),
+        actions: [
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Выйти'),
+          ),
+        ],
+      ),
+    );
+
+    // ─────────── Если пользователь не подтвердил выход ───────────
+    if (confirmed != true || !context.mounted) return;
+
+    // ─────────── Выполняем выход ───────────
+    try {
+      final auth = ref.read(authServiceProvider);
+      
+      // Очищаем токены из безопасного хранилища
+      await auth.logout();
+      
+      // Очищаем кеш настроек пользователя
+      await clearUserSettingsCache();
+      
+      // Инвалидируем провайдеры для очистки состояния
+      ref.invalidate(userSettingsProvider);
+      ref.invalidate(isAuthorizedProvider);
+      ref.invalidate(currentUserIdProvider);
+      
+      // Проверяем, что виджет еще монтирован перед навигацией
+      if (!context.mounted) return;
+      
+      // Перенаправляем на экран входа
+      Navigator.of(context, rootNavigator: true).pushReplacementNamed('/home');
+    } catch (e) {
+      // В случае ошибки все равно перенаправляем на экран входа
+      if (context.mounted) {
+        Navigator.of(context, rootNavigator: true).pushReplacementNamed('/home');
+      }
+    }
   }
 
   @override
@@ -360,9 +416,7 @@ class SettingsScreen extends ConsumerWidget {
                   icon: CupertinoIcons.square_arrow_right,
                   iconColor: AppColors.brandPrimary,
                   title: 'Выйти',
-                  onTap: () {
-                    // Пока оставляем заглушку
-                  },
+                  onTap: () => _handleLogout(context, ref),
                 ),
               ],
             ),

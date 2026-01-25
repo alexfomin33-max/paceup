@@ -139,8 +139,8 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Доступ к данным'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Доступ к данным', backgroundColor: AppColors.twinBg, showBottomDivider: false, elevation: 0, scrolledUnderElevation: 0,), 
         body: SafeArea(
           child: _isLoading
               ? const Center(
@@ -189,8 +189,9 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(color: AppColors.twinchip,
+            width: 0.7,),
                       ),
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -231,12 +232,12 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                         color: _hasAccess
                             ? AppColors.success.withValues(alpha: 0.1)
                             : AppColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color: _hasAccess
                               ? AppColors.success
                               : AppColors.warning,
-                          width: 1,
+                          width: 0.0,
                         ),
                       ),
                       padding: const EdgeInsets.all(16),
@@ -288,9 +289,14 @@ class _HealthDataAccessScreenState extends State<HealthDataAccessScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.getSurfaceMutedColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                      ),
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: const Border.fromBorderSide(
+          BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
+                      ),),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

@@ -11,11 +11,11 @@ class HelpInfoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Справочная информация'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Справочная информация', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
             children: [
               // Общая информация
               const _InfoSection(
@@ -34,7 +34,7 @@ class HelpInfoScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Тренировки
               const _InfoSection(
@@ -53,7 +53,7 @@ class HelpInfoScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // События
               const _InfoSection(
@@ -72,7 +72,7 @@ class HelpInfoScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Клубы
               const _InfoSection(
@@ -91,7 +91,7 @@ class HelpInfoScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Подписка PacePro
               const _InfoSection(
@@ -110,7 +110,7 @@ class HelpInfoScreen extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
               // Контакты поддержки
               const _InfoSection(
@@ -145,11 +145,12 @@ class _InfoSection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 1,
+          color: AppColors.twinchip,
+            width: 0.7,
         ),
+        
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

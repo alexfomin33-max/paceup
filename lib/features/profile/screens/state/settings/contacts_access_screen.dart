@@ -136,8 +136,8 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Контакты'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Контакты', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: SafeArea(
           child: _isLoading
               ? const Center(
@@ -180,17 +180,19 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                   ),
                 )
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                   children: [
                     // Информационная карточка
                     Container(
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
-                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: const Border.fromBorderSide(
+          BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
+                      ),
                       ),
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -231,12 +233,12 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                         color: _hasAccess
                             ? AppColors.success.withValues(alpha: 0.1)
                             : AppColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color: _hasAccess
                               ? AppColors.success
                               : AppColors.warning,
-                          width: 1,
+                          width: 0,
                         ),
                       ),
                       padding: const EdgeInsets.all(16),
@@ -288,8 +290,14 @@ class _ContactsAccessScreenState extends State<ContactsAccessScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.getSurfaceMutedColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        color: AppColors.getSurfaceColor(context),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: const Border.fromBorderSide(
+          BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
+                      ),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

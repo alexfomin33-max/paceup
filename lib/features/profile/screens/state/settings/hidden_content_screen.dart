@@ -222,8 +222,8 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Скрытые тренировки и посты'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Скрытые тренировки и посты', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: SafeArea(
           child: _isLoading
               ? const Center(child: CupertinoActivityIndicator(radius: 16))
@@ -275,11 +275,11 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
                     // ─── Единая таблица ───
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                         child: Container(
                           decoration: BoxDecoration(
                             color: AppColors.getSurfaceColor(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
                               color: AppColors.getBorderColor(context),
                               width: 0.5,
@@ -365,17 +365,6 @@ class _HiddenContentScreenState extends ConsumerState<HiddenContentScreen> {
                                         );
                                       },
                                     ),
-                                    // ─── Разделитель между строками (кроме последней) ───
-                                    if (index < _users.length - 1)
-                                      Divider(
-                                        height: 1,
-                                        thickness: 0.5,
-                                        color: AppColors.getBorderColor(
-                                          context,
-                                        ),
-                                        indent:
-                                            64, // Отступ для выравнивания с аватаром
-                                      ),
                                   ],
                                 );
                               }),

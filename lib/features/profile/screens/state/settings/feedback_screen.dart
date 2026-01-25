@@ -32,6 +32,12 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
     super.dispose();
   }
 
+  // ── проверка, заполнено ли поле
+  bool get _isFormValid {
+    return _textController.text.trim().isNotEmpty &&
+        _textController.text.trim().length >= 10;
+  }
+
   /// Отправка предложения
   Future<void> _submitFeedback() async {
     if (!_formKey.currentState!.validate()) return;
@@ -85,8 +91,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Предложения по улучшению'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Предложения по улучшению',backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: GestureDetector(
           // Снимаем фокус при тапе вне поля ввода
           onTap: () {
@@ -94,6 +100,8 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
           },
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
+            top: false,
+            bottom: false,
             child: _isSubmitted
                 ? Center(
                     child: Padding(
@@ -137,17 +145,29 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                   )
                 : Form(
                     key: _formKey,
-                    child: ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+                    child: Column(
                       children: [
+                        // ──────────────────────────────────────────────────────────────
+                        // ПРОКРУЧИВАЕМЫЙ КОНТЕНТ
+                        // ──────────────────────────────────────────────────────────────
+                        Expanded(
+                          child: SingleChildScrollView(
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
                         // Информационная карточка
                         Container(
                           decoration: BoxDecoration(
                             color: AppColors.getSurfaceColor(context),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
-                              color: AppColors.getBorderColor(context),
-                              width: 1,
+                              color: AppColors.twinchip,
+            width: 0.7,
                             ),
                           ),
                           padding: const EdgeInsets.all(16),
@@ -187,19 +207,28 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
                         const SizedBox(height: 24),
 
+                        // Заголовок поля ввода
+                        Text(
+                          'Ваше предложение',
+                          style: AppTextStyles.h14w6.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
                         // Поле ввода предложения
                         TextFormField(
                           controller: _textController,
                           focusNode: _focusNode,
-                          maxLines: 10,
-                          minLines: 6,
+                          maxLines: 14,
+                          minLines: 7,
                           textInputAction: TextInputAction.newline,
                           textCapitalization: TextCapitalization.sentences,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
                           decoration: InputDecoration(
-                            labelText: 'Ваше предложение',
-                            labelStyle: AppTextStyles.h14w4Sec.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
-                            ),
                             hintText:
                                 'Опишите, что бы вы хотели улучшить или добавить в приложение...',
                             hintStyle: TextStyle(
@@ -207,26 +236,28 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                             ),
                             errorText: _error,
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              borderSide: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: const BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              borderSide: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: const BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: const BorderSide(
-                                color: AppColors.brandPrimary,
-                                width: 0.7,
-                              ),
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
                             ),
                             errorBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               borderSide: const BorderSide(
                                 color: AppColors.error,
                               ),
@@ -247,31 +278,83 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
 
                         const SizedBox(height: 30),
 
-                        // Показываем ошибку, если есть
-                        if (_error != null)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: SelectableText.rich(
-                              TextSpan(
-                                text: _error!,
-                                style: const TextStyle(
-                                  color: AppColors.error,
-                                  fontSize: 14,
-                                  fontFamily: 'Inter',
-                                ),
+                                  // Показываем ошибку, если есть
+                                  if (_error != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(bottom: 20),
+                                      child: SelectableText.rich(
+                                        TextSpan(
+                                          text: _error!,
+                                          style: const TextStyle(
+                                            color: AppColors.error,
+                                            fontSize: 14,
+                                            fontFamily: 'Inter',
+                                          ),
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                ],
                               ),
-                              textAlign: TextAlign.center,
                             ),
                           ),
-
-                        // Кнопка отправки
-                        Center(
-                          child: PrimaryButton(
-                            text: 'Отправить',
-                            onPressed: _submitFeedback,
-                            isLoading: _isSubmitting,
-                            enabled: !_isSubmitting,
-                            horizontalPadding: 60,
+                        ),
+                        // ──────────────────────────────────────────────────────────────
+                        // КНОПКА "ОТПРАВИТЬ"
+                        // ──────────────────────────────────────────────────────────────
+                        SafeArea(
+                          top: false,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: const BoxDecoration(
+                              color: AppColors.twinBg,
+                            ),
+                            child: Material(
+                              color: _isFormValid && !_isSubmitting
+                                  ? AppColors.button
+                                  : AppColors.button.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              elevation: 0,
+                              child: InkWell(
+                                onTap: _isFormValid && !_isSubmitting
+                                    ? _submitFeedback
+                                    : null,
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                child: Container(
+                                  width: double.infinity,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    color: _isFormValid && !_isSubmitting
+                                        ? AppColors.button
+                                        : AppColors.button.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  ),
+                                  child: Center(
+                                    child: _isSubmitting
+                                        ? const SizedBox(
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                AppColors.surface,
+                                              ),
+                                            ),
+                                          )
+                                        : const Text(
+                                            'Отправить',
+                                            style: TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.surface,
+                                            ),
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],

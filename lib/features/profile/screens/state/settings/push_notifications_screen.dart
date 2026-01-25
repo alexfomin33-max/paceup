@@ -129,8 +129,8 @@ class _PushNotificationsScreenState
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Push-уведомления'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Push-уведомления', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: SafeArea(
           child: _isLoading
               ? const Center(
@@ -306,9 +306,12 @@ class _NotificationSection extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.md)),
-        border: Border.fromBorderSide(
-          BorderSide(color: AppColors.getBorderColor(context), width: 1),
+        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.lg)),
+        border: const Border.fromBorderSide(
+          BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
         ),
       ),
       child: Column(
@@ -349,7 +352,7 @@ class _NotificationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => onChanged(!value),
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Row(
@@ -368,10 +371,13 @@ class _NotificationTile extends StatelessWidget {
                 ),
               ),
             ),
-            CupertinoSwitch(
-              value: value,
-              onChanged: onChanged,
-              activeTrackColor: AppColors.brandPrimary,
+            Transform.scale(
+              scale: 0.85,
+              child: CupertinoSwitch(
+                value: value,
+                onChanged: onChanged,
+                activeTrackColor: AppColors.brandPrimary,
+              ),
             ),
           ],
         ),

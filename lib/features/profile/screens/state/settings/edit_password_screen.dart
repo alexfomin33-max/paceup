@@ -6,7 +6,6 @@ import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../../../core/widgets/primary_button.dart';
 import '../../../../../../core/utils/error_handler.dart';
 import 'user_settings_provider.dart';
 
@@ -132,8 +131,8 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: const PaceAppBar(title: 'Пароль'),
+        backgroundColor: AppColors.twinBg,
+        appBar: const PaceAppBar(title: 'Пароль', backgroundColor: AppColors.twinBg, elevation: 0, scrolledUnderElevation: 0, showBottomDivider: false,),
         body: GestureDetector(
           // Снимаем фокус при тапе вне полей ввода
           onTap: () {
@@ -141,11 +140,25 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
           },
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
+            top: false,
+            bottom: false,
             child: Form(
               key: _formKey,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+              child: Column(
                 children: [
+                  // ──────────────────────────────────────────────────────────────
+                  // ПРОКРУЧИВАЕМЫЙ КОНТЕНТ
+                  // ──────────────────────────────────────────────────────────────
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                   // Поле старого пароля (если пароль уже установлен)
                   if (widget.hasPassword) ...[
                     _buildPasswordField(
@@ -238,14 +251,67 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                       ),
                     ),
 
-                  // Кнопка сохранения
-                  Center(
-                    child: PrimaryButton(
-                      text: 'Сохранить',
-                      onPressed: _savePassword,
-                      isLoading: _isSubmitting,
-                      enabled: _isFormValid && !_isSubmitting,
-                      horizontalPadding: 68,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // ──────────────────────────────────────────────────────────────
+                  // КНОПКА "СОХРАНИТЬ"
+                  // ──────────────────────────────────────────────────────────────
+                  SafeArea(
+                    top: false,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: AppColors.twinBg,
+                      ),
+                      child: Material(
+                        color: _isFormValid && !_isSubmitting
+                            ? AppColors.button
+                            : AppColors.button.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        elevation: 0,
+                        child: InkWell(
+                          onTap: _isFormValid && !_isSubmitting
+                              ? _savePassword
+                              : null,
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          child: Container(
+                            width: double.infinity,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: _isFormValid && !_isSubmitting
+                                  ? AppColors.button
+                                  : AppColors.button.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                            ),
+                            child: Center(
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(
+                                          AppColors.surface,
+                                        ),
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Сохранить',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.surface,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -269,13 +335,6 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
     void Function(String)? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
-    // ── определяем, какой лейбл показывать
-    final bool hasText = controller.text.trim().isNotEmpty;
-    final bool isFocused = focusNode.hasFocus;
-    final String dynamicLabelText = (hasText || isFocused)
-        ? labelText
-        : labelText; // для паролей можно оставить одинаковый текст
-
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
@@ -283,21 +342,25 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
       textInputAction: textInputAction,
       textCapitalization: TextCapitalization.none,
       autocorrect: false,
+      style: const TextStyle(
+        fontSize: 15,
+        fontFamily: 'Inter',
+      ),
       onFieldSubmitted: onFieldSubmitted,
       validator: validator,
       decoration: InputDecoration(
-        labelText: dynamicLabelText,
-        labelStyle: AppTextStyles.h14w4Sec.copyWith(
-          color: AppColors.getTextSecondaryColor(context),
+        hintText: labelText,
+        hintStyle: TextStyle(
+          color: AppColors.getTextPlaceholderColor(context),
+          fontSize: 15,
         ),
-        floatingLabelStyle: TextStyle(
-          color: AppColors.getTextSecondaryColor(context),
-        ),
-        floatingLabelBehavior: FloatingLabelBehavior.auto,
-        alignLabelWithHint: true,
         errorText: errorText,
         filled: true,
-        fillColor: AppColors.getBackgroundColor(context),
+        fillColor: AppColors.getSurfaceColor(context),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 22,
+        ),
         suffixIcon: IconButton(
           icon: Icon(
             obscureText ? CupertinoIcons.eye_slash : CupertinoIcons.eye,
@@ -307,19 +370,28 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
           onPressed: onToggleObscure,
         ),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: BorderSide(color: AppColors.getBorderColor(context)),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderSide: const BorderSide(
+            color: AppColors.twinchip,
+            width: 0.7,
+          ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           borderSide: const BorderSide(color: AppColors.error),
         ),
       ),
