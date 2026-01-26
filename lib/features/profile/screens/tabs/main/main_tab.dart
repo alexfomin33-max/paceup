@@ -484,8 +484,8 @@ class _ActivityCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1.0,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -577,13 +577,13 @@ class _PRRow extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1.0,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: items
@@ -605,13 +605,13 @@ class _PRBadge extends StatelessWidget {
     // Один бейдж из секции PR
     return Column(
       children: [
-        Image.asset(asset, width: 72, height: 72, fit: BoxFit.contain),
-        const SizedBox(height: 6),
+        Image.asset(asset, width: 70, height: 70, fit: BoxFit.contain),
+        const SizedBox(height: 8),
         Text(
           time,
           style: TextStyle(
             fontFamily: 'Inter',
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: FontWeight.w500,
             color: AppColors.getTextPrimaryColor(context),
           ),
@@ -645,10 +645,10 @@ class _MetricsCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1.0,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
         child: Column(
@@ -658,8 +658,8 @@ class _MetricsCard extends StatelessWidget {
               children: [
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+                    horizontal: 16,
+                    vertical: 16,
                   ),
                   child: Row(
                     children: [
@@ -695,9 +695,9 @@ class _MetricsCard extends StatelessWidget {
                   Divider(
                     height: 1,
                     thickness: 0.5,
-                    color: AppColors.getDividerColor(context),
-                    indent: 40,
-                    endIndent: 10,
+                    color: AppColors.getBorderColor(context),
+                    indent: 42,
+                    endIndent: 16,
                   ),
               ],
             );

@@ -288,13 +288,13 @@ class _GearCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1.0,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
-        padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+        padding: const EdgeInsets.fromLTRB(10, 14, 10, 14),
         child: Row(
           children: [
             // Превью изображения (из базы данных или дефолтное)

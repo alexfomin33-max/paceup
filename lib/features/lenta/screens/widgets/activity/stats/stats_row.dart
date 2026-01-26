@@ -380,7 +380,7 @@ class StatsRow extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Время',
+                            'Время, мин',
                             style: AppTextStyles.h11w4Sec.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
@@ -410,7 +410,7 @@ class StatsRow extends StatelessWidget {
                                 ? 'Скорость'
                                 : isSwim
                                 ? 'Темп, /100м'
-                                : 'Темп',
+                                : 'Темп, /км',
                             style: AppTextStyles.h11w4Sec.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
@@ -638,14 +638,14 @@ class StatsRow extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Скорость',
+                              'Скорость, км/ч',
                               style: AppTextStyles.h11w4Sec.copyWith(
                                 color: AppColors.getTextSecondaryColor(context),
                               ),
                             ),
                             const SizedBox(height: 1),
                             // ──────────────────────────────────────────────────────────────
-                            // 📏 УМЕНЬШАЕМ РАЗМЕР ШРИФТА "км/ч" на 1
+                            // 🏃 ДЛЯ БЕГА: показываем только числовое значение скорости без "км/ч"
                             // ──────────────────────────────────────────────────────────────
                             speedText == '—'
                                 ? Text(
@@ -656,32 +656,12 @@ class StatsRow extends StatelessWidget {
                                       ),
                                     ),
                                   )
-                                : Text.rich(
-                                    TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: speedText.replaceAll(
-                                            ' км/ч',
-                                            '',
-                                          ),
-                                          style: AppTextStyles.h16w6.copyWith(
-                                            color:
-                                                AppColors.getTextPrimaryColor(
-                                                  context,
-                                                ),
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: ' км/ч',
-                                          style: AppTextStyles.h16w6.copyWith(
-                                            fontSize: 15,
-                                            color:
-                                                AppColors.getTextPrimaryColor(
-                                                  context,
-                                                ),
-                                          ),
-                                        ),
-                                      ],
+                                : Text(
+                                    speedText.replaceAll(' км/ч', ''),
+                                    style: AppTextStyles.h16w6.copyWith(
+                                      color: AppColors.getTextPrimaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
                           ],

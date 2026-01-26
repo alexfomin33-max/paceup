@@ -265,13 +265,13 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
   // Вспомогательный метод для создания блока с единым оформлением
   Widget _buildBlock(Widget child) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(12,16,12,16),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 1.0,
+          color: AppColors.twinchip,
+          width: 0.7,
         ),
       ),
       child: child,

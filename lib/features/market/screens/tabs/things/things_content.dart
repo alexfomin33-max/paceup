@@ -13,10 +13,12 @@ import 'widgets/market_things_card.dart';
 
 class ThingsContent extends ConsumerStatefulWidget {
   final bool isFiltersVisible;
+  final List<Widget>? customHeaderSlivers;
 
   const ThingsContent({
     super.key,
     this.isFiltersVisible = false,
+    this.customHeaderSlivers,
   });
 
   @override
@@ -76,121 +78,123 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
     final thingsState = ref.watch(thingsProvider);
     final items = thingsState.items;
 
-    // Количество элементов заголовка (селектор категории показывается только если isFiltersVisible)
-    final headerCount = widget.isFiltersVisible ? 1 : 0;
-
-    // ── показываем индикатор загрузки
-    if (thingsState.isLoading && items.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CupertinoActivityIndicator(radius: 10),
-        ),
-      );
-    }
-
-    // ── показываем ошибку
-    if (thingsState.error != null && items.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                'Ошибка загрузки',
-                style: TextStyle(color: AppColors.error, fontSize: 16),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                thingsState.error!,
-                style: TextStyle(
-                  color: AppColors.getTextSecondaryColor(context),
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      );
+    // ── функция обновления при pull-to-refresh
+    Future<void> onRefresh() async {
+      await ref.read(thingsProvider.notifier).loadInitial();
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        await ref.read(thingsProvider.notifier).loadInitial();
-      },
-      child: ListView.separated(
-        key: const ValueKey('things_list'),
-        padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      onRefresh: onRefresh,
+      child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        itemCount: items.length + headerCount + (thingsState.hasMore ? 1 : 0),
-        separatorBuilder: (_, index) {
-          // Убираем отступ после выпадающего меню
-          if (widget.isFiltersVisible && index == 0) {
-            return const SizedBox.shrink();
-          }
-          return const SizedBox(height: 12);
-        },
-        itemBuilder: (_, index) {
-          if (index == 0 && widget.isFiltersVisible) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-              child: _CategoryDropdown(
-                value: _selected,
-                options: _categories,
-                onChanged: (v) async {
-                  setState(() => _selected = v ?? 'Все');
-                  await _updateCategoryFilter();
-                },
-              ),
-            );
-          }
+        slivers: [
+          // ── кастомные слайверы (пилюля) из родительского экрана
+          if (widget.customHeaderSlivers != null) ...widget.customHeaderSlivers!,
+          if (widget.customHeaderSlivers != null)
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-          // Если меню фильтров скрыто, корректируем индекс для элементов списка
-          final itemIndex = widget.isFiltersVisible ? index - headerCount : index;
-
-          // ── кнопка загрузки следующей страницы
-          if (itemIndex == items.length) {
-            if (thingsState.isLoadingMore) {
-              return const Center(
+          // ── состояние загрузки
+          if (thingsState.isLoading && items.isEmpty)
+            const SliverToBoxAdapter(
+              child: Center(
                 child: Padding(
-                  padding: EdgeInsets.all(16),
+                  padding: EdgeInsets.all(20),
                   child: CupertinoActivityIndicator(radius: 10),
                 ),
-              );
-            }
-            if (thingsState.hasMore) {
-              return Center(
-                child: TextButton(
-                  onPressed: () {
-                    ref.read(thingsProvider.notifier).loadMore();
-                  },
-                  child: const Text('Загрузить еще'),
+              ),
+            )
+          // ── состояние ошибки
+          else if (thingsState.error != null && items.isEmpty)
+            SliverToBoxAdapter(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Ошибка загрузки',
+                        style: TextStyle(color: AppColors.error, fontSize: 16),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        thingsState.error!,
+                        style: TextStyle(
+                          color: AppColors.getTextSecondaryColor(context),
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            }
-            return const SizedBox.shrink();
-          }
+              ),
+            )
+          // ── основной список
+          else ...[
+            // ── селектор категории (если видим)
+            if (widget.isFiltersVisible)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                  child: _CategoryDropdown(
+                    value: _selected,
+                    options: _categories,
+                    onChanged: (v) async {
+                      setState(() => _selected = v ?? 'Все');
+                      await _updateCategoryFilter();
+                    },
+                  ),
+                ),
+              ),
+            // ── список карточек
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              sliver: SliverList.separated(
+                itemCount: items.length + (thingsState.hasMore ? 1 : 0),
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (_, index) {
+                  // ── кнопка загрузки следующей страницы
+                  if (index == items.length) {
+                    if (thingsState.isLoadingMore) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16),
+                          child: CupertinoActivityIndicator(radius: 10),
+                        ),
+                      );
+                    }
+                    if (thingsState.hasMore) {
+                      return Center(
+                        child: TextButton(
+                          onPressed: () {
+                            ref.read(thingsProvider.notifier).loadMore();
+                          },
+                          child: const Text('Загрузить еще'),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }
 
-          if (itemIndex >= items.length) return const SizedBox.shrink();
+                  final isOpen = _expanded.contains(items[index].id);
+                  final isFirstCard = index == 0;
 
-          final isOpen = _expanded.contains(items[itemIndex].id);
-
-          // Добавляем отступ над первой карточкой
-          final isFirstCard = itemIndex == 0;
-
-          return Padding(
-            padding: EdgeInsets.only(top: isFirstCard ? 16 : 0),
-            child: GoodsCard(
-              item: items[itemIndex],
-              expanded: isOpen,
-              onToggle: () => setState(() => _expanded.toggle(items[itemIndex].id)),
+                  return Padding(
+                    padding: EdgeInsets.only(top: isFirstCard ? 0 : 0),
+                    child: GoodsCard(
+                      item: items[index],
+                      expanded: isOpen,
+                      onToggle: () => setState(() => _expanded.toggle(items[index].id)),
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        },
+          ],
+        ],
       ),
     );
   }
@@ -212,21 +216,21 @@ class _CategoryDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 17),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 20),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
                         ),
-        // boxShadow: const [
-        //   BoxShadow(
-        //     color: AppColors.twinshadow,
-        //     blurRadius: 20,
-        //     offset: Offset(0, 1),
-        //   ),
-        // ],
+        boxShadow: const [
+            BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+          ],
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -240,7 +244,7 @@ class _CategoryDropdown extends StatelessWidget {
           ),
           dropdownColor: AppColors.getSurfaceColor(context),
           menuMaxHeight: 300,
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           style: AppTextStyles.h14w4.copyWith(
             color: AppColors.getTextPrimaryColor(context),
           ),

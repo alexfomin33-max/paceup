@@ -438,7 +438,7 @@ class _SportIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         width: 28,
         height: 28,
@@ -493,13 +493,13 @@ class _CalendarCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
+          color: AppColors.twinchip,
           width: 0.7,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(10, 12, 10, 12),
+      padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
       child: Column(
         children: [
           const Row(
@@ -776,10 +776,10 @@ class _WorkoutCard extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 1,
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
         padding: const EdgeInsets.all(6),
@@ -793,10 +793,10 @@ class _WorkoutCard extends ConsumerWidget {
               // 2. Если нет фотографий, но есть трек → показываем карту маршрута
               // 3. Если нет фотографий И нет трека → показываем заглушку
               ClipRRect(
-                borderRadius: BorderRadius.circular(AppRadius.xs),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: SizedBox(
                   width: 80,
-                  height: 74,
+                  height: 76,
                   child: _WorkoutCard._buildActivityImage(
                     context,
                     item,
@@ -820,7 +820,7 @@ class _WorkoutCard extends ConsumerWidget {
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
                     // Три метрики — строго таблично, выровнены по левому краю
                     IntrinsicHeight(

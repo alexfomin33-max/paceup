@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/radius.dart';
 
 /// Горизонтальные вкладки без индикатора (ползунка).
 /// Синхронизируется с PageView через [value]; для будущей совместимости
@@ -124,10 +125,19 @@ class _TabsBarState extends State<TabsBar> {
                         final selected = i == widget.value;
                         return GestureDetector(
                           onTap: () => widget.onChanged(i),
-                          child: Padding(
+                          child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: _hPad,
+                              vertical: 6,
                             ),
+                            decoration: selected
+                                ? BoxDecoration(
+                                    color: AppColors.twinBg,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.xl,
+                                    ),
+                                  )
+                                : null,
                             child: Text(
                               widget.items[i],
                               style: TextStyle(

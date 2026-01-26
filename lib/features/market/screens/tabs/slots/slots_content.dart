@@ -18,10 +18,12 @@ import 'widgets/market_slot_card.dart';
 
 class SlotsContent extends ConsumerStatefulWidget {
   final bool isSearchVisible;
+  final List<Widget>? customHeaderSlivers;
 
   const SlotsContent({
     super.key,
     this.isSearchVisible = false,
+    this.customHeaderSlivers,
   });
 
   @override
@@ -169,198 +171,197 @@ class _SlotsContentState extends ConsumerState<SlotsContent> {
     // Это не вызывает пересоздание виджета при изменении фильтра
     final slotsState = ref.watch(slotsProvider);
 
-    // Количество элементов заголовка (строка поиска показывается только если isSearchVisible)
-    final headerCount = widget.isSearchVisible ? 1 : 0;
-
-    // Состояние загрузки (начальная загрузка)
-    if (slotsState.isLoading && slotsState.items.isEmpty) {
-      return Column(
-        children: [
-          if (widget.isSearchVisible)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-              child: _EventDropdownField(
-                key: const ValueKey('event_dropdown_field'),
-                controller: _searchCtrl,
-                focusNode: _searchFocusNode,
-                hintText: 'Поиск события',
-                selectedEvent: _selectedEvent,
-                onEventSelected: _onEventSelected,
-                onClear: _onClear,
-                searchFunction: _searchEvents,
-              ),
-            ),
-          const SizedBox(height: 40),
-          const CupertinoActivityIndicator(),
-          const SizedBox(height: 16),
-          Text(
-            'Загрузка слотов...',
-            style: AppTextStyles.h14w4.copyWith(
-              color: AppColors.getTextSecondaryColor(context),
-            ),
-          ),
-        ],
-      );
+    // ── функция обновления при pull-to-refresh
+    Future<void> onRefresh() async {
+      final notifier = ref.read(slotsProvider.notifier);
+      await notifier.loadInitial();
     }
 
-    // Состояние ошибки
-    if (slotsState.error != null && slotsState.items.isEmpty) {
-      return Column(
-        children: [
-          if (widget.isSearchVisible)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-              child: _EventDropdownField(
-                key: const ValueKey('event_dropdown_field'),
-                controller: _searchCtrl,
-                focusNode: _searchFocusNode,
-                hintText: 'Поиск события',
-                selectedEvent: _selectedEvent,
-                onEventSelected: _onEventSelected,
-                onClear: _onClear,
-                searchFunction: _searchEvents,
-              ),
-            ),
-          const SizedBox(height: 40),
-          Icon(
-            CupertinoIcons.exclamationmark_triangle,
-            size: 48,
-            color: AppColors.getTextSecondaryColor(context),
-          ),
-          const SizedBox(height: 16),
-          SelectableText.rich(
-            TextSpan(
-              text: 'Ошибка загрузки слотов:\n',
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextSecondaryColor(context),
-              ),
-              children: [
-                TextSpan(
-                  text: slotsState.error!,
-                  style: AppTextStyles.h14w4.copyWith(color: Colors.red),
-                ),
-              ],
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          CupertinoButton(
-            onPressed: () {
-              final notifier = ref.read(slotsProvider.notifier);
-              notifier.loadInitial();
-            },
-            child: const Text('Повторить'),
-          ),
-        ],
-      );
-    }
-
-    // Пустое состояние
-    if (slotsState.items.isEmpty) {
-      return Column(
-        children: [
-          if (widget.isSearchVisible)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-              child: _EventDropdownField(
-                key: const ValueKey('event_dropdown_field'),
-                controller: _searchCtrl,
-                focusNode: _searchFocusNode,
-                hintText: 'Поиск события',
-                selectedEvent: _selectedEvent,
-                onEventSelected: _onEventSelected,
-                onClear: _onClear,
-                searchFunction: _searchEvents,
-              ),
-            ),
-          const SizedBox(height: 40),
-          Text(
-            'Слоты не найдены',
-            style: AppTextStyles.h14w4.copyWith(
-              color: AppColors.getTextSecondaryColor(context),
-            ),
-          ),
-        ],
-      );
-    }
-
-    // Основной список слотов с pull-to-refresh
+    // ── Основной контент с CustomScrollView
     return RefreshIndicator(
-      onRefresh: () async {
-        // Обновляем список слотов при pull-to-refresh
-        final notifier = ref.read(slotsProvider.notifier);
-        await notifier.loadInitial();
-      },
-      child: ListView.separated(
-        key: const ValueKey('slots_list'),
+      onRefresh: onRefresh,
+      child: CustomScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        itemCount:
-            slotsState.items.length +
-            headerCount +
-            (slotsState.hasMore ? 1 : 0),
-        separatorBuilder: (_, index) {
-          // Убираем отступ после поля поиска
-          if (widget.isSearchVisible && index == 0) {
-            return const SizedBox.shrink();
-          }
-          return const SizedBox(height: 10);
-        },
-        itemBuilder: (_, index) {
-          if (index == 0 && widget.isSearchVisible) {
-            return RepaintBoundary(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
-                child: _EventDropdownField(
-                  key: const ValueKey('event_dropdown_field'),
-                  controller: _searchCtrl,
-                  focusNode: _searchFocusNode,
-                  hintText: 'Поиск события',
-                  selectedEvent: _selectedEvent,
-                  onEventSelected: _onEventSelected,
-                  onClear: _onClear,
-                  searchFunction: _searchEvents,
+        slivers: [
+          // ── кастомные слайверы (пилюля) из родительского экрана
+          if (widget.customHeaderSlivers != null) ...widget.customHeaderSlivers!,
+          if (widget.customHeaderSlivers != null)
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+          // ── состояние загрузки
+          if (slotsState.isLoading && slotsState.items.isEmpty)
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  if (widget.isSearchVisible)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                      child: _EventDropdownField(
+                        key: const ValueKey('event_dropdown_field'),
+                        controller: _searchCtrl,
+                        focusNode: _searchFocusNode,
+                        hintText: 'Поиск события',
+                        selectedEvent: _selectedEvent,
+                        onEventSelected: _onEventSelected,
+                        onClear: _onClear,
+                        searchFunction: _searchEvents,
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                  const CupertinoActivityIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Загрузка слотов...',
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          // ── состояние ошибки
+          else if (slotsState.error != null && slotsState.items.isEmpty)
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  if (widget.isSearchVisible)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                      child: _EventDropdownField(
+                        key: const ValueKey('event_dropdown_field'),
+                        controller: _searchCtrl,
+                        focusNode: _searchFocusNode,
+                        hintText: 'Поиск события',
+                        selectedEvent: _selectedEvent,
+                        onEventSelected: _onEventSelected,
+                        onClear: _onClear,
+                        searchFunction: _searchEvents,
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                  Icon(
+                    CupertinoIcons.exclamationmark_triangle,
+                    size: 48,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                  const SizedBox(height: 16),
+                  SelectableText.rich(
+                    TextSpan(
+                      text: 'Ошибка загрузки слотов:\n',
+                      style: AppTextStyles.h14w4.copyWith(
+                        color: AppColors.getTextSecondaryColor(context),
+                      ),
+                      children: [
+                        TextSpan(
+                          text: slotsState.error!,
+                          style: AppTextStyles.h14w4.copyWith(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  CupertinoButton(
+                    onPressed: () {
+                      final notifier = ref.read(slotsProvider.notifier);
+                      notifier.loadInitial();
+                    },
+                    child: const Text('Повторить'),
+                  ),
+                ],
+              ),
+            )
+          // ── пустое состояние
+          else if (slotsState.items.isEmpty)
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  if (widget.isSearchVisible)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                      child: _EventDropdownField(
+                        key: const ValueKey('event_dropdown_field'),
+                        controller: _searchCtrl,
+                        focusNode: _searchFocusNode,
+                        hintText: 'Поиск события',
+                        selectedEvent: _selectedEvent,
+                        onEventSelected: _onEventSelected,
+                        onClear: _onClear,
+                        searchFunction: _searchEvents,
+                      ),
+                    ),
+                  const SizedBox(height: 40),
+                  Text(
+                    'Слоты не найдены',
+                    style: AppTextStyles.h14w4.copyWith(
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          // ── основной список слотов
+          else ...[
+            // ── поле поиска (если видимо)
+            if (widget.isSearchVisible)
+              SliverToBoxAdapter(
+                child: RepaintBoundary(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+                    child: _EventDropdownField(
+                      key: const ValueKey('event_dropdown_field'),
+                      controller: _searchCtrl,
+                      focusNode: _searchFocusNode,
+                      hintText: 'Поиск события',
+                      selectedEvent: _selectedEvent,
+                      onEventSelected: _onEventSelected,
+                      onClear: _onClear,
+                      searchFunction: _searchEvents,
+                    ),
+                  ),
                 ),
               ),
-            );
-          }
+            // ── список карточек
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              sliver: SliverList.separated(
+                itemCount: slotsState.items.length + (slotsState.hasMore ? 1 : 0),
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
+                itemBuilder: (_, index) {
+                  // ── индикатор загрузки следующей страницы
+                  if (index == slotsState.items.length) {
+                    return slotsState.isLoadingMore
+                        ? const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Center(child: CupertinoActivityIndicator()),
+                          )
+                        : const SizedBox.shrink();
+                  }
 
-          // Если поле поиска скрыто, корректируем индекс для элементов списка
-          final itemIndex = widget.isSearchVisible ? index - headerCount : index;
+                  final item = slotsState.items[index];
+                  final isOpen = _expanded.contains(index);
+                  final isFirstCard = index == 0;
 
-          // Индикатор загрузки следующей страницы в конце списка
-          if (itemIndex == slotsState.items.length) {
-            return slotsState.isLoadingMore
-                ? const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: CupertinoActivityIndicator()),
-                  )
-                : const SizedBox.shrink();
-          }
-
-          final item = slotsState.items[itemIndex];
-          final isOpen = _expanded.contains(itemIndex);
-
-          // Добавляем отступ над первой карточкой
-          final isFirstCard = itemIndex == 0;
-
-          return Padding(
-            padding: EdgeInsets.only(top: isFirstCard ? 16 : 0),
-            child: MarketSlotCard(
-              item: item,
-              expanded: isOpen,
-              onToggle: () => setState(() => _expanded.toggle(itemIndex)),
-              onChatClosed: () {
-                // Обновляем список слотов после возврата из экрана чата
-                final notifier = ref.read(slotsProvider.notifier);
-                notifier.loadInitial();
-              },
+                  return Padding(
+                    padding: EdgeInsets.only(top: isFirstCard ? 0 : 0),
+                    child: MarketSlotCard(
+                      item: item,
+                      expanded: isOpen,
+                      onToggle: () => setState(() => _expanded.toggle(index)),
+                      onChatClosed: () {
+                        final notifier = ref.read(slotsProvider.notifier);
+                        notifier.loadInitial();
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        },
+          ],
+        ],
       ),
     );
   }
@@ -714,13 +715,13 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
       link: _layerLink,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: const [
             BoxShadow(
-              color: AppColors.twinshadow,
-              blurRadius: 20,
-              offset: Offset(0, 1),
-            ),
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
           ],
         ),
         child: TextField(
@@ -746,7 +747,7 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
             fillColor: AppColors.getSurfaceColor(context),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 17,
+              vertical: 20,
             ),
             prefixIcon: Icon(
               CupertinoIcons.search,
@@ -768,15 +769,15 @@ class _EventDropdownFieldState extends State<_EventDropdownField> {
                   )
                 : null,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide.none,
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide.none,
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               borderSide: BorderSide.none,
             ),
           ),

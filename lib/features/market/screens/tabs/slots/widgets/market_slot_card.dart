@@ -41,7 +41,7 @@ class MarketSlotCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
@@ -54,7 +54,7 @@ class MarketSlotCard extends StatelessWidget {
             // ),
           ],
         ),
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.fromLTRB(8,10,8,10),
         child: Column(
           children: [
             // Верхняя строка: миниатюра + контент + кнопка
@@ -74,7 +74,7 @@ class MarketSlotCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 0),
                       // Заголовок + стрелка (если есть детали)
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +104,7 @@ class MarketSlotCard extends StatelessWidget {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 12),
 
                       // Одна строка: дистанция • пол • цена • кнопка справа
                       Row(
@@ -252,7 +252,7 @@ class _Thumb extends StatelessWidget {
         width: 60,
         height: 60,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppRadius.xs),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           color: AppColors.getBackgroundColor(context),
         ),
         clipBehavior: Clip.antiAlias,

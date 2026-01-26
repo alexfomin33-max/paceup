@@ -539,7 +539,7 @@ class _ActivityDescriptionPageState
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         // ────────────────────────────────────────────────────────────────
         // ✅ Плашка приглашения в совместную тренировку (фиксированная снизу)
         // ────────────────────────────────────────────────────────────────
@@ -1044,10 +1044,10 @@ class _ActivityDescriptionPageState
                       padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
+                          color: AppColors.twinchip,
+                          width: 0.7,
                         ),
                       ),
                       child: _SplitsTableFull(
@@ -1068,10 +1068,10 @@ class _ActivityDescriptionPageState
                       padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
+                          color: AppColors.twinchip,
+                          width: 0.7,
                         ),
                       ),
                       child: Column(
@@ -1117,10 +1117,10 @@ class _ActivityDescriptionPageState
                       padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 1,
+                          color: AppColors.twinchip,
+                          width: 0.7,
                         ),
                       ),
                       child: Column(
@@ -1168,10 +1168,10 @@ class _ActivityDescriptionPageState
                         padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
                         decoration: BoxDecoration(
                           color: AppColors.getSurfaceColor(context),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                            color: AppColors.twinchip,
+                            width: 0.7,
                           ),
                         ),
                         child: Column(

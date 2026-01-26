@@ -948,7 +948,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     // Если userId ещё не загружен — показываем индикатор загрузки
     if (_actualUserId == null) {
       return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           titleWidget: Image.asset(
             'assets/black_logo.png',
@@ -994,7 +994,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     );
 
     return Scaffold(
-      backgroundColor: AppColors.getBackgroundColor(context),
+      backgroundColor: AppColors.twinBg,
 
       // новый глобальный AppBar без стекла/прозрачности
       appBar: PaceAppBar(
@@ -1003,8 +1003,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           height: 24,
           fit: BoxFit.contain,
         ),
-        showBottomDivider: true,
+        showBottomDivider: false,
         leadingWidth: 96, // две иконки слева
+        elevation: 8,
+        scrolledUnderElevation: 8,
         // слева — избранное и «создать пост»
         leading: Padding(
           padding: const EdgeInsets.only(left: 6),

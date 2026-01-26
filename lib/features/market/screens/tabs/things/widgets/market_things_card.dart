@@ -44,6 +44,8 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
   Future<void> _loadCurrentUser() async {
     final auth = AuthService();
     final userId = await auth.getUserId();
+    // ── проверяем, что виджет еще смонтирован перед вызовом setState
+    if (!mounted) return;
     setState(() {
       _currentUserId = userId;
       _isLoadingUser = false;
@@ -67,7 +69,7 @@ class _GoodsCardState extends ConsumerState<GoodsCard> {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.7,
