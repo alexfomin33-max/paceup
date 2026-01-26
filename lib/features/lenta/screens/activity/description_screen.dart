@@ -97,11 +97,12 @@ class _ActivityDescriptionPageState
   al.Activity? _updatedActivity;
 
   // ────────────────────────────────────────────────────────────────
-  // 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ: темп, пульс, высота по километрам
+  // 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ: темп, пульс, высота, мощность по километрам
   // ────────────────────────────────────────────────────────────────
   List<double> _paceData = [];
   List<double> _heartRateData = [];
   List<double> _elevationData = [];
+  List<double> _wattsData = []; // мощность (ватты) по километрам
   bool _isLoadingCharts = true;
 
   // Сводка данных для отображения под графиками
@@ -238,6 +239,11 @@ class _ActivityDescriptionPageState
                 [];
             _elevationData =
                 (data['elevation'] as List<dynamic>?)
+                    ?.map((e) => (e as num).toDouble())
+                    .toList() ??
+                [];
+            _wattsData =
+                (data['watts'] as List<dynamic>?)
                     ?.map((e) => (e as num).toDouble())
                     .toList() ??
                 [];
@@ -1061,106 +1067,114 @@ class _ActivityDescriptionPageState
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // ───────── БЛОК ГРАФИКА ТЕМПА
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
+                // Показываем только если есть данные pacePerKm в params
+                if (stats?.pacePerKm.isNotEmpty == true) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(
+                            color: AppColors.twinchip,
+                            width: 0.7,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _ChartMetricsHeader(
-                            mode: 0,
-                            summary: _chartsSummary,
-                            isLoading: _isLoadingCharts,
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            height: 210,
-                            width: double.infinity,
-                            child: _isLoadingCharts
-                                ? const Center(
-                                    child: CupertinoActivityIndicator(
-                                      radius: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ChartMetricsHeader(
+                              mode: 0,
+                              summary: _chartsSummary,
+                              isLoading: _isLoadingCharts,
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 210,
+                              width: double.infinity,
+                              child: _isLoadingCharts
+                                  ? const Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                      ),
+                                    )
+                                  : _FadeInWidget(
+                                      child: _SimpleLineChart(
+                                        mode: 0,
+                                        paceData: _paceData,
+                                        heartRateData: _heartRateData,
+                                        elevationData: _elevationData,
+                                        wattsData: _wattsData,
+                                      ),
                                     ),
-                                  )
-                                : _FadeInWidget(
-                                    child: _SimpleLineChart(
-                                      mode: 0,
-                                      paceData: _paceData,
-                                      heartRateData: _heartRateData,
-                                      elevationData: _elevationData,
-                                    ),
-                                  ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                ],
 
                 // ───────── БЛОК ГРАФИКА ПУЛЬСА
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
+                // Показываем только если есть данные heartRatePerKm в params
+                if (stats?.heartRatePerKm.isNotEmpty == true) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(
+                            color: AppColors.twinchip,
+                            width: 0.7,
+                          ),
                         ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _ChartMetricsHeader(
-                            mode: 1,
-                            summary: _chartsSummary,
-                            isLoading: _isLoadingCharts,
-                          ),
-                          const SizedBox(height: 20),
-                          SizedBox(
-                            height: 210,
-                            width: double.infinity,
-                            child: _isLoadingCharts
-                                ? const Center(
-                                    child: CupertinoActivityIndicator(
-                                      radius: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ChartMetricsHeader(
+                              mode: 1,
+                              summary: _chartsSummary,
+                              isLoading: _isLoadingCharts,
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 210,
+                              width: double.infinity,
+                              child: _isLoadingCharts
+                                  ? const Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                      ),
+                                    )
+                                  : _FadeInWidget(
+                                      child: _SimpleLineChart(
+                                        mode: 1,
+                                        paceData: _paceData,
+                                        heartRateData: _heartRateData,
+                                        elevationData: _elevationData,
+                                        wattsData: _wattsData,
+                                      ),
                                     ),
-                                  )
-                                : _FadeInWidget(
-                                    child: _SimpleLineChart(
-                                      mode: 1,
-                                      paceData: _paceData,
-                                      heartRateData: _heartRateData,
-                                      elevationData: _elevationData,
-                                    ),
-                                  ),
-                          ),
-                        ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                ],
 
                 // ───────── БЛОК ГРАФИКА ВЫСОТЫ
-                // 🏊 ДЛЯ ПЛАВАНИЯ: не показываем график высоты
+                // Показываем только если есть данные elevationPerKm в params и это не плавание
                 if (!(a.type.toLowerCase() == 'swim' ||
-                    a.type.toLowerCase() == 'swimming')) ...[
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                        a.type.toLowerCase() == 'swimming') &&
+                    stats?.elevationPerKm?.isNotEmpty == true) ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
@@ -1198,6 +1212,7 @@ class _ActivityDescriptionPageState
                                         paceData: _paceData,
                                         heartRateData: _heartRateData,
                                         elevationData: _elevationData,
+                                        wattsData: _wattsData,
                                       ),
                                     ),
                             ),
@@ -1207,9 +1222,61 @@ class _ActivityDescriptionPageState
                     ),
                   ),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
-                ] else
-                  // 🏊 ДЛЯ ПЛАВАНИЯ: добавляем отступ снизу, если графика Высота нет
+                ],
+
+                // ───────── БЛОК ГРАФИКА МОЩНОСТИ (WATTS)
+                // Показываем только если есть данные wattsPerKm в params или в загруженных данных
+                // Проверяем оба источника: stats (из params) и _wattsData (из API)
+                if ((stats != null && stats.wattsPerKm.isNotEmpty) ||
+                    (!_isLoadingCharts && _wattsData.isNotEmpty)) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    sliver: SliverToBoxAdapter(
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          border: Border.all(
+                            color: AppColors.twinchip,
+                            width: 0.7,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _ChartMetricsHeader(
+                              mode: 3,
+                              summary: _chartsSummary,
+                              isLoading: _isLoadingCharts,
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              height: 210,
+                              width: double.infinity,
+                              child: _isLoadingCharts
+                                  ? const Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 10,
+                                      ),
+                                    )
+                                  : _FadeInWidget(
+                                      child: _SimpleLineChart(
+                                        mode: 3,
+                                        paceData: _paceData,
+                                        heartRateData: _heartRateData,
+                                        elevationData: _elevationData,
+                                        wattsData: _wattsData,
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                ],
               ],
             ),
           ),
@@ -2206,19 +2273,21 @@ class _SplitsTableFull extends StatelessWidget {
 /// Простой линейный график:
 /// - Для «Темп» ось Y — ММ:СС (мин/км), данные храним в сек/км;
 /// - Ось X — километры 0..N (где N — количество точек);
-/// - Для «Пульс»/«Высота» — обычные числа.
+/// - Для «Пульс»/«Высота»/«Мощность» — обычные числа.
 /// - Единицы измерения на оси Y НЕ отображаем.
 class _SimpleLineChart extends StatefulWidget {
-  final int mode; // 0 pace, 1 hr, 2 elev
+  final int mode; // 0 pace, 1 hr, 2 elev, 3 watts
   final List<double> paceData;
   final List<double> heartRateData;
   final List<double> elevationData;
+  final List<double> wattsData;
 
   const _SimpleLineChart({
     required this.mode,
     required this.paceData,
     required this.heartRateData,
     required this.elevationData,
+    this.wattsData = const [],
   });
 
   @override
@@ -2241,9 +2310,13 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
       // Пульс
       y = widget.heartRateData.isNotEmpty ? widget.heartRateData : [];
       isPace = false;
-    } else {
+    } else if (widget.mode == 2) {
       // Высота
       y = widget.elevationData.isNotEmpty ? widget.elevationData : [];
+      isPace = false;
+    } else {
+      // Мощность (watts)
+      y = widget.wattsData.isNotEmpty ? widget.wattsData : [];
       isPace = false;
     }
 
@@ -2303,7 +2376,7 @@ class _LinePainter extends CustomPainter {
   final List<double> yValues; // для Темпа — секунды/км
   final bool paceMode; // true -> формат ММ:СС
   final int xMax; // количество км (точек), рисуем подписи 0..xMax
-  final int chartMode; // 0 = Темп, 1 = Пульс, 2 = Высота
+  final int chartMode; // 0 = Темп, 1 = Пульс, 2 = Высота, 3 = Мощность
   final Color textSecondaryColor; // цвет текста для подписей осей
   final Color borderColor; // цвет границы для сетки
   final int? selectedIndex; // индекс выбранной точки
@@ -2319,7 +2392,7 @@ class _LinePainter extends CustomPainter {
   });
 
   /// Получает цвет линии графика в зависимости от режима
-  /// 0 = Темп (brandPrimary), 1 = Пульс (female), 2 = Высота (accentMint)
+  /// 0 = Темп (brandPrimary), 1 = Пульс (female), 2 = Высота (accentMint), 3 = Мощность (warning)
   Color get lineColor {
     switch (chartMode) {
       case 0:
@@ -2328,6 +2401,8 @@ class _LinePainter extends CustomPainter {
         return AppColors.female;
       case 2:
         return AppColors.accentMint;
+      case 3:
+        return AppColors.warning; // Оранжевый для мощности
       default:
         return AppColors.brandPrimary;
     }
@@ -2647,7 +2722,7 @@ class _FadeInWidgetState extends State<_FadeInWidget> {
 /// В стиле скриншотов: два значения по центру с подписями
 /// ────────────────────────────────────────────────────────────────
 class _ChartMetricsHeader extends StatelessWidget {
-  final int mode; // 0 pace, 1 hr, 2 elev
+  final int mode; // 0 pace, 1 hr, 2 elev, 3 watts
   final Map<String, dynamic>? summary;
 
   /// При true — индикатор загрузки вместо прочерков в блоке метрик
@@ -2679,6 +2754,8 @@ class _ChartMetricsHeader extends StatelessWidget {
           return 'Пульс';
         case 2:
           return 'Высота';
+        case 3:
+          return 'Мощность';
         default:
           return '';
       }
@@ -2695,6 +2772,8 @@ class _ChartMetricsHeader extends StatelessWidget {
           return CupertinoIcons.heart;
         case 2:
           return Icons.landscape;
+        case 3:
+          return CupertinoIcons.bolt; // Иконка молнии для мощности
         default:
           return CupertinoIcons.chart_bar;
       }
@@ -2711,6 +2790,8 @@ class _ChartMetricsHeader extends StatelessWidget {
           return AppColors.female;
         case 2:
           return AppColors.accentMint;
+        case 3:
+          return AppColors.warning; // Оранжевый для мощности
         default:
           return AppColors.getTextPrimaryColor(context);
       }
@@ -2796,13 +2877,23 @@ class _ChartMetricsHeader extends StatelessWidget {
               ),
             ],
           );
-        } else {
+        } else if (mode == 2) {
           return Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               metricItem('—', 'Мин. высота'),
               const SizedBox(width: 64),
               metricItem('—', 'Макс. высота'),
+            ],
+          );
+        } else {
+          // Мощность: Ср. мощность и Макс. мощность
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Ср. мощность'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. мощность'),
             ],
           );
         }
@@ -2877,7 +2968,7 @@ class _ChartMetricsHeader extends StatelessWidget {
             ),
           ],
         );
-      } else {
+      } else if (mode == 2) {
         // Высота: Мин. высота и Макс. высота
         final elevSummary = summary!['elevation'] as Map<String, dynamic>?;
         if (elevSummary == null) {
@@ -2905,6 +2996,37 @@ class _ChartMetricsHeader extends StatelessWidget {
             metricItem(
               max != null ? max.toStringAsFixed(1) : '—',
               'Макс. высота',
+            ),
+          ],
+        );
+      } else {
+        // Мощность: Ср. мощность и Макс. мощность
+        final wattsSummary = summary!['watts'] as Map<String, dynamic>?;
+        if (wattsSummary == null) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              metricItem('—', 'Ср. мощность'),
+              const SizedBox(width: 64),
+              metricItem('—', 'Макс. мощность'),
+            ],
+          );
+        }
+
+        final average = wattsSummary['average'] as num?;
+        final max = wattsSummary['max'] as num?;
+
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            metricItem(
+              average != null ? '${average.round()}' : '—',
+              'Ср. мощность',
+            ),
+            const SizedBox(width: 64),
+            metricItem(
+              max != null ? '${max.round()}' : '—',
+              'Макс. мощность',
             ),
           ],
         );

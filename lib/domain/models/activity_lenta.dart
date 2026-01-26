@@ -323,6 +323,8 @@ class ActivityStats {
   final int? totalSteps; // общее количество шагов
   final Map<String, double> heartRatePerKm;
   final Map<String, double> pacePerKm;
+  final Map<String, double> elevationPerKm; // высота по километрам
+  final Map<String, double> wattsPerKm; // мощность (ватты) по километрам
 
   ActivityStats({
     required this.distance,
@@ -348,6 +350,8 @@ class ActivityStats {
     this.totalSteps,
     required this.heartRatePerKm,
     required this.pacePerKm,
+    this.elevationPerKm = const {},
+    this.wattsPerKm = const {},
   });
 
   factory ActivityStats.fromJson(Map<String, dynamic> j) {
@@ -393,6 +397,8 @@ class ActivityStats {
               : null,
       heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
       pacePerKm: _parseNumMap(j['pacePerKm']),
+      elevationPerKm: _parseNumMap(j['elevationPerKm']),
+      wattsPerKm: _parseNumMap(j['wattsPerKm']),
     );
 
     return stats;
@@ -404,12 +410,12 @@ class ActivityStats {
 
   /// Проверяет, есть ли данные о сегментах (отрезках по километрам)
   bool hasSplitsData() {
-    return pacePerKm.isNotEmpty || heartRatePerKm.isNotEmpty;
+    return pacePerKm.isNotEmpty || heartRatePerKm.isNotEmpty || wattsPerKm.isNotEmpty;
   }
 
   /// Возвращает количество сегментов (километров) с данными
   int get splitsCount {
-    final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys};
+    final allKeys = <String>{...pacePerKm.keys, ...heartRatePerKm.keys, ...wattsPerKm.keys};
     return allKeys.length;
   }
 
@@ -418,6 +424,9 @@ class ActivityStats {
 
   /// Проверяет, есть ли данные о пульсе для сегментов
   bool hasHeartRateSplits() => heartRatePerKm.isNotEmpty;
+
+  /// Проверяет, есть ли данные о мощности для сегментов
+  bool hasWattsSplits() => wattsPerKm.isNotEmpty;
 
   /// ────────────────────────────────────────────────────────────────
   /// ⏱️ ПОЛУЧЕНИЕ ПРАВИЛЬНОГО DURATION: если есть movingDuration и он > 0,
