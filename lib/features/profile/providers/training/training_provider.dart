@@ -149,9 +149,12 @@ class TrainingActivity {
       });
     }
     
+    // 🏔️ ПАРСИНГ ВЫСОТЫ: поддерживаем оба варианта (elevationPerKm и ElevationPerKm)
+    // В базе данных в поле params может быть как elevationPerKm, так и ElevationPerKm
     final elevationPerKm = <String, double>{};
-    if (json['elevationPerKm'] is Map) {
-      (json['elevationPerKm'] as Map).forEach((key, value) {
+    final elevationData = json['elevationPerKm'] ?? json['ElevationPerKm'];
+    if (elevationData is Map) {
+      (elevationData as Map).forEach((key, value) {
         if (value is num) {
           elevationPerKm[key.toString()] = value.toDouble();
         }

@@ -397,7 +397,9 @@ class ActivityStats {
               : null,
       heartRatePerKm: _parseNumMap(j['heartRatePerKm']),
       pacePerKm: _parseNumMap(j['pacePerKm']),
-      elevationPerKm: _parseNumMap(j['elevationPerKm']),
+      // 🏔️ ПАРСИНГ ВЫСОТЫ: поддерживаем оба варианта (elevationPerKm и ElevationPerKm)
+      // В базе данных в поле params может быть как elevationPerKm, так и ElevationPerKm
+      elevationPerKm: _parseNumMap(j['elevationPerKm'] ?? j['ElevationPerKm']),
       wattsPerKm: _parseNumMap(j['wattsPerKm']),
     );
 

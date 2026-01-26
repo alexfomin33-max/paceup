@@ -1171,10 +1171,13 @@ class _ActivityDescriptionPageState
                 ],
 
                 // ───────── БЛОК ГРАФИКА ВЫСОТЫ
-                // Показываем только если есть данные elevationPerKm в params и это не плавание
+                // Показываем только если есть данные elevationPerKm в params или в загруженных данных API
+                // и это не плавание
+                // Проверяем оба источника: stats (из params) и _elevationData (из API)
                 if (!(a.type.toLowerCase() == 'swim' ||
                         a.type.toLowerCase() == 'swimming') &&
-                    stats?.elevationPerKm?.isNotEmpty == true) ...[
+                    (stats?.elevationPerKm?.isNotEmpty == true ||
+                        (!_isLoadingCharts && _elevationData.isNotEmpty))) ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
