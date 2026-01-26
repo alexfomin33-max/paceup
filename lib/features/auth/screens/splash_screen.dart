@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/services/auth_service.dart';
 import '../../../core/services/garmin_sync_service.dart';
 import '../../../core/services/sync_provider_service.dart';
 import '../../../core/services/health_sync_service.dart';
@@ -253,10 +254,24 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   /// 🔹 Автоматическая синхронизация в фоне на основе sync_provider из базы
   /// Проверяет актуальный способ синхронизации и запускает соответствующую синхронизацию
   Future<void> _syncInBackground() async {
+    // Проверяем, что виджет еще монтирован перед использованием ref
+    if (!mounted) return;
+    
+    // Сохраняем все нужные сервисы до начала асинхронных операций
+    // чтобы избежать ошибки "Cannot use ref after widget was disposed"
+    final syncProviderService = ref.read(syncProviderServiceProvider);
+    final garminService = ref.read(garminSyncServiceProvider);
+    final healthSyncService = ref.read(healthSyncServiceProvider);
+    
     try {
+      // Проверяем mounted перед каждой асинхронной операцией
+      if (!mounted) return;
+      
       // Получаем актуальный способ синхронизации из базы
-      final syncProviderService = ref.read(syncProviderServiceProvider);
       final syncProvider = await syncProviderService.getSyncProvider();
+      
+      // Проверяем mounted после await
+      if (!mounted) return;
       
       if (syncProvider == null) {
         if (kDebugMode) {
@@ -272,11 +287,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       // Запускаем соответствующую синхронизацию
       switch (syncProvider) {
         case 'garmin':
-          await _syncGarminInBackground();
+          // Проверяем mounted перед синхронизацией
+          if (!mounted) return;
+          await _syncGarminInBackground(garminService);
           break;
         case 'health_connect':
         case 'apple_health':
-          await _syncHealthInBackground();
+          // Проверяем mounted перед передачей ref
+          if (!mounted) return;
+          await _syncHealthInBackground(healthSyncService, ref);
           break;
         default:
           if (kDebugMode) {
@@ -292,9 +311,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   /// 🔹 Автоматическая синхронизация Garmin в фоне
-  Future<void> _syncGarminInBackground() async {
+  Future<void> _syncGarminInBackground(GarminSyncService garminService) async {
+    final auth = AuthService();
+    
     try {
-      final garminService = ref.read(garminSyncServiceProvider);
+      final userId = await auth.getUserId();
       
       // Проверяем, подключен ли Garmin
       final connectionStatus = await garminService.checkConnection();
@@ -365,10 +386,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   /// 🔹 Автоматическая синхронизация Health Connect/Apple Health в фоне
-  Future<void> _syncHealthInBackground() async {
+  Future<void> _syncHealthInBackground(HealthSyncService healthSyncService, WidgetRef ref) async {
     try {
-      final healthSyncService = ref.read(healthSyncServiceProvider);
-      
       if (kDebugMode) {
         debugPrint('🔄 [Health] Запуск автоматической синхронизации...');
       }
@@ -401,6 +420,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   /// - Валидация токена через сеть происходит в фоне (не блокирует переход)
   /// - Предотвращает визуальный микролаг между splash и загруженной лентой
   Future<void> _checkAuth() async {
+    // Проверяем, что виджет еще монтирован перед использованием ref
+    if (!mounted) return;
+    
     // Получаем AuthService через провайдер
     final auth = ref.read(authServiceProvider);
 
@@ -461,6 +483,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
 
       // Инициализируем FCM для авторизованного пользователя (только на Android, временно отключено для iOS)
       if (!Platform.isMacOS && !Platform.isIOS) {
+        // Проверяем mounted перед использованием ref
+        if (!mounted) return;
         try {
           final fcmService = ref.read(fcmServiceProvider);
           await fcmService.initialize();
@@ -483,7 +507,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       // Это гарантирует, что HTTP клиент и провайдеры полностью готовы
       // Увеличена задержка до 3 секунд для полной инициализации HTTP клиента
       Future.delayed(const Duration(seconds: 3), () {
-        _syncInBackground();
+        // Проверяем, что виджет еще монтирован перед запуском синхронизации
+        if (mounted) {
+          _syncInBackground();
+        }
       });
     } else {
       // 🔹 fallback: userId не найден, переходим на общий HomeScreen
