@@ -1020,7 +1020,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                       final brightness = Theme.of(context).brightness;
                       final isLight = brightness == Brightness.light;
                       final fillColor = isLight
-                          ? AppColors.disabled
+                          ? AppColors.background
                           : AppColors.getSurfaceMutedColor(context);
                       final textColor = isLight
                           ? AppColors.getTextPlaceholderColor(context)
@@ -1083,8 +1083,9 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                               onPressed: _pickLocation,
                               style: OutlinedButton.styleFrom(
                                 shape: const CircleBorder(),
-                                side: BorderSide(
-                                  color: AppColors.getBorderColor(context),
+                                side: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
                                 ),
                                 foregroundColor: AppColors.getTextPrimaryColor(
                                   context,
@@ -1430,19 +1431,38 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  SizedBox(
-                    height: 90,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: 3,
-                      separatorBuilder: (_, _) => const SizedBox(width: 12),
-                      itemBuilder: (_, i) => _MediaTile(
-                        file: photos[i],
-                        onPick: () => _pickPhoto(i),
-                        onRemove: () => setState(() => photos[i] = null),
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      // ────────────────────────────────────────────────────────────────
+                      // 🔹 ВЫЧИСЛЕНИЕ ДИНАМИЧЕСКОГО РАЗМЕРА ЭЛЕМЕНТА
+                      // ────────────────────────────────────────────────────────────────
+                      // Размер вычисляется так, чтобы в одну линию на экране помещалось ровно 3 элемента
+                      // Учитываем: паддинг Column (16px с каждой стороны = 32px) и отступы между элементами (2 отступа по 12px = 24px)
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      const horizontalPadding = 16.0 * 2; // Паддинг Column с двух сторон
+                      const separatorWidth = 12.0 * 2; // 2 отступа между 3 элементами
+                      final itemSize = (screenWidth - horizontalPadding - separatorWidth) / 3;
+
+                      return SizedBox(
+                        height: itemSize + 6, // Размер элемента + padding сверху для кнопок удаления
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.only(
+                            top: 6,
+                          ), // Добавляем padding сверху для кнопок удаления
+                          itemCount: 3,
+                          separatorBuilder: (_, _) => const SizedBox(width: 12),
+                          itemBuilder: (_, i) => _MediaTile(
+                            file: photos[i],
+                            onPick: () => _pickPhoto(i),
+                            onRemove: () => setState(() => photos[i] = null),
+                            width: itemSize,
+                            height: itemSize,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -1760,14 +1780,17 @@ class _MediaTile extends StatelessWidget {
             borderRadius: isCircular
                 ? null
                 : BorderRadius.circular(AppRadius.lg),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
+            color: AppColors.twinphoto,
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
+            ),
           ),
-          child: Center(
+          child: const Center(
             child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
+              CupertinoIcons.camera_fill,
+              size: 24,
+              color: AppColors.scrim20,
             ),
           ),
         ),
@@ -1830,7 +1853,7 @@ class _MediaTile extends StatelessWidget {
                 height: 24,
                 decoration: BoxDecoration(
                   color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(color: AppColors.getBorderColor(context)),
                 ),
                 child: const Icon(

@@ -291,6 +291,32 @@ class _OfficialEventDetailScreenState
     }
   }
 
+  /// ──────────────────────── Кнопка регистрации (зафиксированная внизу) ────────────────────────
+  Widget _buildRegisterButton(String registrationLink) {
+    final textColor = AppColors.getSurfaceColor(context);
+
+    return ElevatedButton(
+      onPressed: () => _openEventLink(registrationLink),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: Text(
+        'Зарегистрироваться',
+        style: AppTextStyles.h15w5.copyWith(
+          color: textColor,
+          height: 1.0,
+        ),
+      ),
+    );
+  }
+
   /// ──────────────────────── Форматирование даты с годом ────────────────────────
   /// Добавляет год к дате, если это не текущий год
   String _formatDateWithYear(String dateFormattedShort) {
@@ -474,22 +500,26 @@ class _OfficialEventDetailScreenState
         backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
-          bottom: false,
-          child: Stack(
-            children: [
-              // ───────── Скроллируемый контент
-              NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  // Закрываем попап меню при любом скролле или свайпе
-                  if (notification is ScrollUpdateNotification ||
-                      notification is ScrollStartNotification) {
-                    MoreMenuHub.hide();
-                  }
-                  return false;
-                },
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
+          bottom: true,
+          child: Builder(
+            builder: (context) {
+              final columnChildren = <Widget>[
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // ───────── Скроллируемый контент
+                      NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          // Закрываем попап меню при любом скролле или свайпе
+                          if (notification is ScrollUpdateNotification ||
+                              notification is ScrollStartNotification) {
+                            MoreMenuHub.hide();
+                          }
+                          return false;
+                        },
+                        child: CustomScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
                     child: Builder(
@@ -663,7 +693,7 @@ class _OfficialEventDetailScreenState
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           // Блок с адресом
                           Expanded(
                             child: Container(
@@ -810,85 +840,56 @@ class _OfficialEventDetailScreenState
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                          ],
+                        ),
+                      ),
 
-                  // ───────── Кнопка "Зарегистрироваться" (только если есть ссылка)
-                  if (registrationLink.isNotEmpty)
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Material(
-                          color: AppColors.brandPrimary,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          elevation: 0,
-                          child: InkWell(
-                            onTap: () => _openEventLink(registrationLink),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            child: Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.brandPrimary,
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
+                      // ───────── Плавающие круглые иконки (назад + действие)
+                      Positioned(
+                        top: 12,
+                        left: 0,
+                        right: 0,
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _CircleIconBtn(
+                                  icon: CupertinoIcons.back,
+                                  semantic: 'Назад',
+                                  onTap: () => Navigator.of(context).maybePop(),
                                 ),
-                              ),
-                              child: const Text(
-                                'Зарегистрироваться',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.surface,
+                                Container(
+                                  key: _menuKey,
+                                  child: _CircleIconBtn(
+                                    icon: CupertinoIcons.ellipsis_vertical,
+                                    semantic: 'Меню',
+                                    onTap: () => _showMenu(context),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                    ),
-
-                  if (registrationLink.isNotEmpty)
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                ],
-                ),
-              ),
-
-              // ───────── Плавающие круглые иконки (назад + действие)
-              Positioned(
-                top: 12,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _CircleIconBtn(
-                          icon: CupertinoIcons.back,
-                          semantic: 'Назад',
-                          onTap: () => Navigator.of(context).maybePop(),
-                        ),
-                        Container(
-                          key: _menuKey,
-                          child: _CircleIconBtn(
-                            icon: CupertinoIcons.ellipsis_vertical,
-                            semantic: 'Меню',
-                            onTap: () => _showMenu(context),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                // ───────── Зафиксированная кнопка регистрации (только если есть ссылка)
+                if (registrationLink.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    color: AppColors.getBackgroundColor(context),
+                    child: _buildRegisterButton(registrationLink),
+                  ),
+              ];
+
+              return Column(children: columnChildren);
+            },
           ),
         ),
       ),

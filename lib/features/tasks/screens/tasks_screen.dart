@@ -88,6 +88,8 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
                       // Обновляем список задач
                       ref.invalidate(userTasksProvider);
                       ref.invalidate(tasksProvider);
+                      // Переключаемся на вкладку "Доступные"
+                      _onSegChanged(1);
                     }
                   },
                 ),
@@ -104,7 +106,7 @@ class _TasksScreenState extends ConsumerState<TasksScreen> {
         children: [
           // ── Пилюля под AppBar + контент вкладок со свайпом
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
             child: Center(
               child: SegmentedPill(
                 left: 'Активные',

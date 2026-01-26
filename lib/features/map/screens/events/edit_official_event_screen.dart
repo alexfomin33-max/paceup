@@ -12,7 +12,6 @@ import '../../../../core/utils/local_image_compressor.dart'
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/widgets/primary_button.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/providers/form_state_provider.dart';
@@ -675,18 +674,20 @@ class _EditOfficialEventScreenState
     final formState = ref.watch(formStateProvider);
     if (formState.isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           title: 'Редактирование события',
-          showBack: true,
-          showBottomDivider: true,
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _deleteEvent,
             ),
@@ -698,18 +699,20 @@ class _EditOfficialEventScreenState
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           title: 'Редактирование события',
-          showBack: true,
-          showBottomDivider: true,
+          backgroundColor: AppColors.twinBg,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _deleteEvent,
             ),
@@ -720,7 +723,8 @@ class _EditOfficialEventScreenState
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -731,12 +735,11 @@ class _EditOfficialEventScreenState
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Логотип',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -759,12 +762,11 @@ class _EditOfficialEventScreenState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Фоновая картинка',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -788,49 +790,46 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Название ----------
-                  Text(
+                  const Text(
                     'Название события',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Builder(
-                    builder: (context) => TextField(
-                      controller: nameCtrl,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Введите название события',
-                        hintStyle: AppTextStyles.h14w4Place,
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 17,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                      child: TextField(
+                        controller: nameCtrl,
+                        style: AppTextStyles.h14w4,
+                        decoration: InputDecoration(
+                          hintText: 'Введите название события',
+                          hintStyle: AppTextStyles.h14w4Place,
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 22,
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -839,51 +838,48 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Ссылка на страницу мероприятия ----------
-                  Text(
+                  const Text(
                     'Ссылка на страницу мероприятия',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Builder(
-                    builder: (context) => TextField(
-                      controller: linkCtrl,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'https://example.com/event',
-                        hintStyle: AppTextStyles.h14w4Place,
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 17,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                      child: TextField(
+                        controller: linkCtrl,
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
+                        style: AppTextStyles.h14w4,
+                        decoration: InputDecoration(
+                          hintText: 'https://example.com/event',
+                          hintStyle: AppTextStyles.h14w4Place,
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 22,
                           ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -892,86 +888,77 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Вид активности ----------
-                  Text(
+                  const Text(
                     'Вид активности',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Builder(
-                    builder: (context) => InputDecorator(
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
                         ),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: activity,
-                          isExpanded: true,
-                          hint: const Text(
-                            'Выберите вид активности',
-                            style: AppTextStyles.h14w4Place,
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
                           ),
-                          onChanged: (String? newValue) {
-                            if (newValue != null) {
-                              setState(() => activity = newValue);
-                            }
-                          },
-                          dropdownColor: AppColors.getSurfaceColor(context),
-                          menuMaxHeight: 300,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          icon: Icon(
-                            Icons.arrow_drop_down,
-                            color: AppColors.getIconSecondaryColor(context),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
-                          items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
-                            option,
-                          ) {
-                            return DropdownMenuItem<String>(
-                              value: option,
-                              child: Builder(
-                                builder: (context) => Text(
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: activity,
+                            isExpanded: true,
+                            hint: const Text(
+                              'Выберите вид активности',
+                              style: AppTextStyles.h14w4Place,
+                            ),
+                            onChanged: (String? newValue) {
+                              if (newValue != null) {
+                                setState(() => activity = newValue);
+                              }
+                            },
+                            dropdownColor: AppColors.getSurfaceColor(context),
+                            menuMaxHeight: 300,
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            icon: Icon(
+                              Icons.arrow_drop_down,
+                              color: AppColors.getIconSecondaryColor(context),
+                            ),
+                            style: AppTextStyles.h14w4,
+                            items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
+                              option,
+                            ) {
+                              return DropdownMenuItem<String>(
+                                value: option,
+                                child: Text(
                                   option,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
-                                    ),
-                                  ),
+                                  style: AppTextStyles.h14w4,
                                 ),
-                              ),
-                            );
-                          }).toList(),
+                              );
+                            }).toList(),
+                          ),
                         ),
                       ),
                     ),
@@ -979,101 +966,105 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Место + кнопка "Карта" ----------
-                  Text(
+                  const Text(
                     'Место проведения',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Builder(
-                    builder: (context) => Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: placeCtrl,
-                            enabled: false,
-                            style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.getTextSecondaryColor(context),
+                    builder: (context) {
+                      // ── определяем более серый цвет для светлой темы
+                      final brightness = Theme.of(context).brightness;
+                      final isLight = brightness == Brightness.light;
+                      final fillColor = isLight
+                          ? AppColors.background
+                          : AppColors.getSurfaceMutedColor(context);
+                      final textColor = isLight
+                          ? AppColors.getTextPlaceholderColor(context)
+                          : AppColors.getTextSecondaryColor(context);
+
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                border: Border.all(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: placeCtrl,
+                                enabled: false,
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: textColor,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Выберите место на карте',
+                                  hintStyle: AppTextStyles.h14w4Place,
+                                  filled: true,
+                                  fillColor: fillColor,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 22,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  disabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Выберите место на карте',
-                              hintStyle: AppTextStyles.h14w4Place,
-                              filled: true,
-                              fillColor: AppColors.getSurfaceMutedColor(
-                                context,
+                          ),
+                          const SizedBox(width: 12),
+                          SizedBox(
+                            width: 52,
+                            height: 52,
+                            child: OutlinedButton(
+                              onPressed: _pickLocation,
+                              style: OutlinedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                side: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                                foregroundColor: AppColors.getTextPrimaryColor(
+                                  context,
+                                ),
+                                backgroundColor: AppColors.getSurfaceColor(
+                                  context,
+                                ),
+                                padding: EdgeInsets.zero,
                               ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 17,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(
-                                    context,
-                                  ).withValues(alpha: 0.6),
-                                  width: 1,
-                                ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(
-                                    context,
-                                  ).withValues(alpha: 0.6),
-                                  width: 1,
-                                ),
-                              ),
-                              disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(
-                                    context,
-                                  ).withValues(alpha: 0.6),
-                                  width: 1,
-                                ),
+                              child: Icon(
+                                CupertinoIcons.placemark,
+                                size: 20,
+                                color: AppColors.getIconPrimaryColor(context),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 52,
-                          height: 52,
-                          child: OutlinedButton(
-                            onPressed: _pickLocation,
-                            style: OutlinedButton.styleFrom(
-                              shape: const CircleBorder(),
-                              side: BorderSide(
-                                color: AppColors.getBorderColor(context),
-                              ),
-                              foregroundColor: AppColors.getTextPrimaryColor(
-                                context,
-                              ),
-                              backgroundColor: AppColors.getSurfaceColor(
-                                context,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                            child: Icon(
-                              CupertinoIcons.placemark,
-                              size: 20,
-                              color: AppColors.getIconPrimaryColor(context),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
 
@@ -1081,83 +1072,80 @@ class _EditOfficialEventScreenState
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Дата проведения',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                       const SizedBox(height: 8),
                       Builder(
-                        builder: (context) => GestureDetector(
-                          onTap: _pickDateCupertino,
-                          child: AbsorbPointer(
-                            child: InputDecorator(
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: AppColors.getSurfaceColor(context),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 18,
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 12,
-                                    right: 6,
+                        builder: (context) => Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            border: Border.all(
+                              color: AppColors.twinchip,
+                              width: 0.7,
+                            ),
+                          ),
+                          child: GestureDetector(
+                            onTap: _pickDateCupertino,
+                            child: AbsorbPointer(
+                              child: InputDecorator(
+                                decoration: InputDecoration(
+                                  filled: true,
+                                  fillColor: AppColors.getSurfaceColor(context),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 22,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.calendar,
-                                    size: 18,
-                                    color: AppColors.getIconPrimaryColor(
-                                      context,
+                                  prefixIcon: Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 12,
+                                      right: 6,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.calendar,
+                                      size: 18,
+                                      color: AppColors.getIconPrimaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                prefixIconConstraints: const BoxConstraints(
-                                  minWidth: 18 + 14,
-                                  minHeight: 18,
-                                ),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
+                                  prefixIconConstraints: const BoxConstraints(
+                                    minWidth: 18 + 14,
+                                    minHeight: 18,
                                   ),
-                                  borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
-                                ),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
-                                  borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
-                                  ),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.sm,
-                                  ),
-                                  borderSide: BorderSide(
-                                    color: AppColors.getBorderColor(context),
-                                    width: 1,
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
+                                    borderSide: BorderSide.none,
                                   ),
                                 ),
-                              ),
-                              child: Text(
-                                date != null
-                                    ? _fmtDate(date!)
-                                    : 'Выберите дату',
-                                style: date != null
-                                    ? AppTextStyles.h14w4.copyWith(
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      )
-                                    : AppTextStyles.h14w4Place,
+                                child: Text(
+                                  date != null
+                                      ? _fmtDate(date!)
+                                      : 'Выберите дату',
+                                  style: date != null
+                                      ? AppTextStyles.h14w4
+                                      : AppTextStyles.h14w4Place,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ),
                           ),
@@ -1168,12 +1156,11 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Дистанция ----------
-                  Text(
+                  const Text(
                     'Дистанция (в метрах)',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1188,50 +1175,48 @@ class _EditOfficialEventScreenState
                         width:
                             (MediaQuery.of(context).size.width - 32 - 16) / 2,
                         child: Builder(
-                          builder: (context) => TextField(
-                            controller: _distanceControllers[index],
-                            keyboardType: TextInputType.number,
-                            textInputAction: TextInputAction.next,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
+                          builder: (context) => Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: AppColors.twinchip,
+                                width: 0.7,
+                              ),
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Введите дистанцию',
-                              hintStyle: AppTextStyles.h14w4Place,
-                              filled: true,
-                              fillColor: AppColors.getSurfaceColor(context),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 17,
-                              ),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                            child: TextField(
+                              controller: _distanceControllers[index],
+                              keyboardType: TextInputType.number,
+                              textInputAction: TextInputAction.next,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
+                              style: AppTextStyles.h14w4,
+                              decoration: InputDecoration(
+                                hintText: '0 метров',
+                                hintStyle: AppTextStyles.h14w4Place,
+                                filled: true,
+                                fillColor: AppColors.getSurfaceColor(context),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 22,
                                 ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                  borderSide: BorderSide.none,
                                 ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                  borderSide: BorderSide.none,
                                 ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.sm,
-                                ),
-                                borderSide: BorderSide(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                  borderSide: BorderSide.none,
                                 ),
                               ),
                             ),
@@ -1267,56 +1252,57 @@ class _EditOfficialEventScreenState
                   const SizedBox(height: 24),
 
                   // ---------- Описание ----------
-                  Text(
+                  const Text(
                     'Описание события',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Builder(
-                    builder: (context) => TextField(
-                      controller: descCtrl,
-                      maxLines: 30,
-                      minLines: 7,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                    builder: (context) => Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 0.7,
+                        ),
                       ),
-                      decoration: InputDecoration(
-                        hintText: 'Введите описание события',
-                        hintStyle: AppTextStyles.h14w4Place,
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.all(12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                      child: TextField(
+                        controller: descCtrl,
+                        maxLines: 12,
+                        minLines: 7,
+                        textAlignVertical: TextAlignVertical.top,
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
                         ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                        decoration: InputDecoration(
+                          hintText: 'Введите описание события',
+                          hintStyle: AppTextStyles.h14w4Place.copyWith(
+                            color: AppColors.getTextPlaceholderColor(context),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
+                          filled: true,
+                          fillColor: AppColors.getSurfaceColor(context),
+                          contentPadding: const EdgeInsets.all(12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 24),
                   // ── Отображение ошибок
                   if (formState.hasErrors) ...[
                     FormErrorDisplay(formState: formState),
@@ -1329,13 +1315,44 @@ class _EditOfficialEventScreenState
                     child: Builder(
                       builder: (context) {
                         final formState = ref.watch(formStateProvider);
-                        return PrimaryButton(
-                          text: 'Сохранить изменения',
-                          onPressed: !formState.isSubmitting ? _submit : () {},
-                          width: 230,
-                          isLoading: formState.isSubmitting,
-                          enabled: isFormValid && !formState.isSubmitting,
+                        final textColor = AppColors.getSurfaceColor(context);
+                        final isLoading = formState.isSubmitting;
+                        final isValid = isFormValid;
+
+                        final button = ElevatedButton(
+                          onPressed: (isLoading || !isValid) ? null : _submit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.button,
+                            foregroundColor: textColor,
+                            disabledBackgroundColor: AppColors.button,
+                            disabledForegroundColor: textColor,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            shape: const StadiumBorder(),
+                            minimumSize: const Size(double.infinity, 50),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            alignment: Alignment.center,
+                          ),
+                          child: isLoading
+                              ? CupertinoActivityIndicator(
+                                  radius: 9,
+                                  color: textColor,
+                                )
+                              : Text(
+                                  'Сохранить изменения',
+                                  style: AppTextStyles.h15w5.copyWith(
+                                    color: textColor,
+                                    height: 1.0,
+                                  ),
+                                ),
                         );
+
+                        // Блокировка нажатий во время загрузки
+                        if (isLoading) {
+                          return IgnorePointer(child: button);
+                        }
+
+                        return button;
                       },
                     ),
                   ),
@@ -1380,8 +1397,14 @@ class _MediaTile extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onPick,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                color: AppColors.getBackgroundColor(context),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Image.file(
                 file!,
                 fit: BoxFit.cover,
@@ -1403,24 +1426,20 @@ class _MediaTile extends StatelessWidget {
           Positioned(
             right: -6,
             top: -6,
-            child: Builder(
-              builder: (context) => GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
-                    ),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
-                  ),
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
                 ),
               ),
             ),
@@ -1436,8 +1455,14 @@ class _MediaTile extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: onPick,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                color: AppColors.getBackgroundColor(context),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Builder(
                 builder: (context) {
                   final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -1476,24 +1501,20 @@ class _MediaTile extends StatelessWidget {
           Positioned(
             right: -6,
             top: -6,
-            child: Builder(
-              builder: (context) => GestureDetector(
-                onTap: onRemove,
-                child: Container(
-                  width: 24,
-                  height: 24,
-                  decoration: BoxDecoration(
-                    color: AppColors.getSurfaceColor(context),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                    border: Border.all(
-                      color: AppColors.getBorderColor(context),
-                    ),
-                  ),
-                  child: const Icon(
-                    CupertinoIcons.clear_circled_solid,
-                    size: 20,
-                    color: AppColors.error,
-                  ),
+            child: GestureDetector(
+              onTap: onRemove,
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: AppColors.getSurfaceColor(context),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(color: AppColors.getBorderColor(context)),
+                ),
+                child: const Icon(
+                  CupertinoIcons.clear_circled_solid,
+                  size: 20,
+                  color: AppColors.error,
                 ),
               ),
             ),
@@ -1503,23 +1524,24 @@ class _MediaTile extends StatelessWidget {
     }
 
     // Пустая плитка для выбора
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: onPick,
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+          border: Border.all(
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.camera_fill,
+            size: 24,
+            color: AppColors.scrim20,
           ),
         ),
       ),

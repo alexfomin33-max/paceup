@@ -325,6 +325,59 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
+  /// ──────────────────────── Кнопка вступления (зафиксированная внизу) ────────────────────────
+  Widget _buildJoinButton() {
+    final isOpen = _clubData?['is_open'] as bool? ?? true;
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: _isJoining ? null : _joinClub,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: _isJoining
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  isOpen ? 'Вступить' : 'Подать заявку',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              isOpen ? 'Вступить' : 'Подать заявку',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+
+    if (_isJoining) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
+  }
+
   /// ──────────────────────── Показ меню с действиями ────────────────────────
   void _showMenu(BuildContext context) {
     final items = <MoreMenuItem>[];
@@ -440,7 +493,6 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     final name = _clubData!['name'] as String? ?? '';
     final backgroundUrl = _clubData!['background_url'] as String? ?? '';
     final membersCount = _clubData!['members_count'] as int? ?? 0;
-    final isOpen = _clubData!['is_open'] as bool? ?? true;
     final link = _clubData!['link'] as String? ?? '';
 
     final description = _clubData!['description'] as String? ?? '';
@@ -463,20 +515,24 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
           body: SafeArea(
             top: false,
             bottom: true,
-            child: Stack(
-              children: [
-                NotificationListener<ScrollNotification>(
-                  onNotification: (notification) {
-                    // Закрываем попап меню при любом скролле или свайпе
-                    if (notification is ScrollUpdateNotification ||
-                        notification is ScrollStartNotification) {
-                      MoreMenuHub.hide();
-                    }
-                    return false;
-                  },
-                  child: CustomScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    slivers: [
+            child: Builder(
+              builder: (context) {
+                final columnChildren = <Widget>[
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        NotificationListener<ScrollNotification>(
+                          onNotification: (notification) {
+                            // Закрываем попап меню при любом скролле или свайпе
+                            if (notification is ScrollUpdateNotification ||
+                                notification is ScrollStartNotification) {
+                              MoreMenuHub.hide();
+                            }
+                            return false;
+                          },
+                          child: CustomScrollView(
+                            physics: const BouncingScrollPhysics(),
+                            slivers: [
                     // ───────── Cover + overlay-кнопки + логотип
                     SliverToBoxAdapter(
                       child: Builder(
@@ -659,7 +715,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: AppColors.getSurfaceColor(context),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
                                 color: AppColors.getBorderColor(context),
                                 width: 1,
@@ -707,89 +763,6 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     if (description.isNotEmpty)
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                    // ───────── Промежуточный блок: кнопка действия (только для вступления)
-                    if (!_isMember && !_isRequest) ...[
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Builder(
-                            builder: (context) {
-                              // ── Цвет текста: в светлой теме используем getSurfaceColor, в тёмной — surface
-                              final textColor =
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppColors.surface
-                                  : AppColors.getSurfaceColor(context);
-
-                              // ── Контент кнопки с индикатором загрузки
-                              final Widget content = Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  if (_isJoining)
-                                    const Padding(
-                                      padding: EdgeInsets.only(right: 10),
-                                      child: CupertinoActivityIndicator(
-                                        radius: 9,
-                                      ),
-                                    ),
-                                  Flexible(
-                                    child: Text(
-                                      isOpen ? 'Вступить' : 'Подать заявку',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: textColor,
-                                        height: 1.0,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
-
-                              // ── Кнопка с borderRadius = AppRadius.md
-                              final Widget button = ElevatedButton(
-                                onPressed: _isJoining ? null : _joinClub,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.brandPrimary,
-                                  foregroundColor: textColor,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 30,
-                                    vertical: 0,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.md,
-                                    ),
-                                  ),
-                                  minimumSize: const Size(0, 44),
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                  alignment: Alignment.center,
-                                ),
-                                child: content,
-                              );
-
-                              // ── Растягиваем на всю ширину
-                              return SizedBox(
-                                width: double.infinity,
-                                height: 44,
-                                child: _isJoining
-                                    ? IgnorePointer(child: button)
-                                    : button,
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                    ],
 
                     // ───────── Пилюля с табами
                     SliverPadding(
@@ -853,7 +826,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               decoration: BoxDecoration(
                                 color: AppColors.getSurfaceColor(context),
                                 borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
+                                  AppRadius.lg,
                                 ),
                                 border: Border.all(
                                   color: AppColors.getBorderColor(context),
@@ -920,53 +893,67 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                       ),
 
+                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                  ],
-                  ),
-                ),
+                          ],
+                        ),
+                      ),
 
-                // ───────── Плавающие круглые иконки (назад + редактирование)
-                Positioned(
-                  top: 12,
-                  left: 0,
-                  right: 0,
-                  child: SafeArea(
-                    bottom: false,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          _CircleIconBtn(
-                            icon: CupertinoIcons.back,
-                            semantic: 'Назад',
-                            onTap: () {
-                              // ── Если количество участников было обновлено, возвращаем результат
-                              if (_updatedMembersCount != null) {
-                                Navigator.of(context).pop({
-                                  'members_count_updated': true,
-                                  'members_count': _updatedMembersCount,
-                                  'club_id': widget.clubId,
-                                });
-                              } else {
-                                Navigator.of(context).maybePop();
-                              }
-                            },
+                      // ───────── Плавающие круглые иконки (назад + редактирование)
+                    Positioned(
+                      top: 12,
+                      left: 0,
+                      right: 0,
+                      child: SafeArea(
+                        bottom: false,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _CircleIconBtn(
+                                icon: CupertinoIcons.back,
+                                semantic: 'Назад',
+                                onTap: () {
+                                  // ── Если количество участников было обновлено, возвращаем результат
+                                  if (_updatedMembersCount != null) {
+                                    Navigator.of(context).pop({
+                                      'members_count_updated': true,
+                                      'members_count': _updatedMembersCount,
+                                      'club_id': widget.clubId,
+                                    });
+                                  } else {
+                                    Navigator.of(context).maybePop();
+                                  }
+                                },
+                              ),
+                              Container(
+                                key: _menuKey,
+                                child: _CircleIconBtn(
+                                  icon: CupertinoIcons.ellipsis_vertical,
+                                  semantic: 'Меню',
+                                  onTap: () => _showMenu(context),
+                                ),
+                              ),
+                            ],
                           ),
-                          Container(
-                            key: _menuKey,
-                            child: _CircleIconBtn(
-                              icon: CupertinoIcons.ellipsis_vertical,
-                              semantic: 'Меню',
-                              onTap: () => _showMenu(context),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  // ───────── Зафиксированная кнопка вступления (только для не участников)
+                  if (!_isMember && !_isRequest)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      color: AppColors.getBackgroundColor(context),
+                      child: _buildJoinButton(),
+                    ),
+                ];
+
+                return Column(children: columnChildren);
+              },
             ),
           ),
         ),

@@ -868,7 +868,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 8),
 
                   // ────────────────────────────────────────────────────────────────
                   // 💾 КНОПКА СОХРАНЕНИЯ

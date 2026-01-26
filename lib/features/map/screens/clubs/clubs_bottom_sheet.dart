@@ -250,14 +250,13 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
             color: AppColors.twinchip,
             width: 0.7,
           ),
-          // boxShadow: [
-          //   BoxShadow(
-          //     color: shadowColor,
-          //     offset: const Offset(0, 1),
-          //     blurRadius: 1,
-          //     spreadRadius: 0,
-          //   ),
-          // ],
+          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
         child: Column(

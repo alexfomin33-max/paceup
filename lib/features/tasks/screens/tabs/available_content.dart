@@ -168,17 +168,20 @@ class _MonthLabel extends StatelessWidget {
   final String text;
   const _MonthLabel(this.text);
 
-  @override
+ @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 15,
-        fontWeight: FontWeight.w500,
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkTextSecondary
-            : null,
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Text(
+        text,
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.darkTextSecondary
+              : null,
+        ),
       ),
     );
   }

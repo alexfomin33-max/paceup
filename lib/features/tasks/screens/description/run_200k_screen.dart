@@ -251,8 +251,10 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                                   ),
                                   taskAsyncValue.when(
                                     data: (task) {
-                                      // Показываем кнопку редактирования только если задача существует и user_id = 1
-                                      if (task == null || _currentUserId != 1) {
+                                      // Показываем кнопку редактирования только если задача существует и user_id = 1, 16 или 17
+                                      if (task == null ||
+                                          _currentUserId == null ||
+                                          !([1, 16, 17].contains(_currentUserId))) {
                                         return const SizedBox(
                                           width: 34,
                                           height: 34,

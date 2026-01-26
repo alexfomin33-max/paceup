@@ -12,10 +12,10 @@ import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../core/widgets/app_bar.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../core/widgets/primary_button.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/providers/form_state_provider.dart';
+import '../../../../core/providers/form_state.dart';
 import '../../../../core/widgets/form_error_display.dart';
 
 /// Экран редактирования клуба
@@ -429,6 +429,49 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     return '$dd.$mm.$yy';
   }
 
+  /// Кнопка сохранения
+  /// При загрузке: только индикатор (без текста), тёмный фон, блокировка нажатий.
+  Widget _buildSaveButton(AppFormState formState) {
+    final textColor = AppColors.getSurfaceColor(context);
+    final isLoading = formState.isSubmitting;
+    final isEnabled = isFormValid && !isLoading && !_deleting;
+
+    // ────────────────────────────────────────────────────────────────
+    // 💾 КНОПКА СОХРАНЕНИЯ (единый стиль с экраном добавления активности)
+    // ────────────────────────────────────────────────────────────────
+    final button = ElevatedButton(
+      onPressed: isEnabled ? _submit : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        disabledBackgroundColor: AppColors.button,
+        disabledForegroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: isLoading
+          ? CupertinoActivityIndicator(radius: 9, color: textColor)
+          : Text(
+              'Сохранить',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+
+    // Блокировка нажатий во время загрузки
+    if (isLoading) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
+  }
+
   /// Показываем диалог подтверждения удаления
   Future<bool> _confirmDelete() async {
     final result = await showCupertinoDialog<bool>(
@@ -635,18 +678,21 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
     if (_loadingData) {
       return Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           title: 'Редактирование клуба',
+          backgroundColor: AppColors.twinBg,
           showBack: true,
-          showBottomDivider: true,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _deleteClub,
             ),
@@ -658,18 +704,21 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
+        backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
           title: 'Редактирование клуба',
+          backgroundColor: AppColors.twinBg,
           showBack: true,
-          showBottomDivider: true,
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
           actions: [
             IconButton(
               splashRadius: 22,
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _deleteClub,
             ),
@@ -681,7 +730,8 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -692,12 +742,11 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Логотип клуба',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -721,12 +770,11 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            const Text(
                               'Фоновая картинка',
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -751,21 +799,25 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   const SizedBox(height: 24),
 
                   // ---------- Название клуба ----------
-                  Text(
+                  const Text(
                     'Название клуба',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => TextField(
-                      controller: nameCtrl,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
                       ),
+                    ),
+                    child: TextField(
+                      controller: nameCtrl,
+                      style: AppTextStyles.h14w4,
                       decoration: InputDecoration(
                         hintText: 'Введите название клуба',
                         hintStyle: AppTextStyles.h14w4Place,
@@ -773,58 +825,51 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         fillColor: AppColors.getSurfaceColor(context),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 17,
+                          vertical: 22,
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('name')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('name')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('name')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
+                        errorText: formState.fieldErrors.containsKey('name')
+                            ? formState.fieldErrors['name']
+                            : null,
+                        errorMaxLines: 2,
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // ---------- Страница клуба ----------
-                  Text(
+                  const Text(
                     'Страница клуба',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => TextField(
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: TextField(
                       controller: linkCtrl,
                       keyboardType: TextInputType.url,
                       textInputAction: TextInputAction.next,
-                      style: AppTextStyles.h14w4.copyWith(
-                        color: AppColors.getTextPrimaryColor(context),
-                      ),
+                      style: AppTextStyles.h14w4,
                       decoration: InputDecoration(
                         hintText: 'https://example.com/club',
                         hintStyle: AppTextStyles.h14w4Place,
@@ -832,28 +877,19 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         fillColor: AppColors.getSurfaceColor(context),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 17,
+                          vertical: 22,
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
@@ -861,51 +897,46 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   const SizedBox(height: 24),
 
                   // ---------- Вид активности ----------
-                  Text(
+                  const Text(
                     'Вид активности',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => InputDecorator(
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: InputDecorator(
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.getSurfaceColor(context),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 4,
+                          vertical: 8,
                         ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: formState.fieldErrors.containsKey('activity')
-                                ? AppColors.error
-                                : AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
+                        errorText: formState.fieldErrors.containsKey('activity')
+                            ? formState.fieldErrors['activity']
+                            : null,
+                        errorMaxLines: 2,
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -925,28 +956,20 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                           },
                           dropdownColor: AppColors.getSurfaceColor(context),
                           menuMaxHeight: 300,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           icon: Icon(
                             Icons.arrow_drop_down,
                             color: AppColors.getIconSecondaryColor(context),
                           ),
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+                          style: AppTextStyles.h14w4,
                           items: const ['Бег', 'Велосипед', 'Плавание', 'Лыжи'].map((
                             option,
                           ) {
                             return DropdownMenuItem<String>(
                               value: option,
-                              child: Builder(
-                                builder: (context) => Text(
-                                  option,
-                                  style: AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
+                              child: Text(
+                                option,
+                                style: AppTextStyles.h14w4,
                               ),
                             );
                           }).toList(),
@@ -973,11 +996,8 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
+                      const Text(
                         'Открытое сообщество',
-                        style: TextStyle(
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
                       ),
                     ],
                   ),
@@ -998,23 +1018,19 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text(
+                      const Text(
                         'Закрытое сообщество',
-                        style: TextStyle(
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
 
                   // ---------- Город ----------
-                  Text(
+                  const Text(
                     'Город',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -1034,17 +1050,23 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   const SizedBox(height: 24),
 
                   // ---------- Дата основания клуба ----------
-                  Text(
+                  const Text(
                     'Дата основания клуба',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => GestureDetector(
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: GestureDetector(
                       onTap: _pickDateCupertino,
                       child: AbsorbPointer(
                         child: InputDecorator(
@@ -1053,7 +1075,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                             fillColor: AppColors.getSurfaceColor(context),
                             contentPadding: const EdgeInsets.symmetric(
                               horizontal: 12,
-                              vertical: 18,
+                              vertical: 22,
                             ),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.only(
@@ -1071,53 +1093,31 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                               minHeight: 18,
                             ),
                             border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color:
-                                    formState.fieldErrors.containsKey(
-                                      'foundationDate',
-                                    )
-                                    ? AppColors.error
-                                    : AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
                             ),
                             enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color:
-                                    formState.fieldErrors.containsKey(
-                                      'foundationDate',
-                                    )
-                                    ? AppColors.error
-                                    : AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
                             ),
                             focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(AppRadius.sm),
-                              borderSide: BorderSide(
-                                color:
-                                    formState.fieldErrors.containsKey(
-                                      'foundationDate',
-                                    )
-                                    ? AppColors.error
-                                    : AppColors.getBorderColor(context),
-                                width: 1,
-                              ),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderSide: BorderSide.none,
                             ),
+                            errorText: formState.fieldErrors.containsKey('foundationDate')
+                                ? formState.fieldErrors['foundationDate']
+                                : null,
+                            errorMaxLines: 2,
                           ),
                           child: Text(
                             foundationDate != null
                                 ? _fmtDate(foundationDate!)
                                 : 'Выберите дату',
                             style: foundationDate != null
-                                ? AppTextStyles.h14w4.copyWith(
-                                    color: AppColors.getTextPrimaryColor(
-                                      context,
-                                    ),
-                                  )
+                                ? AppTextStyles.h14w4
                                 : AppTextStyles.h14w4Place,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
@@ -1126,50 +1126,49 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   const SizedBox(height: 24),
 
                   // ---------- Описание ----------
-                  Text(
+                  const Text(
                     'Описание',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Builder(
-                    builder: (context) => TextField(
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: TextField(
                       controller: descCtrl,
-                      maxLines: 30,
-                      minLines: 7,
+                      maxLines: 12,
+                      minLines: 8,
                       textAlignVertical: TextAlignVertical.top,
                       style: AppTextStyles.h14w4.copyWith(
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                       decoration: InputDecoration(
                         hintText: 'Введите описание клуба',
-                        hintStyle: AppTextStyles.h14w4Place,
+                        hintStyle: AppTextStyles.h14w4Place.copyWith(
+                          color: AppColors.getTextPlaceholderColor(context),
+                        ),
                         filled: true,
                         fillColor: AppColors.getSurfaceColor(context),
                         contentPadding: const EdgeInsets.all(12),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.sm),
-                          borderSide: BorderSide(
-                            color: AppColors.getBorderColor(context),
-                            width: 1,
-                          ),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
                         ),
                       ),
                     ),
@@ -1182,17 +1181,13 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                     const SizedBox(height: 16),
                   ],
 
-                  // ── Кнопка сохранения
+                  const SizedBox(height: 8),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 💾 КНОПКА СОХРАНЕНИЯ
+                  // ────────────────────────────────────────────────────────────────
                   Center(
-                    child: PrimaryButton(
-                      text: 'Сохранить',
-                      onPressed: () {
-                        if (!formState.isSubmitting && !_deleting) _submit();
-                      },
-                      width: 230,
-                      isLoading: formState.isSubmitting,
-                      enabled: isFormValid && !formState.isSubmitting,
-                    ),
+                    child: _buildSaveButton(formState),
                   ),
                 ],
               ),
@@ -1226,11 +1221,15 @@ class _CityAutocompleteField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = hasError
-        ? AppColors.error
-        : AppColors.getBorderColor(context);
-
-    return Autocomplete<String>(
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 0.7,
+        ),
+      ),
+      child: Autocomplete<String>(
       optionsBuilder: (TextEditingValue textEditingValue) {
         if (textEditingValue.text.isEmpty) {
           return const Iterable<String>.empty();
@@ -1267,9 +1266,7 @@ class _CityAutocompleteField extends StatelessWidget {
               onSubmitted: (String value) {
                 onFieldSubmitted();
               },
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
-              ),
+              style: AppTextStyles.h14w4,
               decoration: InputDecoration(
                 hintText: 'Введите город',
                 hintStyle: AppTextStyles.h14w4Place,
@@ -1277,19 +1274,19 @@ class _CityAutocompleteField extends StatelessWidget {
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 17,
+                  vertical: 22,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  borderSide: BorderSide(color: borderColor, width: 1),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  borderSide: BorderSide.none,
                 ),
                 errorText: hasError
                     ? (errorText ?? 'Выберите город из списка')
@@ -1309,7 +1306,7 @@ class _CityAutocompleteField extends StatelessWidget {
               child: Material(
                 elevation: 4.0,
                 color: AppColors.getSurfaceColor(context),
-                borderRadius: BorderRadius.circular(AppRadius.md),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxHeight: 200),
                   child: ListView.builder(
@@ -1330,7 +1327,9 @@ class _CityAutocompleteField extends StatelessWidget {
                           child: Text(
                             option,
                             style: AppTextStyles.h14w4.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
+                              color: AppColors.getTextPrimaryColor(
+                                context,
+                              ),
                             ),
                           ),
                         ),
@@ -1341,6 +1340,7 @@ class _CityAutocompleteField extends StatelessWidget {
               ),
             );
           },
+      ),
     );
   }
 }
@@ -1397,20 +1397,28 @@ class _MediaTile extends StatelessWidget {
                     ),
                   )
                 : ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                    child: Image.file(
-                      file!,
-                      fit: BoxFit.cover,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: Container(
                       width: width,
                       height: height,
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.getBackgroundColor(context),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: Image.file(
+                        file!,
+                        fit: BoxFit.cover,
                         width: width,
                         height: height,
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 24,
-                          color: AppColors.getIconSecondaryColor(context),
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          width: width,
+                          height: height,
+                          color: AppColors.getBackgroundColor(context),
+                          child: Icon(
+                            CupertinoIcons.photo,
+                            size: 24,
+                            color: AppColors.getIconSecondaryColor(context),
+                          ),
                         ),
                       ),
                     ),
@@ -1491,7 +1499,7 @@ class _MediaTile extends StatelessWidget {
                     ),
                   )
                 : ClipRRect(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     child: Builder(
                       builder: (context) {
                         final dpr = MediaQuery.of(context).devicePixelRatio;
@@ -1559,26 +1567,27 @@ class _MediaTile extends StatelessWidget {
     }
 
     // ── если фото ещё нет — плитка с иконкой и рамкой
-    return Builder(
-      builder: (context) => GestureDetector(
-        onTap: onPick,
-        child: Container(
-          width: width,
-          height: height,
-          decoration: BoxDecoration(
-            shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
-            borderRadius: isCircular
-                ? null
-                : BorderRadius.circular(AppRadius.sm),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        width: width,
+        height: height,
+        decoration: BoxDecoration(
+          shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+          borderRadius: isCircular
+              ? null
+              : BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+          border: Border.all(
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
+        ),
+        child: Center(
+          child: Icon(
+            CupertinoIcons.camera_fill,
+            size: 24,
+            color: AppColors.scrim20,
           ),
         ),
       ),

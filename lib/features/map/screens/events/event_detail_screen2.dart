@@ -307,6 +307,58 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     }
   }
 
+  /// ──────────────────────── Кнопка присоединения (зафиксированная внизу) ────────────────────────
+  Widget _buildJoinButton() {
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: _isTogglingParticipation ? null : _toggleParticipation,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: _isTogglingParticipation
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  _isParticipant ? 'Выйти' : 'Присоединиться',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              _isParticipant ? 'Выйти' : 'Присоединиться',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+
+    if (_isTogglingParticipation) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
+  }
+
   /// ──────────────────────── Показ меню с действиями ────────────────────────
   void _showMenu(BuildContext context) {
     final items = <MoreMenuItem>[];
@@ -370,7 +422,11 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     );
 
     // Показываем попап меню
-    MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
+    MoreMenuOverlay(
+      anchorKey: _menuKey,
+      items: items,
+      width: 230, // Увеличена ширина для текста "Убрать из избранного"
+    ).show(context);
   }
 
   /// ──────────────────────── Переход в профиль организатора ────────────────────────
@@ -629,22 +685,25 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
-          bottom: false,
-          child: Stack(
-            children: [
-              // ───────── Скроллируемый контент
-              NotificationListener<ScrollNotification>(
-                onNotification: (notification) {
-                  // Закрываем попап меню при любом скролле или свайпе
-                  if (notification is ScrollUpdateNotification ||
-                      notification is ScrollStartNotification) {
-                    MoreMenuHub.hide();
-                  }
-                  return false;
-                },
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  slivers: [
+          bottom: true,
+          child: Builder(
+            builder: (context) {
+              final columnChildren = <Widget>[
+                Expanded(
+                  child: Stack(
+                    children: [
+                      NotificationListener<ScrollNotification>(
+                        onNotification: (notification) {
+                          // Закрываем попап меню при любом скролле или свайпе
+                          if (notification is ScrollUpdateNotification ||
+                              notification is ScrollStartNotification) {
+                            MoreMenuHub.hide();
+                          }
+                          return false;
+                        },
+                        child: CustomScrollView(
+                          physics: const BouncingScrollPhysics(),
+                          slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
                     child: Builder(
@@ -991,7 +1050,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 8),
                           // Блок с дистанцией
                           Expanded(
                             child: Container(
@@ -1280,98 +1339,55 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                     ),
                   ),
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                          ],
+                        ),
+                      ),
 
-                  // ───────── Кнопка "Присоединиться"/"Выйти"
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    sliver: SliverToBoxAdapter(
-                      child: Material(
-                        color: _isParticipant
-                            ? AppColors.textPrimary
-                            : AppColors.brandPrimary,
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        elevation: 0,
-                        child: InkWell(
-                          onTap: _isTogglingParticipation
-                              ? null
-                              : _toggleParticipation,
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              color: _isParticipant
-                                  ? AppColors.textPrimary
-                                  : AppColors.brandPrimary,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: _isTogglingParticipation
-                                ? const Center(
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CupertinoActivityIndicator(
-                                        radius: 10,
-                                        color: AppColors.surface,
-                                      ),
-                                    ),
-                                  )
-                                : Center(
-                                    child: Text(
-                                      _isParticipant
-                                          ? 'Выйти'
-                                          : 'Присоединиться',
-                                      style: const TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.surface,
-                                      ),
-                                    ),
+                      // ───────── Плавающие круглые иконки (назад + редактирование)
+                      Positioned(
+                        top: 12,
+                        left: 0,
+                        right: 0,
+                        child: SafeArea(
+                          bottom: false,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                _CircleIconBtn(
+                                  icon: CupertinoIcons.back,
+                                  semantic: 'Назад',
+                                  onTap: () => Navigator.of(context).maybePop(),
+                                ),
+                                Container(
+                                  key: _menuKey,
+                                  child: _CircleIconBtn(
+                                    icon: CupertinoIcons.ellipsis_vertical,
+                                    semantic: 'Меню',
+                                    onTap: () => _showMenu(context),
                                   ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                ],
-                ),
-              ),
-
-              // ───────── Плавающие круглые иконки (назад + редактирование)
-              Positioned(
-                top: 12,
-                left: 0,
-                right: 0,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _CircleIconBtn(
-                          icon: CupertinoIcons.back,
-                          semantic: 'Назад',
-                          onTap: () => Navigator.of(context).maybePop(),
-                        ),
-                        Container(
-                          key: _menuKey,
-                          child: _CircleIconBtn(
-                            icon: CupertinoIcons.ellipsis_vertical,
-                            semantic: 'Меню',
-                            onTap: () => _showMenu(context),
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                // ───────── Зафиксированная кнопка присоединения
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  color: AppColors.getBackgroundColor(context),
+                  child: _buildJoinButton(),
+                ),
+              ];
+
+              return Column(children: columnChildren);
+            },
           ),
         ),
       ),
@@ -1474,7 +1490,7 @@ class _SquarePhoto extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
           onTap: onTap,
           child: LayoutBuilder(

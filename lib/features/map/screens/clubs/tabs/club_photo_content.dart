@@ -474,34 +474,28 @@ class _AddPhotoPlaceholder extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Builder(
-        builder: (context) => Container(
-          width: cellSize,
-          height: cellSize,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(
-              color: AppColors.getBorderColor(context),
-              width: 1,
-            ),
-          ),
-          child: Center(
-            child: isLoading
-                ? SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CupertinoActivityIndicator(
-                      radius: 10,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                  )
-                : Icon(
-                    CupertinoIcons.photo_camera,
-                    size: 32,
-                    color: AppColors.getIconSecondaryColor(context),
+      child: Container(
+        width: cellSize,
+        height: cellSize,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+        ),
+        child: Center(
+          child: isLoading
+              ? SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CupertinoActivityIndicator(
+                    radius: 10,
+                    color: AppColors.scrim20,
                   ),
-          ),
+                )
+              : const Icon(
+                  CupertinoIcons.camera_fill,
+                  size: 24,
+                  color: AppColors.scrim20,
+                ),
         ),
       ),
     );

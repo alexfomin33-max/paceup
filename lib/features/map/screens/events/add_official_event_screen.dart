@@ -921,7 +921,7 @@ class _AddOfficialEventScreenState
                       final brightness = Theme.of(context).brightness;
                       final isLight = brightness == Brightness.light;
                       final fillColor = isLight
-                          ? AppColors.disabled
+                          ? AppColors.background
                           : AppColors.getSurfaceMutedColor(context);
                       final textColor = isLight
                           ? AppColors.getTextPlaceholderColor(context)
@@ -984,9 +984,12 @@ class _AddOfficialEventScreenState
                               onPressed: _pickLocation,
                               style: OutlinedButton.styleFrom(
                                 shape: const CircleBorder(),
-                                side: BorderSide(
-                                  color: AppColors.getBorderColor(context),
+                                side: const BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
                                 ),
+
+
                                 foregroundColor: AppColors.getTextPrimaryColor(
                                   context,
                                 ),
@@ -1392,6 +1395,7 @@ class _MediaTile extends StatelessWidget {
   final VoidCallback onRemove;
   final double width;
   final double height;
+  final bool isCircular;
 
   const _MediaTile({
     required this.file,
@@ -1399,11 +1403,12 @@ class _MediaTile extends StatelessWidget {
     required this.onRemove,
     required this.width,
     required this.height,
+    this.isCircular = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    // 📌 Если фото ещё нет — плитка с иконкой и рамкой
+    // ── если фото ещё нет — плитка с иконкой и рамкой
     if (file == null) {
       return GestureDetector(
         onTap: onPick,
@@ -1411,32 +1416,44 @@ class _MediaTile extends StatelessWidget {
           width: width,
           height: height,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            color: AppColors.getSurfaceColor(context),
+            shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+            borderRadius: isCircular
+                ? null
+                : BorderRadius.circular(AppRadius.lg),
+            color: AppColors.twinphoto,
             border: Border.all(
               color: AppColors.twinchip,
               width: 0.7,
             ),
           ),
-          child: Center(
+          child: const Center(
             child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
+              CupertinoIcons.camera_fill,
+              size: 24,
+              color: AppColors.scrim20,
             ),
           ),
         ),
       );
     }
 
-    // 📌 Если фото выбрано — превью без рамки
+    // ── если фото выбрано — превью без рамки
     return Stack(
       clipBehavior: Clip.none,
       children: [
         GestureDetector(
           onTap: onPick,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              shape: isCircular ? BoxShape.circle : BoxShape.rectangle,
+              borderRadius: isCircular
+                  ? null
+                  : BorderRadius.circular(AppRadius.lg),
+              color: AppColors.getBackgroundColor(context),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Image.file(
               file!,
               fit: BoxFit.cover,
@@ -1458,25 +1475,20 @@ class _MediaTile extends StatelessWidget {
         Positioned(
           right: -6,
           top: -6,
-          child: Builder(
-            builder: (context) => GestureDetector(
-              onTap: onRemove,
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                  border: Border.all(
-                    color: AppColors.twinchip,
-                    width: 0.7,
-                  ),
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 20,
-                  color: AppColors.error,
-                ),
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(context),
+                borderRadius: BorderRadius.circular(AppRadius.md),
+                border: Border.all(color: AppColors.getBorderColor(context)),
+              ),
+              child: const Icon(
+                CupertinoIcons.clear_circled_solid,
+                size: 20,
+                color: AppColors.error,
               ),
             ),
           ),

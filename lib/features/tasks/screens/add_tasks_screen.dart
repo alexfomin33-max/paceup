@@ -403,7 +403,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Логотип задачи',
+                            'Логотип',
                             style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
@@ -1161,7 +1161,7 @@ class _MediaTile extends StatelessWidget {
           height: height,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            color: AppColors.getSurfaceColor(context),
+            color: AppColors.twinphoto,
             border: Border.all(
               color: AppColors.twinchip,
               width: 0.7,
@@ -1169,9 +1169,9 @@ class _MediaTile extends StatelessWidget {
           ),
           child: Center(
             child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
+              CupertinoIcons.camera_fill,
+              size: 24,
+              color: AppColors.scrim20,
             ),
           ),
         ),
@@ -1184,8 +1184,14 @@ class _MediaTile extends StatelessWidget {
       children: [
         GestureDetector(
           onTap: onPick,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: Container(
+            width: width,
+            height: height,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              color: AppColors.getBackgroundColor(context),
+            ),
+            clipBehavior: Clip.antiAlias,
             child: Image.file(
               file!,
               fit: BoxFit.cover,
