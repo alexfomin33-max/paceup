@@ -103,7 +103,9 @@ class _ActivityDescriptionPageState
   List<double> _heartRateData = [];
   List<double> _elevationData = [];
   List<double> _wattsData = []; // мощность (ватты) по километрам
+  List<int> _paceLabels = []; // Метки для оси X (в метрах для плавания, в км для остальных)
   bool _isLoadingCharts = true;
+  bool _isSwimmingChart = false; // Флаг, что это плавание
 
   // Сводка данных для отображения под графиками
   Map<String, dynamic>? _chartsSummary;
@@ -247,6 +249,14 @@ class _ActivityDescriptionPageState
                     ?.map((e) => (e as num).toDouble())
                     .toList() ??
                 [];
+            // Метки для оси X (для плавания - в метрах)
+            _paceLabels =
+                (data['paceLabels'] as List<dynamic>?)
+                    ?.map((e) => (e as num).toInt())
+                    .toList() ??
+                [];
+            // Флаг, что это плавание
+            _isSwimmingChart = data['isSwimming'] == true;
             _chartsSummary = data['summary'] as Map<String, dynamic>?;
             _isLoadingCharts = false;
           });
@@ -853,6 +863,10 @@ class _ActivityDescriptionPageState
                                     // 🏊 ДЛЯ ПЛАВАНИЯ НА ЭКРАНЕ ОПИСАНИЯ: показываем вторую строку метрик
                                     // ────────────────────────────────────────────────────────────────
                                     hideSecondRowForSwimInFeed: false,
+                                    // ────────────────────────────────────────────────────────────────
+                                    // 🚴 ПЕРЕДАЧА ИНФОРМАЦИИ О НАЛИЧИИ ТРЕКА: для пересчета скорости велотренировок без трека
+                                    // ────────────────────────────────────────────────────────────────
+                                    hasRoute: a.points.isNotEmpty,
                                   ),
                                   bottomGap: 16.0,
                                 )
@@ -904,6 +918,10 @@ class _ActivityDescriptionPageState
                                       activityType: a.type,
                                       bottomPadding: 0,
                                       hideSecondRowForSwimInFeed: false,
+                                      // ────────────────────────────────────────────────────────────────
+                                      // 🚴 ПЕРЕДАЧА ИНФОРМАЦИИ О НАЛИЧИИ ТРЕКА: для пересчета скорости велотренировок без трека
+                                      // ────────────────────────────────────────────────────────────────
+                                      hasRoute: a.points.isNotEmpty,
                                     ),
                                     bottomGap: 16.0,
                                   ),
@@ -1043,32 +1061,67 @@ class _ActivityDescriptionPageState
                 const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
                 // ───────── «Отрезки» — таблица на всю ширину экрана
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  sliver: SliverToBoxAdapter(
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
+                // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем только если есть трек И есть разбивка на отрезки
+                // Для других типов показываем всегда, если есть данные
+                Builder(
+                  builder: (context) {
+                    final isBikeType = a.type.toLowerCase() == 'bike' ||
+                        a.type.toLowerCase() == 'bicycle' ||
+                        a.type.toLowerCase() == 'cycling' ||
+                        a.type.toLowerCase() == 'indoor-cycling';
+                    final hasSplitsData = stats?.pacePerKm.isNotEmpty == true ||
+                        stats?.heartRatePerKm.isNotEmpty == true;
+                    if ((!isBikeType && hasSplitsData) ||
+                        (isBikeType && a.points.isNotEmpty && hasSplitsData)) {
+                      return SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        sliver: SliverToBoxAdapter(
+                          child: Container(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 12, 10),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: AppColors.twinchip,
+                                width: 0.7,
+                              ),
+                            ),
+                            child: _SplitsTableFull(
+                              stats: stats,
+                              activityType: a.type,
+                            ),
+                          ),
                         ),
-                      ),
-                      child: _SplitsTableFull(
-                        stats: stats,
-                        activityType: a.type,
-                      ),
-                    ),
-                  ),
+                      );
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  },
                 ),
-
-                const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                Builder(
+                  builder: (context) {
+                    final isBikeType = a.type.toLowerCase() == 'bike' ||
+                        a.type.toLowerCase() == 'bicycle' ||
+                        a.type.toLowerCase() == 'cycling' ||
+                        a.type.toLowerCase() == 'indoor-cycling';
+                    final hasSplitsData = stats?.pacePerKm.isNotEmpty == true ||
+                        stats?.heartRatePerKm.isNotEmpty == true;
+                    if ((!isBikeType && hasSplitsData) ||
+                        (isBikeType && a.points.isNotEmpty && hasSplitsData)) {
+                      return const SliverToBoxAdapter(child: SizedBox(height: 12));
+                    }
+                    return const SliverToBoxAdapter(child: SizedBox.shrink());
+                  },
+                ),
 
                 // ───────── БЛОК ГРАФИКА ТЕМПА
                 // Показываем только если есть данные pacePerKm в params
-                if (stats?.pacePerKm.isNotEmpty == true) ...[
+                // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем только если есть трек или есть разбивка на отрезки
+                if (stats?.pacePerKm.isNotEmpty == true &&
+                    !((a.type.toLowerCase() == 'bike' ||
+                            a.type.toLowerCase() == 'bicycle' ||
+                            a.type.toLowerCase() == 'cycling' ||
+                            a.type.toLowerCase() == 'indoor-cycling') &&
+                        a.points.isEmpty)) ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
@@ -1085,10 +1138,34 @@ class _ActivityDescriptionPageState
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _ChartMetricsHeader(
-                              mode: 0,
-                              summary: _chartsSummary,
-                              isLoading: _isLoadingCharts,
+                            Builder(
+                              builder: (context) {
+                                // ────────────────────────────────────────────────────────────────
+                                // 🏊 ДЛЯ ПЛАВАНИЯ: пересчитываем средний темп из stats.avgPace
+                                // если summary неправильный или отсутствует
+                                // ────────────────────────────────────────────────────────────────
+                                Map<String, dynamic>? correctedSummary = _chartsSummary;
+                                final isSwimming = a.type.toLowerCase() == 'swim' ||
+                                    a.type.toLowerCase() == 'swimming';
+                                if (isSwimming && stats?.avgPace != null && stats!.avgPace > 0) {
+                                  // Пересчитываем из мин/км в секунды на 100м
+                                  final avgPaceMinPerKm = stats.avgPace;
+                                  final avgPaceSecPer100m = (avgPaceMinPerKm / 10.0) * 60.0;
+                                  
+                                  // Создаем или обновляем summary
+                                  correctedSummary = Map<String, dynamic>.from(_chartsSummary ?? {});
+                                  final paceSummary = Map<String, dynamic>.from(
+                                    correctedSummary['pace'] as Map<String, dynamic>? ?? {},
+                                  );
+                                  paceSummary['average'] = avgPaceSecPer100m;
+                                  correctedSummary['pace'] = paceSummary;
+                                }
+                                return _ChartMetricsHeader(
+                                  mode: 0,
+                                  summary: correctedSummary,
+                                  isLoading: _isLoadingCharts,
+                                );
+                              },
                             ),
                             const SizedBox(height: 20),
                             SizedBox(
@@ -1107,6 +1184,8 @@ class _ActivityDescriptionPageState
                                         heartRateData: _heartRateData,
                                         elevationData: _elevationData,
                                         wattsData: _wattsData,
+                                        paceLabels: _paceLabels,
+                                        isSwimming: _isSwimmingChart,
                                       ),
                                     ),
                             ),
@@ -1120,7 +1199,13 @@ class _ActivityDescriptionPageState
 
                 // ───────── БЛОК ГРАФИКА ПУЛЬСА
                 // Показываем только если есть данные heartRatePerKm в params
-                if (stats?.heartRatePerKm.isNotEmpty == true) ...[
+                // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем только если есть трек или есть разбивка на отрезки
+                if (stats?.heartRatePerKm.isNotEmpty == true &&
+                    !((a.type.toLowerCase() == 'bike' ||
+                            a.type.toLowerCase() == 'bicycle' ||
+                            a.type.toLowerCase() == 'cycling' ||
+                            a.type.toLowerCase() == 'indoor-cycling') &&
+                        a.points.isEmpty)) ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
@@ -1173,11 +1258,17 @@ class _ActivityDescriptionPageState
                 // ───────── БЛОК ГРАФИКА ВЫСОТЫ
                 // Показываем только если есть данные elevationPerKm в params или в загруженных данных API
                 // и это не плавание
+                // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем только если есть трек или есть разбивка на отрезки
                 // Проверяем оба источника: stats (из params) и _elevationData (из API)
                 if (!(a.type.toLowerCase() == 'swim' ||
                         a.type.toLowerCase() == 'swimming') &&
                     (stats?.elevationPerKm?.isNotEmpty == true ||
-                        (!_isLoadingCharts && _elevationData.isNotEmpty))) ...[
+                        (!_isLoadingCharts && _elevationData.isNotEmpty)) &&
+                    !((a.type.toLowerCase() == 'bike' ||
+                            a.type.toLowerCase() == 'bicycle' ||
+                            a.type.toLowerCase() == 'cycling' ||
+                            a.type.toLowerCase() == 'indoor-cycling') &&
+                        a.points.isEmpty)) ...[
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
@@ -1229,10 +1320,17 @@ class _ActivityDescriptionPageState
 
                 // ───────── БЛОК ГРАФИКА МОЩНОСТИ (WATTS)
                 // Показываем только если есть данные wattsPerKm в params или в загруженных данных
+                // 🚴 ДЛЯ ВЕЛОТРЕНИРОВОК: показываем только если есть трек или есть разбивка на отрезки
                 // Проверяем оба источника: stats (из params) и _wattsData (из API)
                 if ((stats != null && stats.wattsPerKm.isNotEmpty) ||
                     (!_isLoadingCharts && _wattsData.isNotEmpty)) ...[
-                  SliverPadding(
+                  // Дополнительная проверка для велотренировок без трека
+                  if (!((a.type.toLowerCase() == 'bike' ||
+                          a.type.toLowerCase() == 'bicycle' ||
+                          a.type.toLowerCase() == 'cycling' ||
+                          a.type.toLowerCase() == 'indoor-cycling') &&
+                      a.points.isEmpty))
+                    SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
                       child: Container(
@@ -1931,25 +2029,54 @@ class _SplitsTableFull extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // ────────────────────────────────────────────────────────────────
+    // Определяем, является ли это плаванием
+    // ────────────────────────────────────────────────────────────────
+    final isSwimming = activityType.toLowerCase() == 'swimming' ||
+        activityType.toLowerCase() == 'swim';
+
+    // ────────────────────────────────────────────────────────────────
     // Извлекаем данные о сегментах из stats
     // pacePerKm и heartRatePerKm — это Map<String, double>
     // где ключи — номера километров ("1", "2", "3" и т.д.)
     // Для типа "run" ключи могут быть в формате "km_1", "km_2" и т.д.
+    // Для плавания: ключи в формате "km_1", "km_3", "km_5" означают отрезки по 100м (100м, 300м, 500м)
     // ────────────────────────────────────────────────────────────────
     var pacePerKm = stats?.pacePerKm ?? <String, double>{};
     var heartRatePerKm = stats?.heartRatePerKm ?? <String, double>{};
 
     // ────────────────────────────────────────────────────────────────
     // Для типов "run" и "ski" преобразуем ключи из "km_1" в "1"
+    // Для плавания также нормализуем ключи, но темп пересчитаем на 100м
     // ────────────────────────────────────────────────────────────────
-    if (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking') {
+    if (activityType == 'run' ||
+        activityType == 'ski' ||
+        activityType == 'indoor-running' ||
+        activityType == 'walking' ||
+        activityType == 'hiking' ||
+        isSwimming) {
       final normalizedPacePerKm = <String, double>{};
       final normalizedHeartRatePerKm = <String, double>{};
 
       pacePerKm.forEach((key, value) {
         // Убираем префикс "km_" если он есть
         final normalizedKey = key.startsWith('km_') ? key.substring(3) : key;
-        normalizedPacePerKm[normalizedKey] = value;
+        if (isSwimming) {
+          // Для плавания: темп указан на километр, пересчитываем на 100м
+          // Если значение < 100, это формат минут (24.6 = 24:36 мин/км)
+          // Сначала переводим в секунды, потом делим на 10
+          if (value < 100) {
+            // Формат минут: переводим в секунды, затем делим на 10
+            final minutes = value.floor();
+            final seconds = ((value - minutes) * 60).round();
+            final totalSeconds = minutes * 60 + seconds;
+            normalizedPacePerKm[normalizedKey] = totalSeconds / 10.0;
+          } else {
+            // Уже в секундах, просто делим на 10
+            normalizedPacePerKm[normalizedKey] = value / 10.0;
+          }
+        } else {
+          normalizedPacePerKm[normalizedKey] = value;
+        }
       });
 
       heartRatePerKm.forEach((key, value) {
@@ -1975,7 +2102,7 @@ class _SplitsTableFull extends StatelessWidget {
                 SizedBox(
                   width: 28,
                   child: Text(
-                    'Км',
+                    isSwimming ? 'М' : 'Км',
                     style: AppTextStyles.h12w4.copyWith(
                       color: AppColors.getTextPrimaryColor(context),
                     ),
@@ -2075,6 +2202,7 @@ class _SplitsTableFull extends StatelessWidget {
     // ────────────────────────────────────────────────────────────────
     // Находим самый быстрый темп для нормализации визуальных полос
     // Для типа "run" значения в формате минут (5.7 = 5:42), для других — секунды
+    // Для плавания: темп уже пересчитан на 100м (в секундах)
     // ────────────────────────────────────────────────────────────────
     final paceValues = sortedKeys
         .map((k) => pacePerKm[k] ?? 0.0)
@@ -2082,6 +2210,7 @@ class _SplitsTableFull extends StatelessWidget {
         .toList();
 
     // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
+    // Для плавания: темп уже в секундах на 100м, используем как есть
     final paceValuesForComparison =
         (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking')
         ? paceValues
@@ -2132,7 +2261,7 @@ class _SplitsTableFull extends StatelessWidget {
               SizedBox(
                 width: 28,
                 child: Text(
-                  'Км',
+                  isSwimming ? 'М' : 'Км',
                   style: AppTextStyles.h12w4.copyWith(
                     color: AppColors.getTextPrimaryColor(context),
                   ),
@@ -2179,6 +2308,7 @@ class _SplitsTableFull extends StatelessWidget {
           // Используем пропорцию: fastestPace / paceSecForVisual
           // Самый быстрый темп (fastestPace) будет иметь полоску на всю ширину (1.0)
           // Для типов "run" и "ski" конвертируем минуты в секунды для сравнения
+          // Для плавания: темп уже пересчитан на 100м (в секундах), используем как есть
           // ────────────────────────────────────────────────────────────────
           final paceSecForVisual =
               (activityType == 'run' || activityType == 'ski' || activityType == 'indoor-running' || activityType == 'walking' || activityType == 'hiking')
@@ -2192,6 +2322,10 @@ class _SplitsTableFull extends StatelessWidget {
 
           // Форматируем ключ для отображения (убираем "_partial" если есть)
           final displayKey = kmKey.replaceAll('_partial', '');
+          // Для плавания: отображаем метры без буквы "м" (100, 200, 300 и т.д.)
+          final displayText = isSwimming
+              ? '${(int.tryParse(displayKey) ?? 0) * 100}'
+              : displayKey;
 
           return Column(
             children: [
@@ -2202,7 +2336,7 @@ class _SplitsTableFull extends StatelessWidget {
                     SizedBox(
                       width: 28,
                       child: Text(
-                        displayKey,
+                        displayText,
                         style: AppTextStyles.h12w4.copyWith(
                           color: AppColors.getTextPrimaryColor(context),
                         ),
@@ -2274,8 +2408,8 @@ class _SplitsTableFull extends StatelessWidget {
 }
 
 /// Простой линейный график:
-/// - Для «Темп» ось Y — ММ:СС (мин/км), данные храним в сек/км;
-/// - Ось X — километры 0..N (где N — количество точек);
+/// - Для «Темп» ось Y — ММ:СС (мин/км или мин/100м для плавания), данные храним в сек/км или сек/100м;
+/// - Ось X — километры 0..N (где N — количество точек) или метры для плавания;
 /// - Для «Пульс»/«Высота»/«Мощность» — обычные числа.
 /// - Единицы измерения на оси Y НЕ отображаем.
 class _SimpleLineChart extends StatefulWidget {
@@ -2284,6 +2418,8 @@ class _SimpleLineChart extends StatefulWidget {
   final List<double> heartRateData;
   final List<double> elevationData;
   final List<double> wattsData;
+  final List<int> paceLabels; // Метки для оси X (в метрах для плавания, в км для остальных)
+  final bool isSwimming; // Флаг, что это плавание
 
   const _SimpleLineChart({
     required this.mode,
@@ -2291,6 +2427,8 @@ class _SimpleLineChart extends StatefulWidget {
     required this.heartRateData,
     required this.elevationData,
     this.wattsData = const [],
+    this.paceLabels = const [],
+    this.isSwimming = false,
   });
 
   @override
@@ -2336,7 +2474,11 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
     }
 
     // xMax = число километров (точек). Подписываем 0..xMax (включительно).
-    final xMax = y.length;
+    // Для плавания: xMax = количество точек - 1 (индексы от 0 до length-1)
+    // Для остальных: xMax = количество точек
+    final xMax = (widget.isSwimming && widget.mode == 0 && y.length > 0)
+        ? y.length - 1
+        : y.length;
 
     return GestureDetector(
       onTapDown: (details) {
@@ -2350,6 +2492,8 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
           textSecondaryColor: AppColors.getTextSecondaryColor(context),
           borderColor: AppColors.getBorderColor(context),
           selectedIndex: _selectedIndex,
+          paceLabels: widget.paceLabels,
+          isSwimming: widget.isSwimming,
         );
         final tappedIndex = painter.getTappedIndex(localPosition, box.size);
         if (mounted) {
@@ -2368,6 +2512,8 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
           textSecondaryColor: AppColors.getTextSecondaryColor(context),
           borderColor: AppColors.getBorderColor(context),
           selectedIndex: _selectedIndex,
+          paceLabels: widget.paceLabels,
+          isSwimming: widget.isSwimming,
         ),
         willChange: false,
       ),
@@ -2376,13 +2522,15 @@ class _SimpleLineChartState extends State<_SimpleLineChart> {
 }
 
 class _LinePainter extends CustomPainter {
-  final List<double> yValues; // для Темпа — секунды/км
+  final List<double> yValues; // для Темпа — секунды/км или сек/100м для плавания
   final bool paceMode; // true -> формат ММ:СС
   final int xMax; // количество км (точек), рисуем подписи 0..xMax
   final int chartMode; // 0 = Темп, 1 = Пульс, 2 = Высота, 3 = Мощность
   final Color textSecondaryColor; // цвет текста для подписей осей
   final Color borderColor; // цвет границы для сетки
   final int? selectedIndex; // индекс выбранной точки
+  final List<int> paceLabels; // Метки для оси X (в метрах для плавания, в км для остальных)
+  final bool isSwimming; // Флаг, что это плавание
 
   _LinePainter({
     required this.yValues,
@@ -2392,6 +2540,8 @@ class _LinePainter extends CustomPainter {
     required this.textSecondaryColor,
     required this.borderColor,
     this.selectedIndex,
+    this.paceLabels = const [],
+    this.isSwimming = false,
   });
 
   /// Получает цвет линии графика в зависимости от режима
@@ -2636,42 +2786,85 @@ class _LinePainter extends CustomPainter {
 
     // Подписи X (0..xMax) — без вертикальных линий
     // Если точек больше 20, пропускаем подписи для лучшей читаемости
+    // Для плавания используем метки в метрах из paceLabels
     final tpXStyle = TextStyle(
       fontFamily: 'Inter',
       fontSize: 10,
       color: textSecondaryColor,
     );
 
-    // Определяем шаг для подписей в зависимости от количества точек
-    // Цель: показать примерно 10-15 подписей максимум
-    final step = xMax <= 20
-        ? 1
-        : xMax <= 40
-        ? 2
-        : xMax <= 60
-        ? 3
-        : xMax <= 80
-        ? 4
-        : xMax <= 100
-        ? 5
-        : (xMax / 10).ceil();
+    // Для плавания используем метки из paceLabels (в метрах)
+    if (isSwimming && paceLabels.isNotEmpty && paceLabels.length == yValues.length) {
+      // Определяем шаг для подписей в зависимости от количества точек
+      final step = xMax <= 20
+          ? 1
+          : xMax <= 40
+          ? 2
+          : xMax <= 60
+          ? 3
+          : xMax <= 80
+          ? 4
+          : xMax <= 100
+          ? 5
+          : (xMax / 10).ceil();
 
-    // Всегда показываем первую (0) и последнюю (xMax) подпись
-    final labelsToShow = <int>{0, xMax};
+      // Всегда показываем первую и последнюю подпись
+      final lastIndex = xMax > 0 ? xMax : 0;
+      final labelsToShow = <int>{0};
+      if (lastIndex > 0) {
+        labelsToShow.add(lastIndex);
+      }
 
-    // Добавляем промежуточные подписи с учетом шага
-    for (int k = step; k < xMax; k += step) {
-      labelsToShow.add(k);
-    }
+      // Добавляем промежуточные подписи с учетом шага
+      for (int k = step; k < lastIndex; k += step) {
+        labelsToShow.add(k);
+      }
 
-    // Сортируем и рисуем подписи
-    final sortedLabels = labelsToShow.toList()..sort();
-    for (final k in sortedLabels) {
-      final x = left + w * (k / xMax);
-      final span = TextSpan(text: '$k', style: tpXStyle);
-      tp.text = span;
-      tp.layout();
-      tp.paint(canvas, Offset(x - tp.width / 2, top + h + 6));
+      // Сортируем и рисуем подписи с метками в метрах
+      final sortedLabels = labelsToShow.toList()..sort();
+      for (final k in sortedLabels) {
+        if (k < paceLabels.length && lastIndex > 0) {
+          final x = left + w * (k / lastIndex);
+          final labelValue = paceLabels[k];
+          final span = TextSpan(text: '$labelValueм', style: tpXStyle);
+          tp.text = span;
+          tp.layout();
+          tp.paint(canvas, Offset(x - tp.width / 2, top + h + 6));
+        }
+      }
+    } else {
+      // Для остальных типов: используем индексы (километры)
+      // Определяем шаг для подписей в зависимости от количества точек
+      // Цель: показать примерно 10-15 подписей максимум
+      final step = xMax <= 20
+          ? 1
+          : xMax <= 40
+          ? 2
+          : xMax <= 60
+          ? 3
+          : xMax <= 80
+          ? 4
+          : xMax <= 100
+          ? 5
+          : (xMax / 10).ceil();
+
+      // Всегда показываем первую (0) и последнюю (xMax) подпись
+      final labelsToShow = <int>{0, xMax};
+
+      // Добавляем промежуточные подписи с учетом шага
+      for (int k = step; k < xMax; k += step) {
+        labelsToShow.add(k);
+      }
+
+      // Сортируем и рисуем подписи
+      final sortedLabels = labelsToShow.toList()..sort();
+      for (final k in sortedLabels) {
+        final x = left + w * (k / xMax);
+        final span = TextSpan(text: '$k', style: tpXStyle);
+        tp.text = span;
+        tp.layout();
+        tp.paint(canvas, Offset(x - tp.width / 2, top + h + 6));
+      }
     }
   }
 
@@ -2683,7 +2876,9 @@ class _LinePainter extends CustomPainter {
       old.chartMode != chartMode ||
       old.textSecondaryColor != textSecondaryColor ||
       old.borderColor != borderColor ||
-      old.selectedIndex != selectedIndex;
+      old.selectedIndex != selectedIndex ||
+      old.paceLabels != paceLabels ||
+      old.isSwimming != isSwimming;
 }
 
 /// ────────────────────────────────────────────────────────────────
