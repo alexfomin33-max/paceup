@@ -1318,6 +1318,7 @@ class _Workout {
   final Map<String, double> heartRatePerKm;
   final Map<String, double> pacePerKm;
   final Map<String, double> elevationPerKm;
+  final Map<String, double> wattsPerKm; // мощность (ватты) по километрам
   final Map<String, dynamic>? stats; // Полный объект stats для совместимости
 
   _Workout(
@@ -1345,6 +1346,7 @@ class _Workout {
     this.heartRatePerKm = const {},
     this.pacePerKm = const {},
     this.elevationPerKm = const {},
+    this.wattsPerKm = const {},
     this.stats,
   ]);
 
@@ -1425,6 +1427,7 @@ class _Workout {
       activity.heartRatePerKm,
       activity.pacePerKm,
       activity.elevationPerKm,
+      activity.wattsPerKm,
       activity.stats,
     );
   }

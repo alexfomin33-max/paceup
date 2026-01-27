@@ -36,6 +36,7 @@ class TrainingActivity {
   final Map<String, double> heartRatePerKm;
   final Map<String, double> pacePerKm;
   final Map<String, double> elevationPerKm;
+  final Map<String, double> wattsPerKm; // мощность (ватты) по километрам
   final Map<String, dynamic>? stats; // Полный объект stats для совместимости
 
   TrainingActivity({
@@ -63,6 +64,7 @@ class TrainingActivity {
     this.heartRatePerKm = const {},
     this.pacePerKm = const {},
     this.elevationPerKm = const {},
+    this.wattsPerKm = const {},
     this.stats,
   });
 
@@ -147,11 +149,23 @@ class TrainingActivity {
       });
     }
     
+    // 🏔️ ПАРСИНГ ВЫСОТЫ: поддерживаем оба варианта (elevationPerKm и ElevationPerKm)
+    // В базе данных в поле params может быть как elevationPerKm, так и ElevationPerKm
     final elevationPerKm = <String, double>{};
-    if (json['elevationPerKm'] is Map) {
-      (json['elevationPerKm'] as Map).forEach((key, value) {
+    final elevationData = json['elevationPerKm'] ?? json['ElevationPerKm'];
+    if (elevationData is Map) {
+      (elevationData as Map).forEach((key, value) {
         if (value is num) {
           elevationPerKm[key.toString()] = value.toDouble();
+        }
+      });
+    }
+    
+    final wattsPerKm = <String, double>{};
+    if (json['wattsPerKm'] is Map) {
+      (json['wattsPerKm'] as Map).forEach((key, value) {
+        if (value is num) {
+          wattsPerKm[key.toString()] = value.toDouble();
         }
       });
     }
@@ -185,6 +199,7 @@ class TrainingActivity {
       heartRatePerKm: heartRatePerKm,
       pacePerKm: pacePerKm,
       elevationPerKm: elevationPerKm,
+      wattsPerKm: wattsPerKm,
       stats: stats,
     );
   }

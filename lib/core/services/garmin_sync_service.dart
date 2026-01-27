@@ -94,14 +94,22 @@ class GarminSyncService {
   /// 
   /// Получает последнюю тренировку и сохраняет её в БД
   /// Возвращает результат синхронизации
-  Future<Map<String, dynamic>> syncLastActivity() async {
+  Future<Map<String, dynamic>> syncLastActivity({String? garminActivityId}) async {
     try {
       // Получаем user_id для передачи в теле запроса (резервный вариант)
       final userId = await _authService.getUserId();
       
+      final body = <String, dynamic>{};
+      if (userId != null) {
+        body['user_id'] = userId;
+      }
+      if (garminActivityId != null) {
+        body['garmin_activity_id'] = garminActivityId;
+      }
+      
       final response = await _apiService.post(
         '/garmin/sync_activity.php',
-        body: userId != null ? {'user_id': userId} : null,
+        body: body.isNotEmpty ? body : null,
       );
 
       return response;
