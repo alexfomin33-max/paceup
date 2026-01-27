@@ -793,6 +793,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: chatRow,
                 );
 
+                // ─── Добавляем отступ сверху для первой карточки ───
+                if (i == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: item,
+                  );
+                }
+
                 return item;
               },
             );

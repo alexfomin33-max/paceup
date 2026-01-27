@@ -209,6 +209,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   String? _fullscreenImageUrl;
   bool _wasPaused = false;
   DateTime? _lastVisibleTime;
+  int? _selectedMessageIdForDelete; // ID сообщения, выбранного для удаления
 
   @override
   void initState() {
@@ -437,6 +438,78 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         }
       }
     });
+  }
+
+  // ─── Показ диалога подтверждения удаления ───
+  Future<void> _showDeleteConfirmation(int messageId) async {
+    if (!mounted) return;
+    
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Удалить сообщение?'),
+        content: const Text('Это действие нельзя отменить'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteMessage(messageId);
+    }
+  }
+
+  // ─── Удаление сообщения ───
+  Future<void> _deleteMessage(int messageId) async {
+    if (_currentUserId == null || _chatData == null) return;
+
+    try {
+      final response = await _api.post(
+        '/delete_thing_chat_message.php',
+        body: {
+          'chat_id': _chatData!.chatId.toString(),
+          'user_id': _currentUserId.toString(),
+          'message_id': messageId.toString(),
+        },
+      );
+
+      if (response['success'] == true) {
+        if (!mounted) return;
+        setState(() {
+          _messages.removeWhere((m) => m.id == messageId);
+          _selectedMessageIdForDelete = null;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] as String? ?? 'Ошибка удаления сообщения',
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка удаления сообщения: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   // ─── Отправка текстового сообщения ───
@@ -884,7 +957,15 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
               ),
             ),
             body: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
+              onTap: () {
+                FocusScope.of(context).unfocus();
+                // ─── Сбрасываем выбор сообщения для удаления ───
+                if (_selectedMessageIdForDelete != null) {
+                  setState(() {
+                    _selectedMessageIdForDelete = null;
+                  });
+                }
+              },
               behavior: HitTestBehavior.translucent,
               child: Column(
                 children: [
@@ -1089,6 +1170,15 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                           ? msg.imageUrl
                                           : null,
                                       time: _formatTime(msg.createdAt),
+                                      messageId: msg.id,
+                                      isSelectedForDelete:
+                                          _selectedMessageIdForDelete == msg.id,
+                                      onLongPress: () {
+                                        setState(() {
+                                          _selectedMessageIdForDelete = msg.id;
+                                        });
+                                      },
+                                      onDelete: () => _showDeleteConfirmation(msg.id),
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1464,7 +1554,8 @@ class _BubbleLeft extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final max = MediaQuery.of(context).size.width * 0.75;
+    final screenW = MediaQuery.of(context).size.width;
+    final max = screenW * 0.75;
     return Padding(
       padding: EdgeInsets.only(
         right: 12,
@@ -1475,114 +1566,147 @@ class _BubbleLeft extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          CircleAvatar(
-            radius: 14,
-            backgroundImage: avatarUrl != null && avatarUrl!.isNotEmpty
-                ? NetworkImage(avatarUrl!)
-                : null,
-            child: avatarUrl == null || avatarUrl!.isEmpty
-                ? Icon(
-                    CupertinoIcons.person_fill,
-                    size: 14,
-                    color: AppColors.getIconSecondaryColor(context),
-                  )
-                : null,
-            onBackgroundImageError: (error, stackTrace) {},
+          ClipOval(
+            child: Builder(
+              builder: (context) {
+                final dpr = MediaQuery.of(context).devicePixelRatio;
+                final w = (28 * dpr).round();
+                final url = avatarUrl ?? '';
+                return CachedNetworkImage(
+                  imageUrl: url.isNotEmpty ? url : 'https://uploads.paceup.ru/images/users/avatars/def.png',
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.cover,
+                  memCacheWidth: w,
+                  maxWidthDiskCache: w,
+                  placeholder: (context, url) => Container(
+                    width: 28,
+                    height: 28,
+                    color: AppColors.getSurfaceMutedColor(context),
+                    child: Center(
+                      child: CupertinoActivityIndicator(
+                        radius: 6,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    width: 28,
+                    height: 28,
+                    color: AppColors.getSurfaceMutedColor(context),
+                    child: Icon(
+                      CupertinoIcons.person,
+                      size: 16,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
           const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkSurfaceMuted
-                    : AppColors.softBg,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((image?.isNotEmpty ?? false)) ...[
-                    GestureDetector(
-                      onTap: onImageTap,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final maxW = max * 0.9;
-                            final w = (maxW * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: image!,
-                              width: maxW,
-                              fit: BoxFit.cover,
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
+          IntrinsicWidth(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: max),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.softBg,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.xl),
+                    topRight: Radius.circular(AppRadius.xl),
+                    bottomLeft: Radius.zero,
+                    bottomRight: Radius.circular(AppRadius.xl),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ─── Изображение (если есть) ───
+                    if ((image?.isNotEmpty ?? false)) ...[
+                      GestureDetector(
+                        onTap: onImageTap,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          child: Builder(
+                            builder: (context) {
+                              final dpr = MediaQuery.of(context).devicePixelRatio;
+                              final maxW = max * 0.9;
+                              final w = (maxW * dpr).round();
+                              return CachedNetworkImage(
+                                imageUrl: image!,
                                 width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(
-                                  context,
-                                ),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 12,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                return Container(
+                                fit: BoxFit.cover,
+                                memCacheWidth: w,
+                                maxWidthDiskCache: w,
+                                placeholder: (context, url) => Container(
                                   width: maxW,
                                   height: 200,
                                   color: AppColors.getSurfaceMutedColor(
                                     context,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 12,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
+                                ),
+                                errorWidget: (context, url, error) {
+                                  return Container(
+                                    width: maxW,
+                                    height: 200,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.photo,
+                                      size: 40,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    if (text.isNotEmpty) const SizedBox(height: 8),
+                      if (text.isNotEmpty) const SizedBox(height: 8),
+                    ],
+                    // ─── Текст и время на одной строке ───
+                    if (text.isNotEmpty)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.35,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            time,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.getTextTertiaryColor(context),
+                            ),
+                          ),
+                        ],
+                      ),
                   ],
-                  if (text.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
@@ -1598,6 +1722,10 @@ class _BubbleRight extends StatelessWidget {
   final String time;
   final double topSpacing;
   final double bottomSpacing;
+  final int messageId;
+  final bool isSelectedForDelete;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onDelete;
   final VoidCallback? onImageTap;
   const _BubbleRight({
     required this.text,
@@ -1605,6 +1733,10 @@ class _BubbleRight extends StatelessWidget {
     required this.time,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
+    required this.messageId,
+    this.isSelectedForDelete = false,
+    this.onLongPress,
+    this.onDelete,
     this.onImageTap,
   });
   @override
@@ -1619,101 +1751,126 @@ class _BubbleRight extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 20, 12, 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.brandPrimary.withValues(alpha: 0.2)
-                    : AppColors.blueBg,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+          // ─── Иконка удаления (показывается при длительном нажатии) ───
+          if (isSelectedForDelete)
+            GestureDetector(
+              onTap: onDelete,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: const Icon(
+                  CupertinoIcons.delete,
+                  size: 18,
+                  color: AppColors.error,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((image?.isNotEmpty ?? false)) ...[
-                    GestureDetector(
-                      onTap: onImageTap,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final maxW = max * 0.9;
-                            final w = (maxW * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: image!,
-                              width: maxW,
-                              fit: BoxFit.cover,
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
-                                width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(
-                                  context,
-                                ),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 12,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                return Container(
-                                  width: maxW,
-                                  height: 200,
-                                  color: AppColors.getSurfaceMutedColor(
-                                    context,
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    if (text.isNotEmpty) const SizedBox(height: 8),
-                  ],
-                  if (text.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
-                        ),
-                      ),
+            ),
+          GestureDetector(
+            onLongPress: onLongPress,
+            child: IntrinsicWidth(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: max),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+                  decoration: BoxDecoration(
+                    color: isSelectedForDelete
+                        ? const Color(0xFFe0ffbc)
+                        : AppColors.ownBubble,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomLeft: Radius.circular(AppRadius.xl),
+                      bottomRight: Radius.zero,
                     ),
                   ),
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ─── Изображение (если есть) ───
+                      if ((image?.isNotEmpty ?? false)) ...[
+                        GestureDetector(
+                          onTap: onImageTap,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            child: Builder(
+                              builder: (context) {
+                                final dpr = MediaQuery.of(context).devicePixelRatio;
+                                final maxW = max * 0.9;
+                                final w = (maxW * dpr).round();
+                                return CachedNetworkImage(
+                                  imageUrl: image!,
+                                  width: maxW,
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: w,
+                                  maxWidthDiskCache: w,
+                                  placeholder: (context, url) => Container(
+                                    width: maxW,
+                                    height: 200,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 12,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) {
+                                    return Container(
+                                      width: maxW,
+                                      height: 200,
+                                      color: AppColors.getSurfaceMutedColor(
+                                        context,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.photo,
+                                        size: 40,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        if (text.isNotEmpty) const SizedBox(height: 8),
+                      ],
+                      // ─── Текст и время на одной строке ───
+                      if (text.isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                text,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              time,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.getTextTertiaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -1741,7 +1898,7 @@ class _Composer extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
           border: Border(
@@ -1760,7 +1917,8 @@ class _Composer extends StatelessWidget {
             return Row(
               children: [
                 IconButton(
-                  icon: const Icon(CupertinoIcons.plus_circle),
+                  icon: const Icon(CupertinoIcons.plus_circle,
+                    size: 28),
                   onPressed: isDisabled ? null : onPickImage,
                   color: isDisabled
                       ? AppColors.getTextPlaceholderColor(context)
@@ -1774,7 +1932,8 @@ class _Composer extends StatelessWidget {
                     maxLines: 5,
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
-                    style: AppTextStyles.h14w4.copyWith(
+                    style: TextStyle(
+                      fontSize: 15,
                       color: isDisabled
                           ? AppColors.getTextPlaceholderColor(context)
                           : AppColors.getTextPrimaryColor(context),
@@ -1782,6 +1941,7 @@ class _Composer extends StatelessWidget {
                     decoration: InputDecoration(
                       hintText: isDisabled ? 'Товар продан' : 'Сообщение...',
                       hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        fontSize: 15,
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -1800,14 +1960,14 @@ class _Composer extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 0),
                 IconButton(
                   onPressed: (isEnabled && !isDisabled) ? onSend : null,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: Icon(
-                    Icons.send,
-                    size: 22,
+                    CupertinoIcons.arrow_up_circle_fill,
+                    size: 28,
                     color: (isEnabled && !isDisabled)
                         ? AppColors.brandPrimary
                         : AppColors.getTextPlaceholderColor(context),

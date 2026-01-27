@@ -96,6 +96,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   int? _actualChatId; // Реальный chatId (создается если widget.chatId = 0)
   double _previousKeyboardHeight = 0; // Для отслеживания изменений клавиатуры
   String? _fullscreenImageUrl; // URL изображения для полноэкранного просмотра
+  int? _selectedMessageIdForDelete; // ID сообщения, выбранного для удаления
 
   @override
   void initState() {
@@ -723,6 +724,84 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     }
   }
 
+  /// ─── Показ диалога подтверждения удаления ───
+  Future<void> _showDeleteConfirmation(int messageId) async {
+    if (!mounted) return;
+    
+    final confirmed = await showCupertinoDialog<bool>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Удалить сообщение?'),
+        content: const Text('Это действие нельзя отменить'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Отмена'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Удалить'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteMessage(messageId);
+    }
+  }
+
+  /// ─── Удаление сообщения ───
+  Future<void> _deleteMessage(int messageId) async {
+    if (_currentUserId == null) return;
+
+    final chatId = _actualChatId ?? widget.chatId;
+    if (chatId == 0) return;
+
+    try {
+      final api = ref.read(apiServiceProvider);
+      final response = await api.post(
+        '/delete_message.php',
+        body: {
+          'chat_id': chatId.toString(),
+          'user_id': _currentUserId.toString(),
+          'message_id': messageId.toString(),
+        },
+      );
+
+      if (response['success'] == true) {
+        if (!mounted) return;
+        setState(() {
+          _messages.removeWhere((m) => m.id == messageId);
+          _selectedMessageIdForDelete = null;
+        });
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                response['message'] as String? ?? 'Ошибка удаления сообщения',
+              ),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ErrorHandler.formatWithContext(e, context: 'удалении сообщения'),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
+  }
+
   /// ─── Отметка сообщений как прочитанных ───
   Future<void> _markMessagesAsRead() async {
     if (_currentUserId == null) return;
@@ -1124,6 +1203,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
               // ─── Убираем фокус с поля ввода при тапе на экран ───
               onTap: () {
                 FocusScope.of(context).unfocus();
+                // ─── Сбрасываем выбор сообщения для удаления ───
+                if (_selectedMessageIdForDelete != null) {
+                  setState(() {
+                    _selectedMessageIdForDelete = null;
+                  });
+                }
               },
               behavior: HitTestBehavior.translucent,
               child: Column(
@@ -1270,6 +1355,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                     time: _formatTime(message.createdAt),
                                     topSpacing: topSpacing,
                                     bottomSpacing: bottomSpacing,
+                                    messageId: message.id,
+                                    isSelectedForDelete:
+                                        _selectedMessageIdForDelete == message.id,
+                                    onLongPress: () {
+                                      setState(() {
+                                        _selectedMessageIdForDelete = message.id;
+                                      });
+                                    },
+                                    onDelete: () => _showDeleteConfirmation(message.id),
                                     onImageTap:
                                         (message.image?.isNotEmpty ?? false)
                                         ? () => _showFullscreenImage(
@@ -1378,7 +1472,7 @@ class _BubbleLeft extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
-    final max = screenW * 0.72;
+    final max = screenW * 0.75;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -1429,101 +1523,107 @@ class _BubbleLeft extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkSurfaceMuted
-                    : AppColors.softBg,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ─── Изображение (если есть) ───
-                  if ((image?.isNotEmpty ?? false)) ...[
-                    GestureDetector(
-                      onTap: onImageTap,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final maxW = max * 0.9;
-                            final w = (maxW * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: image!,
-                              width: maxW,
-                              fit: BoxFit.cover,
-                              // ── Встроенная анимация fade-in работает по умолчанию
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
+          IntrinsicWidth(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: max),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkSurfaceMuted
+                      : AppColors.softBg,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(AppRadius.xl),
+                    topRight: Radius.circular(AppRadius.xl),
+                    bottomLeft: Radius.zero,
+                    bottomRight: Radius.circular(AppRadius.xl),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // ─── Изображение (если есть) ───
+                    if ((image?.isNotEmpty ?? false)) ...[
+                      GestureDetector(
+                        onTap: onImageTap,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
+                          child: Builder(
+                            builder: (context) {
+                              final dpr = MediaQuery.of(context).devicePixelRatio;
+                              final maxW = max * 0.9;
+                              final w = (maxW * dpr).round();
+                              return CachedNetworkImage(
+                                imageUrl: image!,
                                 width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(context),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 12,
-                                    color: AppColors.getIconSecondaryColor(context),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                return Container(
+                                fit: BoxFit.cover,
+                                // ── Встроенная анимация fade-in работает по умолчанию
+                                memCacheWidth: w,
+                                maxWidthDiskCache: w,
+                                placeholder: (context, url) => Container(
                                   width: maxW,
                                   height: 200,
-                                  color: AppColors.getSurfaceMutedColor(
-                                    context,
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
+                                  color: AppColors.getSurfaceMutedColor(context),
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 12,
+                                      color: AppColors.getIconSecondaryColor(context),
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
+                                ),
+                                errorWidget: (context, url, error) {
+                                  return Container(
+                                    width: maxW,
+                                    height: 200,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.photo,
+                                      size: 40,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
-                    if (text.isNotEmpty) const SizedBox(height: 8),
-                  ],
-                  // ─── Текст (если есть) ───
-                  if (text.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
+                      if (text.isNotEmpty) const SizedBox(height: 8),
+                    ],
+                    // ─── Текст и время на одной строке ───
+                    if (text.isNotEmpty)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              text,
+                              style: TextStyle(
+                                fontSize: 15,
+                                height: 1.35,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            time,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppColors.getTextTertiaryColor(context),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  // ─── Время ───
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
+          ),
           ),
         ],
       ),
@@ -1538,6 +1638,10 @@ class _BubbleRight extends StatelessWidget {
   final String time;
   final double topSpacing;
   final double bottomSpacing;
+  final int messageId;
+  final bool isSelectedForDelete;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onDelete;
   final VoidCallback? onImageTap;
 
   const _BubbleRight({
@@ -1546,6 +1650,10 @@ class _BubbleRight extends StatelessWidget {
     required this.time,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
+    required this.messageId,
+    this.isSelectedForDelete = false,
+    this.onLongPress,
+    this.onDelete,
     this.onImageTap,
   });
 
@@ -1562,101 +1670,123 @@ class _BubbleRight extends StatelessWidget {
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: max),
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.brandPrimary.withValues(alpha: 0.2)
-                    : AppColors.blueBg,
-                borderRadius: BorderRadius.circular(AppRadius.sm),
+          // ─── Иконка удаления (показывается при длительном нажатии) ───
+          if (isSelectedForDelete)
+            GestureDetector(
+              onTap: onDelete,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: const Icon(
+                  CupertinoIcons.delete,
+                  size: 18,
+                  color: AppColors.error,
+                ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ─── Изображение (если есть) ───
-                  if ((image?.isNotEmpty ?? false)) ...[
-                    GestureDetector(
-                      onTap: onImageTap,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final maxW = max * 0.9;
-                            final w = (maxW * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: image!,
-                              width: maxW,
-                              fit: BoxFit.cover,
-                              // ── Встроенная анимация fade-in работает по умолчанию
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
-                                width: maxW,
-                                height: 200,
-                                color: AppColors.getSurfaceMutedColor(context),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 12,
-                                    color: AppColors.getIconSecondaryColor(context),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, url, error) {
-                                return Container(
-                                  width: maxW,
-                                  height: 200,
-                                  color: AppColors.getSurfaceMutedColor(
-                                    context,
-                                  ),
-                                  child: Icon(
-                                    CupertinoIcons.photo,
-                                    size: 40,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    if (text.isNotEmpty) const SizedBox(height: 8),
-                  ],
-                  // ─── Текст (если есть) ───
-                  if (text.isNotEmpty)
-                    SizedBox(
-                      width: double.infinity,
-                      child: Text(
-                        text,
-                        style: TextStyle(
-                          fontSize: 14,
-                          height: 1.35,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
-                    ),
-                  // ─── Время ───
-                  Padding(
-                    padding: const EdgeInsets.only(top: 0),
-                    child: Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        time,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.getTextTertiaryColor(context),
-                        ),
-                      ),
+            ),
+          GestureDetector(
+            onLongPress: onLongPress,
+            child: IntrinsicWidth(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: max),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+                  decoration: BoxDecoration(
+                    color: isSelectedForDelete
+                        ? const Color(0xFFe0ffbc)
+                        : AppColors.ownBubble,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomLeft: Radius.circular(AppRadius.xl),
+                      bottomRight: Radius.zero,
                     ),
                   ),
-                ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ─── Изображение (если есть) ───
+                      if ((image?.isNotEmpty ?? false)) ...[
+                        GestureDetector(
+                          onTap: onImageTap,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            child: Builder(
+                              builder: (context) {
+                                final dpr = MediaQuery.of(context).devicePixelRatio;
+                                final maxW = max * 0.9;
+                                final w = (maxW * dpr).round();
+                                return CachedNetworkImage(
+                                  imageUrl: image!,
+                                  width: maxW,
+                                  fit: BoxFit.cover,
+                                  // ── Встроенная анимация fade-in работает по умолчанию
+                                  memCacheWidth: w,
+                                  maxWidthDiskCache: w,
+                                  placeholder: (context, url) => Container(
+                                    width: maxW,
+                                    height: 200,
+                                    color: AppColors.getSurfaceMutedColor(context),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 12,
+                                        color: AppColors.getIconSecondaryColor(context),
+                                      ),
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) {
+                                    return Container(
+                                      width: maxW,
+                                      height: 200,
+                                      color: AppColors.getSurfaceMutedColor(
+                                        context,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.photo,
+                                        size: 40,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                        if (text.isNotEmpty) const SizedBox(height: 8),
+                      ],
+                      // ─── Текст и время на одной строке ───
+                      if (text.isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                text,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              time,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.getTextTertiaryColor(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
@@ -1712,7 +1842,7 @@ class _ComposerState extends State<_Composer> {
     return SafeArea(
       top: false,
       child: Container(
-        padding: const EdgeInsets.fromLTRB(0, 8, 8, 8),
+        padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
           // ─── Нижняя граница, как у AppBar ───
@@ -1732,7 +1862,7 @@ class _ComposerState extends State<_Composer> {
             return Row(
               children: [
                 IconButton(
-                  icon: const Icon(CupertinoIcons.plus_circle),
+                  icon: const Icon(CupertinoIcons.plus_circle, size: 28),
                   onPressed: widget.onPickImage,
                   color: AppColors.getIconSecondaryColor(context),
                 ),
@@ -1745,11 +1875,13 @@ class _ComposerState extends State<_Composer> {
                     textInputAction: TextInputAction.newline,
                     keyboardType: TextInputType.multiline,
                     style: TextStyle(
+                      fontSize: 15,
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                     decoration: InputDecoration(
                       hintText: 'Сообщение...',
                       hintStyle: AppTextStyles.h14w4Place.copyWith(
+                        fontSize: 15,
                         color: AppColors.getTextPlaceholderColor(context),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
@@ -1769,14 +1901,14 @@ class _ComposerState extends State<_Composer> {
                     onSubmitted: (_) => widget.onSend(),
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 0),
                 IconButton(
                   onPressed: isEnabled ? widget.onSend : null,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   icon: Icon(
-                    Icons.send,
-                    size: 22,
+                    CupertinoIcons.arrow_up_circle_fill,
+                    size: 28,
                     color: isEnabled
                         ? AppColors.brandPrimary
                         : AppColors.getTextPlaceholderColor(context),

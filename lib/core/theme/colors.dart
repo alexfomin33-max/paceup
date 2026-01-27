@@ -151,6 +151,7 @@ abstract class AppColors {
   // └───────────────────────────────────────────────────────────────────────┘
   // Чат-пузырь (как у тебя было)
   static const Color chatBubble = Color(0xFFDBFFDC);
+  static const Color ownBubble = Color(0xFFEFFEDD);
   // Имена в чате
   static const Color nameMale = Color(0xFF197DCA);
   static const Color nameFemale = Color(0xFFE02862);
