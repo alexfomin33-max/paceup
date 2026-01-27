@@ -1,0 +1,503 @@
+/* ────────────────────────────────────────────────────────────────────────
+   Глобальные стили и переменные
+   ──────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* Цвета бренда PaceUp */
+  --brand-primary: #379AE6;
+  --brand-secondary: #5856D6;
+  --brand-tertiary: #34C759;
+  --green-up: #9bec28;
+  
+  /* Текст */
+  --text-primary: #1C1C1E;
+  --text-secondary: #6C6C70;
+  --text-tertiary: #8E8E93;
+  
+  /* Фоны */
+  --background: #F2F2F7;
+  --surface: #FFFFFF;
+  --surface-muted: #FAFAFC;
+  
+  /* Тени */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.16);
+  
+  /* Радиусы */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  
+  /* Отступы */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--background);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  width: 100%;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Main
+   ──────────────────────────────────────────────────────────────────────── */
+
+.main {
+  flex: 1;
+  padding-top: var(--spacing-md);
+  padding-bottom: var(--spacing-md);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Заголовок страницы
+   ──────────────────────────────────────────────────────────────────────── */
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: var(--spacing-md);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Форма добавления задачи
+   ──────────────────────────────────────────────────────────────────────── */
+
+.add-task-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.add-task-wrapper {
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: flex-start;
+  background: var(--surface);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
+
+.add-task-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.task-icons {
+  display: flex;
+  gap: var(--spacing-xs);
+  align-items: center;
+}
+
+.task-icon {
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  user-select: none;
+}
+
+.task-icon:hover {
+  transform: scale(1.2);
+}
+
+.task-icon-human,
+.task-icon-robot {
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+
+.task-icon.selected {
+  opacity: 1;
+}
+
+.task-input {
+  flex: 1;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  min-height: 80px;
+  transition: all 0.3s ease;
+  background: var(--surface);
+  color: var(--text-primary);
+}
+
+.task-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(55, 154, 230, 0.1);
+}
+
+.task-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.btn-add {
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--brand-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-add:active {
+  transform: translateY(0);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Секции задач
+   ──────────────────────────────────────────────────────────────────────── */
+
+.tasks-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+.completed-section {
+  opacity: 0.9;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+}
+
+.tasks-count {
+  background: var(--brand-primary);
+  color: white;
+  padding: 2px;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 600;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Список задач
+   ──────────────────────────────────────────────────────────────────────── */
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.task-item {
+  background: var(--surface);
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  transition: all 0.3s ease;
+  animation: fadeIn 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+
+.task-item.completed-task {
+  opacity: 0.7;
+  background: var(--surface-muted);
+}
+
+.task-item.removing {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+.task-item.moving {
+  animation: slideDown 0.5s ease-out forwards;
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Иконка задачи
+   ──────────────────────────────────────────────────────────────────────── */
+
+.task-item-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Текст задачи
+   ──────────────────────────────────────────────────────────────────────── */
+
+.task-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.task-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.5;
+  word-wrap: break-word;
+  cursor: text;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+
+
+.task-text.editing {
+  background: var(--surface-muted);
+  outline: 2px solid var(--brand-primary);
+  outline-offset: 2px;
+}
+
+.task-text-input {
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  border: 2px solid var(--brand-primary);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  background: var(--surface);
+  resize: vertical;
+  min-height: 50px;
+}
+
+.task-text-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(55, 154, 230, 0.1);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Кнопки действий
+   ──────────────────────────────────────────────────────────────────────── */
+
+.task-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.btn-action {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Inter', sans-serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.btn-edit {
+  background: rgba(88, 86, 214, 0.5);
+  color: white;
+}
+
+.btn-edit:hover {
+  background: var(--brand-secondary);
+}
+
+.btn-complete {
+  background: rgba(52, 199, 89, 0.5);
+  color: white;
+}
+
+.btn-complete:hover {
+  background: var(--brand-tertiary);
+}
+
+.btn-restore {
+  background: rgba(55, 154, 230, 0.5);
+  color: white;
+}
+
+.btn-restore:hover {
+  background: var(--brand-primary);
+}
+
+.btn-delete {
+  background: rgba(255, 59, 48, 0.5);
+  color: white;
+  border: none;
+}
+
+.btn-delete:hover {
+  background: #ff3b30;
+}
+
+.btn-action:active {
+  transform: translateY(0);
+}
+
+/* ────────────────────────────────────────────────────────────────────────
+   Анимации
+   ──────────────────────────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+
+/* ────────────────────────────────────────────────────────────────────────
+   Адаптивность
+   ──────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 20px;
+  }
+
+  .add-task-wrapper {
+    flex-direction: column;
+  }
+
+  .btn-add {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .section-title {
+    font-size: 15px;
+  }
+
+  .task-item {
+    flex-wrap: wrap;
+  }
+
+  .task-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .btn-action {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 18px;
+  }
+
+  .section-title {
+    font-size: 14px;
+  }
+
+  .task-item {
+    padding: var(--spacing-xs);
+  }
+
+  .task-text {
+    font-size: 13px;
+  }
+}
