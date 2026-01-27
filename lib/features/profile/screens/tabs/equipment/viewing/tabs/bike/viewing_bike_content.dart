@@ -63,6 +63,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
 
   /// Загрузка велосипедов из API
   Future<void> _loadBikes() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -74,6 +75,8 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
         '/get_equipment.php',
         body: {'user_id': widget.userId.toString()},
       );
+
+      if (!mounted) return;
 
       if (data['success'] == true) {
         final bikesList = data['bikes'] as List<dynamic>? ?? [];
@@ -118,12 +121,14 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
           _isLoading = false;
         });
       } else {
+        if (!mounted) return;
         setState(() {
           _error = data['message'] ?? 'Ошибка при загрузке велосипедов';
           _isLoading = false;
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = ErrorHandler.format(e);
         _isLoading = false;

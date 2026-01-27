@@ -218,13 +218,13 @@ class _ClubCard extends StatelessWidget {
     final card = Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        // border: Border.all(color: AppColors.twinchip, width: 1),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
+                : AppColors.shadowMedium,
             offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,
@@ -240,13 +240,13 @@ class _ClubCard extends StatelessWidget {
           Container(
             height: 100,
             width: 100,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: AppColors.getBorderColor(context),
-                width: 0.5,
-              ),
-            ),
+            // decoration: BoxDecoration(
+            //   shape: BoxShape.circle,
+            //   border: Border.all(
+            //     color: AppColors.getBorderColor(context),
+            //     width: 0.5,
+            //   ),
+            // ),
             child: ClipOval(child: _ClubLogoImage(logoUrl: club.logoUrl)),
           ),
           const SizedBox(height: 8),

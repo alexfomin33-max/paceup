@@ -411,6 +411,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     final formState = ref.watch(formStateProvider);
 
     return InteractiveBackSwipe(
+      enabled: false,
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: const PaceAppBar(

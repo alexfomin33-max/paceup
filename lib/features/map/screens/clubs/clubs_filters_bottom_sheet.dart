@@ -114,8 +114,10 @@ class _ClubsFiltersBottomSheetState extends State<ClubsFiltersBottomSheet> {
             // ──── Разделительная линия ────
             Divider(
               height: 1,
-              thickness: 1,
+              thickness: 0.5,
               color: AppColors.getBorderColor(context),
+              indent: 4,
+              endIndent: 4,
             ),
             const SizedBox(height: 16),
 

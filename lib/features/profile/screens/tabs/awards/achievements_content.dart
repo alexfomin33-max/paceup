@@ -198,15 +198,15 @@ class _BadgeTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.7,
-        ),
+        // border: Border.all(
+        //   color: AppColors.getBorderColor(context),
+        //   width: 0.7,
+        // ),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).brightness == Brightness.dark
                 ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
+                : AppColors.shadowMedium,
             offset: const Offset(0, 1),
             blurRadius: 1,
             spreadRadius: 0,

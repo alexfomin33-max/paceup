@@ -424,6 +424,7 @@ class _AddOfficialEventScreenState
         : null;
 
     return InteractiveBackSwipe(
+      enabled: false,
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(
@@ -921,7 +922,7 @@ class _AddOfficialEventScreenState
                       final brightness = Theme.of(context).brightness;
                       final isLight = brightness == Brightness.light;
                       final fillColor = isLight
-                          ? AppColors.background
+                          ? AppColors.disabledchip
                           : AppColors.getSurfaceMutedColor(context);
                       final textColor = isLight
                           ? AppColors.getTextPlaceholderColor(context)

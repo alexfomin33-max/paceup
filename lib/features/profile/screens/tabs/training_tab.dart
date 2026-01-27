@@ -496,7 +496,7 @@ class _CalendarCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: AppColors.twinchip,
-          width: 0.7,
+          width: 1.0,
         ),
       ),
       padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
@@ -779,7 +779,7 @@ class _WorkoutCard extends ConsumerWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.twinchip,
-            width: 0.7,
+            width: 1.0,
           ),
         ),
         padding: const EdgeInsets.all(6),

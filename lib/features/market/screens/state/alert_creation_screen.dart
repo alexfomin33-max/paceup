@@ -713,15 +713,15 @@ class _EventAutocompleteField extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                          border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.7,
+                          width: 0.5,
                         ),
-                        // boxShadow: [
-                        //   const BoxShadow(
-                        //     color: AppColors.twinshadow,
-                        //     blurRadius: 20,
-                        //     offset: Offset(0, 1),
-                        //   ),
-                        // ],
+        boxShadow: [
+          const BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
                       ),
                       clipBehavior: Clip.antiAlias,
                       child: ClipRRect(
@@ -1014,7 +1014,7 @@ class _ChipsRow extends StatelessWidget {
                   ? null
                   : Border.all(
                           color: AppColors.twinchip,
-                          width: 0.7,
+                          width: 1.0,
                         ),
         
             ),
@@ -1070,7 +1070,7 @@ class _OvalToggle extends StatelessWidget {
               ? null
               : Border.all(
                           color: AppColors.twinchip,
-                          width: 0.7,
+                          width: 1.0,
                         ),
 
         ),
@@ -1105,20 +1105,20 @@ class _AlertCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: const BorderRadius.all(Radius.circular(AppRadius.sm)),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
-                        ),
-        // boxShadow: [
-        //   const BoxShadow(
-        //     color: AppColors.twinshadow,
-        //     blurRadius: 20,
-        //     offset: Offset(0, 1),
-        //   ),
-        // ],
+          color: AppColors.twinchip,
+          width: 1.0,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 20,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
-      padding: const EdgeInsets.all(6),
+      padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1127,12 +1127,10 @@ class _AlertCard extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: onOpen,
             child: Container(
-              width: 58,
-              height: 58,
+              width: 60,
+              height: 60,
               decoration: BoxDecoration(
-                borderRadius: const BorderRadius.all(
-                  Radius.circular(AppRadius.xs),
-                ),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 color: AppColors.getBackgroundColor(context),
               ),
               clipBehavior: Clip.antiAlias,
@@ -1141,8 +1139,8 @@ class _AlertCard extends StatelessWidget {
                       imageUrl: alert.imageUrl,
                       fit: BoxFit.cover,
                       placeholder: (context, url) => Container(
-                        width: 58,
-                        height: 58,
+                        width: 60,
+                        height: 60,
                         color: AppColors.getBackgroundColor(context),
                         child: Center(
                           child: CupertinoActivityIndicator(
@@ -1171,7 +1169,7 @@ class _AlertCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 2),
+                const SizedBox(height: 0),
                 GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onTap: onOpen,
@@ -1179,12 +1177,12 @@ class _AlertCard extends StatelessWidget {
                     alert.eventName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.h14w4.copyWith(
+                    style: AppTextStyles.h14w5.copyWith(
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Row(
                   children: [
                     DistancePill(text: alert.distance),

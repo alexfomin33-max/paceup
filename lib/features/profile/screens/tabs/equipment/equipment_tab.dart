@@ -658,7 +658,7 @@ class _GearListCard extends StatelessWidget {
           color: AppColors.getSurfaceColor(context),
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
+            color: AppColors.twinchip,
             width: 1.0,
           ),
         ),

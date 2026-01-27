@@ -698,6 +698,7 @@ class _EditOfficialEventScreenState
     }
 
     return InteractiveBackSwipe(
+      enabled: false,
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(

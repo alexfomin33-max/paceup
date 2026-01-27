@@ -10,6 +10,7 @@ import '../../../../../../../core/utils/error_handler.dart';
 import '../../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../../core/services/health_sync_service.dart';
 import '../utils/workout_importer.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,6 +59,9 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
   bool _importing = false;
   int _importedCount = 0;
   int _failedCount = 0;
+
+  // Для запроса разрешений и автоматической синхронизации
+  bool _requestingPermissions = false;
 
   @override
   void initState() {
@@ -162,6 +166,66 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       _showSnackBar('Доступ не выдан. Проверьте $hint');
     }
     return ok2;
+  }
+
+  /// Запрашивает разрешения и автоматически запускает синхронизацию новых тренировок
+  Future<void> _requestPermissionsAndSync() async {
+    if (_requestingPermissions) return;
+
+    setState(() {
+      _requestingPermissions = true;
+      _status = 'Запрашиваю разрешения…';
+    });
+
+    try {
+      final granted = await _requestPermissions();
+      if (!mounted) return;
+
+      if (!granted) {
+        setState(() {
+          _status = 'Разрешения не выданы.';
+          _requestingPermissions = false;
+        });
+        return;
+      }
+
+      // ✅ Разрешения выданы — запускаем автоматическую синхронизацию
+      setState(() {
+        _status = 'Разрешения выданы. Проверяю новые тренировки…';
+      });
+
+      final syncService = ref.read(healthSyncServiceProvider);
+      final result = await syncService.syncNewWorkouts(ref);
+
+      if (!mounted) return;
+
+      if (result.success) {
+        setState(() {
+          _status = result.importedCount > 0
+              ? 'Импортировано новых тренировок: ${result.importedCount}'
+              : 'Новых тренировок не найдено';
+          _requestingPermissions = false;
+        });
+        _showSnackBar(
+          result.importedCount > 0
+              ? 'Импортировано тренировок: ${result.importedCount}'
+              : 'Новых тренировок не найдено',
+        );
+      } else {
+        setState(() {
+          _status = 'Ошибка синхронизации: ${result.message}';
+          _requestingPermissions = false;
+        });
+        _showSnackBar('Ошибка: ${result.message}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _status = 'Ошибка: $e';
+        _requestingPermissions = false;
+      });
+      _showSnackBar(ErrorHandler.format(e));
+    }
   }
 
   // ───────── Синхронизация за 7 дней ─────────
@@ -455,6 +519,23 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
             ),
 
             const SizedBox(height: 16),
+
+            // Кнопка запроса разрешений
+            Center(
+              child: PrimaryButton(
+                text: _requestingPermissions
+                    ? 'Запрос разрешений…'
+                    : 'Запрос разрешений',
+                onPressed: _requestingPermissions
+                    ? () {}
+                    : () => _requestPermissionsAndSync(),
+                width: 260,
+                height: 44,
+                isLoading: _requestingPermissions,
+              ),
+            ),
+
+            const SizedBox(height: 12),
 
             // Кнопка синка
             Center(

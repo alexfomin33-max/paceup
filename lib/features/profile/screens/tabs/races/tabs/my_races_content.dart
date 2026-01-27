@@ -103,99 +103,97 @@ class _RaceBlock extends StatelessWidget {
         ),
         const SizedBox(height: 4),
 
-        // Табличная карточка — во всю ширину экрана
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: AppColors.getSurfaceColor(context),
-            border: Border(
-              top: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 0.5,
-              ),
-              bottom: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 0.5,
-              ),
+        // Табличная карточка — с горизонтальным отступом 12px от краев экрана
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          child: Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              border: Border.all(
+                          color: AppColors.twinchip,
+                          width: 1.0,
+                        ),
+              // boxShadow: [
+              //   BoxShadow(
+              //     color: Theme.of(context).brightness == Brightness.dark
+              //         ? AppColors.darkShadowSoft
+              //         : AppColors.shadowSoft,
+              //     offset: const Offset(0, 1),
+              //     blurRadius: 1,
+              //     spreadRadius: 0,
+              //   ),
+              // ],
             ),
-            boxShadow: [
-              BoxShadow(
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkShadowSoft
-                    : AppColors.shadowSoft,
-                offset: const Offset(0, 1),
-                blurRadius: 1,
-                spreadRadius: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // ЯЧЕЙКА 1: превью с паддингом 4 по всем сторонам
+                  SizedBox(
+                    child: Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        child: Image.asset(item.asset, width: 80, height: 53),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // ЯЧЕЙКА 2: дистанция
+                  Expanded(
+                    child: Center(
+                      child: _metric(
+                        context,
+                        Icons.directions_run,
+                        '${item.km.toStringAsFixed(1)} км',
+                      ),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: FractionallySizedBox(
+                      heightFactor: 0.5,
+                      child: VerticalDivider(
+                        width: 1,
+                        thickness: 0.5,
+                        color: AppColors.getDividerColor(context),
+                      ),
+                    ),
+                  ),
+
+                  // ЯЧЕЙКА 3: время
+                  Expanded(
+                    child: Center(
+                      child: _metric(context, Icons.access_time, item.time),
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: FractionallySizedBox(
+                      heightFactor: 0.5,
+                      child: VerticalDivider(
+                        width: 1,
+                        thickness: 0.5,
+                        color: AppColors.getDividerColor(context),
+                      ),
+                    ),
+                  ),
+
+                  // ЯЧЕЙКА 4: темп
+                  Expanded(
+                    child: Center(
+                      child: _metric(context, Icons.speed, item.pace),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // ЯЧЕЙКА 1: превью с паддингом 4 по всем сторонам
-                SizedBox(
-                  child: Padding(
-                    padding: const EdgeInsets.all(0),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
-                      child: Image.asset(item.asset, width: 80, height: 53),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 10),
-
-                // ЯЧЕЙКА 2: дистанция
-                Expanded(
-                  child: Center(
-                    child: _metric(
-                      context,
-                      Icons.directions_run,
-                      '${item.km.toStringAsFixed(1)} км',
-                    ),
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: FractionallySizedBox(
-                    heightFactor: 0.5,
-                    child: VerticalDivider(
-                      width: 1,
-                      thickness: 0.5,
-                      color: AppColors.getDividerColor(context),
-                    ),
-                  ),
-                ),
-
-                // ЯЧЕЙКА 3: время
-                Expanded(
-                  child: Center(
-                    child: _metric(context, Icons.access_time, item.time),
-                  ),
-                ),
-
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  child: FractionallySizedBox(
-                    heightFactor: 0.5,
-                    child: VerticalDivider(
-                      width: 1,
-                      thickness: 0.5,
-                      color: AppColors.getDividerColor(context),
-                    ),
-                  ),
-                ),
-
-                // ЯЧЕЙКА 4: темп
-                Expanded(
-                  child: Center(
-                    child: _metric(context, Icons.speed, item.pace),
-                  ),
-                ),
-              ],
             ),
           ),
         ),

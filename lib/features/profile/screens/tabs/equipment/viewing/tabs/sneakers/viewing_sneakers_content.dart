@@ -222,7 +222,7 @@ class _ViewingSneakersContentState
           final sneaker = _sneakers[index];
           return Column(
             children: [
-              if (index > 0) const SizedBox(height: 12),
+              if (index > 0) const SizedBox(height: 16),
               GearViewCard.shoes(
                 equipUserId: sneaker.equipUserId,
                 brand: sneaker.brand,
@@ -548,8 +548,18 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        border: Border.all(color: AppColors.getBorderColor(context), width: 1),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        // border: Border.all(color: AppColors.getBorderColor(context), width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.darkShadowSoft
+                : AppColors.shadowMedium,
+            offset: const Offset(0, 1),
+            blurRadius: 1,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,7 +575,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                   // Для своего профиля - padding top: 0, для чужого - padding top: 12
                   return Padding(
                     padding: EdgeInsets.fromLTRB(
-                      12,
+                      16,
                       isOwnProfile ? 0 : 12,
                       12,
                       0,
@@ -627,7 +637,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                   );
                 },
                 loading: () => Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -661,7 +671,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                   ),
                 ),
                 error: (_, _) => Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -713,7 +723,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                       return Transform.translate(
                         offset: const Offset(0, -6),
                         child: Padding(
-                          padding: const EdgeInsets.only(left: 12, bottom: 6),
+                          padding: const EdgeInsets.only(left: 16, bottom: 6),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 10,
@@ -754,7 +764,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
                     } else {
                       return Padding(
                         padding: const EdgeInsets.only(
-                          left: 12,
+                          left: 16,
                           top: 8,
                           bottom: 6,
                         ),
@@ -1004,13 +1014,13 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
             height: 1,
             thickness: 0.5,
             color: AppColors.getDividerColor(context),
-            indent: 12,
+            indent: 16,
             endIndent: 12,
           ),
 
           // ── Метрики (левое выравнивание чисел)
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+            padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
             child: Row(
               children: [
                 _metric('Тренировок', '${widget.workouts}'),
@@ -1022,7 +1032,7 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
 
           // ── Дата
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+            padding: const EdgeInsets.fromLTRB(16, 6, 12, 16),
             child: Text(
               widget.since,
               style: TextStyle(

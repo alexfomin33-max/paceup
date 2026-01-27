@@ -550,7 +550,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             ),
                           )
                         : null,
-                    centerTitle: false,
+                    centerTitle: !isOwnProfile,
                     actions: isOwnProfile
                         ? [
                             _CircleAppIcon(

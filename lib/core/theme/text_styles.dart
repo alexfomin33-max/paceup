@@ -45,6 +45,15 @@ class AppTextStyles {
   );
   // style: AppTextStyles.h15w5
 
+    static const TextStyle h15w5Place = TextStyle(
+    fontFamily: 'Inter',
+    fontSize: 15,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textPlaceholder,
+    letterSpacing: 0,
+  );
+  // style: AppTextStyles.h15w5Place
+
   static const TextStyle h15w4 = TextStyle(
     fontFamily: 'Inter',
     fontSize: 15,

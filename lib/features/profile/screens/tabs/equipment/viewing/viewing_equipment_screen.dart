@@ -55,7 +55,7 @@ class _ViewingEquipmentScreenState
         backgroundColor: AppColors.getBackgroundColor(context),
         appBar: AppBar(
           elevation: 0,
-          backgroundColor: AppColors.getSurfaceColor(context),
+          backgroundColor: AppColors.getBackgroundColor(context),
           centerTitle: true,
           title: const Text(
             'Просмотр снаряжения',
@@ -86,7 +86,7 @@ class _ViewingEquipmentScreenState
           bottom: true,
           child: Column(
             children: [
-              const SizedBox(height: 14),
+              const SizedBox(height: 8),
 
               // ── Пилюля как segmented_pill.dart
               Padding(

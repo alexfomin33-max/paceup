@@ -115,14 +115,14 @@ class _SearchField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
                           color: AppColors.twinchip,
                           width: 0.5,
                         ),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.twinchip,
+            color: AppColors.twinshadow,
             blurRadius: 10,
             offset: Offset(0, 1),
           ),
@@ -150,18 +150,18 @@ class _SearchField extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
-            vertical: 22,
+            vertical: 17,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             borderSide: BorderSide.none
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             borderSide: BorderSide.none
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             borderSide: BorderSide.none
           ),
         ),
@@ -351,7 +351,7 @@ class _RowTileState extends State<_RowTile> {
       behavior: HitTestBehavior.opaque,
       onTap: () => _openChat(context),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: [
             // ─── Аватар → переход в профиль ───

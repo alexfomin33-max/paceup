@@ -102,6 +102,7 @@ class _RecommendedList extends StatelessWidget {
           parent: AlwaysScrollableScrollPhysics(),
         ),
         cacheExtent: 300,
+        clipBehavior: Clip.none,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         children: [
           for (int i = 0; i < friends.length; i++) ...[
@@ -246,11 +247,18 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
-        ),
+            color: AppColors.twinchip,
+            width: 0.5,
+          ),
+          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

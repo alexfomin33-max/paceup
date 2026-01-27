@@ -314,7 +314,7 @@ class TaskCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.7,
+                          width: 1.0,
                         ),
         // boxShadow: const [
         //   // BoxShadow(

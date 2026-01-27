@@ -882,6 +882,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     }
 
     return InteractiveBackSwipe(
+      enabled: false,
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(

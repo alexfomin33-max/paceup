@@ -947,6 +947,19 @@ class _ActivityDescriptionPageState
                         bottomLeft: Radius.circular(AppRadius.xl),
                         bottomRight: Radius.circular(AppRadius.xl),
                       ),
+                      border: const Border(
+                        bottom: BorderSide(
+                          color: AppColors.twinchip,
+                          width: 1.0,
+                        ),
+                      ),
+                          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
                     ),
                     clipBehavior: Clip.antiAlias,
                     padding: const EdgeInsets.symmetric(
@@ -1046,9 +1059,16 @@ class _ActivityDescriptionPageState
                         color: AppColors.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
-                        ),
+                            color: AppColors.twinchip,
+                            width: 1.0,
+                          ),
+                          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
                       ),
                       child: _SplitsTableFull(
                         stats: stats,
@@ -1070,9 +1090,16 @@ class _ActivityDescriptionPageState
                         color: AppColors.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
-                        ),
+                            color: AppColors.twinchip,
+                            width: 1.0,
+                          ),
+                          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1119,9 +1146,17 @@ class _ActivityDescriptionPageState
                         color: AppColors.getSurfaceColor(context),
                         borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
-                        ),
+                            color: AppColors.twinchip,
+                            width: 1.0,
+                          ),
+                          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+    
+        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1171,8 +1206,15 @@ class _ActivityDescriptionPageState
                           borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: AppColors.twinchip,
-                            width: 0.7,
+                            width: 1.0,
                           ),
+                          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinchip,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1206,7 +1248,7 @@ class _ActivityDescriptionPageState
                       ),
                     ),
                   ),
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+                  const SliverToBoxAdapter(child: SizedBox(height: 16)),
                 ] else
                   // 🏊 ДЛЯ ПЛАВАНИЯ: добавляем отступ снизу, если графика Высота нет
                   const SliverToBoxAdapter(child: SizedBox(height: 12)),
@@ -2943,14 +2985,14 @@ class _ChartMetricsHeader extends StatelessWidget {
 }
 
 /// ────────────────────────────────────────────────────────────────────
-/// 🎨 КРУГЛАЯ КНОПКА-ИКОНКА: полупрозрачная кнопка для AppBar
-/// Плавно меняет стиль при скролле: кружок исчезает, иконка становится темной
+/// 🎨 КНОПКА-ИКОНКА: иконка для AppBar без фонового кружка
+/// Плавно меняет цвет при скролле: от светлого (на карте) к темному (в AppBar)
 /// ────────────────────────────────────────────────────────────────────
 class _CircleAppIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final bool isScrolled;
-  final double fadeOpacity; // Плавное исчезновение фона при начале скролла
+  final double fadeOpacity; // Плавное изменение цвета иконки при скролле
   const _CircleAppIcon({
     required this.icon,
     required this.isScrolled,
@@ -2971,31 +3013,12 @@ class _CircleAppIcon extends StatelessWidget {
       (1 - fadeOpacity.clamp(0.0, 1.0)),
     );
 
-    // Цвет фона: делаем кружок более прозрачным, чтобы меньше перекрывать фон
-    // при не прокрученной шапке; при скролле фон кружка полностью исчезает.
-    final backgroundColor = isScrolled
-        ? Colors.transparent
-        : AppColors.getTextPrimaryColor(
-            context,
-          ).withValues(alpha: 0.32 * fadeOpacity.clamp(0.0, 1.0));
-
     return SizedBox(
       width: 38.0,
       height: 38.0,
       child: GestureDetector(
         onTap: onPressed ?? () {},
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: backgroundColor,
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Icon(icon, size: 20, color: iconColor),
-        ),
+        child: Icon(icon, size: 20, color: iconColor),
       ),
     );
   }

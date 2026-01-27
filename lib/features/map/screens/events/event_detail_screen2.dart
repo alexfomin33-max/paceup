@@ -966,7 +966,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           color: AppColors.getSurfaceColor(context),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                            color: AppColors.getBorderColor(context),
+                            color: AppColors.twinchip,
                             width: 1,
                           ),
                         ),
@@ -1016,7 +1016,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                   AppRadius.md,
                                 ),
                                 border: Border.all(
-                                  color: AppColors.getBorderColor(context),
+                                  color: AppColors.twinchip,
                                   width: 1,
                                 ),
                               ),
@@ -1061,7 +1061,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                                   AppRadius.md,
                                 ),
                                 border: Border.all(
-                                  color: AppColors.getBorderColor(context),
+                                  color: AppColors.twinchip,
                                   width: 1,
                                 ),
                               ),
@@ -1161,7 +1161,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           color: AppColors.getSurfaceColor(context),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                            color: AppColors.getBorderColor(context),
+                            color: AppColors.twinchip,
                             width: 1,
                           ),
                         ),
@@ -1306,7 +1306,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           color: AppColors.getSurfaceColor(context),
                           borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                            color: AppColors.getBorderColor(context),
+                            color: AppColors.twinchip,
                             width: 1,
                           ),
                         ),
@@ -1457,7 +1457,7 @@ class _Avatar40 extends StatelessWidget {
       placeholder: (context, url) => Container(
         width: 40,
         height: 40,
-        color: AppColors.getBorderColor(context),
+        color: AppColors.twinchip,
         child: Center(
           child: CupertinoActivityIndicator(
             radius: 8,
@@ -1468,7 +1468,7 @@ class _Avatar40 extends StatelessWidget {
       errorWidget: (context, imageUrl, error) => Container(
         width: 40,
         height: 40,
-        color: AppColors.getBorderColor(context),
+        color: AppColors.twinchip,
         child: Icon(
           Icons.person,
           size: 24,
@@ -1503,7 +1503,7 @@ class _SquarePhoto extends StatelessWidget {
                 memCacheWidth: target,
                 maxWidthDiskCache: target,
                 placeholder: (context, url) => Container(
-                  color: AppColors.getBorderColor(context),
+                  color: AppColors.twinchip,
                   child: Center(
                     child: CupertinoActivityIndicator(
                       radius: 12,

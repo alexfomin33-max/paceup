@@ -27,7 +27,7 @@ abstract class AppColors {
   // │ ФОНЫ / ПОВЕРХНОСТИ                                                    │
   // └───────────────────────────────────────────────────────────────────────┘
   // Системные iOS-лайк фоны
-  static const Color background = Color(0xFFF2F2F7); // systemGroupedBackground
+  static const Color background = Color(0xFFF8F8FC); // systemGroupedBackground
   static const Color softBg = Color(0xFFF5F5F5);
   static const Color twinBg = Color(0xFFF8F8FC);
   // основная поверхность (карточки)
@@ -35,6 +35,7 @@ abstract class AppColors {
   // слегка приглушённая поверхность
   static const Color surfaceMuted = Color(0xFFFAFAFC); 
   static const Color disabled = Color(0xFFF7F7FA);
+  static const Color disabledchip = Color(0xFFF2F2F7);
 
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ РАЗДЕЛИТЕЛИ / БОРДЕРЫ / СТРОКИ                                       │
@@ -42,7 +43,7 @@ abstract class AppColors {
   // iOS separator: обычно это полупрозрачный тёмный на белом.
   // Мы даём уже просчитанные светлые значения, чтобы не возиться с альфой.
   static const Color divider = Color(0xFFE5E5EA); // тонкая линия-разделитель
-  static const Color border = Color(0xFFEAEAEA); // очень лёгкая рамка
+  static const Color border = Color(0xFFF1F1F9); // очень лёгкая рамка
   // более заметный бордер (для инпутов)
   static const Color outline = Color(0xFFDADDE2);
 

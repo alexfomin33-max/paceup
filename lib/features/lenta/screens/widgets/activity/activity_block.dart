@@ -115,17 +115,18 @@ class ActivityBlock extends ConsumerWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(AppRadius.xl),
-          bottom: Radius.circular(AppRadius.xl),
-        ),
-        border: Border(
-          top: BorderSide(width: 0.5, color: AppColors.getBorderColor(context)),
-          bottom: BorderSide(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: AppColors.twinchip,
             width: 0.5,
-            color: AppColors.getBorderColor(context),
           ),
-        ),
+          boxShadow: const [
+          BoxShadow(
+            color: AppColors.twinshadow,
+            blurRadius: 10,
+            offset: Offset(0, 1),
+          ),
+        ],
       ),
       child: Builder(
         builder: (context) {

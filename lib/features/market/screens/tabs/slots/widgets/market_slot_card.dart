@@ -44,15 +44,15 @@ class MarketSlotCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.7,
+                          width: 1.0,
                         ),
-          boxShadow: const [
-            // BoxShadow(
-            //   color: AppColors.twinshadow,
-            //   blurRadius: 20,
-            //   offset: Offset(0, 1),
-            // ),
-          ],
+          // boxShadow: const [
+          //   // BoxShadow(
+          //   //   color: AppColors.twinshadow,
+          //   //   blurRadius: 20,
+          //   //   offset: Offset(0, 1),
+          //   // ),
+          // ],
         ),
         padding: const EdgeInsets.fromLTRB(8,10,8,10),
         child: Column(

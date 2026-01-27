@@ -703,6 +703,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     }
 
     return InteractiveBackSwipe(
+      enabled: false,
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
         appBar: PaceAppBar(

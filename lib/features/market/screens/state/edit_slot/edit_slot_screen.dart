@@ -239,6 +239,59 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
     return const [];
   }
 
+  /// Кнопка сохранения
+  Widget _buildSaveButton() {
+    final isSubmitting = _isSubmitting || _isDeleting;
+    final textColor = AppColors.getSurfaceColor(context);
+
+    final button = ElevatedButton(
+      onPressed: !isSubmitting && _isValid ? _save : () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: isSubmitting
+          ? Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: CupertinoActivityIndicator(
+                    radius: 9,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  'Сохранить изменения',
+                  style: AppTextStyles.h15w5.copyWith(
+                    color: textColor,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            )
+          : Text(
+              'Сохранить изменения',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+
+    if (isSubmitting) {
+      return IgnorePointer(child: button);
+    }
+
+    return button;
+  }
+
   /// Сохранение изменений слота
   Future<void> _save() async {
     if (!_isValid || _isSubmitting) return;
@@ -422,15 +475,10 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // 🔻 умный нижний паддинг: клавиатура (viewInsets) > 0 ? берём её : берём safe-area
-    final media = MediaQuery.of(context);
-    final bottomInset = media.viewInsets.bottom; // клавиатура
-    final safeBottom = media.viewPadding.bottom; // «борода»/ноутч
-    final bottomPad = (bottomInset > 0 ? bottomInset : safeBottom) + 20;
-
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
+        resizeToAvoidBottomInset: false,
         appBar: PaceAppBar(
           backgroundColor: AppColors.twinBg,
           title: 'Редактирование',
@@ -452,12 +500,6 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         ),
         body: Stack(
           children: [
-            // ─── Индикатор загрузки ───
-            if (_isLoading)
-              const Center(
-                child: CupertinoActivityIndicator(),
-              ),
-
             // ─── Форма с эффектом fade-in ───
             IgnorePointer(
               ignoring: _isLoading,
@@ -465,17 +507,24 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                 opacity: _isLoading ? 0.0 : 1.0,
                 duration: const Duration(milliseconds: 300),
                 child: GestureDetector(
-                // ── снимаем фокус с текстовых полей при клике вне их
-                onTap: () {
-                  FocusScope.of(context).unfocus();
-                },
-                behavior: HitTestBehavior.opaque,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, bottomPad),
-                  physics: const BouncingScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                  // ── снимаем фокус с текстовых полей при клике вне их
+                  onTap: () {
+                    FocusScope.of(context).unfocus();
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: SafeArea(
+                    child: Column(
+                      children: [
+                        // ────────────────────────────────────────────────────────────────
+                        // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
+                        // ────────────────────────────────────────────────────────────────
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                            physics: const BouncingScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
                 _EventAutocompleteField(
                   label: 'Название события',
                   hint: 'Начните вводить название события',
@@ -575,68 +624,33 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
                   ),
                 ],
 
-                // ────────────────────────────────────────────────────────────────
-                // 💾 КНОПКА СОХРАНЕНИЯ
-                // ────────────────────────────────────────────────────────────────
-                Builder(
-                  builder: (context) {
-                    final isSubmitting = _isSubmitting || _isDeleting;
-                    final textColor = AppColors.getSurfaceColor(context);
-
-                    final button = ElevatedButton(
-                      onPressed: !isSubmitting && _isValid ? _save : () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.button,
-                        foregroundColor: textColor,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 30),
-                        shape: const StadiumBorder(),
-                        minimumSize: const Size(double.infinity, 50),
-                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        alignment: Alignment.center,
-                      ),
-                      child: isSubmitting
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 10),
-                                  child: CupertinoActivityIndicator(
-                                    radius: 9,
-                                    color: textColor,
-                                  ),
-                                ),
-                                Text(
-                                  'Сохранить изменения',
-                                  style: AppTextStyles.h15w5.copyWith(
-                                    color: textColor,
-                                    height: 1.0,
-                                  ),
-                                ),
+                // Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                const SizedBox(height: 20),
                               ],
-                            )
-                          : Text(
-                              'Сохранить изменения',
-                              style: AppTextStyles.h15w5.copyWith(
-                                color: textColor,
-                                height: 1.0,
-                              ),
                             ),
-                    );
+                          ),
+                        ),
 
-                    if (isSubmitting) {
-                      return IgnorePointer(child: button);
-                    }
-
-                    return button;
-                  },
-                ),
-                    ],
+                        // ────────────────────────────────────────────────────────────────
+                        // 💾 ЗАФИКСИРОВАННАЯ КНОПКА СОХРАНЕНИЯ ВНИЗУ ЭКРАНА
+                        // ────────────────────────────────────────────────────────────────
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          color: AppColors.twinBg,
+                          child: _buildSaveButton(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
                 ),
               ),
             ),
+
+            // ─── Индикатор загрузки ───
+            if (_isLoading)
+              const Center(
+                child: CupertinoActivityIndicator(),
+              ),
           ],
         ),
       ),
@@ -1117,14 +1131,12 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        SizedBox(
-          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-          child: Container(
+        Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.5,
+                          width: 0.7,
                         ),
               // boxShadow: [
               //   const BoxShadow(
@@ -1139,40 +1151,36 @@ class _PriceField extends StatelessWidget {
               keyboardType: TextInputType.number,
               inputFormatters: [_PriceInputFormatter()],
               onChanged: onChanged,
-              style: AppTextStyles.h14w4.copyWith(
+              style: AppTextStyles.h15w5.copyWith(
                 color: AppColors.getTextPrimaryColor(context),
               ),
               decoration: InputDecoration(
-                hintText: '0',
-                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                hintText: '0 ₽',
+                hintStyle: AppTextStyles.h15w5Place.copyWith(
                   color: AppColors.getTextPlaceholderColor(context),
                 ),
-                suffixText: '₽',
-                suffixStyle: AppTextStyles.h14w4.copyWith(
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
+             
                 filled: true,
                 fillColor: AppColors.getSurfaceColor(context),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 12,
-                  vertical: 17,
+                  vertical: 21,
                 ),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }
@@ -1235,17 +1243,17 @@ class _ChipsRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.xl),
                border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.5,
+                          width: 0.7,
                         ),
-              boxShadow: sel
-                  ? null
-                  : [
-                      // const BoxShadow(
-                      //   color: AppColors.twinshadow,
-                      //   blurRadius: 20,
-                      //   offset: Offset(0, 1),
-                      // ),
-                    ],
+              // boxShadow: sel
+              //     ? null
+              //     : [
+              //         // const BoxShadow(
+              //         //   color: AppColors.twinshadow,
+              //         //   blurRadius: 20,
+              //         //   offset: Offset(0, 1),
+              //         // ),
+              //       ],
             ),
             child: Text(
               items[i],
@@ -1296,17 +1304,17 @@ class _OvalToggle extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.xl),
            border: Border.all(
                           color: AppColors.twinchip,
-                          width: 0.5,
+                          width: 0.7,
                         ),
-          boxShadow: selected
-              ? null
-              : [
-                  // const BoxShadow(
-                  //   color: AppColors.twinshadow,
-                  //   blurRadius: 20,
-                  //   offset: Offset(0, 1),
-                  // ),
-                ],
+          // boxShadow: selected
+          //     ? null
+          //     : [
+          //         const BoxShadow(
+          //           color: AppColors.twinshadow,
+          //           blurRadius: 20,
+          //           offset: Offset(0, 1),
+          //         ),
+          //       ],
         ),
         child: Text(
           label,

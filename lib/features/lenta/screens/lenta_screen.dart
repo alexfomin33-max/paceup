@@ -17,7 +17,6 @@ import 'state/notifications/notifications_provider.dart';
 import '../../../../core/utils/image_cache_manager.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/services/health_sync_service.dart';
-import '../../../../core/services/strava_sync_service.dart';
 import '../../../../core/widgets/error_display.dart';
 
 import 'widgets/activity/activity_block.dart'; // карточка тренировки
@@ -305,25 +304,23 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
   //  ПРОВЕРКА И СИНХРОНИЗАЦИЯ HEALTH CONNECT
   // ─────────────────────────────────────────────────────────────────────────
 
-  /// Запрашивает разрешения на доступ к данным Health Connect/HealthKit
+  // ─────────────────────────────────────────────────────────────────────────
+  //  ЗАПРОС РАЗРЕШЕНИЙ ПЕРЕНЕСЁН В health_connect_screen.dart
+  // ─────────────────────────────────────────────────────────────────────────
+  // Метод _requestHealthPermissions удалён — запрос разрешений теперь
+  // происходит только через экран настроек Health Connect
+
+  /// Проверяет наличие разрешений и запускает импорт новых тренировок
   ///
-  /// Вызывается при первом запуске приложения для автоматического запроса
-  /// разрешений на чтение тренировок
-  Future<bool> _requestHealthPermissions() async {
+  /// ⚠️ НЕ запрашивает разрешения автоматически — они должны быть запрошены
+  /// пользователем вручную через экран Health Connect в настройках.
+  /// Также синхронизирует тренировки из Strava, если настроена синхронизация
+  Future<void> _checkAndSyncHealthData() async {
+    // Предотвращаем двойной запуск синхронизации
+    if (_isSyncingHealthData) return;
+
     try {
-      // Конфигурируем Health плагин
-      await _health.configure();
-      if (!mounted) return false;
-
-      // Проверяем доступность Health Connect на Android
-      if (Platform.isAndroid) {
-        final hasHC = await _health.isHealthConnectAvailable();
-        if (hasHC == false) {
-          return false;
-        }
-      }
-
-      // Проверяем, есть ли уже разрешения
+      // Проверяем наличие разрешений (без запроса)
       final hasPermissions = await _health.hasPermissions(
         _healthTypes,
         permissions: List.generate(
@@ -332,42 +329,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ),
       );
 
-      // Если разрешения уже есть — возвращаем true
+      // Если разрешения есть — запускаем синхронизацию
       if (hasPermissions == true) {
-        return true;
-      }
-
-      // Запрашиваем разрешения
-      final granted = await _health.requestAuthorization(
-        _healthTypes,
-        permissions: List.generate(
-          _healthTypes.length,
-          (_) => HealthDataAccess.READ,
-        ),
-      );
-
-      if (!mounted) return false;
-
-      return granted;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Проверяет флаг синхронизации и запускает импорт новых тренировок
-  ///
-  /// При первом запуске автоматически запрашивает разрешения Health Connect
-  /// Также синхронизирует тренировки из Strava, если настроена синхронизация
-  Future<void> _checkAndSyncHealthData() async {
-    // Предотвращаем двойной запуск синхронизации
-    if (_isSyncingHealthData) return;
-
-    try {
-      // Запрашиваем разрешения перед синхронизацией
-      final hasPermissions = await _requestHealthPermissions();
-
-      if (!hasPermissions) {
-      } else {
         final syncService = ref.read(healthSyncServiceProvider);
 
         // Запускаем синхронизацию Health Connect, если пользователь авторизован
@@ -581,6 +544,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     MoreMenuHub.hide();
     await Navigator.of(
       context,
+      rootNavigator: true, // ─── Открываем поверх нижнего меню ───
     ).push(TransparentPageRoute(builder: (_) => const ChatScreen()));
 
     if (!mounted) return;
@@ -1003,10 +967,11 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           height: 24,
           fit: BoxFit.contain,
         ),
-        showBottomDivider: false,
+        showBottomDivider: true,
         leadingWidth: 96, // две иконки слева
         elevation: 8,
         scrolledUnderElevation: 8,
+        shadowColor: AppColors.shadowMedium,
         // слева — избранное и «создать пост»
         leading: Padding(
           padding: const EdgeInsets.only(left: 6),

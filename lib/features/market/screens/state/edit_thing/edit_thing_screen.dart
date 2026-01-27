@@ -15,7 +15,6 @@ import '../../../../../core/utils/local_image_compressor.dart'
 import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/services/auth_service.dart';
-import '../../../../../core/widgets/primary_button.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
@@ -222,13 +221,17 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
     }
   }
 
-  // ── добавление нового поля для ввода города передачи
+  // ── добавление нового поля для ввода города передачи (максимум 3 поля)
   void _addCityField() {
+    // ── ограничиваем количество полей до 3
+    if (_cityControllers.length >= 3) return;
+    
     setState(() {
       final newController = TextEditingController();
       _selectedCities.add(null);
       newController.addListener(() {
         setState(() {});
+        // Если текст изменился не через выбор из списка, сбрасываем выбранный город
         final index = _cityControllers.length;
         if (newController.text.trim() != _selectedCities[index]) {
           _selectedCities[index] = null;
@@ -569,7 +572,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                 icon: const Icon(
                   CupertinoIcons.delete,
                   size: 20,
-                  color: AppColors.error,
+                  color: AppColors.textPrimary,
                 ),
                 onPressed: _handleDelete,
               ),
@@ -594,7 +597,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                 icon: const Icon(
                   CupertinoIcons.delete,
                   size: 20,
-                  color: AppColors.error,
+                  color: AppColors.textPrimary,
                 ),
                 onPressed: _handleDelete,
               ),
@@ -646,7 +649,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
               icon: const Icon(
                 CupertinoIcons.delete,
                 size: 20,
-                color: AppColors.error,
+                color: AppColors.textPrimary,
               ),
               onPressed: _handleDelete,
             ),
@@ -659,7 +662,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
           },
           behavior: HitTestBehavior.opaque,
           child: SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(12, 20, 12, bottomPad),
+            padding: EdgeInsets.fromLTRB(16, 12, 16, bottomPad),
             physics: const BouncingScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -712,53 +715,73 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                 ),
                 const SizedBox(height: 20),
 
-                // ── динамические поля для ввода городов передачи (в два столбца)
+                // ── динамические поля для ввода городов передачи
                 const _SmallLabel('Город передачи'),
                 const SizedBox(height: 8),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: List.generate(_cityControllers.length, (index) {
-                    return SizedBox(
-                      width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
-                      child: CityAutocompleteField(
-                        controller: _cityControllers[index],
-                        suggestions: _cities,
-                        hintText: 'Населенный пункт',
-                        onSelected: (city) {
-                          setState(() {
-                            _selectedCities[index] = city;
-                            _cityControllers[index].text = city;
-                          });
-                        },
-                      ),
-                    );
-                  }),
+                Column(
+                  children: List.generate(
+                    _cityControllers.length.clamp(0, 3),
+                    (index) {
+                      return Column(
+                        children: [
+                          if (index > 0) const SizedBox(height: 12),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              border: Border.all(
+                                color: AppColors.twinchip,
+                                width: 0.7,
+                              ),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: CityAutocompleteField(
+                              controller: _cityControllers[index],
+                              suggestions: _cities,
+                              hintText: 'Населенный пункт',
+                              showBorder: false,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 22,
+                              ),
+                              onSelected: (city) {
+                                setState(() {
+                                  _selectedCities[index] = city;
+                                  _cityControllers[index].text = city;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ).expand((widget) => [widget]).toList(),
                 ),
-                const SizedBox(height: 12),
-                // ── кнопка "добавить ещё"
-                GestureDetector(
-                  onTap: _addCityField,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        CupertinoIcons.add_circled,
-                        size: 20,
-                        color: AppColors.brandPrimary,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'добавить ещё',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
+                // ── кнопка "добавить ещё" (показываем только если меньше 3 полей)
+                if (_cityControllers.length < 3) ...[
+                  const SizedBox(height: 12),
+                  GestureDetector(
+                    onTap: _addCityField,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          CupertinoIcons.add_circled,
+                          size: 20,
                           color: AppColors.brandPrimary,
                         ),
-                      ),
-                    ],
+                        SizedBox(width: 8),
+                        Text(
+                          'добавить ещё',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.brandPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 20),
 
                 _LabeledTextField(
@@ -767,7 +790,7 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                       'Размер, отправка, передача и другая полезная информация',
                   controller: descCtrl,
                   minLines: 7, // ── минимальная высота поля 7 строк
-                  maxLines: 20, // ── максимальная высота поля 20 строк
+                  maxLines: 12,
                 ),
                 const SizedBox(height: 24),
 
@@ -788,19 +811,59 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
                 // ────────────────────────────────────────────────────────────────
                 // 💾 КНОПКА СОХРАНЕНИЯ
                 // ────────────────────────────────────────────────────────────────
-                Center(
-                  child: Builder(
-                    builder: (context) {
-                      final formState = ref.watch(formStateProvider);
-                      return PrimaryButton(
-                        text: 'Сохранить изменения',
-                        onPressed: !formState.isSubmitting ? _submit : () {},
-                        width: 230,
-                        isLoading: formState.isSubmitting,
-                        enabled: _isValid && !formState.isSubmitting,
-                      );
-                    },
-                  ),
+                Builder(
+                  builder: (context) {
+                    final formState = ref.watch(formStateProvider);
+                    final isSubmitting = formState.isSubmitting;
+                    final textColor = AppColors.getSurfaceColor(context);
+
+                    final button = ElevatedButton(
+                      onPressed: !isSubmitting && _isValid ? _submit : () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.button,
+                        foregroundColor: textColor,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        shape: const StadiumBorder(),
+                        minimumSize: const Size(double.infinity, 50),
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        alignment: Alignment.center,
+                      ),
+                      child: isSubmitting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 10),
+                                  child: CupertinoActivityIndicator(
+                                    radius: 9,
+                                    color: textColor,
+                                  ),
+                                ),
+                                Text(
+                                  'Сохранить изменения',
+                                  style: AppTextStyles.h15w5.copyWith(
+                                    color: textColor,
+                                    height: 1.0,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Text(
+                              'Сохранить изменения',
+                              style: AppTextStyles.h15w5.copyWith(
+                                color: textColor,
+                                height: 1.0,
+                              ),
+                            ),
+                    );
+
+                    if (isSubmitting) {
+                      return IgnorePointer(child: button);
+                    }
+
+                    return button;
+                  },
                 ),
               ],
             ),
@@ -812,58 +875,71 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
 
   /// Горизонтальная карусель фотографий
   Widget _buildPhotoCarousel() {
-    // ── общее количество элементов: кнопка добавления + существующие изображения + новые изображения
-    final totalItems = 1 + _existingImages.length + _newImages.length;
+    return Builder(
+      builder: (context) {
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ВЫЧИСЛЕНИЕ ДИНАМИЧЕСКОГО РАЗМЕРА ЭЛЕМЕНТА
+        // ────────────────────────────────────────────────────────────────
+        // Размер вычисляется так, чтобы в одну линию на экране помещалось ровно 3 элемента
+        // Учитываем: паддинг Column (12px с каждой стороны = 24px) и отступы между элементами (2 отступа по 12px = 24px)
+        final screenWidth = MediaQuery.of(context).size.width;
+        const horizontalPadding = 12.0 * 2; // Паддинг Column с двух сторон
+        const separatorWidth = 12.0 * 2; // 2 отступа между 3 элементами
+        final itemSize = (screenWidth - horizontalPadding - separatorWidth) / 3;
 
-    return SizedBox(
-      height: 90,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        itemCount: totalItems,
-        separatorBuilder: (context, index) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          // ── первый элемент — кнопка добавления фото
-          if (index == 0) {
-            return _buildAddPhotoButton();
-          }
+        // ── общее количество элементов: кнопка добавления + существующие изображения + новые изображения
+        final totalItems = 1 + _existingImages.length + _newImages.length;
 
-          // ── существующие изображения
-          if (index <= _existingImages.length) {
-            final imageIndex = index - 1;
-            final url = _existingImages[imageIndex];
-            return _buildExistingPhotoItem(url, imageIndex);
-          }
+        return SizedBox(
+          height: itemSize + 6, // Размер элемента + padding сверху для кнопок удаления
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.only(
+              top: 6,
+            ), // Добавляем padding сверху для кнопок удаления
+            itemCount: totalItems,
+            separatorBuilder: (context, index) => const SizedBox(width: 12),
+            itemBuilder: (context, index) {
+              // ── первый элемент — кнопка добавления фото
+              if (index == 0) {
+                return _buildAddPhotoButton(itemSize);
+              }
 
-          // ── новые изображения
-          final newImageIndex = index - 1 - _existingImages.length;
-          final file = _newImages[newImageIndex];
-          return _buildNewPhotoItem(file, newImageIndex);
-        },
-      ),
+              // ── существующие изображения
+              if (index <= _existingImages.length) {
+                final imageIndex = index - 1;
+                final url = _existingImages[imageIndex];
+                return _buildExistingPhotoItem(url, imageIndex, itemSize);
+              }
+
+              // ── новые изображения
+              final newImageIndex = index - 1 - _existingImages.length;
+              final file = _newImages[newImageIndex];
+              return _buildNewPhotoItem(file, newImageIndex, itemSize);
+            },
+          ),
+        );
+      },
     );
   }
 
   /// Кнопка добавления фотографии
-  Widget _buildAddPhotoButton() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: GestureDetector(
-        onTap: _handleAddPhotos,
-        child: Container(
-          width: 90,
-          height: 90,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.sm),
-            color: AppColors.getSurfaceColor(context),
-            border: Border.all(color: AppColors.getBorderColor(context)),
-          ),
-          child: Center(
-            child: Icon(
-              CupertinoIcons.photo,
-              size: 28,
-              color: AppColors.getIconSecondaryColor(context),
-            ),
+  Widget _buildAddPhotoButton(double size) {
+    return GestureDetector(
+      onTap: _handleAddPhotos,
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          color: AppColors.twinphoto,
+        ),
+        child: const Center(
+          child: Icon(
+            CupertinoIcons.camera_fill,
+            size: 24,
+            color: AppColors.scrim20,
           ),
         ),
       ),
@@ -871,117 +947,125 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
   }
 
   /// Элемент существующего изображения с кнопкой удаления
-  Widget _buildExistingPhotoItem(String url, int index) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: () => _handleReplaceExistingImage(url, index),
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                color: AppColors.getBackgroundColor(context),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: CachedNetworkImage(
-                imageUrl: url,
-                fit: BoxFit.cover,
-                errorWidget: (context, url, error) => Container(
+  Widget _buildExistingPhotoItem(String url, int index, double size) {
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () => _handleReplaceExistingImage(url, index),
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   color: AppColors.getBackgroundColor(context),
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 24,
-                    color: AppColors.getIconSecondaryColor(context),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: CachedNetworkImage(
+                  imageUrl: url,
+                  fit: BoxFit.cover,
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          // ── кнопка удаления в правом верхнем углу
-          Positioned(
-            right: -6,
-            top: -6,
-            child: GestureDetector(
-              onTap: () => _handleDeleteExistingImage(url),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.getBorderColor(context)),
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 20,
-                  color: AppColors.error,
+            // ── кнопка удаления в правом верхнем углу
+            Positioned(
+              right: -6,
+              top: -6,
+              child: GestureDetector(
+                onTap: () => _handleDeleteExistingImage(url),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   /// Элемент нового изображения с кнопкой удаления
-  Widget _buildNewPhotoItem(File file, int index) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          GestureDetector(
-            onTap: () => _handleReplaceNewImage(file, index),
-            child: Container(
-              width: 90,
-              height: 90,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                color: AppColors.getBackgroundColor(context),
-              ),
-              clipBehavior: Clip.hardEdge,
-              child: Image.file(
-                file,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
+  Widget _buildNewPhotoItem(File file, int index, double size) {
+    return Builder(
+      builder: (context) => Padding(
+        padding: const EdgeInsets.only(top: 6),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            GestureDetector(
+              onTap: () => _handleReplaceNewImage(file, index),
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   color: AppColors.getBackgroundColor(context),
-                  child: Icon(
-                    CupertinoIcons.photo,
-                    size: 24,
-                    color: AppColors.getIconSecondaryColor(context),
+                ),
+                clipBehavior: Clip.hardEdge,
+                child: Image.file(
+                  file,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    color: AppColors.getBackgroundColor(context),
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.getIconSecondaryColor(context),
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-          // ── кнопка удаления в правом верхнем углу
-          Positioned(
-            right: -6,
-            top: -6,
-            child: GestureDetector(
-              onTap: () => _handleDeleteNewImage(file),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                  border: Border.all(color: AppColors.getBorderColor(context)),
-                ),
-                child: const Icon(
-                  CupertinoIcons.clear_circled_solid,
-                  size: 20,
-                  color: AppColors.error,
+            // ── кнопка удаления в правом верхнем углу
+            Positioned(
+              right: -6,
+              top: -6,
+              child: GestureDetector(
+                onTap: () => _handleDeleteNewImage(file),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: AppColors.getSurfaceColor(context),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: AppColors.getBorderColor(context),
+                    ),
+                  ),
+                  child: const Icon(
+                    CupertinoIcons.clear_circled_solid,
+                    size: 20,
+                    color: AppColors.error,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1028,44 +1112,44 @@ class _LabeledTextField extends StatelessWidget {
           _SmallLabel(label),
           const SizedBox(height: 8),
         ],
-        TextFormField(
-          controller: controller,
-          minLines: minLines,
-          maxLines: maxLines,
-          onChanged: onChanged,
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
+            ),
           ),
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: AppTextStyles.h14w4Place.copyWith(
-              color: AppColors.getTextPlaceholderColor(context),
+          child: TextFormField(
+            controller: controller,
+            minLines: minLines,
+            maxLines: maxLines,
+            onChanged: onChanged,
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
             ),
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 17,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: AppTextStyles.h14w4Place.copyWith(
+                color: AppColors.getTextPlaceholderColor(context),
               ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 21,
               ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
@@ -1095,62 +1179,57 @@ class _DropdownField extends StatelessWidget {
       children: [
         _SmallLabel(label),
         const SizedBox(height: 8),
-        InputDecorator(
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.getSurfaceColor(context),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 4,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.sm),
-              borderSide: BorderSide(
-                color: AppColors.getBorderColor(context),
-                width: 1,
-              ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
             ),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: value,
-              isExpanded: true,
-              onChanged: onChanged,
-              dropdownColor: AppColors.getSurfaceColor(context),
-              menuMaxHeight: 300,
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              icon: Icon(
-                Icons.arrow_drop_down,
-                color: AppColors.getIconSecondaryColor(context),
+          child: InputDecorator(
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: AppColors.getSurfaceColor(context),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 8,
               ),
-              style: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
               ),
-              items: items.map((o) {
-                return DropdownMenuItem<String>(
-                  value: o,
-                  child: Text(
-                    o,
-                    style: AppTextStyles.h14w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                );
-              }).toList(),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: value,
+                isExpanded: true,
+                onChanged: onChanged,
+                dropdownColor: AppColors.getSurfaceColor(context),
+                menuMaxHeight: 300,
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+                style: AppTextStyles.h14w4.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+                items: items.map((o) {
+                  return DropdownMenuItem<String>(
+                    value: o,
+                    child: Text(o, style: AppTextStyles.h14w4),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ),
@@ -1216,51 +1295,44 @@ class _PriceField extends StatelessWidget {
       children: [
         const _SmallLabel('Цена'),
         const SizedBox(height: 8),
-        SizedBox(
-          width: (MediaQuery.of(context).size.width - 24 - 12) / 2,
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
+            ),
+          ),
           child: TextFormField(
             controller: controller,
             keyboardType: TextInputType.number,
             inputFormatters: [_PriceInputFormatter()],
             onChanged: onChanged,
-            style: AppTextStyles.h14w4.copyWith(
+            style: AppTextStyles.h15w5.copyWith(
               color: AppColors.getTextPrimaryColor(context),
             ),
             decoration: InputDecoration(
-              hintText: '0',
-              hintStyle: AppTextStyles.h14w4Place.copyWith(
+              hintText: '0 ₽',
+              hintStyle: AppTextStyles.h15w5Place.copyWith(
                 color: AppColors.getTextPlaceholderColor(context),
-              ),
-              suffixText: '₽',
-              suffixStyle: AppTextStyles.h14w4.copyWith(
-                color: AppColors.getTextPrimaryColor(context),
               ),
               filled: true,
               fillColor: AppColors.getSurfaceColor(context),
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 17,
+                vertical: 21,
               ),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(
-                  color: AppColors.getBorderColor(context),
-                  width: 1,
-                ),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                borderSide: BorderSide.none,
               ),
             ),
           ),
@@ -1329,9 +1401,8 @@ class _OvalToggle extends StatelessWidget {
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
-            color: selected
-                ? AppColors.brandPrimary
-                : AppColors.getBorderColor(context),
+            color: AppColors.twinchip,
+            width: 0.7,
           ),
         ),
         child: Text(

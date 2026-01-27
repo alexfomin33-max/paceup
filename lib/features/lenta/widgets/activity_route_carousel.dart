@@ -1,5 +1,6 @@
 // lib/widgets/activity_route_carousel.dart
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/utils/static_map_url_builder.dart';
@@ -62,7 +63,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   bool _isLoadingRouteMap = false;
   final RouteMapService _routeMapService = RouteMapService();
 
-  static const _dotsTop = 10.0;
+  static const _dotsBottom = 10.0;
 
   // ────────────────────────────────────────────────────────────────
   // ⚡ КЭШИРОВАНИЕ URL КАРТЫ: генерируем один раз вместо каждого rebuild
@@ -173,10 +174,15 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             // Индикаторы точек, если фотографий больше одной
             if (widget.imageUrls.length > 1)
               Positioned(
-                top: _dotsTop,
+                bottom: _dotsBottom,
                 left: 0,
                 right: 0,
-                child: _buildDots(widget.imageUrls.length, isPhotosOnly: true),
+                child: Center(
+                  child: _buildDots(
+                    widget.imageUrls.length,
+                    isPhotosOnly: true,
+                  ),
+                ),
               ),
           ],
         ),
@@ -246,14 +252,14 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           ),
 
           // ────────────────────────────────────────────────────────────────
-          // 🔘 ИНДИКАТОРЫ: точки сверху для навигации
+          // 🔘 ИНДИКАТОРЫ: точки снизу для навигации
           // ────────────────────────────────────────────────────────────────
           if (totalSlides > 1)
             Positioned(
-              top: _dotsTop,
+              bottom: _dotsBottom,
               left: 0,
               right: 0,
-              child: _buildDots(totalSlides, items: items),
+              child: Center(child: _buildDots(totalSlides, items: items)),
             ),
         ],
       ),
@@ -373,57 +379,81 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 widget.activityId != null && widget.userId != null;
           }
 
-          return CachedNetworkImage(
-            imageUrl: finalMapUrl,
-            fit: BoxFit.cover,
-            width: double.infinity,
-            height: double.infinity,
-            filterQuality: FilterQuality.medium,
-            memCacheWidth: _cachedWidthPx!,
-            maxWidthDiskCache: _cachedWidthPx!,
-            placeholder: (context, url) => Container(
-              color: AppColors.getSurfaceColor(context),
-              child: const Center(child: CupertinoActivityIndicator()),
-            ),
-            errorWidget: (context, url, error) => Container(
-              color: AppColors.getSurfaceColor(context),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    CupertinoIcons.map,
-                    size: 48,
-                    color: AppColors.textTertiary,
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: finalMapUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                filterQuality: FilterQuality.medium,
+                memCacheWidth: _cachedWidthPx!,
+                maxWidthDiskCache: _cachedWidthPx!,
+                placeholder: (context, url) => Container(
+                  color: AppColors.getSurfaceColor(context),
+                  child: const Center(child: CupertinoActivityIndicator()),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: AppColors.getSurfaceColor(context),
+                  child: const Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        CupertinoIcons.map,
+                        size: 48,
+                        color: AppColors.textTertiary,
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'Карта недоступна',
+                        style: TextStyle(
+                          color: AppColors.textTertiary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Карта недоступна',
-                    style: TextStyle(
-                      color: AppColors.textTertiary,
-                      fontSize: 12,
+                ),
+                // ────────────────────────────────────────────────────────────────
+                // ✅ СОХРАНЕНИЕ КАРТЫ: сохраняем изображение на сервер после загрузки
+                // Это нужно для ускорения последующих загрузок
+                // ────────────────────────────────────────────────────────────────
+                imageBuilder: shouldSaveAfterLoad && !useSavedImage
+                    ? (context, imageProvider) {
+                        // Сохраняем изображение асинхронно в фоне, не блокируя UI
+                        // После сохранения обновляем состояние для использования сохраненного URL
+                        _saveRouteMapImage(finalMapUrl).then((savedUrl) {
+                          if (savedUrl != null && mounted) {
+                            setState(() {
+                              _savedRouteMapUrl = savedUrl;
+                            });
+                          }
+                        });
+                        return Image(image: imageProvider);
+                      }
+                    : null,
+              ),
+              // Градиентное затемнение сверху
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: widget.height * 0.3,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.scrim40,
+                        Colors.transparent,
+                      ],
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            // ────────────────────────────────────────────────────────────────
-            // ✅ СОХРАНЕНИЕ КАРТЫ: сохраняем изображение на сервер после загрузки
-            // Это нужно для ускорения последующих загрузок
-            // ────────────────────────────────────────────────────────────────
-            imageBuilder: shouldSaveAfterLoad && !useSavedImage
-                ? (context, imageProvider) {
-                    // Сохраняем изображение асинхронно в фоне, не блокируя UI
-                    // После сохранения обновляем состояние для использования сохраненного URL
-                    _saveRouteMapImage(finalMapUrl).then((savedUrl) {
-                      if (savedUrl != null && mounted) {
-                        setState(() {
-                          _savedRouteMapUrl = savedUrl;
-                        });
-                      }
-                    });
-                    return Image(image: imageProvider);
-                  }
-                : null,
+            ],
           );
         },
       ),
@@ -468,42 +498,66 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
         final screenW = constraints.maxWidth;
         final targetW = (screenW * fixedDpr).round();
 
-        return CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-          filterQuality: FilterQuality.low,
-          memCacheWidth: targetW,
-          maxWidthDiskCache: targetW,
-          placeholder: (context, url) => Container(
-            color: AppColors.disabled,
-            child: const Center(child: CupertinoActivityIndicator()),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: AppColors.disabled,
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.photo,
-                  size: 48,
-                  color: AppColors.textTertiary,
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            CachedNetworkImage(
+              imageUrl: imageUrl,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
+              filterQuality: FilterQuality.low,
+              memCacheWidth: targetW,
+              maxWidthDiskCache: targetW,
+              placeholder: (context, url) => Container(
+                color: AppColors.disabled,
+                child: const Center(child: CupertinoActivityIndicator()),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: AppColors.disabled,
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      CupertinoIcons.photo,
+                      size: 48,
+                      color: AppColors.textTertiary,
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Изображение недоступно',
+                      style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
+                    ),
+                  ],
                 ),
-                SizedBox(height: 8),
-                Text(
-                  'Изображение недоступно',
-                  style: TextStyle(color: AppColors.textTertiary, fontSize: 12),
-                ),
-              ],
+              ),
             ),
-          ),
+            // Градиентное затемнение сверху
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: widget.height * 0.3,
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.scrim40,
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  /// Строит индикаторы точек сверху карусели.
+  /// Строит индикаторы точек снизу карусели.
   /// Если переданы items, определяет цвет по типу активного элемента:
   /// - темные точки для карты маршрута
   /// - светлые точки для фотографий
@@ -522,27 +576,35 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     // Если текущий слайд - карта, используем темные точки
     final useLightDots = isPhotosOnly || !isCurrentMap;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(total, (index) {
-        final isActive = _currentIndex == index;
-        final color = useLightDots
-            ? (isActive
-                  ? AppColors.surface
-                  : AppColors.surface.withValues(alpha: 0.3))
-            : (isActive
-                  ? AppColors.brandPrimary
-                  : AppColors.brandPrimary.withValues(alpha: 0.3));
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.scrim40,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(total, (index) {
+          final isActive = _currentIndex == index;
+          final color = useLightDots
+              ? (isActive
+                    ? AppColors.surface
+                    : AppColors.surface.withValues(alpha: 0.3))
+              : (isActive
+                    ? AppColors.surface
+                    : AppColors.surface.withValues(alpha: 0.3));
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-          ),
-        );
-      }),
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+            ),
+          );
+        }),
+      ),
     );
   }
 

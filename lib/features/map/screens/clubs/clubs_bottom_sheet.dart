@@ -248,12 +248,12 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.twinchip,
-            width: 0.7,
+            width: 0.5,
           ),
           boxShadow: const [
           BoxShadow(
             color: AppColors.twinshadow,
-            blurRadius: 20,
+            blurRadius: 10,
             offset: Offset(0, 1),
           ),
         ],

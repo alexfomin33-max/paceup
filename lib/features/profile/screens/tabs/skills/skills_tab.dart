@@ -138,20 +138,20 @@ class SkillCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5, // тонкая рамка
+          color: AppColors.twinchip,
+          width: 1.0, // тонкая рамка
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
+        // boxShadow: [
+        //   BoxShadow(
+        //     color: Theme.of(context).brightness == Brightness.dark
+        //         ? AppColors.darkShadowSoft
+        //         : AppColors.shadowMedium,
+        //     offset: const Offset(0, 1),
+        //     blurRadius: 1,
+        //     spreadRadius: 0,
+        //   ),
+        // ],
       ),
       padding: const EdgeInsets.fromLTRB(10, 10, 12, 10),
       margin: const EdgeInsets.symmetric(horizontal: 12),

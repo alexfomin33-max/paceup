@@ -155,16 +155,16 @@ class _MedalsMonthCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 0.5,
-          ), // ← тонкий бордер
-          borderRadius: BorderRadius.circular(AppRadius.md),
+          // border: Border.all(
+          //   color: AppColors.getBorderColor(context),
+          //   width: 0.5,
+          // ), // ← тонкий бордер
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: Theme.of(context).brightness == Brightness.dark
                   ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
+                  : AppColors.shadowMedium,
               offset: const Offset(0, 1),
               blurRadius: 1,
               spreadRadius: 0,

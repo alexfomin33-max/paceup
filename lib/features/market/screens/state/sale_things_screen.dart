@@ -140,10 +140,10 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
     super.dispose();
   }
 
-  // ── добавление нового поля для ввода города передачи (максимум 2 поля)
+  // ── добавление нового поля для ввода города передачи (максимум 3 поля)
   void _addCityField() {
-    // ── ограничиваем количество полей до 2
-    if (_cityControllers.length >= 2) return;
+    // ── ограничиваем количество полей до 3
+    if (_cityControllers.length >= 3) return;
     
     setState(() {
       final newController = TextEditingController();
@@ -443,7 +443,7 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
             const SizedBox(height: 8),
             Column(
               children: List.generate(
-                _cityControllers.length.clamp(0, 2),
+                _cityControllers.length.clamp(0, 3),
                 (index) {
                   return Column(
                     children: [
@@ -469,6 +469,10 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
                           suggestions: _cities,
                           hintText: 'Населенный пункт',
                           showBorder: false,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 22,
+                          ),
                           onSelected: (city) {
                             setState(() {
                               _selectedCities[index] = city;
@@ -482,8 +486,8 @@ class _SaleThingsContentState extends ConsumerState<_SaleThingsContent> {
                 },
               ).expand((widget) => [widget]).toList(),
             ),
-            // ── кнопка "добавить ещё" (показываем только если меньше 2 полей)
-            if (_cityControllers.length < 2) ...[
+            // ── кнопка "добавить ещё" (показываем только если меньше 3 полей)
+            if (_cityControllers.length < 3) ...[
               const SizedBox(height: 12),
               GestureDetector(
                 onTap: _addCityField,
@@ -997,12 +1001,12 @@ class _PriceField extends StatelessWidget {
               keyboardType: TextInputType.number,
               inputFormatters: [_PriceInputFormatter()],
               onChanged: onChanged,
-              style: AppTextStyles.h14w4.copyWith(
+              style: AppTextStyles.h15w5.copyWith(
                 color: AppColors.getTextPrimaryColor(context),
               ),
               decoration: InputDecoration(
                 hintText: '0 ₽',
-                hintStyle: AppTextStyles.h14w4Place.copyWith(
+                hintStyle: AppTextStyles.h15w5Place.copyWith(
                   color: AppColors.getTextPlaceholderColor(context),
                 ),
                
@@ -1095,15 +1099,15 @@ class _OvalToggle extends StatelessWidget {
                           color: AppColors.twinchip,
                           width: 0.7,
                         ),
-          boxShadow: selected
-              ? null
-              : [
-                  // const BoxShadow(
-                  //   color: AppColors.twinshadow,
-                  //   blurRadius: 20,
-                  //   offset: Offset(0, 1),
-                  // ),
-                ],
+          // boxShadow: selected
+          //     ? null
+          //     : [
+          //         // const BoxShadow(
+          //         //   color: AppColors.twinshadow,
+          //         //   blurRadius: 20,
+          //         //   offset: Offset(0, 1),
+          //         // ),
+          //       ],
         ),
         child: Text(
           label,

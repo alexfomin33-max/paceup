@@ -553,6 +553,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                 bottomLeft: Radius.circular(AppRadius.xl),
                                 bottomRight: Radius.circular(AppRadius.xl),
                               ),
+                              border: const Border(
+                                bottom: BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 1,
+                                ),
+                              ),
                             ),
                             child: ClipRRect(
                               borderRadius: const BorderRadius.only(
@@ -717,7 +723,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               color: AppColors.getSurfaceColor(context),
                               borderRadius: BorderRadius.circular(AppRadius.lg),
                               border: Border.all(
-                                color: AppColors.getBorderColor(context),
+                                color: AppColors.twinchip,
                                 width: 1,
                               ),
                             ),
@@ -777,7 +783,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                 AppRadius.xxl,
                               ),
                               border: Border.all(
-                                color: AppColors.getBorderColor(context),
+                                color: AppColors.twinchip,
                                 width: 1,
                               ),
                             ),
@@ -829,7 +835,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                   AppRadius.lg,
                                 ),
                                 border: Border.all(
-                                  color: AppColors.getBorderColor(context),
+                                  color: AppColors.twinchip,
                                   width: 1,
                                 ),
                               ),
