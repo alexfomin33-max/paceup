@@ -309,6 +309,11 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
 
   /// ──────────────────────── Кнопка присоединения (зафиксированная внизу) ────────────────────────
   Widget _buildJoinButton() {
+    // ─── Кнопка показывается только если пользователь не присоединился
+    if (_isParticipant) {
+      return const SizedBox.shrink();
+    }
+
     final textColor = AppColors.getSurfaceColor(context);
 
     final button = ElevatedButton(
@@ -335,7 +340,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                   ),
                 ),
                 Text(
-                  _isParticipant ? 'Выйти' : 'Присоединиться',
+                  'Присоединиться',
                   style: AppTextStyles.h15w5.copyWith(
                     color: textColor,
                     height: 1.0,
@@ -344,7 +349,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
               ],
             )
           : Text(
-              _isParticipant ? 'Выйти' : 'Присоединиться',
+              'Присоединиться',
               style: AppTextStyles.h15w5.copyWith(
                 color: textColor,
                 height: 1.0,
@@ -685,7 +690,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         backgroundColor: AppColors.getBackgroundColor(context),
         body: SafeArea(
           top: false,
-          bottom: true,
+          bottom: !_isParticipant,
           child: Builder(
             builder: (context) {
               final columnChildren = <Widget>[
@@ -1151,144 +1156,225 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                   if (photos.isNotEmpty)
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
-                  // ───────── Промежуточный блок: участники
+                  // ───────── Промежуточный блок: участники и чат
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     sliver: SliverToBoxAdapter(
-                      child: Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppColors.getSurfaceColor(context),
-                          borderRadius: BorderRadius.circular(AppRadius.md),
-                          border: Border.all(
-                            color: AppColors.twinchip,
-                            width: 1,
-                          ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
+                      child: IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Text(
-                              'Участники',
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 12,
-                                color: AppColors.getTextSecondaryColor(context),
+                          // ─── Блок "Участники"
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.only(
+                                left: 12,
+                                top: 12,
+                                bottom: 12,
                               ),
-                            ),
-                            const SizedBox(height: 6),
-                            if (participants.isEmpty)
-                              Text(
-                                '—',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Inter',
-                                  fontSize: 15,
-                                  color: AppColors.getTextPrimaryColor(context),
+                              decoration: BoxDecoration(
+                                color: AppColors.getSurfaceColor(context),
+                                borderRadius: BorderRadius.circular(AppRadius.md),
+                                border: Border.all(
+                                  color: AppColors.twinchip,
+                                  width: 1,
                                 ),
-                              )
-                            else
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: List.generate(participants.length, (
-                                  i,
-                                ) {
-                                  final p =
-                                      participants[i] as Map<String, dynamic>;
-                                  final avatarUrl =
-                                      p['avatar_url'] as String? ?? '';
-                                  final participantUserId =
-                                      p['user_id'] as int?;
-                                  // ─── Кликабельный аватар участника: переход в профиль
-                                  return GestureDetector(
-                                    onTap: participantUserId != null
-                                        ? () => _openParticipantProfile(
-                                            participantUserId,
-                                          )
-                                        : null,
-                                    behavior: HitTestBehavior.opaque,
-                                    child: ClipOval(
-                                      child: avatarUrl.isNotEmpty
-                                          ? Builder(
-                                              builder: (context) {
-                                                final dpr = MediaQuery.of(
-                                                  context,
-                                                ).devicePixelRatio;
-                                                final w = (48 * dpr).round();
-                                                return CachedNetworkImage(
-                                                  imageUrl: avatarUrl,
-                                                  width: 48,
-                                                  height: 48,
-                                                  fit: BoxFit.cover,
-                                                  memCacheWidth: w,
-                                                  maxWidthDiskCache: w,
-                                                  placeholder: (context, url) =>
-                                                      Container(
-                                                    width: 48,
-                                                    height: 48,
-                                                    color: AppColors.getBorderColor(
-                                                      context,
-                                                    ),
-                                                    child: Center(
-                                                      child:
-                                                          CupertinoActivityIndicator(
-                                                        radius: 8,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Участники: ${participants.length}',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  if (participants.isEmpty)
+                                    Text(
+                                      '—',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Inter',
+                                        fontSize: 15,
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    SizedBox(
+                                      height: 32,
+                                      child: ListView.separated(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: participants.length,
+                                        separatorBuilder: (context, index) =>
+                                            const SizedBox(width: 8),
+                                        itemBuilder: (context, i) {
+                                          final p = participants[i]
+                                              as Map<String, dynamic>;
+                                          final avatarUrl =
+                                              p['avatar_url'] as String? ?? '';
+                                          final participantUserId =
+                                              p['user_id'] as int?;
+                                          // ─── Кликабельный аватар участника: переход в профиль
+                                          return GestureDetector(
+                                            onTap: participantUserId != null
+                                                ? () => _openParticipantProfile(
+                                                    participantUserId,
+                                                  )
+                                                : null,
+                                            behavior: HitTestBehavior.opaque,
+                                            child: ClipOval(
+                                              child: avatarUrl.isNotEmpty
+                                                  ? Builder(
+                                                      builder: (context) {
+                                                        final dpr = MediaQuery.of(
+                                                          context,
+                                                        ).devicePixelRatio;
+                                                        final w = (32 * dpr)
+                                                            .round();
+                                                        return CachedNetworkImage(
+                                                          imageUrl: avatarUrl,
+                                                          width: 32,
+                                                          height: 32,
+                                                          fit: BoxFit.cover,
+                                                          memCacheWidth: w,
+                                                          maxWidthDiskCache: w,
+                                                          placeholder: (context,
+                                                                  url) =>
+                                                              Container(
+                                                            width: 32,
+                                                            height: 32,
+                                                            color: AppColors
+                                                                .getBorderColor(
+                                                              context,
+                                                            ),
+                                                            child: Center(
+                                                              child:
+                                                                  CupertinoActivityIndicator(
+                                                                radius: 8,
+                                                                color: AppColors
+                                                                    .getIconPrimaryColor(
+                                                                  context,
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          errorWidget: (
+                                                            context,
+                                                            imageUrl,
+                                                            error,
+                                                          ) =>
+                                                              Container(
+                                                                width: 32,
+                                                                height: 32,
+                                                                color: AppColors
+                                                                    .getBorderColor(
+                                                                  context,
+                                                                ),
+                                                                child: Icon(
+                                                                  Icons.person,
+                                                                  size: 20,
+                                                                  color: AppColors
+                                                                      .getIconPrimaryColor(
+                                                                    context,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                        );
+                                                      },
+                                                    )
+                                                  : Container(
+                                                      width: 32,
+                                                      height: 32,
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors
+                                                            .getBorderColor(
+                                                          context,
+                                                        ),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: Icon(
+                                                        Icons.person,
+                                                        size: 20,
                                                         color: AppColors
                                                             .getIconPrimaryColor(
                                                           context,
                                                         ),
                                                       ),
                                                     ),
-                                                  ),
-                                                  errorWidget:
-                                                      (
-                                                        context,
-                                                        imageUrl,
-                                                        error,
-                                                      ) => Container(
-                                                        width: 48,
-                                                        height: 48,
-                                                        color:
-                                                            AppColors.getBorderColor(
-                                                              context,
-                                                            ),
-                                                        child: Icon(
-                                                          Icons.person,
-                                                          size: 28,
-                                                          color:
-                                                              AppColors.getIconPrimaryColor(
-                                                                context,
-                                                              ),
-                                                        ),
-                                                      ),
-                                                );
-                                              },
-                                            )
-                                          : Container(
-                                              width: 48,
-                                              height: 48,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.getBorderColor(
-                                                  context,
-                                                ),
-                                                shape: BoxShape.circle,
-                                              ),
-                                              child: Icon(
-                                                Icons.person,
-                                                size: 28,
-                                                color:
-                                                    AppColors.getIconPrimaryColor(
-                                                      context,
-                                                    ),
-                                              ),
                                             ),
+                                          );
+                                        },
+                                      ),
                                     ),
-                                  );
-                                }),
+                                ],
                               ),
-                          ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          // ─── Блок "Общение" (квадратный, такая же высота, как блок "Участники")
+                          AspectRatio(
+                            aspectRatio: 1.0,
+                            child: GestureDetector(
+                              onTap: _isParticipant
+                                  ? () {
+                                      // TODO: Реализовать переход в чат события
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Чат события'),
+                                          duration: Duration(seconds: 1),
+                                        ),
+                                      );
+                                    }
+                                  : null,
+                              behavior: HitTestBehavior.opaque,
+                              child: Opacity(
+                                opacity: _isParticipant ? 1.0 : 0.5,
+                                child: Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surface,
+                                    borderRadius: BorderRadius.circular(AppRadius.md),
+                                    border: Border.all(
+                                      color: AppColors.twinchip,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.chat_bubble_2,
+                                        size: 24,
+                                        color: AppColors.orange,
+                                      ),
+                                      SizedBox(height: 6),
+                                      Text(
+                                        'Общение',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.orange,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                         ),
                       ),
                     ),
@@ -1378,12 +1464,13 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                     ],
                   ),
                 ),
-                // ───────── Зафиксированная кнопка присоединения
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  color: AppColors.getBackgroundColor(context),
-                  child: _buildJoinButton(),
-                ),
+                // ───────── Зафиксированная кнопка присоединения (только если пользователь не присоединился)
+                if (!_isParticipant)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    color: AppColors.getBackgroundColor(context),
+                    child: _buildJoinButton(),
+                  ),
               ];
 
               return Column(children: columnChildren);
