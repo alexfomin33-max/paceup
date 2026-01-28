@@ -8,6 +8,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/colors.dart';
+import '../../profile/providers/profile_header_provider.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
 import '../widgets/top_three_leaders.dart';
@@ -30,6 +31,7 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab>
 
   // ── вид спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи (single-select)
   int _sport = 0;
+  bool _defaultSportSet = false;
 
   // ── выбранный период (по умолчанию "Текущий месяц")
   String? _selectedPeriod = 'Текущий месяц';
@@ -49,6 +51,17 @@ class _AllUsersTabState extends ConsumerState<AllUsersTab>
     super.build(
       context,
     ); // Обязательно вызываем для AutomaticKeepAliveClientMixin
+    // По умолчанию активна иконка основного вида спорта пользователя (users.sport)
+    if (!_defaultSportSet) {
+      _defaultSportSet = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _sport = ref.read(defaultSportIndexProvider);
+          });
+        }
+      });
+    }
     // Преобразуем период в формат для API
     String period = 'current_week';
     if (_selectedPeriod == 'Текущий месяц') {

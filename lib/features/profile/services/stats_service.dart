@@ -41,9 +41,9 @@ class StatsMetrics {
 
 /// Модель данных для графиков
 class StatsCharts {
-  final List<double> distance; // 12 месяцев в км
-  final List<int> activeDays; // 12 месяцев
-  final List<int> activeTime; // 12 месяцев в минутах
+  final List<double> distance; // Данные по расстоянию (12 месяцев для года, 7 дней для недели, до 31 дня для месяца)
+  final List<int> activeDays; // Данные по дням активности
+  final List<int> activeTime; // Данные по времени активности в минутах
 
   StatsCharts({
     required this.distance,
@@ -69,20 +69,49 @@ class StatsCharts {
   }
 }
 
+/// Информация о периоде для отображения
+class PeriodInfo {
+  final String type; // 'week', 'month', 'year'
+  final String? startDate;
+  final String? endDate;
+  final String? monthName; // Для месяца
+
+  PeriodInfo({
+    required this.type,
+    this.startDate,
+    this.endDate,
+    this.monthName,
+  });
+
+  factory PeriodInfo.fromJson(Map<String, dynamic> json) {
+    return PeriodInfo(
+      type: json['type'] ?? 'year',
+      startDate: json['startDate'],
+      endDate: json['endDate'],
+      monthName: json['monthName'],
+    );
+  }
+}
+
 /// Модель полной статистики
 class StatsData {
   final StatsMetrics metrics;
   final StatsCharts charts;
+  final PeriodInfo? periodInfo; // Информация о периоде для отображения
 
   StatsData({
     required this.metrics,
     required this.charts,
+    this.periodInfo,
   });
 
   factory StatsData.fromJson(Map<String, dynamic> json) {
     return StatsData(
       metrics: StatsMetrics.fromJson(json['metrics'] ?? {}),
       charts: StatsCharts.fromJson(json['charts'] ?? {}),
+      periodInfo: json['periodInfo'] != null
+          ? PeriodInfo.fromJson(json['periodInfo'])
+          : null,
     );
   }
 }
@@ -97,21 +126,29 @@ class StatsService {
   /// [period] - период: 'week', 'month', 'year'
   /// [sportType] - тип спорта: 'run', 'bike', 'swim' или null (все)
   /// [year] - год для графиков (по умолчанию текущий)
+  /// [weekStartDate] - дата начала недели в формате 'YYYY-MM-DD' (для периода 'week')
+  /// [monthStartDate] - дата начала месяца в формате 'YYYY-MM-DD' (для периода 'month')
   Future<StatsData> getStats({
     required int userId,
     required String period,
     String? sportType,
     int? year,
+    String? weekStartDate,
+    String? monthStartDate,
   }) async {
     try {
+      final body = <String, dynamic>{
+        'userId': userId,
+        'period': period,
+        if (sportType != null) 'sportType': sportType,
+        if (year != null) 'year': year,
+        if (weekStartDate != null) 'weekStartDate': weekStartDate,
+        if (monthStartDate != null) 'monthStartDate': monthStartDate,
+      };
+
       final response = await _api.post(
         '/get_stats.php',
-        body: {
-          'userId': userId,
-          'period': period,
-          if (sportType != null) 'sportType': sportType,
-          if (year != null) 'year': year,
-        },
+        body: body,
       );
 
       if (response['success'] == true) {

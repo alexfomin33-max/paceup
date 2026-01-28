@@ -13,11 +13,11 @@ import '../../../core/services/api_service.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/services/auth_service.dart';
 import '../../profile/providers/profile_header_provider.dart';
+import '../providers/city_leaderboard_provider.dart';
 import '../widgets/city_autocomplete_field.dart';
 import '../widgets/leaderboard_filters_panel.dart';
 import '../widgets/leaderboard_table.dart';
 import '../widgets/top_three_leaders.dart';
-import '../providers/city_leaderboard_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //                     ВКЛАДКА "ГОРОД"
@@ -45,6 +45,7 @@ class _CityTabState extends ConsumerState<CityTab>
 
   // ── вид спорта: 0 бег, 1 вело, 2 плавание, 3 лыжи (single-select)
   int _sport = 0;
+  bool _defaultSportSet = false;
 
   // ── выбранный период (по умолчанию "Текущий месяц")
   String? _selectedPeriod = 'Текущий месяц';
@@ -180,6 +181,17 @@ class _CityTabState extends ConsumerState<CityTab>
     super.build(
       context,
     ); // Обязательно вызываем для AutomaticKeepAliveClientMixin
+    // По умолчанию активна иконка основного вида спорта пользователя (users.sport)
+    if (!_defaultSportSet) {
+      _defaultSportSet = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _sport = ref.read(defaultSportIndexProvider);
+          });
+        }
+      });
+    }
     // ── Загружаем профиль пользователя для получения города
     if (_currentUserId != null) {
       final profileState = ref.watch(profileHeaderProvider(_currentUserId!));

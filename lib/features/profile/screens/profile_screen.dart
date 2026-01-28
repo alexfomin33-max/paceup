@@ -10,6 +10,7 @@ import '../../../core/widgets/transparent_route.dart';
 import '../../../core/widgets/more_menu_overlay.dart';
 import '../../../features/complaint.dart';
 import '../../../core/widgets/more_menu_hub.dart';
+import '../../../domain/models/user_profile_header.dart';
 import '../providers/profile_header_provider.dart';
 import '../providers/profile_header_state.dart';
 import '../providers/user_photos_provider.dart';
@@ -201,8 +202,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         return MainTab(key: _mainTabKey, userId: userId);
       case 1:
         return PhotosTab(userId: userId);
-      case 2:
-        return StatsTab(key: _statsTabKey, userId: userId);
+      case 2: {
+        final profileState = ref.read(profileHeaderProvider(userId));
+        final initialSport = profileState.profile?.sport != null
+            ? sportStringToIndex(profileState.profile!.sport)
+            : null;
+        return StatsTab(
+          key: _statsTabKey,
+          userId: userId,
+          initialSport: initialSport,
+        );
+      }
       case 3:
         return TrainingTab(key: _trainingTabKey, userId: userId);
       case 4:

@@ -12,7 +12,10 @@ List<Widget> buildByTypeStatsSlivers(int userId) {
 
 class StatsTab extends StatefulWidget {
   final int? userId;
-  const StatsTab({super.key, this.userId});
+  /// Индекс вида спорта по умолчанию (0 бег, 1 вело, 2 плавание, 3 лыжи).
+  /// Если передан и совпадает с основным видом пользователя — эта иконка активна при открытии.
+  final int? initialSport;
+  const StatsTab({super.key, this.userId, this.initialSport});
 
   @override
   State<StatsTab> createState() => StatsTabState();
@@ -45,7 +48,11 @@ class StatsTabState extends State<StatsTab>
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
         SliverToBoxAdapter(
-          child: _ByTypeContent(key: _contentKey, userId: userId),
+          child: _ByTypeContent(
+            key: _contentKey,
+            userId: userId,
+            initialSport: widget.initialSport,
+          ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 18)),
       ],
@@ -55,7 +62,13 @@ class StatsTabState extends State<StatsTab>
 
 class _ByTypeContent extends StatefulWidget {
   final int userId;
-  const _ByTypeContent({super.key, required this.userId});
+  /// Индекс вида спорта по умолчанию (0 бег, 1 вело, 2 плавание, 3 лыжи).
+  final int? initialSport;
+  const _ByTypeContent({
+    super.key,
+    required this.userId,
+    this.initialSport,
+  });
   @override
   State<_ByTypeContent> createState() => _ByTypeContentState();
 }
@@ -75,12 +88,37 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   StatsData? _statsData;
   String? _error;
 
-  // Текущий год для графиков
+  // Текущий год для графиков (для периода "За год")
   int _currentYear = DateTime.now().year;
+
+  // Текущая выбранная неделя (для периода "За неделю")
+  DateTime _currentWeekStart = _getCurrentWeekStart();
+
+  // Текущий выбранный месяц (для периода "За месяц")
+  DateTime _currentMonthStart = _getCurrentMonthStart();
+
+  // Вспомогательные функции для получения начала недели/месяца
+  static DateTime _getCurrentWeekStart() {
+    final now = DateTime.now();
+    final dayOfWeek = now.weekday; // 1 (понедельник) - 7 (воскресенье)
+    final daysToMonday = dayOfWeek - 1;
+    return DateTime(now.year, now.month, now.day - daysToMonday);
+  }
+
+  static DateTime _getCurrentMonthStart() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, 1);
+  }
 
   @override
   void initState() {
     super.initState();
+    // По умолчанию активна иконка основного вида спорта пользователя (users.sport)
+    if (widget.initialSport != null &&
+        widget.initialSport! >= 0 &&
+        widget.initialSport! <= 3) {
+      _sport = widget.initialSport!;
+    }
     _loadStats();
   }
 
@@ -90,7 +128,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   }
 
   /// Загружает статистику с текущими фильтрами
-  Future<void> _loadStats({int? year}) async {
+  Future<void> _loadStats({int? year, DateTime? weekStart, DateTime? monthStart}) async {
     setState(() {
       _isLoading = true;
       _error = null;
@@ -115,22 +153,43 @@ class _ByTypeContentState extends State<_ByTypeContent> {
 
       final period = periodMap[_period] ?? 'year';
       final sportType = sportTypeMap[_sport];
-      final yearForRequest = year ?? _currentYear;
+      
+      String? weekStartDateStr;
+      String? monthStartDateStr;
+      int? yearForRequest;
+
+      if (period == 'week') {
+        final weekToUse = weekStart ?? _currentWeekStart;
+        weekStartDateStr = '${weekToUse.year}-${weekToUse.month.toString().padLeft(2, '0')}-${weekToUse.day.toString().padLeft(2, '0')}';
+        if (weekStart != null) {
+          _currentWeekStart = weekStart;
+        }
+      } else if (period == 'month') {
+        final monthToUse = monthStart ?? _currentMonthStart;
+        monthStartDateStr = '${monthToUse.year}-${monthToUse.month.toString().padLeft(2, '0')}-01';
+        if (monthStart != null) {
+          _currentMonthStart = monthStart;
+        }
+      } else {
+        yearForRequest = year ?? _currentYear;
+        if (year != null) {
+          _currentYear = year;
+        }
+      }
 
       final data = await _statsService.getStats(
         userId: widget.userId,
         period: period,
         sportType: sportType,
         year: yearForRequest,
+        weekStartDate: weekStartDateStr,
+        monthStartDate: monthStartDateStr,
       );
 
       if (mounted) {
         setState(() {
           _statsData = data;
           _isLoading = false;
-          if (year != null) {
-            _currentYear = year;
-          }
         });
       }
     } catch (e) {
@@ -473,9 +532,18 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   }
 
   /// Вычисляет minY, maxY и tick для графика дней активности
-  /// Всегда использует диапазон от 0 до 31 (максимальное количество дней в месяце)
+  /// Для периодов "За неделю" и "За месяц": бинарная шкала 0-1
+  /// Для периода "За год": диапазон 0-31 (максимальное количество дней в месяце)
   (double, double, double) _getActiveDaysRange(List<double> values) {
-    // Для графика дней активности всегда используем фиксированный диапазон 0-31
+    // Для периодов "За неделю" и "За месяц" используем бинарную шкалу 0-1
+    if (_period == 'За неделю' || _period == 'За месяц') {
+      const minY = 0.0;
+      const maxY = 1.0;
+      const tick = 0.5; // Для отображения линий на 0, 0.5, 1.0
+      return (minY, maxY, tick);
+    }
+    
+    // Для года: диапазон 0-31
     const minY = 0.0;
     const maxY = 31.0;
     
@@ -615,7 +683,15 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     ),
                     onChanged: (String? newValue) {
                       if (newValue != null && newValue != _period) {
-                        setState(() => _period = newValue);
+                        setState(() {
+                          _period = newValue;
+                          // Сбрасываем на текущую неделю/месяц при смене периода
+                          if (newValue == 'За неделю') {
+                            _currentWeekStart = _getCurrentWeekStart();
+                          } else if (newValue == 'За месяц') {
+                            _currentMonthStart = _getCurrentMonthStart();
+                          }
+                        });
                         _loadStats();
                       }
                     },
@@ -721,8 +797,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         // ── Карточка с графиком
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: _YearChartCard(
-            initialYear: _currentYear,
+          child: _PeriodChartCard(
+            period: _period,
+            currentYear: _currentYear,
+            currentWeekStart: _currentWeekStart,
+            currentMonthStart: _currentMonthStart,
             color: AppColors.brandPrimary,
             minY: distanceMinY,
             maxY: distanceMaxY,
@@ -730,10 +809,13 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             height: 200,
             values: distanceValues,
             userId: widget.userId,
-            period: _getPeriodApi(),
+            periodApi: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
+            onWeekChanged: (weekStart) => _loadStats(weekStart: weekStart),
+            onMonthChanged: (monthStart) => _loadStats(monthStart: monthStart),
             valueFormatter: (value) => '${value.toStringAsFixed(1)} км',
+            periodInfo: _statsData?.periodInfo,
           ),
         ),
         const SizedBox(height: 20),
@@ -745,8 +827,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         // ── Карточка с графиком "Дней активности"
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-          child: _YearChartCard(
-            initialYear: _currentYear,
+          child: _PeriodChartCard(
+            period: _period,
+            currentYear: _currentYear,
+            currentWeekStart: _currentWeekStart,
+            currentMonthStart: _currentMonthStart,
             color: AppColors.female,
             minY: activeDaysMinY,
             maxY: activeDaysMaxY,
@@ -754,10 +839,16 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             height: 200,
             values: activeDaysValues,
             userId: widget.userId,
-            period: _getPeriodApi(),
+            periodApi: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
-            valueFormatter: (value) => value.toInt().toString(),
+            onWeekChanged: (weekStart) => _loadStats(weekStart: weekStart),
+            onMonthChanged: (monthStart) => _loadStats(monthStart: monthStart),
+            valueFormatter: (_period == 'За неделю' || _period == 'За месяц')
+                ? (value) => value >= 0.5 ? '1' : '0'
+                : (value) => value.toInt().toString(),
+            periodInfo: _statsData?.periodInfo,
+            isBinaryScale: _period == 'За неделю' || _period == 'За месяц',
           ),
         ),
         const SizedBox(height: 20),
@@ -769,8 +860,11 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         // ── Карточка с графиком "Время активности"
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-          child: _YearChartCard(
-            initialYear: _currentYear,
+          child: _PeriodChartCard(
+            period: _period,
+            currentYear: _currentYear,
+            currentWeekStart: _currentWeekStart,
+            currentMonthStart: _currentMonthStart,
             color: AppColors.accentMint,
             minY: activeTimeMinY,
             maxY: activeTimeMaxY,
@@ -778,10 +872,13 @@ class _ByTypeContentState extends State<_ByTypeContent> {
             height: 220,
             values: activeTimeValues,
             userId: widget.userId,
-            period: _getPeriodApi(),
+            periodApi: _getPeriodApi(),
             sportType: _getSportTypeApi(),
             onYearChanged: (year) => _loadStats(year: year),
+            onWeekChanged: (weekStart) => _loadStats(weekStart: weekStart),
+            onMonthChanged: (monthStart) => _loadStats(monthStart: monthStart),
             valueFormatter: (value) => '${value.toInt()} мин',
+            periodInfo: _statsData?.periodInfo,
           ),
         ),
       ],
@@ -874,23 +971,33 @@ class _SportIcon extends StatelessWidget {
   }
 }
 
-/// Карточка графика «по виду спорта» (переключение года)
-class _YearChartCard extends StatefulWidget {
-  final int initialYear;
-  final List<double> values; // 12
+/// Карточка графика с поддержкой недели/месяца/года
+class _PeriodChartCard extends StatefulWidget {
+  final String period; // 'За неделю', 'За месяц', 'За год'
+  final int currentYear;
+  final DateTime currentWeekStart;
+  final DateTime currentMonthStart;
+  final List<double> values;
   final double minY;
   final double maxY;
   final double tick;
   final Color color;
   final double height;
   final int userId;
-  final String period;
+  final String periodApi; // 'week', 'month', 'year'
   final String? sportType;
   final Function(int) onYearChanged;
-  final String Function(double) valueFormatter; // Форматирование значения
+  final Function(DateTime) onWeekChanged;
+  final Function(DateTime) onMonthChanged;
+  final String Function(double) valueFormatter;
+  final PeriodInfo? periodInfo;
+  final bool isBinaryScale; // Для бинарной шкалы 0-1
 
-  const _YearChartCard({
-    required this.initialYear,
+  const _PeriodChartCard({
+    required this.period,
+    required this.currentYear,
+    required this.currentWeekStart,
+    required this.currentMonthStart,
     required this.values,
     required this.minY,
     required this.maxY,
@@ -898,45 +1005,111 @@ class _YearChartCard extends StatefulWidget {
     required this.color,
     required this.height,
     required this.userId,
-    required this.period,
+    required this.periodApi,
     required this.sportType,
     required this.onYearChanged,
+    required this.onWeekChanged,
+    required this.onMonthChanged,
     required this.valueFormatter,
+    this.periodInfo,
+    this.isBinaryScale = false,
   });
 
   @override
-  State<_YearChartCard> createState() => _YearChartCardState();
+  State<_PeriodChartCard> createState() => _PeriodChartCardState();
 }
 
-class _YearChartCardState extends State<_YearChartCard> {
-  late int _year = widget.initialYear;
+class _PeriodChartCardState extends State<_PeriodChartCard> {
+  late int _year = widget.currentYear;
+  late DateTime _weekStart = widget.currentWeekStart;
+  late DateTime _monthStart = widget.currentMonthStart;
   bool _isLoading = false;
 
   @override
-  void didUpdateWidget(_YearChartCard oldWidget) {
+  void didUpdateWidget(_PeriodChartCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.initialYear != widget.initialYear) {
-      _year = widget.initialYear;
+    if (oldWidget.currentYear != widget.currentYear) {
+      _year = widget.currentYear;
+    }
+    if (oldWidget.currentWeekStart != widget.currentWeekStart) {
+      _weekStart = widget.currentWeekStart;
+    }
+    if (oldWidget.currentMonthStart != widget.currentMonthStart) {
+      _monthStart = widget.currentMonthStart;
     }
   }
 
-  void _changeYear(int delta) {
-    final newYear = _year + delta;
-    // Ограничиваем год разумными пределами
-    if (newYear >= 2020 && newYear <= DateTime.now().year + 1) {
-      setState(() {
+  void _changePeriod(int delta) {
+    setState(() {
+      _isLoading = true;
+    });
+
+    if (widget.period == 'За неделю') {
+      final newWeekStart = DateTime(
+        _weekStart.year,
+        _weekStart.month,
+        _weekStart.day + (delta * 7),
+      );
+      _weekStart = newWeekStart;
+      widget.onWeekChanged(newWeekStart);
+    } else if (widget.period == 'За месяц') {
+      final newMonthStart = DateTime(
+        _monthStart.year,
+        _monthStart.month + delta,
+        1,
+      );
+      _monthStart = newMonthStart;
+      widget.onMonthChanged(newMonthStart);
+    } else {
+      // За год
+      final newYear = _year + delta;
+      if (newYear >= 2020 && newYear <= DateTime.now().year + 1) {
         _year = newYear;
-        _isLoading = true;
-      });
-      widget.onYearChanged(newYear);
-      // Сброс индикатора загрузки произойдет при обновлении данных
-      Future.delayed(const Duration(milliseconds: 300), () {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-        }
-      });
+        widget.onYearChanged(newYear);
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+    }
+
+    // Сброс индикатора загрузки произойдет при обновлении данных
+    Future.delayed(const Duration(milliseconds: 300), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  String _getPeriodLabel() {
+    if (widget.period == 'За неделю') {
+      final weekEnd = DateTime(
+        _weekStart.year,
+        _weekStart.month,
+        _weekStart.day + 6,
+      );
+      return '${_weekStart.day.toString().padLeft(2, '0')}.${_weekStart.month.toString().padLeft(2, '0')} - ${weekEnd.day.toString().padLeft(2, '0')}.${weekEnd.month.toString().padLeft(2, '0')}';
+    } else if (widget.period == 'За месяц') {
+      final monthNames = [
+        'Январь',
+        'Февраль',
+        'Март',
+        'Апрель',
+        'Май',
+        'Июнь',
+        'Июль',
+        'Август',
+        'Сентябрь',
+        'Октябрь',
+        'Ноябрь',
+        'Декабрь',
+      ];
+      return '${monthNames[_monthStart.month - 1]} ${_monthStart.year}';
+    } else {
+      return '$_year';
     }
   }
 
@@ -958,7 +1131,7 @@ class _YearChartCardState extends State<_YearChartCard> {
             children: [
               _NavIcon(
                 CupertinoIcons.left_chevron,
-                onTap: () => _changeYear(-1),
+                onTap: () => _changePeriod(-1),
               ),
               Expanded(
                 child: _isLoading
@@ -974,7 +1147,7 @@ class _YearChartCardState extends State<_YearChartCard> {
                         ),
                       )
                     : Text(
-                        '$_year',
+                        _getPeriodLabel(),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontFamily: 'Inter',
@@ -986,7 +1159,7 @@ class _YearChartCardState extends State<_YearChartCard> {
               ),
               _NavIcon(
                 CupertinoIcons.right_chevron,
-                onTap: () => _changeYear(1),
+                onTap: () => _changePeriod(1),
               ),
             ],
           ),
@@ -1001,6 +1174,10 @@ class _YearChartCardState extends State<_YearChartCard> {
             borderColor: AppColors.getBorderColor(context),
             textSecondaryColor: AppColors.getTextSecondaryColor(context),
             valueFormatter: widget.valueFormatter,
+            period: widget.period,
+            weekStart: widget.period == 'За неделю' ? _weekStart : null,
+            monthStart: widget.period == 'За месяц' ? _monthStart : null,
+            isBinaryScale: widget.isBinaryScale,
           ),
         ],
       ),
@@ -1118,7 +1295,7 @@ class _MetricRowData {
 // ———— График (12 месяцев) — линия с точками, подписи под точками
 
 class _BarsChart extends StatefulWidget {
-  final List<double> values; // 12
+  final List<double> values;
   final double minY;
   final double maxY;
   final double tick;
@@ -1126,8 +1303,11 @@ class _BarsChart extends StatefulWidget {
   final double height;
   final Color borderColor;
   final Color textSecondaryColor;
-  final String Function(double)
-  valueFormatter; // Форматирование значения для отображения
+  final String Function(double) valueFormatter;
+  final String period; // 'За неделю', 'За месяц', 'За год'
+  final DateTime? weekStart; // Для недели
+  final DateTime? monthStart; // Для месяца
+  final bool isBinaryScale; // Для бинарной шкалы 0-1
 
   const _BarsChart({
     required this.values,
@@ -1139,6 +1319,10 @@ class _BarsChart extends StatefulWidget {
     required this.borderColor,
     required this.textSecondaryColor,
     required this.valueFormatter,
+    required this.period,
+    this.weekStart,
+    this.monthStart,
+    this.isBinaryScale = false,
   });
 
   @override
@@ -1169,6 +1353,7 @@ class _BarsChartState extends State<_BarsChart> {
                 textSecondaryColor: widget.textSecondaryColor,
                 selectedIndex: _selectedIndex,
                 valueFormatter: widget.valueFormatter,
+                isBinaryScale: widget.isBinaryScale,
               );
               final tappedIndex = painter.getTappedIndex(
                 localPosition,
@@ -1192,14 +1377,26 @@ class _BarsChartState extends State<_BarsChart> {
                 textSecondaryColor: widget.textSecondaryColor,
                 selectedIndex: _selectedIndex,
                 valueFormatter: widget.valueFormatter,
+                isBinaryScale: widget.isBinaryScale,
               ),
             ),
           ),
         ),
 
-        const Padding(
-          padding: EdgeInsets.only(left: 28, right: 8), // вровень с painter
-          child: _MonthLabels(fontSize: 10),
+        Padding(
+          padding: const EdgeInsets.only(left: 28, right: 8), // вровень с painter
+          child: widget.period == 'За неделю'
+              ? _WeekLabels(
+                  weekStart: widget.weekStart!,
+                  fontSize: 10,
+                )
+              : widget.period == 'За месяц'
+                  ? _MonthDayLabels(
+                      monthStart: widget.monthStart!,
+                      fontSize: 10,
+                      valuesCount: widget.values.length,
+                    )
+                  : const _MonthLabels(fontSize: 10),
         ),
       ],
     );
@@ -1246,6 +1443,98 @@ class _MonthLabels extends StatelessWidget {
   }
 }
 
+/// Подписи для дней недели
+class _WeekLabels extends StatelessWidget {
+  final DateTime weekStart;
+  final double fontSize;
+  const _WeekLabels({required this.weekStart, this.fontSize = 10});
+
+  static const _dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(7, (i) {
+        final day = DateTime(
+          weekStart.year,
+          weekStart.month,
+          weekStart.day + i,
+        );
+        return Expanded(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _dayNames[i],
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: fontSize,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                ),
+                Text(
+                  '${day.day}',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: fontSize - 1,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+/// Подписи для дней месяца
+class _MonthDayLabels extends StatelessWidget {
+  final DateTime monthStart;
+  final double fontSize;
+  final int valuesCount;
+  const _MonthDayLabels({
+    required this.monthStart,
+    this.fontSize = 10,
+    required this.valuesCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Показываем подписи только для некоторых дней, чтобы не перегружать график
+    // Показываем каждые N дней в зависимости от количества дней в месяце
+    final step = valuesCount > 15 ? (valuesCount / 8).ceil() : 1;
+    
+    return Row(
+      children: List.generate(valuesCount, (i) {
+        final day = DateTime(
+          monthStart.year,
+          monthStart.month,
+          monthStart.day + i,
+        );
+        final shouldShow = i % step == 0 || i == valuesCount - 1;
+        
+        return Expanded(
+          child: Center(
+            child: shouldShow
+                ? Text(
+                    '${day.day}',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: fontSize,
+                      color: AppColors.getTextSecondaryColor(context),
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        );
+      }),
+    );
+  }
+}
+
 class _BarsPainter extends CustomPainter {
   final List<double> values;
   final double minY;
@@ -1256,6 +1545,7 @@ class _BarsPainter extends CustomPainter {
   final Color textSecondaryColor;
   final int? selectedIndex;
   final String Function(double) valueFormatter;
+  final bool isBinaryScale; // Для бинарной шкалы 0-1
 
   _BarsPainter({
     required this.values,
@@ -1267,6 +1557,7 @@ class _BarsPainter extends CustomPainter {
     required this.textSecondaryColor,
     this.selectedIndex,
     required this.valueFormatter,
+    this.isBinaryScale = false,
   });
 
   static const double leftPad = 28;
@@ -1326,8 +1617,25 @@ class _BarsPainter extends CustomPainter {
         gridPaint,
       );
 
+      // Форматируем значение для оси Y
+      String yLabel;
+      if (isBinaryScale) {
+        // Для бинарной шкалы показываем 0, 0.5, 1
+        if (y == 0.0) {
+          yLabel = '0';
+        } else if (y == 0.5) {
+          yLabel = '0.5';
+        } else if (y == 1.0) {
+          yLabel = '1';
+        } else {
+          yLabel = y.toStringAsFixed(1);
+        }
+      } else {
+        yLabel = y.toInt().toString();
+      }
+
       tp.text = TextSpan(
-        text: y.toInt().toString(),
+        text: yLabel,
         style: TextStyle(
           fontFamily: 'Inter',
           fontSize: 10,
