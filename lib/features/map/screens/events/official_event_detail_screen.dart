@@ -130,7 +130,6 @@ class _OfficialEventDetailScreenState
           text: 'Редактировать',
           icon: CupertinoIcons.pencil,
           onTap: () async {
-            MoreMenuHub.hide();
             // Переходим на экран редактирования события
             final result = await Navigator.of(context).push<dynamic>(
               TransparentPageRoute(
@@ -167,7 +166,6 @@ class _OfficialEventDetailScreenState
         iconColor: _isBookmarked ? AppColors.red : null,
         textStyle: _isBookmarked ? const TextStyle(color: AppColors.red) : null,
         onTap: () {
-          MoreMenuHub.hide();
           _toggleBookmark();
         },
       ),
@@ -221,6 +219,19 @@ class _OfficialEventDetailScreenState
             _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
           });
         }
+
+        // Показываем SnackBar об успешном выполнении
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isBookmarked
+                  ? 'Событие добавлено в избранное'
+                  : 'Событие удалено из избранного',
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       } else {
         final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
         setState(() {

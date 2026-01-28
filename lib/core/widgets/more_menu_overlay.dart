@@ -10,6 +10,7 @@ class MoreMenuItem {
   final VoidCallback onTap;
   final Color? iconColor;
   final TextStyle? textStyle;
+  final String? snackBarMessage; // Сообщение для SnackBar при нажатии
 
   const MoreMenuItem({
     required this.text,
@@ -17,6 +18,7 @@ class MoreMenuItem {
     required this.onTap,
     this.iconColor,
     this.textStyle,
+    this.snackBarMessage,
   });
 }
 
@@ -53,6 +55,7 @@ class MoreMenuOverlay {
   final EdgeInsets innerPadding;
 
   OverlayEntry? _entry;
+  BuildContext? _context; // Сохраняем контекст для показа SnackBar
 
   bool get isShown => _entry != null;
 
@@ -62,6 +65,7 @@ class MoreMenuOverlay {
       MoreMenuHub.unregister(hide);
       _entry!.remove();
       _entry = null;
+      _context = null; // Очищаем контекст
     }
   }
 
@@ -69,6 +73,7 @@ class MoreMenuOverlay {
   void show(BuildContext context) {
     if (_entry != null) return;
 
+    _context = context; // Сохраняем контекст для SnackBar
     final anchorCtx = anchorKey.currentContext;
     final overlay = Overlay.of(context, rootOverlay: true);
     if (anchorCtx == null) return;
@@ -76,22 +81,27 @@ class MoreMenuOverlay {
     // ────────────────────────────────────────────────────────────────
     // 📏 ВЫЧИСЛЕНИЕ ШИРИНЫ ПО СОДЕРЖИМОМОМУ: находим самый длинный текст
     // ────────────────────────────────────────────────────────────────
-    final textStyle = AppTextStyles.h15w4;
+    final baseTextStyle = AppTextStyles.h15w4;
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
     double maxTextWidth = 0.0;
     for (final item in items) {
+      // Объединяем базовый стиль с кастомным (если есть)
+      // Это важно, так как кастомный может содержать только цвет
+      final effectiveStyle = item.textStyle != null
+          ? baseTextStyle.merge(item.textStyle)
+          : baseTextStyle;
       textPainter.text = TextSpan(
         text: item.text,
-        style: item.textStyle ?? textStyle,
+        style: effectiveStyle,
       );
-      textPainter.layout();
+      textPainter.layout(maxWidth: double.infinity);
       if (textPainter.width > maxTextWidth) {
         maxTextWidth = textPainter.width;
       }
     }
     // Ширина = текст + padding horizontal (14*2) + иконка (20) + отступ (12)
-    // + минимальные отступы для комфорта
-    final computedWidth = maxTextWidth + 14 * 2 + 20 + 12 + 8;
+    // + минимальные отступы для комфорта + запас для точности измерения
+    final computedWidth = maxTextWidth + 14 * 2 + 20 + 12 + 8 + 4;
     // Используем вычисленную ширину, но не меньше минимальной
     final menuWidth = computedWidth > width ? computedWidth : width;
 
@@ -211,6 +221,15 @@ class MoreMenuOverlay {
         InkWell(
           onTap: () {
             hide(); // сперва закрываем меню
+            // Показываем SnackBar, если указано сообщение
+            if (it.snackBarMessage != null && _context != null) {
+              ScaffoldMessenger.of(_context!).showSnackBar(
+                SnackBar(
+                  content: Text(it.snackBarMessage!),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            }
             it.onTap(); // потом действие
           },
           borderRadius: BorderRadius.circular(AppRadius.sm),

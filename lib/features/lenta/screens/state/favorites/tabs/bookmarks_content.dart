@@ -62,7 +62,7 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              const SliverToBoxAdapter(child: SizedBox(height: 10)),
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
               // ── Состояния загрузки и ошибок
               if (eventsState.isLoading && eventsState.events.isEmpty)
@@ -120,14 +120,15 @@ class _BookmarksContentState extends ConsumerState<BookmarksContent> {
                   ),
                 )
               else
-                // ── Карточный список с зазором 2 px (как в Маршрутах)
+                // ── Карточный список с зазором 2 px
+                // ── Горизонтальный отступ как в my_events_content.dart
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: SliverList.separated(
                     itemCount: eventsState.events.length,
                     separatorBuilder: (_, _) => const SizedBox(
-                      height: 2,
-                    ), // такой же зазор, как в Маршрутах
+                      height: 10,
+                    ),
                     itemBuilder: (context, i) {
                       final event = eventsState.events[i];
                       return GestureDetector(
@@ -207,21 +208,19 @@ class _BookmarkCard extends StatelessWidget {
       decoration: BoxDecoration(
         // ── Цвет поверхности из темы
         color: AppColors.getSurfaceColor(context),
+        // ── Стиль карточки как в events_bottom_sheet.dart
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
-          width: 0.5,
+          color: AppColors.twinchip,
+          width: 1.0,
         ),
-        boxShadow: [
-          BoxShadow(
-            // ── Тень из темы (более заметная в темной теме)
-            color: Theme.of(context).brightness == Brightness.dark
-                ? AppColors.darkShadowSoft
-                : AppColors.shadowSoft,
-            offset: const Offset(0, 1),
-            blurRadius: 1,
-            spreadRadius: 0,
-          ),
-        ],
+        // boxShadow: const [
+        //   BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 10,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: _BookmarkRow(event: event),
     );
@@ -310,104 +309,151 @@ class _BookmarkRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      // внутренние отступы карточки
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+      // ── Внутренние отступы карточки как в events_bottom_sheet.dart
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: Stack(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.xs),
-            child: event.logoUrl != null && event.logoUrl!.isNotEmpty
-                ? Builder(
-                    builder: (context) {
-                      final dpr = MediaQuery.of(context).devicePixelRatio;
-                      final targetW = (55 * dpr).round();
-                      final targetH = (55 * dpr).round();
-                      return CachedNetworkImage(
-                        imageUrl: event.logoUrl!,
-                        width: 55,
-                        height: 55,
-                        fit: BoxFit.cover,
-                        memCacheWidth: targetW,
-                        memCacheHeight: targetH,
-                        maxWidthDiskCache: targetW,
-                        maxHeightDiskCache: targetH,
-                        errorWidget: (context, imageUrl, error) => Container(
-                          width: 55,
-                          height: 55,
-                          // ── Цвет скелетона (можно оставить константу, т.к. это декоративный элемент)
-                          color: AppColors.skeletonBase,
-                          alignment: Alignment.center,
-                          child: Icon(
-                            CupertinoIcons.photo,
-                            size: 20,
-                            // ── Цвет иконки из темы
-                            color: AppColors.getTextSecondaryColor(context),
-                          ),
-                        ),
-                        placeholder: (context, imageUrl) => Container(
-                          width: 55,
-                          height: 55,
-                          color: AppColors.skeletonBase,
-                          alignment: Alignment.center,
-                          child: const CupertinoActivityIndicator(),
-                        ),
-                      );
-                    },
-                  )
-                : Container(
-                    width: 55,
-                    height: 55,
-                    color: AppColors.skeletonBase,
-                    alignment: Alignment.center,
-                    child: Icon(
-                      CupertinoIcons.photo,
-                      size: 20,
-                      // ── Цвет иконки из темы
-                      color: AppColors.getTextSecondaryColor(context),
-                    ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Логотип события (круглый, 100x100)
+              SizedBox(
+                height: 100,
+                width: 100,
+                child: ClipOval(
+                  child: _BookmarkLogoImage(logoUrl: event.logoUrl),
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // ── Название события с обрезанием текста
+              Center(
+                child: Text(
+                  event.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    height: 1.2,
+                    color: AppColors.getTextPrimaryColor(context),
                   ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Первая строка: Название + красный кружок с крестиком
-                Row(
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              // ── Дата и количество участников
+              Align(
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Text(
-                        event.name,
+                        _formatDateWithoutCurrentYear(event.dateFormatted),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        // ── Цвет текста из темы
-                        style: AppTextStyles.h14w6.copyWith(
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          height: 1.2,
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
                     ),
-                    _RemoveButton(
-                      eventId: event.id,
-                      onRemove: () =>
-                          _handleRemoveBookmark(context, ref, event.id),
+                    Text(
+                      '  ·  ',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                    ),
+                    Icon(
+                      CupertinoIcons.person_2,
+                      size: 15,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _fmt(event.participantsCount),
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.2,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  '${_formatDateWithoutCurrentYear(event.dateFormatted)}  ·  Участников: ${_fmt(event.participantsCount)}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  // ── Цвет текста из темы
-                  style: AppTextStyles.h13w5.copyWith(
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          // ── Кнопка удаления в правом верхнем углу
+          Positioned(
+            top: 0,
+            right: 0,
+            child: _RemoveButton(
+              eventId: event.id,
+              onRemove: () => _handleRemoveBookmark(context, ref, event.id),
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ── Виджет для отображения логотипа события
+/// Использует CachedNetworkImage для загрузки изображения из API
+/// Показывает placeholder при отсутствии логотипа или ошибке загрузки
+class _BookmarkLogoImage extends StatelessWidget {
+  final String? logoUrl;
+  const _BookmarkLogoImage({required this.logoUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Если логотип не указан, показываем placeholder
+    if (logoUrl == null || logoUrl!.isEmpty) {
+      return Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.calendar,
+          size: 40,
+          color: AppColors.textSecondary,
+        ),
+      );
+    }
+
+    // ── Загружаем логотип из сети с кэшированием
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final targetW = (100 * dpr).round();
+
+    return CachedNetworkImage(
+      imageUrl: logoUrl!,
+      width: 100,
+      height: 100,
+      fit: BoxFit.cover,
+      memCacheWidth: targetW,
+      maxWidthDiskCache: targetW,
+      errorWidget: (context, imageUrl, error) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const Icon(
+          CupertinoIcons.photo,
+          size: 24,
+          color: AppColors.textSecondary,
+        ),
+      ),
+      placeholder: (context, imageUrl) => Container(
+        color: AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: const CupertinoActivityIndicator(radius: 10),
       ),
     );
   }
@@ -423,20 +469,20 @@ class _RemoveButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return CupertinoButton(
       padding: EdgeInsets.zero,
-      minimumSize: const Size(28, 28),
+      minimumSize: const Size(20, 20),
       onPressed: onRemove,
       child: Container(
         width: 20,
         height: 20,
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: AppColors.error, width: 1),
-        ),
+        // decoration: BoxDecoration(
+        //   color: AppColors.error,
+        //   shape: BoxShape.circle,
+        //   border: Border.all(color: AppColors.error, width: 1),
+        // ),
         child: const Icon(
-          CupertinoIcons.xmark,
-          size: 12,
-          color: AppColors.error,
+          CupertinoIcons.bookmark_solid,
+          size: 20,
+          color: AppColors.orange,
         ),
       ),
     );

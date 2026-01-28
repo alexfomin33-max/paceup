@@ -17,17 +17,6 @@ import '../../../../core/services/route_map_service.dart';
 /// - Кеширование через CachedNetworkImage снижает повторные запросы
 /// - Упрощение полилинии уменьшает размер URL и ускоряет генерацию
 class ActivityRouteCarousel extends StatefulWidget {
-  const ActivityRouteCarousel({
-    super.key,
-    required this.points,
-    required this.imageUrls,
-    this.height = 240,
-    this.onMapTap,
-    this.mapSortOrder,
-    this.activityId,
-    this.userId,
-  });
-
   /// Точки трека в порядке следования.
   final List<LatLng> points;
 
@@ -52,6 +41,25 @@ class ActivityRouteCarousel extends StatefulWidget {
   /// Если не указан, карта будет генерироваться через Mapbox без сохранения.
   final int? userId;
 
+  /// Позиция индикаторов свайпа: true - сверху, false - снизу (по умолчанию).
+  final bool dotsOnTop;
+
+  /// Показывать ли градиентное затемнение сверху: true - показывать (по умолчанию), false - скрыть.
+  final bool showTopGradient;
+
+  const ActivityRouteCarousel({
+    super.key,
+    required this.points,
+    required this.imageUrls,
+    this.height = 240,
+    this.onMapTap,
+    this.mapSortOrder,
+    this.activityId,
+    this.userId,
+    this.dotsOnTop = false,
+    this.showTopGradient = true,
+  });
+
   @override
   State<ActivityRouteCarousel> createState() => _ActivityRouteCarouselState();
 }
@@ -64,6 +72,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   final RouteMapService _routeMapService = RouteMapService();
 
   static const _dotsBottom = 10.0;
+  static const _dotsTop = 10.0;
 
   // ────────────────────────────────────────────────────────────────
   // ⚡ КЭШИРОВАНИЕ URL КАРТЫ: генерируем один раз вместо каждого rebuild
@@ -174,7 +183,8 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
             // Индикаторы точек, если фотографий больше одной
             if (widget.imageUrls.length > 1)
               Positioned(
-                bottom: _dotsBottom,
+                top: widget.dotsOnTop ? _dotsTop : null,
+                bottom: widget.dotsOnTop ? null : _dotsBottom,
                 left: 0,
                 right: 0,
                 child: Center(
@@ -252,11 +262,12 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           ),
 
           // ────────────────────────────────────────────────────────────────
-          // 🔘 ИНДИКАТОРЫ: точки снизу для навигации
+          // 🔘 ИНДИКАТОРЫ: точки для навигации (сверху или снизу в зависимости от dotsOnTop)
           // ────────────────────────────────────────────────────────────────
           if (totalSlides > 1)
             Positioned(
-              bottom: _dotsBottom,
+              top: widget.dotsOnTop ? _dotsTop : null,
+              bottom: widget.dotsOnTop ? null : _dotsBottom,
               left: 0,
               right: 0,
               child: Center(child: _buildDots(totalSlides, items: items)),
@@ -434,25 +445,26 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                       }
                     : null,
               ),
-              // Градиентное затемнение сверху
-              Positioned(
-                top: 0,
-                left: 0,
-                right: 0,
-                height: widget.height * 0.3,
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        AppColors.scrim40,
-                        Colors.transparent,
-                      ],
+              // Градиентное затемнение сверху (только если showTopGradient = true)
+              if (widget.showTopGradient)
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: widget.height * 0.3,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          AppColors.scrim40,
+                          Colors.transparent,
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           );
         },
@@ -532,25 +544,26 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 ),
               ),
             ),
-            // Градиентное затемнение сверху
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              height: widget.height * 0.3,
-              child: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.scrim40,
-                      Colors.transparent,
-                    ],
+            // Градиентное затемнение сверху (только если showTopGradient = true)
+            if (widget.showTopGradient)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: widget.height * 0.3,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        AppColors.scrim40,
+                        Colors.transparent,
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
           ],
         );
       },
@@ -579,7 +592,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.scrim40,
+        color: AppColors.scrim40.withValues(alpha: 0.25), // Более прозрачный фон
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
       child: Row(

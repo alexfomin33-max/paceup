@@ -48,6 +48,8 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
               unselectedLabelColor: AppColors.getTextSecondaryColor(context),
               indicatorColor: AppColors.brandPrimary,
               indicatorWeight: 1,
+              // ── Разделитель под TabBar: менее заметный (30% прозрачности)
+              dividerColor: AppColors.twinchip,
               labelPadding: const EdgeInsets.symmetric(horizontal: 8),
               tabs: const [
                 Tab(

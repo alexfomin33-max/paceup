@@ -59,6 +59,8 @@ class _MainTabState extends MainTabState
   // Ключ для доступа к состоянию графика недельной активности
   final GlobalKey<WeeklyActivityChartState> _weeklyChartKey =
       GlobalKey<WeeklyActivityChartState>();
+  // Выбранный вид спорта для фильтрации рекордов (0 - бег, 1 - вело, 2 - плавание, 3 - лыжи)
+  int _selectedSport = 0;
 
   @override
   void initState() {
@@ -378,7 +380,17 @@ class _MainTabState extends MainTabState
         ),
 
       // ───────────────── Личные рекорды ─────────────────
-      const SliverToBoxAdapter(child: _SectionTitle('Личные рекорды')),
+      SliverToBoxAdapter(
+        child: _SectionTitleWithSportIcons(
+          title: 'Личные рекорды',
+          selectedSport: _selectedSport,
+          onSportChanged: (sport) {
+            setState(() {
+              _selectedSport = sport;
+            });
+          },
+        ),
+      ),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
       SliverToBoxAdapter(child: _PRRow(items: data.prs)),
 
@@ -432,6 +444,113 @@ class _SectionTitle extends StatelessWidget {
                 ? AppColors.darkTextSecondary
                 : AppColors.getTextPrimaryColor(context),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Заголовок секции с иконками вида спорта справа
+class _SectionTitleWithSportIcons extends StatelessWidget {
+  final String title;
+  final int selectedSport;
+  final ValueChanged<int> onSportChanged;
+
+  const _SectionTitleWithSportIcons({
+    required this.title,
+    required this.selectedSport,
+    required this.onSportChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          // Заголовок слева
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+          ),
+          // Иконки вида спорта справа
+          _SportIcon(
+            selected: selectedSport == 0,
+            icon: Icons.directions_run,
+            onTap: () => onSportChanged(0),
+          ),
+          const SizedBox(width: 8),
+          _SportIcon(
+            selected: selectedSport == 1,
+            icon: Icons.directions_bike,
+            onTap: () => onSportChanged(1),
+          ),
+          const SizedBox(width: 8),
+          _SportIcon(
+            selected: selectedSport == 2,
+            icon: Icons.pool,
+            onTap: () => onSportChanged(2),
+          ),
+          const SizedBox(width: 8),
+          _SportIcon(
+            selected: selectedSport == 3,
+            icon: Icons.downhill_skiing,
+            onTap: () => onSportChanged(3),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Иконка вида спорта (аналогична SportIcon из leaderboard_filters.dart)
+class _SportIcon extends StatelessWidget {
+  final bool selected;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _SportIcon({
+    required this.selected,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.brandPrimary
+              : AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          border: Border.all(
+            color: AppColors.getBorderColor(context),
+            width: 1,
+          ),
+        ),
+        child: Icon(
+          icon,
+          size: 16,
+          color: selected
+              ? AppColors.getSurfaceColor(context)
+              : AppColors.getTextPrimaryColor(context),
         ),
       ),
     );

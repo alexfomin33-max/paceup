@@ -101,6 +101,13 @@ class ActivityBlock extends ConsumerWidget {
         getDefaultNoRouteImagePath(updatedActivity.type);
 
     // ────────────────────────────────────────────────────────────────
+    // 🏊 ОПРЕДЕЛЕНИЕ ТИПА ТРЕНИРОВКИ: для скрытия правых действий для плавания
+    // ────────────────────────────────────────────────────────────────
+    final activityTypeLower = updatedActivity.type.toLowerCase();
+    final isSwim =
+        activityTypeLower == 'swim' || activityTypeLower == 'swimming';
+
+    // ────────────────────────────────────────────────────────────────
     // 🔹 КЛЮЧ ДЛЯ МЕНЮ: создаем стабильный GlobalKey на основе lentaId
     // ────────────────────────────────────────────────────────────────
     // ⚡ ОПТИМИЗАЦИЯ: используем стабильный ключ для предотвращения
@@ -413,11 +420,9 @@ class ActivityBlock extends ConsumerWidget {
                     // ────────────────────────────────────────────────────────────────
                     // 📊 ФОРМАТИРОВАНИЕ МЕТРИК: вычисляем значения для первой строки
                     // ────────────────────────────────────────────────────────────────
+                    // ⚡ ОПТИМИЗАЦИЯ: isSwim уже определен в начале метода build
                     final activityTypeLower = updatedActivity.type
                         .toLowerCase();
-                    final isSwim =
-                        activityTypeLower == 'swim' ||
-                        activityTypeLower == 'swimming';
                     final isBike =
                         activityTypeLower == 'bike' ||
                         activityTypeLower == 'bicycle' ||
@@ -745,29 +750,8 @@ class ActivityBlock extends ConsumerWidget {
                               mapSortOrder: updatedActivity.mapSortOrder,
                               activityId: updatedActivity.id,
                               userId: updatedActivity.userId,
-                            ),
-                            // ────────────────────────────────────────────────────────────────
-                            // 🌑 ТЕМНЫЙ ГРАДИЕНТ: наложение сверху изображения для лучшей читаемости
-                            // ────────────────────────────────────────────────────────────────
-                            Positioned(
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              height: 140,
-                              child: IgnorePointer(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topCenter,
-                                      end: Alignment.bottomCenter,
-                                      colors: [
-                                        Colors.black.withValues(alpha: 0.1),
-                                        Colors.transparent,
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
+                              dotsOnTop: true, // Индикаторы сверху в ленте
+                              showTopGradient: false, // Без градиента сверху в ленте
                             ),
                             // ────────────────────────────────────────────────────────────────
                             // 🌑 ТЕМНЫЙ ГРАДИЕНТ: наложение внизу изображения для лучшей читаемости
@@ -918,8 +902,10 @@ class ActivityBlock extends ConsumerWidget {
                     // ────────────────────────────────────────────────────────────────
                     // ✅ ИСПРАВЛЕНО: иконка совместной тренировки показывается всегда
                     // для владельца, независимо от наличия карты маршрута
+                    // 🏊 ДЛЯ ПЛАВАНИЯ: иконка "совместно" скрывается в activity_actions_row.dart,
+                    // но иконка шаринга остается видимой
                     // ────────────────────────────────────────────────────────────────
-                    hideRightActions: false,
+                    hideRightActions: false, // ✅ Для плавания показываем шаринг
                   ),
                 ),
               ),

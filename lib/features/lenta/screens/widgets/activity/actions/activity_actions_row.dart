@@ -219,21 +219,29 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         mapImageUrl: selection.mapImageUrl,
       );
     } else {
-      // Если нет ни фото, ни карты - показываем сообщение
+      // Если нет ни фото, ни карты - делимся текстом
       if (mounted) {
-        showCupertinoDialog(
-          context: context,
-          builder: (context) => CupertinoAlertDialog(
-            title: const Text('Нет данных для репоста'),
-            content: const Text('Добавьте фото или маршрут к тренировке'),
-            actions: [
-              CupertinoDialogAction(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('ОК'),
+        try {
+          await Share.share('Моя тренировка в PaceUp!');
+          debugPrint('Текстовый share выполнен успешно');
+        } catch (shareError) {
+          debugPrint('Ошибка при текстовом share: $shareError');
+          if (mounted) {
+            showCupertinoDialog(
+              context: context,
+              builder: (context) => CupertinoAlertDialog(
+                title: const Text('Ошибка'),
+                content: Text('Не удалось открыть меню шаринга: $shareError'),
+                actions: [
+                  CupertinoDialogAction(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('ОК'),
+                  ),
+                ],
               ),
-            ],
-          ),
-        );
+            );
+          }
+        }
       }
     }
   }
@@ -427,13 +435,15 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     final isOwner = widget.currentUserId == widget.activityUserId;
     
     // ───────────────────────────────────────────────────────────────────────
-    // ✅ ПРОВЕРКА ДАННЫХ ДЛЯ РЕПОСТА: иконка показывается, если есть карта
-    // ИЛИ фото (можно репостить либо карту, либо фото)
+    // 🏊 ПРОВЕРКА ТИПА ТРЕНИРОВКИ: для плавания скрываем только иконку "совместно"
     // ───────────────────────────────────────────────────────────────────────
-    final hasMap = widget.activity?.points.isNotEmpty ?? false;
-    final hasPhotos = widget.activity?.mediaImages.isNotEmpty ?? false;
-    // Иконка репоста скрывается только если нет ни карты, ни фото
-    final hideShare = !(hasMap || hasPhotos);
+    final activityType = widget.activity?.type.toLowerCase() ?? '';
+    final isSwim = activityType == 'swim' || activityType == 'swimming';
+    
+    // ───────────────────────────────────────────────────────────────────────
+    // ✅ ИКОНКА ШАРИНГА: показывается всегда для владельца, независимо от наличия
+    // карты или фото (можно репостить даже без карты и фото)
+    // ───────────────────────────────────────────────────────────────────────
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -486,7 +496,8 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
 
         // Правая группа: «совместно» + шаринг
         // ✅ ИСПРАВЛЕНО: иконка совместной тренировки показывается всегда для владельца
-        // Шаринг скрывается только для тренировок без карты И без фото
+        // ✅ ИКОНКА ШАРИНГА: показывается всегда для владельца, даже без карты и фото
+        // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем только иконку "совместно", шаринг показываем
         if (!widget.hideRightActions)
           _RightActionsGroup(
             activityId: widget.activityId,
@@ -496,7 +507,8 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
             isOwner: isOwner,
             onOpenTogether: widget.onOpenTogether,
             onShareTap: _onShareTap,
-            hideShare: hideShare,
+            hideShare: false, // ✅ Шаринг всегда показывается
+            hideTogetherIcon: isSwim, // 🏊 Скрываем иконку "совместно" для плавания
           ),
       ],
     );
@@ -519,7 +531,8 @@ class _RightActionsGroup extends ConsumerWidget {
   final bool isOwner;
   final VoidCallback? onOpenTogether;
   final VoidCallback onShareTap;
-  final bool hideShare; // ✅ Скрывать шаринг для тренировок без карты
+  final bool hideShare; // ✅ Устаревший параметр (шаринг всегда показывается)
+  final bool hideTogetherIcon; // 🏊 Скрывать иконку "совместно" для плавания
 
   const _RightActionsGroup({
     required this.activityId,
@@ -530,22 +543,25 @@ class _RightActionsGroup extends ConsumerWidget {
     this.onOpenTogether,
     required this.onShareTap,
     this.hideShare = false,
+    this.hideTogetherIcon = false, // 🏊 По умолчанию показываем иконку
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ───────────────────────────────────────────────────────────────────────
     // ✅ ВЛАДЕЛЕЦ: всегда видит иконку совместной тренировки
-    // Шаринг показывается только если есть карта маршрута
+    // ✅ ИКОНКА ШАРИНГА: показывается всегда, даже без карты и фото
+    // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем иконку "совместно", но показываем шаринг
     // ───────────────────────────────────────────────────────────────────────
     if (isOwner) {
       return _buildActionsRow(
         context: context,
-        showTogetherIcon: true,
+        showTogetherIcon: !hideTogetherIcon, // 🏊 Скрываем для плавания
         togetherCount: activity?.togetherCount ?? 1,
-        showShareIcon: !hideShare, // ✅ Шаринг только для тренировок с картой
+        showShareIcon: true, // ✅ Шаринг всегда показывается для владельца
         onOpenTogether: onOpenTogether,
         onShareTap: onShareTap,
+        isOwner: true, // ✅ Передаем флаг владельца
       );
     }
 
@@ -592,14 +608,16 @@ class _RightActionsGroup extends ConsumerWidget {
         // ───────────────────────────────────────────────────────────────────
         // ✅ ЯВЛЯЕТСЯ УЧАСТНИКОМ: показываем иконку
         // Шаринг только для владельца
+        // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем иконку "совместно"
         // ───────────────────────────────────────────────────────────────────
         return _buildActionsRow(
           context: context,
-          showTogetherIcon: true,
+          showTogetherIcon: !hideTogetherIcon, // 🏊 Скрываем для плавания
           togetherCount: togetherCount,
           showShareIcon: false, // Шаринг только для владельца
           onOpenTogether: onOpenTogether,
           onShareTap: onShareTap,
+          isOwner: false, // ✅ Не владелец
         );
       },
     );
@@ -612,22 +630,29 @@ class _RightActionsGroup extends ConsumerWidget {
     required bool showShareIcon,
     required VoidCallback? onOpenTogether,
     required VoidCallback onShareTap,
+    required bool isOwner, // ✅ Флаг владельца для отображения счетчика
   }) {
     return Row(
       children: [
-        const Icon(
-          CupertinoIcons.person_2,
-          size: 20,
-          color: AppColors.success,
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '48',
-          style: AppTextStyles.h14w4.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
+        // ───────────────────────────────────────────────────────────────────
+        // 🏊 ИКОНКА И СЧЕТЧИК УЧАСТНИКОВ: показываем только если не скрыта
+        // иконка "совместно" (для плавания скрываем)
+        // ───────────────────────────────────────────────────────────────────
+        if (showTogetherIcon) ...[
+          const Icon(
+            CupertinoIcons.person_2,
+            size: 20,
+            color: AppColors.success,
           ),
-        ),
-        const SizedBox(width: 12),
+          const SizedBox(width: 4),
+          Text(
+            togetherCount.toString(), // ✅ Исправлен хардкод '48'
+            style: AppTextStyles.h14w4.copyWith(
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
         // ───────────────────────────────────────────────────────────────────
         // ✅ ИКОНКА «СОВМЕСТНО»: показываем только если пользователь имеет
         // право видеть её (владелец или участник)
@@ -642,9 +667,10 @@ class _RightActionsGroup extends ConsumerWidget {
             ),
           ),
         // ───────────────────────────────────────────────────────────────────
-        // ✅ КОЛИЧЕСТВО УЧАСТНИКОВ: показываем только если больше 1
+        // ✅ КОЛИЧЕСТВО УЧАСТНИКОВ: для владельца показываем всегда (даже если 1),
+        // для остальных - только если больше 1
         // ───────────────────────────────────────────────────────────────────
-        if (showTogetherIcon && togetherCount > 1) ...[
+        if (showTogetherIcon && (isOwner || togetherCount > 1)) ...[
           const SizedBox(width: 4),
           Text(
             togetherCount.toString(),

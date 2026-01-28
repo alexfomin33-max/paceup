@@ -558,7 +558,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     MoreMenuHub.hide();
     await Navigator.of(
       context,
-    ).push(TransparentPageRoute(builder: (_) => const NotificationsScreen()));
+      rootNavigator: true,
+    ).push(
+      TransparentPageRoute(builder: (_) => const NotificationsScreen()),
+    );
     if (!mounted) return;
     // Обновляем только счетчик непрочитанных уведомлений после возврата из экрана
     ref.read(notificationsProvider.notifier).updateUnreadCount();
