@@ -196,12 +196,17 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
 
       if (response['success'] == true) {
         final weeksJson = response['weeks'] as List<dynamic>;
+        final weeksList = weeksJson
+            .map((w) => WeekData.fromJson(w as Map<String, dynamic>))
+            .toList();
         setState(() {
-          _weeks = weeksJson
-              .map((w) => WeekData.fromJson(w as Map<String, dynamic>))
-              .toList();
+          _weeks = weeksList;
           _isLoading = false;
         });
+        // При открытии экрана сразу выбираем последнюю точку на графике
+        if (weeksList.isNotEmpty) {
+          _loadWeekDetails(weeksList.length - 1);
+        }
       } else {
         setState(() {
           _error = response['message']?.toString() ?? 'Ошибка загрузки данных';
