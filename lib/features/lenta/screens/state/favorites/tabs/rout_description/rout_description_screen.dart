@@ -1,42 +1,114 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:intl/intl.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../core/services/routes_service.dart';
 import '../../../../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../../../profile/screens/profile_screen.dart';
 import 'my_results/my_results_screen.dart';
 import 'all_results/all_results_screen.dart';
 import 'members_route/members_route_screen.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
 
-/// Экран описания маршрута (без общих виджетов)
-class RouteDescriptionScreen extends StatelessWidget {
+/// Экран описания маршрута. Загружает детали из API (дата, автор, рекорды).
+class RouteDescriptionScreen extends StatefulWidget {
   const RouteDescriptionScreen({
     super.key,
-    required this.title,
-    required this.mapAsset,
-    required this.distanceKm,
-    required this.durationText,
-    required this.ascentM,
-    required this.difficulty, // 'easy' | 'medium' | 'hard'
-    this.createdText = '8 июня 2025',
-    this.authorName = 'Евгений Бойко',
-    this.authorAvatar = 'assets/avatar_0.png',
+    required this.routeId,
+    required this.userId,
+    required this.initialRoute,
   });
 
-  final String title;
-  final String mapAsset;
-  final double distanceKm;
-  final String durationText;
-  final int ascentM;
-  final String difficulty;
+  final int routeId;
+  final int userId;
+  final SavedRouteItem initialRoute;
 
-  final String createdText;
-  final String authorName;
-  final String authorAvatar;
+  @override
+  State<RouteDescriptionScreen> createState() => _RouteDescriptionScreenState();
+}
+
+class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
+  RouteDetail? _detail;
+  bool _loading = true;
+  Object? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDetail();
+  }
+
+  Future<void> _loadDetail() async {
+    if (widget.routeId <= 0) {
+      if (mounted) setState(() { _loading = false; });
+      return;
+    }
+    try {
+      final d = await RoutesService().getRouteDetail(
+        routeId: widget.routeId,
+        userId: widget.userId,
+      );
+      if (mounted) setState(() { _detail = d; _loading = false; });
+    } catch (e, st) {
+      if (mounted) setState(() { _error = e; _loading = false; });
+      debugPrint('RouteDetail load error: $e $st');
+    }
+  }
+
+  String get _title => widget.initialRoute.name;
+  String get _mapAsset => 'assets/training_map.png';
+  String? get _mapImageUrl =>
+      _detail?.routeMapUrl ?? widget.initialRoute.routeMapUrl;
+  double get _distanceKm =>
+      _detail != null ? _detail!.distanceKm : widget.initialRoute.distanceKm;
+  /// Время: при загруженных деталях — личный рекорд (лучший среди забегов), иначе из списка.
+  String get _durationText {
+    final pb = _detail?.personalBestText;
+    if (pb != null && pb.isNotEmpty && pb != '—') return pb;
+    return widget.initialRoute.durationText ?? '—';
+  }
+  int get _ascentM =>
+      _detail != null ? _detail!.ascentM : widget.initialRoute.ascentM;
+  String get _difficulty =>
+      _detail?.difficulty ?? widget.initialRoute.difficulty;
+
+  static Widget _mapPlaceholder(BuildContext context) {
+    return Container(
+      height: 200,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? AppColors.darkSurfaceMuted
+          : AppColors.skeletonBase,
+      alignment: Alignment.center,
+      child: Icon(
+        CupertinoIcons.map,
+        size: 28,
+        color: AppColors.getTextSecondaryColor(context),
+      ),
+    );
+  }
+
+  String _formatCreatedAt(String? iso) {
+    if (iso == null || iso.isEmpty) return '—';
+    try {
+      final dt = DateTime.parse(iso);
+      return DateFormat('d MMMM yyyy', 'ru').format(dt);
+    } catch (_) {
+      return iso;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final chip = _difficultyChip(difficulty);
+    final chip = _difficultyChip(_difficulty);
+    final createdText = _loading && _detail == null
+        ? '—'
+        : _formatCreatedAt(_detail?.createdAt);
+    final author = _detail?.author;
+    final personalBestText = _detail?.personalBestText ?? '—';
+    final myWorkoutsCount = _detail?.myWorkoutsCount ?? 0;
+    final participantsCount = _detail?.participantsCount ?? 0;
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -56,241 +128,302 @@ class RouteDescriptionScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // ── Заголовок + чип — по центру
-            SliverToBoxAdapter(
-              child: Container(
-                color: AppColors.getSurfaceColor(context),
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15, // меньше, чем было
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.getTextPrimaryColor(context),
-                        ),
-                      ),
+        body: _error != null
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SelectableText.rich(
+                    TextSpan(
+                      text: 'Ошибка: ${_error.toString()}',
+                      style: const TextStyle(color: AppColors.error),
                     ),
-                    const SizedBox(height: 8),
-                    Center(child: chip),
-                    const SizedBox(height: 12),
-
-                    // Ниже можно оставить служебную инфу слева (как была)
-                    Text(
-                      'Создан: $createdText',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        color: AppColors.getTextSecondaryColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.emoji_events_outlined,
-                          size: 22,
-                          color: AppColors.gold,
-                        ),
-                        const SizedBox(width: 8),
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor:
-                              Theme.of(context).brightness == Brightness.dark
-                              ? AppColors.darkSurfaceMuted
-                              : AppColors.skeletonBase,
-                          backgroundImage: AssetImage(authorAvatar),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            authorName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: () async {
+                  await _loadDetail();
+                },
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(
+                    parent: AlwaysScrollableScrollPhysics(),
+                  ),
+                  slivers: [
+                  // ── Заголовок + чип — по центру
+                  SliverToBoxAdapter(
+                    child: Container(
+                      color: AppColors.getSurfaceColor(context),
+                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Text(
+                              _title,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Center(child: chip),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Создан: $createdText',
                             style: TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
+                              fontSize: 13,
+                              color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
+                          const SizedBox(height: 10),
+                          // Автор: аватар и имя из базы, кликабельно — переход в профиль
+                          InkWell(
+                            onTap: author != null
+                                ? () {
+                                    Navigator.of(context).push(
+                                      TransparentPageRoute(
+                                        builder: (_) => ProfileScreen(
+                                          userId: author.id,
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                : null,
+                            borderRadius: BorderRadius.circular(8),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.emoji_events_outlined,
+                                  size: 22,
+                                  color: AppColors.gold,
+                                ),
+                                const SizedBox(width: 8),
+                                author != null && author.avatar.isNotEmpty
+                                    ? ClipOval(
+                                        child: CachedNetworkImage(
+                                          imageUrl: author.avatar,
+                                          width: 36,
+                                          height: 36,
+                                          fit: BoxFit.cover,
+                                          errorWidget: (_, __, ___) =>
+                                              _avatarPlaceholder(context),
+                                        ),
+                                      )
+                                    : CircleAvatar(
+                                        radius: 18,
+                                        backgroundColor:
+                                            Theme.of(context).brightness ==
+                                                    Brightness.dark
+                                                ? AppColors.darkSurfaceMuted
+                                                : AppColors.skeletonBase,
+                                        child:
+                                            _avatarPlaceholder(context),
+                                      ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    author != null && author.fullName.isNotEmpty
+                                        ? author.fullName
+                                        : '—',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color:
+                                          AppColors.getTextPrimaryColor(context),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ── Карта-превью
+                  SliverToBoxAdapter(
+                    child: _mapImageUrl != null && _mapImageUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: _mapImageUrl!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) =>
+                                _mapPlaceholder(context),
+                          )
+                        : Image.asset(
+                            _mapAsset,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, __) =>
+                                _mapPlaceholder(context),
+                          ),
+                  ),
+
+                  // ── Три метрики
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // ── Карта-превью — без паддингов и без скруглений
-            SliverToBoxAdapter(
-              child: Image.asset(
-                mapAsset,
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Container(
-                  height: 200,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkSurfaceMuted
-                      : AppColors.skeletonBase,
-                  alignment: Alignment.center,
-                  child: Icon(
-                    CupertinoIcons.map,
-                    size: 28,
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                ),
-              ),
-            ),
-
-            // ── Три метрики — карточка БЕЗ внутренних паддингов
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  border: Border.all(
-                    color: AppColors.getBorderColor(context),
-                    width: 0.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      // ── Тень из темы (более заметная в темной теме)
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkShadowSoft
-                          : AppColors.shadowSoft,
-                      offset: const Offset(0, 1),
-                      blurRadius: 1,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _MetricBlock(
-                        label: 'Расстояние',
-                        value: '${distanceKm.toStringAsFixed(2)} км',
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).brightness ==
+                                    Brightness.dark
+                                ? AppColors.darkShadowSoft
+                                : AppColors.shadowSoft,
+                            offset: const Offset(0, 1),
+                            blurRadius: 1,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _MetricBlock(
+                              label: 'Расстояние',
+                              value:
+                                  '${_distanceKm.toStringAsFixed(2)} км',
+                            ),
+                          ),
+                          Expanded(
+                            child: _MetricBlock(
+                              label: 'Время',
+                              value: _durationText,
+                            ),
+                          ),
+                          Expanded(
+                            child: _MetricBlock(
+                              label: 'Набор высоты',
+                              value: '$_ascentM м',
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Expanded(
-                      child: _MetricBlock(label: 'Время', value: durationText),
-                    ),
-                    Expanded(
-                      child: _MetricBlock(
-                        label: 'Набор высоты',
-                        value: '$ascentM м',
+                  ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                  // ── Нижняя карточка: личный рекорд, мои результаты, участники
+                  SliverToBoxAdapter(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                        border: Border.all(
+                          color: AppColors.getBorderColor(context),
+                          width: 0.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Theme.of(context).brightness ==
+                                    Brightness.dark
+                                ? AppColors.darkShadowSoft
+                                : AppColors.shadowSoft,
+                            offset: const Offset(0, 1),
+                            blurRadius: 1,
+                            spreadRadius: 0,
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          _ActionRow(
+                            icon: CupertinoIcons.rosette,
+                            title: 'Личный рекорд',
+                            trailingText: personalBestText,
+                            trailingChevron: false,
+                            onTap: null,
+                          ),
+                          const _DividerLine(),
+                          _ActionRow(
+                            icon: CupertinoIcons.timer,
+                            title: 'Мои результаты',
+                            trailingText:
+                                'Забегов: $myWorkoutsCount',
+                            trailingChevron: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                TransparentPageRoute(
+                                  builder: (_) => MyResultsScreen(
+                                    routeId: widget.routeId,
+                                    routeTitle: _title,
+                                    difficultyText:
+                                        _difficultyText(_difficulty),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const _DividerLine(),
+                          _ActionRow(
+                            icon: CupertinoIcons.chart_bar_alt_fill,
+                            title: 'Общие результаты',
+                            trailingChevron: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                TransparentPageRoute(
+                                  builder: (_) => AllResultsScreen(
+                                    routeId: widget.routeId,
+                                    routeTitle: _title,
+                                    difficultyText:
+                                        _difficultyText(_difficulty),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          const _DividerLine(),
+                          _ActionRow(
+                            icon: CupertinoIcons.person_2_fill,
+                            title: 'Все участники маршрута',
+                            trailingText: '$participantsCount',
+                            trailingChevron: true,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                TransparentPageRoute(
+                                  builder: (_) => MembersRouteScreen(
+                                    routeId: widget.routeId,
+                                    routeTitle: _title,
+                                    difficultyText:
+                                        _difficultyText(_difficulty),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ── Нижняя карточка: 3 колонки (иконка+тайтл | правый текст | шеврон)
-            SliverToBoxAdapter(
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.getSurfaceColor(context),
-                  border: Border.all(
-                    color: AppColors.getBorderColor(context),
-                    width: 0.5,
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      // ── Тень из темы (более заметная в темной теме)
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? AppColors.darkShadowSoft
-                          : AppColors.shadowSoft,
-                      offset: const Offset(0, 1),
-                      blurRadius: 1,
-                      spreadRadius: 0,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    const _ActionRow(
-                      icon: CupertinoIcons.rosette,
-                      title: 'Личный рекорд',
-                      trailingText: '1:32:57',
-                      trailingChevron: false, // у первой строки нет галочки
-                      onTap: null, // не кликается
-                    ),
-                    const _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.timer,
-                      title: 'Мои результаты',
-                      trailingText: 'Забегов: 10',
-                      trailingChevron: true,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          TransparentPageRoute(
-                            builder: (_) => MyResultsScreen(
-                              routeId: 0, // int
-                              routeTitle: title, // String
-                              difficultyText: _difficultyText(
-                                difficulty,
-                              ), // String? (по желанию)
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.chart_bar_alt_fill,
-                      title: 'Общие результаты',
-                      trailingChevron: true,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          TransparentPageRoute(
-                            builder: (_) => AllResultsScreen(
-                              routeId: 0, // подставь реальный
-                              routeTitle: title,
-                              difficultyText: _difficultyText(difficulty),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                    const _DividerLine(),
-                    _ActionRow(
-                      icon: CupertinoIcons.person_2_fill,
-                      title: 'Все участники маршрута',
-                      trailingText: '124',
-                      trailingChevron: true,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          TransparentPageRoute(
-                            builder: (_) => MembersRouteScreen(
-                              routeId: 0, // твой id
-                              routeTitle: title,
-                              difficultyText: _difficultyText(difficulty),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
+
+                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                ],
               ),
             ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
         ),
-      ),
+    );
+  }
+
+  static Widget _avatarPlaceholder(BuildContext context) {
+    return Icon(
+      CupertinoIcons.person_fill,
+      size: 24,
+      color: AppColors.getTextSecondaryColor(context),
     );
   }
 

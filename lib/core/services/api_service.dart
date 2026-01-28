@@ -490,18 +490,17 @@ class ApiService {
             //   );
             // }
           } else {
-            // Логи отключены
-            // if (kDebugMode) {
-            //   final htmlPreview = cleaned.length > 500
-            //       ? '${cleaned.substring(0, 500)}...'
-            //       : cleaned;
-            //   debugPrint(
-            //     '❌ API: Сервер вернул HTML вместо JSON. Status: ${response.statusCode}',
-            //   );
-            //   debugPrint(
-            //     '❌ API: HTML превью (первые 500 символов):\n$htmlPreview',
-            //   );
-            // }
+            // Диагностика: в debug показываем, что именно вернул сервер (404/500/HTML)
+            if (kDebugMode) {
+              final url = response.request?.url.toString() ?? '?';
+              final preview = cleaned.length > 400
+                  ? '${cleaned.substring(0, 400)}...'
+                  : cleaned;
+              debugPrint(
+                '❌ [API] HTML вместо JSON: HTTP ${response.statusCode} ← $url',
+              );
+              debugPrint('❌ [API] Тело ответа (первые 400 символов):\n$preview');
+            }
             throw ApiException(
               "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
             );
@@ -609,16 +608,17 @@ class ApiService {
             }
           }
 
-          // Логи отключены
-          // if (kDebugMode) {
-          //   final htmlPreview = cleaned.length > 500
-          //       ? '${cleaned.substring(0, 500)}...'
-          //       : cleaned;
-          //   debugPrint(
-          //     '❌ API: Ошибка парсинга JSON, получен HTML. Status: ${response.statusCode}',
-          //   );
-          //   debugPrint('❌ API: HTML превью (первые 500 символов):\n$htmlPreview');
-          // }
+          // Диагностика: в debug показываем, что именно вернул сервер
+          if (kDebugMode) {
+            final url = response.request?.url.toString() ?? '?';
+            final preview = cleaned.length > 400
+                ? '${cleaned.substring(0, 400)}...'
+                : cleaned;
+            debugPrint(
+              '❌ [API] Ошибка парсинга, получен HTML: HTTP ${response.statusCode} ← $url',
+            );
+            debugPrint('❌ [API] Тело ответа (первые 400 символов):\n$preview');
+          }
           throw ApiException(
             "Сервер вернул HTML вместо JSON. Возможно, произошла ошибка на сервере. Проверьте логи для деталей.",
           );

@@ -22,6 +22,7 @@ class _PushNotificationsScreenState
     extends ConsumerState<PushNotificationsScreen> {
   // Настройки уведомлений
   bool _newFollowers = true;
+  bool _newWorkouts = true;
   bool _newLikes = true;
   bool _newComments = true;
   bool _newMessages = true;
@@ -64,6 +65,7 @@ class _PushNotificationsScreenState
 
       setState(() {
         _newFollowers = data['new_followers'] ?? true;
+        _newWorkouts = data['new_workouts'] ?? true;
         _newLikes = data['new_likes'] ?? true;
         _newComments = data['new_comments'] ?? true;
         _newMessages = data['new_messages'] ?? true;
@@ -100,6 +102,9 @@ class _PushNotificationsScreenState
           switch (key) {
             case 'new_followers':
               _newFollowers = !value;
+              break;
+            case 'new_workouts':
+              _newWorkouts = !value;
               break;
             case 'new_likes':
               _newLikes = !value;
@@ -189,6 +194,19 @@ class _PushNotificationsScreenState
                               _newFollowers = value;
                             });
                             _saveSetting('new_followers', value);
+                          },
+                        ),
+                        const _Divider(),
+                        _NotificationTile(
+                          icon: CupertinoIcons.flame,
+                          iconColor: AppColors.brandPrimary,
+                          title: 'Новые тренировки',
+                          value: _newWorkouts,
+                          onChanged: (value) {
+                            setState(() {
+                              _newWorkouts = value;
+                            });
+                            _saveSetting('new_workouts', value);
                           },
                         ),
                         const _Divider(),

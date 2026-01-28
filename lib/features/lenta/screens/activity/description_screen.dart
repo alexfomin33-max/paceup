@@ -53,6 +53,8 @@ import '../../../../providers/services/auth_provider.dart';
 import '../../providers/lenta_provider.dart';
 import 'together/together_providers.dart';
 import '../../../../core/services/route_map_service.dart';
+import '../../../../core/services/routes_service.dart';
+import 'package:latlong2/latlong.dart' as ll_for_route;
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -97,6 +99,13 @@ class _ActivityDescriptionPageState
   al.Activity? _updatedActivity;
 
   // ────────────────────────────────────────────────────────────────
+  // 🔹 МАРШРУТ УЖЕ СОХРАНЁН: если для этой тренировки есть маршрут (source_activity_id),
+  // кнопку «Сохранить маршрут» не показываем.
+  // ────────────────────────────────────────────────────────────────
+  bool _routeCheckDone = false;
+  int? _savedRouteId;
+
+  // ────────────────────────────────────────────────────────────────
   // 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ: темп, пульс, высота, мощность по километрам
   // ────────────────────────────────────────────────────────────────
   List<double> _paceData = [];
@@ -129,6 +138,33 @@ class _ActivityDescriptionPageState
     // для ускорения отображения карты при открытии из профиля
     // ────────────────────────────────────────────────────────────────
     _preloadRouteMap();
+    // Проверяем, сохранён ли уже маршрут этой тренировки (не показывать кнопку)
+    _checkRouteSaved();
+  }
+
+  /// Проверка: есть ли в базе маршрут, созданный из этой тренировки (source_activity_id).
+  /// Если да — кнопку «Сохранить маршрут» не показываем.
+  Future<void> _checkRouteSaved() async {
+    final a = widget.activity;
+    if (a.points.isEmpty || a.id <= 0) return;
+    try {
+      final routeId = await RoutesService().getRouteIdBySourceActivity(
+        activityId: a.id,
+        userId: widget.currentUserId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _routeCheckDone = true;
+        _savedRouteId = routeId;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _routeCheckDone = true;
+          _savedRouteId = null;
+        });
+      }
+    }
   }
 
   /// Предзагружает карту маршрута в фоне для ускорения отображения
@@ -394,6 +430,16 @@ class _ActivityDescriptionPageState
             );
           },
         ),
+        if (a.points.isNotEmpty && _routeCheckDone && _savedRouteId == null)
+          MoreMenuItem(
+            text: 'Сохранить маршрут',
+            icon: CupertinoIcons.bookmark,
+            iconColor: AppColors.brandPrimary,
+            onTap: () {
+              MoreMenuHub.hide();
+              _showSaveRouteDialog(context, a);
+            },
+          ),
         MoreMenuItem(
           text: 'Удалить тренировку',
           icon: CupertinoIcons.minus_circle,
@@ -442,6 +488,193 @@ class _ActivityDescriptionPageState
     }
 
     MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 🔹 ДИАЛОГ «СОХРАНИТЬ МАРШРУТ»: название + уровень сложности
+  /// ────────────────────────────────────────────────────────────────
+  void _showSaveRouteDialog(BuildContext context, al.Activity activity) {
+    String name = '';
+    String difficulty = 'medium';
+    final nameController = TextEditingController(
+      text: activity.stats?.distance != null
+          ? 'Маршрут ${(activity.stats!.distance! / 1000).toStringAsFixed(1)} км'
+          : '',
+    );
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setModalState) {
+            return Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.getSurfaceColor(ctx),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Сохранить маршрут',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.getTextPrimaryColor(ctx),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: nameController,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: InputDecoration(
+                          hintText: 'Название маршрута',
+                          hintStyle: TextStyle(
+                            color: AppColors.getTextSecondaryColor(ctx),
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.md),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: (v) => name = v,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Сложность',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: AppColors.getTextSecondaryColor(ctx),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SegmentedButton<String>(
+                        segments: const [
+                          ButtonSegment<String>(
+                            value: 'easy',
+                            label: Text('Лёгкий'),
+                          ),
+                          ButtonSegment<String>(
+                            value: 'medium',
+                            label: Text('Средний'),
+                          ),
+                          ButtonSegment<String>(
+                            value: 'hard',
+                            label: Text('Сложный'),
+                          ),
+                        ],
+                        selected: {difficulty},
+                        onSelectionChanged: (Set<String> v) {
+                          setModalState(() {
+                            difficulty = v.first;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextButton(
+                              onPressed: () =>
+                                  Navigator.of(ctx).pop(),
+                              child: Text(
+                                'Отмена',
+                                style: TextStyle(
+                                  color: AppColors.getTextSecondaryColor(
+                                    ctx,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () async {
+                                name = nameController.text.trim();
+                                if (name.isEmpty) {
+                                  name = 'Маршрут ${activity.stats?.distance != null ? (activity.stats!.distance! / 1000).toStringAsFixed(1) : '?'} км';
+                                }
+                                Navigator.of(ctx).pop();
+                                final points = activity.points
+                                    .map(
+                                      (c) => ll_for_route.LatLng(
+                                        c.lat,
+                                        c.lng,
+                                      ),
+                                    )
+                                    .toList();
+                                final mapboxUrl = points.isNotEmpty
+                                    ? buildRouteMapboxImageUrl(points)
+                                    : null;
+                                try {
+                                  final result =
+                                      await RoutesService().saveRoute(
+                                    userId: widget.currentUserId,
+                                    activityId: activity.id,
+                                    name: name,
+                                    difficulty: difficulty,
+                                    mapboxImageUrl: mapboxUrl,
+                                  );
+                                  if (!mounted) return;
+                                  setState(() => _savedRouteId = result.routeId);
+                                  final msg = result.message ??
+                                      (result.addedToFavorite
+                                          ? 'Маршрут добавлен в избранное'
+                                          : 'Маршрут сохранён');
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    SnackBar(content: Text(msg)),
+                                  );
+                                } catch (e) {
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: SelectableText.rich(
+                                          TextSpan(
+                                            text:
+                                                'Ошибка: ${e.toString()}',
+                                            style: const TextStyle(
+                                              color: Colors.red,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                }
+                              },
+                              child: const Text('Сохранить'),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   /// ────────────────────────────────────────────────────────────────
