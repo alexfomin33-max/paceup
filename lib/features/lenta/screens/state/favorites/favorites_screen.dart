@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
+import '../../../../../providers/services/auth_provider.dart';
 import 'tabs/my_events_content.dart';
 import 'tabs/bookmarks_content.dart';
 import 'tabs/routes_content.dart';
@@ -19,7 +20,22 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
   late final TabController _tab = TabController(length: 3, vsync: this);
 
   @override
+  void initState() {
+    super.initState();
+    _tab.addListener(_onTabChanged);
+  }
+
+  /// При переключении на вкладку «Маршруты» — обновляем список маршрутов.
+  void _onTabChanged() {
+    if (_tab.index == 2) {
+      final uid = ref.read(currentUserIdProvider).valueOrNull ?? 0;
+      if (uid > 0) ref.invalidate(myRoutesProvider(uid));
+    }
+  }
+
+  @override
   void dispose() {
+    _tab.removeListener(_onTabChanged);
     _tab.dispose();
     super.dispose();
   }
