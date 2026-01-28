@@ -389,11 +389,7 @@ class _FriendCardState extends ConsumerState<_FriendCard> {
   Widget build(BuildContext context) {
     final friend = widget.friend;
     final isSubscribed = _currentIsSubscribed;
-    final desc = friend.age > 0
-        ? '${friend.age} лет${friend.city.isNotEmpty ? '  ·  ${friend.city}' : ''}'
-        : friend.city.isNotEmpty
-        ? friend.city
-        : '';
+    final desc = friend.city.isNotEmpty ? friend.city : '';
 
     return Container(
       decoration: BoxDecoration(

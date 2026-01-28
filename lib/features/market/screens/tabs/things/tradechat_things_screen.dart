@@ -210,6 +210,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   bool _wasPaused = false;
   DateTime? _lastVisibleTime;
   int? _selectedMessageIdForDelete; // ID сообщения, выбранного для удаления
+  int? _selectedMessageIdForReply; // ID сообщения, выбранного для ответа
 
   @override
   void initState() {
@@ -959,10 +960,12 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
             body: GestureDetector(
               onTap: () {
                 FocusScope.of(context).unfocus();
-                // ─── Сбрасываем выбор сообщения для удаления ───
-                if (_selectedMessageIdForDelete != null) {
+                // ─── Сбрасываем выбор сообщения для удаления и ответа ───
+                if (_selectedMessageIdForDelete != null ||
+                    _selectedMessageIdForReply != null) {
                   setState(() {
                     _selectedMessageIdForDelete = null;
+                    _selectedMessageIdForReply = null;
                   });
                 }
               },
@@ -1176,6 +1179,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                       onLongPress: () {
                                         setState(() {
                                           _selectedMessageIdForDelete = msg.id;
+                                          _selectedMessageIdForReply = null;
                                         });
                                       },
                                       onDelete: () => _showDeleteConfirmation(msg.id),
@@ -1196,6 +1200,21 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                           : null,
                                       time: _formatTime(msg.createdAt),
                                       avatarUrl: otherUserAvatar,
+                                      messageId: msg.id,
+                                      isSelectedForReply:
+                                          _selectedMessageIdForReply == msg.id,
+                                      onLongPress: () {
+                                        setState(() {
+                                          _selectedMessageIdForReply = msg.id;
+                                          _selectedMessageIdForDelete = null;
+                                        });
+                                      },
+                                      onReply: () {
+                                        // TODO: Реализовать функциональность ответа
+                                        setState(() {
+                                          _selectedMessageIdForReply = null;
+                                        });
+                                      },
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1542,6 +1561,10 @@ class _BubbleLeft extends StatelessWidget {
   final String? avatarUrl;
   final double topSpacing;
   final double bottomSpacing;
+  final int messageId;
+  final bool isSelectedForReply;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onReply;
   final VoidCallback? onImageTap;
   const _BubbleLeft({
     required this.text,
@@ -1550,6 +1573,10 @@ class _BubbleLeft extends StatelessWidget {
     this.avatarUrl,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
+    required this.messageId,
+    this.isSelectedForReply = false,
+    this.onLongPress,
+    this.onReply,
     this.onImageTap,
   });
   @override
@@ -1564,7 +1591,7 @@ class _BubbleLeft extends StatelessWidget {
         bottom: bottomSpacing,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           ClipOval(
             child: Builder(
@@ -1605,111 +1632,135 @@ class _BubbleLeft extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          IntrinsicWidth(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: max),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? AppColors.darkSurfaceMuted
-                      : AppColors.softBg,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(AppRadius.xl),
-                    topRight: Radius.circular(AppRadius.xl),
-                    bottomLeft: Radius.zero,
-                    bottomRight: Radius.circular(AppRadius.xl),
+          GestureDetector(
+            onLongPress: onLongPress,
+            child: IntrinsicWidth(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: max),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 7, 8, 7),
+                  decoration: BoxDecoration(
+                    color: isSelectedForReply
+                        ? Color.lerp(
+                            Theme.of(context).brightness == Brightness.dark
+                                ? AppColors.darkSurfaceMuted
+                                : AppColors.softBg,
+                            Colors.black,
+                            0.1,
+                          )
+                        : (Theme.of(context).brightness == Brightness.dark
+                            ? AppColors.darkSurfaceMuted
+                            : AppColors.softBg),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomLeft: Radius.zero,
+                      bottomRight: Radius.circular(AppRadius.xl),
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // ─── Изображение (если есть) ───
-                    if ((image?.isNotEmpty ?? false)) ...[
-                      GestureDetector(
-                        onTap: onImageTap,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(AppRadius.xl),
-                          child: Builder(
-                            builder: (context) {
-                              final dpr = MediaQuery.of(context).devicePixelRatio;
-                              final maxW = max * 0.9;
-                              final w = (maxW * dpr).round();
-                              return CachedNetworkImage(
-                                imageUrl: image!,
-                                width: maxW,
-                                fit: BoxFit.cover,
-                                memCacheWidth: w,
-                                maxWidthDiskCache: w,
-                                placeholder: (context, url) => Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // ─── Изображение (если есть) ───
+                      if ((image?.isNotEmpty ?? false)) ...[
+                        GestureDetector(
+                          onTap: onImageTap,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.xl),
+                            child: Builder(
+                              builder: (context) {
+                                final dpr = MediaQuery.of(context).devicePixelRatio;
+                                final maxW = max * 0.9;
+                                final w = (maxW * dpr).round();
+                                return CachedNetworkImage(
+                                  imageUrl: image!,
                                   width: maxW,
-                                  height: 200,
-                                  color: AppColors.getSurfaceMutedColor(
-                                    context,
-                                  ),
-                                  child: Center(
-                                    child: CupertinoActivityIndicator(
-                                      radius: 12,
-                                      color: AppColors.getIconSecondaryColor(
-                                        context,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) {
-                                  return Container(
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: w,
+                                  maxWidthDiskCache: w,
+                                  placeholder: (context, url) => Container(
                                     width: maxW,
                                     height: 200,
                                     color: AppColors.getSurfaceMutedColor(
                                       context,
                                     ),
-                                    child: Icon(
-                                      CupertinoIcons.photo,
-                                      size: 40,
-                                      color: AppColors.getIconSecondaryColor(
-                                        context,
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius: 12,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
                                       ),
                                     ),
-                                  );
-                                },
-                              );
-                            },
+                                  ),
+                                  errorWidget: (context, url, error) {
+                                    return Container(
+                                      width: maxW,
+                                      height: 200,
+                                      color: AppColors.getSurfaceMutedColor(
+                                        context,
+                                      ),
+                                      child: Icon(
+                                        CupertinoIcons.photo,
+                                        size: 40,
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
+                            ),
                           ),
                         ),
-                      ),
-                      if (text.isNotEmpty) const SizedBox(height: 8),
-                    ],
-                    // ─── Текст и время на одной строке ───
-                    if (text.isNotEmpty)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              text,
-                              style: TextStyle(
-                                fontSize: 15,
-                                height: 1.35,
-                                color: AppColors.getTextPrimaryColor(context),
+                        if (text.isNotEmpty) const SizedBox(height: 8),
+                      ],
+                      // ─── Текст и время на одной строке ───
+                      if (text.isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                text,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  height: 1.35,
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            time,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: AppColors.getTextTertiaryColor(context),
+                            const SizedBox(width: 6),
+                            Text(
+                              time,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.getTextTertiaryColor(context),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
+                          ],
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
+          // ─── Иконка ответа (показывается при длительном нажатии) ───
+          if (isSelectedForReply)
+            GestureDetector(
+              onTap: onReply,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8),
+                child: Icon(
+                  CupertinoIcons.arrowshape_turn_up_left,
+                  size: 18,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+              ),
+            ),
         ],
       ),
     );

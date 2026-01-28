@@ -905,10 +905,10 @@ class ActivityBlock extends ConsumerWidget {
                       );
                     },
 
-                    // «Вместе» — пушим экран совместных активностей
+                    // «Вместе» — пушим экран совместных активностей (без нижнего меню)
                     onOpenTogether: () {
-                      Navigator.of(context).push(
-                        CupertinoPageRoute(
+                      Navigator.of(context, rootNavigator: true).push(
+                        TransparentPageRoute(
                           builder: (_) =>
                               TogetherScreen(activityId: updatedActivity.id),
                         ),
