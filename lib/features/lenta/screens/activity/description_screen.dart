@@ -3312,11 +3312,14 @@ class _CircleAppIcon extends StatelessWidget {
     );
 
     return SizedBox(
-      width: 38.0,
-      height: 38.0,
+      width: 46.0,
+      height: 44.0,
       child: GestureDetector(
         onTap: onPressed ?? () {},
-        child: Icon(icon, size: 20, color: iconColor),
+        behavior: HitTestBehavior.opaque,
+        child: Center(
+          child: Icon(icon, size: 20, color: iconColor),
+        ),
       ),
     );
   }

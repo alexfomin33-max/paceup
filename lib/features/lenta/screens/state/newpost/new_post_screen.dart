@@ -14,6 +14,7 @@ import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
+import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
 
@@ -49,6 +50,11 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
 
+  // Создание от имени клуба
+  bool _createFromClub = false;
+  List<String> _clubs = [];
+  String? _selectedClub;
+
   @override
   void initState() {
     super.initState();
@@ -56,6 +62,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     _descriptionFocusNode = FocusNode();
     _descriptionController.addListener(_updatePublishState);
     _descriptionFocusNode.addListener(_updatePublishState);
+    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
   }
 
   @override
@@ -71,6 +78,46 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       _canPublish =
           _images.isNotEmpty || _descriptionController.text.trim().isNotEmpty;
     });
+  }
+
+  // ── загрузка списка клубов пользователя
+  Future<void> _loadUserClubs() async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final authService = ref.read(authServiceProvider);
+      final userId = await authService.getUserId();
+
+      if (userId == null) {
+        setState(() {
+          _clubs = [];
+        });
+        return;
+      }
+
+      final data = await api.get(
+        '/get_user_clubs.php',
+        queryParams: {'user_id': userId.toString()},
+      );
+
+      if (data['success'] == true && data['clubs'] != null) {
+        final clubsList = data['clubs'] as List<dynamic>;
+        setState(() {
+          _clubs = clubsList.map((c) => c.toString()).toList();
+          // Если список не пустой и selectedClub не установлен, выбираем первый
+          if (_clubs.isNotEmpty && _selectedClub == null) {
+            _selectedClub = _clubs.first;
+          }
+        });
+      } else {
+        setState(() {
+          _clubs = [];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _clubs = [];
+      });
+    }
   }
 
   @override
@@ -150,6 +197,162 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                           ),
                           const SizedBox(height: 8),
                           _buildVisibilitySelector(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 🏢 4. СОЗДАТЬ ОТ ИМЕНИ КЛУБА
+                          // ────────────────────────────────────────────────────────────────
+                          Builder(
+                            builder: (context) => Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Transform.scale(
+                                    scale: 0.85,
+                                    alignment: Alignment.centerLeft,
+                                    child: Checkbox(
+                                      value: _createFromClub,
+                                      materialTapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      visualDensity: VisualDensity.compact,
+                                      activeColor: AppColors.brandPrimary,
+                                      checkColor:
+                                          AppColors.getSurfaceColor(context),
+                                      side: BorderSide(
+                                        color: AppColors.getIconSecondaryColor(
+                                          context,
+                                        ),
+                                        width: 1.5,
+                                      ),
+                                      onChanged: (v) => setState(
+                                        () => _createFromClub = v ?? false,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Создать от имени клуба',
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (_createFromClub) ...[
+                            const SizedBox(height: 8),
+                            Builder(
+                              builder: (context) => Container(
+                                decoration: BoxDecoration(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadius.lg),
+                                  border: Border.all(
+                                    color: AppColors.twinchip,
+                                    width: 0.7,
+                                  ),
+                                ),
+                                child: InputDecorator(
+                                  decoration: InputDecoration(
+                                    filled: true,
+                                    fillColor: AppColors.getSurfaceColor(
+                                      context,
+                                    ),
+                                    contentPadding:
+                                        const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 8,
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    disabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      borderSide: BorderSide.none,
+                                    ),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedClub,
+                                      isExpanded: true,
+                                      hint: const Text(
+                                        'Выберите клуб',
+                                        style: AppTextStyles.h14w4Place,
+                                      ),
+                                      onChanged: (_createFromClub &&
+                                              _clubs.isNotEmpty)
+                                          ? (String? newValue) {
+                                              setState(() {
+                                                _selectedClub = newValue;
+                                              });
+                                            }
+                                          : null,
+                                      dropdownColor:
+                                          AppColors.getSurfaceColor(context),
+                                      menuMaxHeight: 300,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
+                                      icon: Icon(
+                                        Icons.arrow_drop_down,
+                                        color: (_createFromClub &&
+                                                _clubs.isNotEmpty)
+                                            ? AppColors.getIconSecondaryColor(
+                                                context,
+                                              )
+                                            : AppColors.iconTertiary,
+                                      ),
+                                      style: AppTextStyles.h14w4.copyWith(
+                                        color: (_createFromClub &&
+                                                _clubs.isNotEmpty)
+                                            ? AppColors.getTextPrimaryColor(
+                                                context,
+                                              )
+                                            : AppColors.getTextPlaceholderColor(
+                                                context,
+                                              ),
+                                      ),
+                                      items: _clubs.map((item) {
+                                        return DropdownMenuItem<String>(
+                                          value: item,
+                                          child: Text(
+                                            item,
+                                            style: AppTextStyles.h14w4.copyWith(
+                                              color: AppColors
+                                                  .getTextPrimaryColor(context),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 20),
 
@@ -534,15 +737,23 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       () async {
         Map<String, dynamic> data;
 
+        // Формируем базовые поля
+        final fields = <String, String>{
+          'user_id': widget.userId.toString(),
+          'text': text,
+          'privacy': _selectedVisibility.toString(),
+        };
+
+        // Добавляем клуб, если выбран
+        if (_createFromClub && _selectedClub != null) {
+          fields['club_name'] = _selectedClub!;
+        }
+
         if (_images.isEmpty) {
           // JSON-запрос (без файлов)
           data = await api.post(
             '/create_post.php',
-            body: {
-              'user_id': widget.userId.toString(),
-              'text': text,
-              'privacy': _selectedVisibility.toString(),
-            },
+            body: fields,
           );
         } else {
           // Multipart-запрос (с файлами)
@@ -554,11 +765,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
           data = await api.postMultipart(
             '/create_post.php',
             files: files,
-            fields: {
-              'user_id': widget.userId.toString(),
-              'text': text,
-              'privacy': _selectedVisibility.toString(),
-            },
+            fields: fields,
             timeout: const Duration(seconds: 60),
           );
         }

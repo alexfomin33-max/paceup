@@ -577,7 +577,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       ),
       MoreMenuItem(
         text: 'Добавить тренировку',
-        icon: Icons.emoji_events_outlined,
+        icon: Icons.directions_run,
         onTap: _addActivity,
       ),
     ];
