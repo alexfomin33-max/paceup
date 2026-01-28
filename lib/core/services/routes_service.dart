@@ -206,6 +206,29 @@ class RoutesService {
         .toList();
   }
 
+  /// ID маршрута, созданного из данной тренировки (source_activity_id = activityId).
+  /// null — маршрут по этой тренировке ещё не сохранён.
+  Future<int?> getRouteIdBySourceActivity({
+    required int activityId,
+    int userId = 0,
+  }) async {
+    final queryParams = <String, String>{
+      'activity_id': activityId.toString(),
+    };
+    if (userId > 0) {
+      queryParams['user_id'] = userId.toString();
+    }
+    final response = await _api.get(
+      '/get_route_by_source_activity.php',
+      queryParams: queryParams,
+    );
+    final raw = response['route_id'];
+    if (raw == null) return null;
+    if (raw is int) return raw;
+    if (raw is num) return (raw as num).toInt();
+    return null;
+  }
+
   /// Детали маршрута по ID (дата, автор, личный рекорд, мои результаты,
   /// участники). [userId] — текущий пользователь для персонализированных данных.
   Future<RouteDetail> getRouteDetail({

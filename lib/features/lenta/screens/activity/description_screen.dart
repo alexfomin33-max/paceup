@@ -99,6 +99,13 @@ class _ActivityDescriptionPageState
   al.Activity? _updatedActivity;
 
   // ────────────────────────────────────────────────────────────────
+  // 🔹 МАРШРУТ УЖЕ СОХРАНЁН: если для этой тренировки есть маршрут (source_activity_id),
+  // кнопку «Сохранить маршрут» не показываем.
+  // ────────────────────────────────────────────────────────────────
+  bool _routeCheckDone = false;
+  int? _savedRouteId;
+
+  // ────────────────────────────────────────────────────────────────
   // 📊 ДАННЫЕ ДЛЯ ГРАФИКОВ: темп, пульс, высота, мощность по километрам
   // ────────────────────────────────────────────────────────────────
   List<double> _paceData = [];
@@ -131,6 +138,33 @@ class _ActivityDescriptionPageState
     // для ускорения отображения карты при открытии из профиля
     // ────────────────────────────────────────────────────────────────
     _preloadRouteMap();
+    // Проверяем, сохранён ли уже маршрут этой тренировки (не показывать кнопку)
+    _checkRouteSaved();
+  }
+
+  /// Проверка: есть ли в базе маршрут, созданный из этой тренировки (source_activity_id).
+  /// Если да — кнопку «Сохранить маршрут» не показываем.
+  Future<void> _checkRouteSaved() async {
+    final a = widget.activity;
+    if (a.points.isEmpty || a.id <= 0) return;
+    try {
+      final routeId = await RoutesService().getRouteIdBySourceActivity(
+        activityId: a.id,
+        userId: widget.currentUserId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _routeCheckDone = true;
+        _savedRouteId = routeId;
+      });
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _routeCheckDone = true;
+          _savedRouteId = null;
+        });
+      }
+    }
   }
 
   /// Предзагружает карту маршрута в фоне для ускорения отображения
@@ -396,7 +430,7 @@ class _ActivityDescriptionPageState
             );
           },
         ),
-        if (a.points.isNotEmpty)
+        if (a.points.isNotEmpty && _routeCheckDone && _savedRouteId == null)
           MoreMenuItem(
             text: 'Сохранить маршрут',
             icon: CupertinoIcons.bookmark,
@@ -599,6 +633,7 @@ class _ActivityDescriptionPageState
                                     mapboxImageUrl: mapboxUrl,
                                   );
                                   if (!mounted) return;
+                                  setState(() => _savedRouteId = result.routeId);
                                   final msg = result.message ??
                                       (result.addedToFavorite
                                           ? 'Маршрут добавлен в избранное'
