@@ -97,18 +97,18 @@ class _EquipmentChipState extends State<EquipmentChip> {
     return Column(
       children: [
         Container(
-          height: 64, // 56 + 4 (верх) + 4 (низ) = 64
+          height: 68, // 56 + 6 (верх) + 6 (низ) = 68
           decoration: BoxDecoration(
             color: widget.backgroundColor ??
                 AppColors.getSurfaceColor(context),
-            borderRadius: BorderRadius.circular(AppRadius.sm),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Padding(
             padding: const EdgeInsets.only(
               left: 16,
               right: 16,
-              top: 4,
-              bottom: 4,
+              top: 6,
+              bottom: 6,
             ),
             child: Stack(
               children: [

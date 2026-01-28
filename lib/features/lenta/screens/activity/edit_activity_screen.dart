@@ -52,6 +52,8 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   // ────────────────────────────────────────────────────────────────
   // 📝 КОНТРОЛЛЕРЫ И СОСТОЯНИЕ
   // ────────────────────────────────────────────────────────────────
+  late final TextEditingController _titleController;
+  late final FocusNode _titleFocusNode;
   late final TextEditingController _descriptionController;
   late final FocusNode _descriptionFocusNode;
 
@@ -76,6 +78,10 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   @override
   void initState() {
     super.initState();
+    // Инициализируем название из активности (если есть, иначе пустая строка)
+    // Пока в модели нет поля title, используем пустую строку
+    _titleController = TextEditingController(text: '');
+    _titleFocusNode = FocusNode();
     // Инициализируем описание из активности
     _descriptionController = TextEditingController(
       text: widget.activity.postContent,
@@ -105,12 +111,16 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
     }
 
     // Слушаем изменения для определения, есть ли изменения
+    _titleController.addListener(_checkForChanges);
+    _titleFocusNode.addListener(_checkForChanges);
     _descriptionController.addListener(_checkForChanges);
     _descriptionFocusNode.addListener(_checkForChanges);
   }
 
   @override
   void dispose() {
+    _titleController.dispose();
+    _titleFocusNode.dispose();
     _descriptionController.dispose();
     _descriptionFocusNode.dispose();
     super.dispose();
@@ -210,7 +220,22 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                           const SizedBox(height: 30),
 
                           // ────────────────────────────────────────────────────────────────
-                          // 📝 2. ОПИСАНИЕ ТРЕНИРОВКИ
+                          // 📝 2. НАЗВАНИЕ ТРЕНИРОВКИ
+                          // ────────────────────────────────────────────────────────────────
+                          const Text(
+                            'Название тренировки',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTitleInput(),
+
+                          const SizedBox(height: 30),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 📝 3. ОПИСАНИЕ ТРЕНИРОВКИ
                           // ────────────────────────────────────────────────────────────────
                           const Text(
                             'Описание тренировки',
@@ -223,7 +248,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                           _buildDescriptionInput(),
 
                           // ────────────────────────────────────────────────────────────────
-                          // 👟 3. ЭКИПИРОВКА
+                          // 👟 4. ЭКИПИРОВКА
                           // ────────────────────────────────────────────────────────────────
                           Builder(
                             builder: (context) {
@@ -282,7 +307,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                           const SizedBox(height: 30),
 
                           // ────────────────────────────────────────────────────────────────
-                          // 👁️ 4. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
+                          // 👁️ 5. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
                           // ────────────────────────────────────────────────────────────────
                           const Text(
                             'Кто видит тренировку',
@@ -780,6 +805,54 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
           ),
         );
       },
+    );
+  }
+
+  /// Поле ввода названия
+  Widget _buildTitleInput() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 0.7,
+        ),
+      ),
+      child: TextField(
+        controller: _titleController,
+        focusNode: _titleFocusNode,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_descriptionFocusNode);
+        },
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
+        ),
+        decoration: InputDecoration(
+          hintText: 'Введите название тренировки',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 22,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
     );
   }
 
@@ -1295,6 +1368,7 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         final body = <String, dynamic>{
           'user_id': userId.toString(),
           'activity_id': widget.activity.id.toString(),
+          'title': _titleController.text.trim(),
           'content': _descriptionController.text.trim(),
           'user_group': _selectedVisibility.toString(),
           'media_images': _imageUrls, // Отправляем новый порядок фотографий

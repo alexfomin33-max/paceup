@@ -50,6 +50,8 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   // ────────────────────────────────────────────────────────────────
   // 📝 КОНТРОЛЛЕРЫ И СОСТОЯНИЕ
   // ────────────────────────────────────────────────────────────────
+  late final TextEditingController _titleController;
+  late final FocusNode _titleFocusNode;
   late final TextEditingController _descriptionController;
   late final FocusNode _descriptionFocusNode;
 
@@ -99,12 +101,16 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController();
+    _titleFocusNode = FocusNode();
     _descriptionController = TextEditingController();
     _descriptionFocusNode = FocusNode();
   }
 
   @override
   void dispose() {
+    _titleController.dispose();
+    _titleFocusNode.dispose();
     _descriptionController.dispose();
     _descriptionFocusNode.dispose();
     _distanceController.dispose();
@@ -272,7 +278,19 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   ],
 
                   // ────────────────────────────────────────────────────────────────
-                  // 📝 4. ОПИСАНИЕ ТРЕНИРОВКИ
+                  // 📝 4. НАЗВАНИЕ ТРЕНИРОВКИ
+                  // ────────────────────────────────────────────────────────────────
+                  const Text(
+                    'Название тренировки',
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTitleInput(),
+
+                  const SizedBox(height: 24),
+
+                  // ────────────────────────────────────────────────────────────────
+                  // 📝 5. ОПИСАНИЕ ТРЕНИРОВКИ
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Описание тренировки',
@@ -284,7 +302,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   const SizedBox(height: 24),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👟 5. ДОБАВИТЬ ЭКИПИРОВКУ (выпадающий список)
+                  // 👟 6. ДОБАВИТЬ ЭКИПИРОВКУ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
                   // Показываем только для "Бег" и "Велосипед"
                   if (_shouldShowEquipment()) ...[
@@ -306,7 +324,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   SizedBox(height: _shouldShowEquipment() ? 24 : 0),
 
                   // ────────────────────────────────────────────────────────────────
-                  // 👁️ 6. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
+                  // 👁️ 7. КТО ВИДИТ ТРЕНИРОВКУ (выпадающий список)
                   // ────────────────────────────────────────────────────────────────
                   const Text(
                     'Кто видит тренировку',
@@ -1062,6 +1080,54 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     );
   }
 
+  /// Поле ввода названия
+  Widget _buildTitleInput() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 0.7,
+        ),
+      ),
+      child: TextField(
+        controller: _titleController,
+        focusNode: _titleFocusNode,
+        textInputAction: TextInputAction.next,
+        onSubmitted: (_) {
+          FocusScope.of(context).requestFocus(_descriptionFocusNode);
+        },
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
+        ),
+        decoration: InputDecoration(
+          hintText: 'Введите название тренировки',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
+          filled: true,
+          fillColor: AppColors.getSurfaceColor(context),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 22,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
     return Container(
@@ -1160,6 +1226,10 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         menuButtonColor: Theme.of(context).brightness == Brightness.light
             ? AppColors.getBackgroundColor(context)
             : null, // В темной теме используем дефолтное поведение
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 УБИРАЕМ РАЗДЕЛИТЕЛЬ: не показываем горизонтальную линию снизу
+        // ────────────────────────────────────────────────────────────────
+        showDivider: false,
         onEquipmentChanged: () {
           // После изменения экипировки обновляем список (параметр не используем)
           _loadEquipment();
@@ -1265,37 +1335,48 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
                   children: [
                     // Изображение экипировки
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.xs),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: SizedBox(
-                        height: 40,
+                        height: 64,
+                        width: 64,
                         child: hasValidImageUrl
-                            ? CachedNetworkImage(
-                                imageUrl: equipment.img,
-                                fit: BoxFit.fitHeight,
-                                placeholder: (context, url) => Container(
-                                  width: 40,
-                                  height: 40,
-                                  color: AppColors.getBackgroundColor(context),
-                                  child: Center(
-                                    child: CupertinoActivityIndicator(
-                                      radius: 8,
-                                      color: AppColors.getIconSecondaryColor(
-                                        context,
+                            ? Builder(
+                                builder: (context) {
+                                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                                  final w = (64 * dpr).round();
+                                  return CachedNetworkImage(
+                                    imageUrl: equipment.img,
+                                    fit: BoxFit.contain,
+                                    memCacheWidth: w,
+                                    maxWidthDiskCache: w,
+                                    placeholder: (context, url) => Container(
+                                      width: 64,
+                                      height: 64,
+                                      color: AppColors.getBackgroundColor(context),
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 10,
+                                          color: AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) =>
-                                    Image.asset(
-                                      defaultImageAsset,
-                                      height: 40,
-                                      fit: BoxFit.fitHeight,
-                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Image.asset(
+                                          defaultImageAsset,
+                                          height: 64,
+                                          width: 64,
+                                          fit: BoxFit.contain,
+                                        ),
+                                  );
+                                },
                               )
                             : Image.asset(
                                 defaultImageAsset,
-                                height: 40,
-                                fit: BoxFit.fitHeight,
+                                height: 64,
+                                width: 64,
+                                fit: BoxFit.contain,
                               ),
                       ),
                     ),
@@ -1868,6 +1949,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             'privacy': _selectedVisibility.toString(),
             'equip_user_id': equipUserId.toString(),
             'distance_km': distanceKm.toString(),
+            'title': _titleController.text.trim(),
             'content': _descriptionController.text.trim(),
           },
         );
