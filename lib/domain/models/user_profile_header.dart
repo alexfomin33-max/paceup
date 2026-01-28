@@ -9,6 +9,8 @@ class UserProfileHeader {
   final int? followers;
   final int? following;
   final String? status;
+  /// Основной вид спорта: Бег, Велосипед, Плавание, Лыжи
+  final String? sport;
 
   const UserProfileHeader({
     required this.id,
@@ -21,6 +23,7 @@ class UserProfileHeader {
     this.followers,
     this.following,
     this.status,
+    this.sport,
   });
 
   factory UserProfileHeader.fromJson(Map<String, dynamic> j) {
@@ -53,6 +56,27 @@ class UserProfileHeader {
       followers: toInt(stats['followers']),
       following: toInt(stats['following']),
       status: (j['status'] ?? '').toString(),
+      sport: toStr(j['sport']),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Маппинг вида спорта из БД (users.sport) в индекс иконки на экранах
+// Статистика и Лидерборд: 0 бег, 1 вело, 2 плавание, 3 лыжи
+// ─────────────────────────────────────────────────────────────────────────────
+int sportStringToIndex(String? sport) {
+  if (sport == null || sport.isEmpty) return 0;
+  switch (sport.trim()) {
+    case 'Бег':
+      return 0;
+    case 'Велосипед':
+      return 1;
+    case 'Плавание':
+      return 2;
+    case 'Лыжи':
+      return 3;
+    default:
+      return 0;
   }
 }

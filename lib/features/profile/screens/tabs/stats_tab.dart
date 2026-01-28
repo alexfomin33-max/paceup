@@ -12,7 +12,10 @@ List<Widget> buildByTypeStatsSlivers(int userId) {
 
 class StatsTab extends StatefulWidget {
   final int? userId;
-  const StatsTab({super.key, this.userId});
+  /// Индекс вида спорта по умолчанию (0 бег, 1 вело, 2 плавание, 3 лыжи).
+  /// Если передан и совпадает с основным видом пользователя — эта иконка активна при открытии.
+  final int? initialSport;
+  const StatsTab({super.key, this.userId, this.initialSport});
 
   @override
   State<StatsTab> createState() => StatsTabState();
@@ -45,7 +48,11 @@ class StatsTabState extends State<StatsTab>
       slivers: [
         const SliverToBoxAdapter(child: SizedBox(height: 10)),
         SliverToBoxAdapter(
-          child: _ByTypeContent(key: _contentKey, userId: userId),
+          child: _ByTypeContent(
+            key: _contentKey,
+            userId: userId,
+            initialSport: widget.initialSport,
+          ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 18)),
       ],
@@ -55,7 +62,13 @@ class StatsTabState extends State<StatsTab>
 
 class _ByTypeContent extends StatefulWidget {
   final int userId;
-  const _ByTypeContent({super.key, required this.userId});
+  /// Индекс вида спорта по умолчанию (0 бег, 1 вело, 2 плавание, 3 лыжи).
+  final int? initialSport;
+  const _ByTypeContent({
+    super.key,
+    required this.userId,
+    this.initialSport,
+  });
   @override
   State<_ByTypeContent> createState() => _ByTypeContentState();
 }
@@ -100,6 +113,12 @@ class _ByTypeContentState extends State<_ByTypeContent> {
   @override
   void initState() {
     super.initState();
+    // По умолчанию активна иконка основного вида спорта пользователя (users.sport)
+    if (widget.initialSport != null &&
+        widget.initialSport! >= 0 &&
+        widget.initialSport! <= 3) {
+      _sport = widget.initialSport!;
+    }
     _loadStats();
   }
 
