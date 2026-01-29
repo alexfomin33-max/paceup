@@ -11,6 +11,7 @@ import '../../../../providers/services/auth_provider.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/more_menu_hub.dart';
+import 'tabs/lenta_content.dart';
 import 'tabs/club_photo_content.dart';
 import 'tabs/members_content.dart';
 import 'tabs/stats_content.dart';
@@ -18,6 +19,7 @@ import 'edit_club_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
 import '../../providers/search/clubs_search_provider.dart';
+import '../../../profile/screens/widgets/tabs_bar.dart';
 
 /// Детальная страница клуба (на основе event_detail_screen.dart)
 class ClubDetailScreen extends ConsumerStatefulWidget {
@@ -137,7 +139,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
-  int _tab = 0; // 0 — Фото, 1 — Участники, 2 — Статистика
+  int _tab = 0; // 0 — Лента, 1 — Фото, 2 — Участники, 3 — Статистика
   final GlobalKey<CoffeeRunVldMembersContentState> _membersContentKey =
       GlobalKey<CoffeeRunVldMembersContentState>();
 
@@ -820,130 +822,83 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Пилюля с табами
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      sliver: SliverToBoxAdapter(
-                        child: Builder(
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: AppColors.getSurfaceColor(context),
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xxl,
-                              ),
-                              border: Border.all(
+                    SliverToBoxAdapter(
+                      child: Builder(
+                        builder: (context) => Container(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          decoration: BoxDecoration(
+                            color: AppColors.getSurfaceColor(context),
+                            borderRadius: const BorderRadius.only(
+                              topLeft: Radius.circular(AppRadius.lg),
+                              topRight: Radius.circular(AppRadius.lg),
+                            ),
+                            border: const Border(
+                              top: BorderSide(
                                 color: AppColors.twinchip,
                                 width: 1,
                               ),
                             ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Expanded(
-                                  child: _PillTabBtn(
-                                    text: 'Фото',
-                                    selected: _tab == 0,
-                                    onTap: () => setState(() => _tab = 0),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _PillTabBtn(
-                                    text: 'Участники',
-                                    selected: _tab == 1,
-                                    onTap: () => setState(() => _tab = 1),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: _PillTabBtn(
-                                    text: 'Статистика',
-                                    selected: _tab == 2,
-                                    onTap: () => setState(() => _tab = 2),
-                                  ),
-                                ),
-                              ],
-                            ),
+                          ),
+                          child: TabsBar(
+                            value: _tab,
+                            items: const ['Лента', 'Фото', 'Участники', 'Статистика'],
+                            onChanged: (index) => setState(() => _tab = index),
                           ),
                         ),
                       ),
                     ),
 
-                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
                     // ───────── Контент табов
                     if (_tab == 0)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Builder(
-                            builder: (context) => Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.lg,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.twinchip,
-                                  width: 1,
-                                ),
-                              ),
-                              child: ClubPhotoContent(
-                                clubId: widget.clubId,
-                                canEdit: _canEdit,
-                                clubData: _clubData,
-                                onPhotosUpdated: _loadClub,
-                              ),
+                      SliverFillRemaining(
+                        hasScrollBody: true,
+                        child: Builder(
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(8),
+                            color: AppColors.getSurfaceColor(context),
+                            child: ClubLentaContent(
+                              clubId: widget.clubId,
                             ),
                           ),
                         ),
                       )
                     else if (_tab == 1)
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Builder(
-                            builder: (context) => Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                              child: CoffeeRunVldMembersContent(
-                                key: _membersContentKey,
-                                clubId: widget.clubId,
-                                isOwner: _canEdit,
-                              ),
+                      SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(2),
+                            color: AppColors.getSurfaceColor(context),
+                            child: ClubPhotoContent(
+                              clubId: widget.clubId,
+                              canEdit: _canEdit,
+                              clubData: _clubData,
+                              onPhotosUpdated: _loadClub,
+                            ),
+                          ),
+                        ),
+                      )
+                    else if (_tab == 2)
+                      SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(8),
+                            color: AppColors.getSurfaceColor(context),
+                            child: CoffeeRunVldMembersContent(
+                              key: _membersContentKey,
+                              clubId: widget.clubId,
+                              isOwner: _canEdit,
                             ),
                           ),
                         ),
                       )
                     else
-                      SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        sliver: SliverToBoxAdapter(
-                          child: Builder(
-                            builder: (context) => Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: AppColors.getSurfaceColor(context),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                                border: Border.all(
-                                  color: AppColors.getBorderColor(context),
-                                  width: 1,
-                                ),
-                              ),
-                              child: CoffeeRunVldStatsContent(
-                                clubId: widget.clubId,
-                              ),
+                      SliverToBoxAdapter(
+                        child: Builder(
+                          builder: (context) => Container(
+                            padding: const EdgeInsets.all(12),
+                            color: AppColors.getSurfaceColor(context),
+                            child: CoffeeRunVldStatsContent(
+                              clubId: widget.clubId,
                             ),
                           ),
                         ),
@@ -1200,48 +1155,6 @@ class _BackgroundImage extends StatelessWidget {
             Icons.image,
             size: 48,
             color: AppColors.getIconSecondaryColor(context),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Кнопка вкладки в пилюле
-class _PillTabBtn extends StatelessWidget {
-  final String text;
-  final bool selected;
-  final VoidCallback onTap;
-  const _PillTabBtn({
-    required this.text,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.xl),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.getTextPrimaryColor(context)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: selected
-                  ? AppColors.getSurfaceColor(context)
-                  : AppColors.getTextPrimaryColor(context),
-            ),
           ),
         ),
       ),
