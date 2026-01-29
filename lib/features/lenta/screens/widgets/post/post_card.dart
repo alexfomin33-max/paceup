@@ -480,15 +480,33 @@ class _PostCardState extends ConsumerState<PostCard>
           ),
 
           // ──────────────────────────────────────────────────────────────
-          // ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
+          // ЗАГОЛОВОК И ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
           // ──────────────────────────────────────────────────────────────
-          if (post.postContent.isNotEmpty)
+          if (post.postTitle.isNotEmpty || post.postContent.isNotEmpty)
             GestureDetector(
               onTap: _openPostDescription,
               behavior: HitTestBehavior.opaque,
               child: Padding(
                 padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
-                child: ExpandableText(text: post.postContent),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Заголовок поста (крупнее и жирным)
+                    if (post.postTitle.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          post.postTitle,
+                          style: AppTextStyles.h16w6.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ),
+                    // Описание поста
+                    if (post.postContent.isNotEmpty)
+                      ExpandableText(text: post.postContent),
+                  ],
+                ),
               ),
             ),
 

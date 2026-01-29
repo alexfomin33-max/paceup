@@ -53,8 +53,9 @@ class EditPostScreen extends ConsumerStatefulWidget {
   final int userId;
   final int postId;
 
-  /// Текст и изображения поста на момент открытия экрана
+  /// Текст, заголовок и изображения поста на момент открытия экрана
   final String initialText;
+  final String initialTitle;
   final List<String> initialImageUrls;
   final int initialVisibility;
 
@@ -63,6 +64,7 @@ class EditPostScreen extends ConsumerStatefulWidget {
     required this.userId,
     required this.postId,
     required this.initialText,
+    this.initialTitle = '',
     required this.initialImageUrls,
     this.initialVisibility = 0,
   });
@@ -75,6 +77,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   // ────────────────────────────────────────────────────────────────
   // 📝 КОНТРОЛЛЕРЫ И СОСТОЯНИЕ
   // ────────────────────────────────────────────────────────────────
+  late final TextEditingController _titleController;
+  late final FocusNode _titleFocusNode;
   late final TextEditingController _descriptionController;
   late final FocusNode _descriptionFocusNode;
 
@@ -96,10 +100,14 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   @override
   void initState() {
     super.initState();
+    _titleController = TextEditingController(text: widget.initialTitle);
+    _titleFocusNode = FocusNode();
     _descriptionController = TextEditingController(text: widget.initialText);
     _descriptionFocusNode = FocusNode();
     _initialVisibility = widget.initialVisibility.clamp(0, 2);
     _selectedVisibility = _initialVisibility;
+    _titleController.addListener(_updateSaveState);
+    _titleFocusNode.addListener(_updateSaveState);
     _descriptionController.addListener(_updateSaveState);
     _descriptionFocusNode.addListener(_updateSaveState);
     _updateSaveState();
@@ -107,6 +115,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
 
   @override
   void dispose() {
+    _titleController.dispose();
+    _titleFocusNode.dispose();
     _descriptionController.dispose();
     _descriptionFocusNode.dispose();
     super.dispose();
@@ -116,6 +126,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   bool _hasChanges() {
     final textChanged =
         _descriptionController.text.trim() != widget.initialText.trim();
+    final titleChanged =
+        _titleController.text.trim() != widget.initialTitle.trim();
 
     final existingKeptUrls = _existing
         .where((e) => e.keep)
@@ -133,7 +145,11 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     // Проверяем изменение видимости поста
     final visibilityChanged = _selectedVisibility != _initialVisibility;
 
-    return textChanged || !sameExisting || newFilesAdded || visibilityChanged;
+    return textChanged ||
+        titleChanged ||
+        !sameExisting ||
+        newFilesAdded ||
+        visibilityChanged;
   }
 
   /// Обновляет состояние доступности кнопки сохранения
@@ -191,7 +207,23 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                           const SizedBox(height: 24),
 
                           // ────────────────────────────────────────────────────────────────
-                          // 📝 2. ОПИСАНИЕ ПОСТА
+                          // 📝 2. ЗАГОЛОВОК ПОСТА
+                          // ────────────────────────────────────────────────────────────────
+                          Text(
+                            'Заголовок поста',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildTitleInput(),
+
+                          const SizedBox(height: 24),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 📝 3. ОПИСАНИЕ ПОСТА
                           // ────────────────────────────────────────────────────────────────
                           Text(
                             'Описание поста',
@@ -544,6 +576,55 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     );
   }
 
+  /// Поле ввода заголовка
+  Widget _buildTitleInput() {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 0.7,
+        ),
+      ),
+      child: TextField(
+        controller: _titleController,
+        focusNode: _titleFocusNode,
+        maxLines: 2,
+        minLines: 1,
+        textCapitalization: TextCapitalization.sentences,
+        textInputAction: TextInputAction.next,
+        style: AppTextStyles.h14w4.copyWith(
+          color: AppColors.getTextPrimaryColor(context),
+        ),
+        decoration: InputDecoration(
+          hintText: 'Введите заголовок поста',
+          hintStyle: AppTextStyles.h14w4Place.copyWith(
+            color: AppColors.getTextPlaceholderColor(context),
+          ),
+          filled: true,
+          fillColor: AppColors.surface,
+          contentPadding: const EdgeInsets.all(12),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        onSubmitted: (_) {
+          // Переходим к полю описания при нажатии Enter
+          FocusScope.of(context).requestFocus(_descriptionFocusNode);
+        },
+      ),
+    );
+  }
+
   /// Поле ввода описания
   Widget _buildDescriptionInput() {
     return Container(
@@ -742,6 +823,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               'post_id': widget.postId.toString(),
               'user_id': widget.userId.toString(),
               'text': text,
+              'title': _titleController.text.trim(), // ── Добавляем заголовок поста
               'privacy': _selectedVisibility.toString(),
               'keep_images': keepUrls,
             },
@@ -760,6 +842,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
               'post_id': widget.postId.toString(),
               'user_id': widget.userId.toString(),
               'text': text,
+              'title': _titleController.text.trim(), // ── Добавляем заголовок поста
               'privacy': _selectedVisibility.toString(),
               'keep_images': keepUrls.toString(),
             },
