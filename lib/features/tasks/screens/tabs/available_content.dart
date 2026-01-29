@@ -263,7 +263,7 @@ class AvailableTaskCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: const [
             BoxShadow(
               color: AppColors.twinshadow,
@@ -273,56 +273,73 @@ class AvailableTaskCard extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            // Картинка занимает 2/3 верхней части карточки
-            Expanded(
-              flex: 2,
-              child: imageUrl != null && imageUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      placeholder: (context, url) => Container(
-                        color: AppColors.getBackgroundColor(context),
-                        child: Center(
-                          child: CupertinoActivityIndicator(
-                            radius: 10,
-                            color: AppColors.getIconSecondaryColor(context),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: AppColors.getBackgroundColor(context),
-                        child: Icon(
-                          CupertinoIcons.photo,
-                          size: 28,
+            // Картинка занимает всю высоту карточки
+            imageUrl != null && imageUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: imageUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.getBackgroundColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 10,
                           color: AppColors.getIconSecondaryColor(context),
                         ),
                       ),
-                    )
-                  : Container(
-                      color: AppColors.getBorderColor(context),
-                      child: const Icon(Icons.fitness_center),
                     ),
-            ),
-            // Текст занимает 1/3 нижней части карточки
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 9, 12, 12),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.getBorderColor(context),
+                      child: Icon(
+                        CupertinoIcons.photo,
+                        size: 28,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.getBorderColor(context),
+                    child: const Icon(Icons.fitness_center),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+            // Градиентное затемнение нижней трети карточки
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: FractionallySizedBox(
+                heightFactor: 0.5,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.9),
+                      ],
+                    ),
+                  ),
                 ),
+              ),
+            ),
+            // Текст поверх картинки внизу
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Text(
+                title,
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -351,7 +368,7 @@ class AvailableExpeditionCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: const [
             BoxShadow(
               color: AppColors.twinshadow,
@@ -361,32 +378,51 @@ class AvailableExpeditionCard extends StatelessWidget {
           ],
         ),
         clipBehavior: Clip.antiAlias,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            // Картинка занимает 2/3 верхней части карточки
-            Expanded(
-              flex: 2,
-              child: Image(
-                image: imageProvider,
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
+            // Картинка занимает всю высоту карточки
+            Image(
+              image: imageProvider,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: double.infinity,
             ),
-            // Текст занимает 1/3 нижней части карточки
-            Expanded(
-              flex: 1,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 9, 12, 12),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.left,
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+            // Градиентное затемнение нижней трети карточки
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: FractionallySizedBox(
+                heightFactor: 0.3,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.7),
+                      ],
+                    ),
                   ),
                 ),
+              ),
+            ),
+            // Текст поверх картинки внизу
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Text(
+                title,
+                textAlign: TextAlign.left,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

@@ -853,8 +853,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.getSurfaceColor(context),
                             borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(AppRadius.lg),
-                              topRight: Radius.circular(AppRadius.lg),
+                              topLeft: Radius.circular(AppRadius.xl),
+                              topRight: Radius.circular(AppRadius.xl),
                             ),
                             border: const Border(
                               top: BorderSide(

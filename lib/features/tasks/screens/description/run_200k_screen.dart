@@ -75,6 +75,41 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     }
   }
 
+  /// Кнопка "Начать" в стиле кнопки "Объединить"
+  Widget _buildStartButton(BuildContext context) {
+    final textColor = AppColors.getSurfaceColor(context);
+
+    return ElevatedButton(
+      onPressed: _isLoading ? null : _handleTaskAction,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: _isLoading
+          ? const SizedBox(
+              height: 20,
+              width: 20,
+              child: CupertinoActivityIndicator(
+                radius: 10,
+                color: AppColors.surface,
+              ),
+            )
+          : Text(
+              'Начать',
+              style: AppTextStyles.h15w5.copyWith(
+                color: textColor,
+                height: 1.0,
+              ),
+            ),
+    );
+  }
+
   /// Обработка действия принятия/отмены задачи
   /// Полностью полагается на данные из API через провайдеры
   Future<void> _handleTaskAction() async {
@@ -199,8 +234,13 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        body: CustomScrollView(
-          slivers: [
+        body: Column(
+          children: [
+            // ─────────── Прокручиваемая область с контентом
+            Expanded(
+              child: CustomScrollView(
+                physics: const BouncingScrollPhysics(),
+                slivers: [
             // ─────────── Фоновая картинка + кнопка "назад" + логотип
             SliverToBoxAdapter(
               child: Builder(
@@ -479,54 +519,6 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
               ),
             ),
 
-            // ─────────── Кнопка "Начать"
-            // Показываем кнопку только если пользователь еще не участвует
-            // Не показываем кнопку, пока данные загружаются (currentIsParticipating == null)
-            if (currentIsParticipating != null && !currentIsParticipating)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-                  child: Center(
-                    child: SizedBox(
-                      width: 200,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleTaskAction,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.brandPrimary,
-                          foregroundColor: AppColors.surface,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 0,
-                            vertical: 8,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CupertinoActivityIndicator(
-                                  radius: 10,
-                                  color: AppColors.surface,
-                                ),
-                              )
-                            : const Text(
-                                'Начать',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.surface,
-                                ),
-                              ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
             // ─────────── Контент
             SliverToBoxAdapter(
               child: Column(
@@ -654,10 +646,30 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                 ],
               ),
             ),
-          ],
+
+            // ─────────── Добавляем нижний отступ для контента перед зафиксированной кнопкой
+            if (currentIsParticipating != null && !currentIsParticipating)
+              const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  ],
+                ),
+              ),
+
+              // ─────────── Зафиксированная кнопка "Начать" внизу экрана
+              // Показываем кнопку только если пользователь еще не участвует
+              // Не показываем кнопку, пока данные загружаются (currentIsParticipating == null)
+              if (currentIsParticipating != null && !currentIsParticipating)
+                SafeArea(
+                  top: false,
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    color: AppColors.getBackgroundColor(context),
+                    child: _buildStartButton(context),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
   }
 }
 

@@ -1057,7 +1057,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
 
                   // ---------- Полное описание ----------
                   Text(
-                    'Полное описание',
+                    'Описание задачи',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
@@ -1087,7 +1087,7 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                         decoration: InputDecoration(
-                          hintText: 'Введите полное описание задачи',
+                          hintText: 'Добавьте описание задачи',
                           hintStyle: AppTextStyles.h14w4Place.copyWith(
                             color: AppColors.getTextPlaceholderColor(context),
                           ),
