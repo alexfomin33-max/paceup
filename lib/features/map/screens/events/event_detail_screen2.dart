@@ -13,6 +13,7 @@ import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/more_menu_hub.dart';
 import 'edit_event_screen.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
+import 'event_chat_screen.dart';
 
 /// Детальная страница события (на основе coffeerun_screen.dart)
 class EventDetailScreen2 extends ConsumerStatefulWidget {
@@ -1325,11 +1326,11 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                             child: GestureDetector(
                               onTap: _isParticipant
                                   ? () {
-                                      // TODO: Реализовать переход в чат события
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Чат события'),
-                                          duration: Duration(seconds: 1),
+                                      Navigator.of(context).push(
+                                        TransparentPageRoute(
+                                          builder: (_) => EventChatScreen(
+                                            eventId: widget.eventId,
+                                          ),
                                         ),
                                       );
                                     }
