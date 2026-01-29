@@ -15,6 +15,7 @@ import 'tabs/club_photo_content.dart';
 import 'tabs/members_content.dart';
 import 'tabs/stats_content.dart';
 import 'edit_club_screen.dart';
+import 'club_chat_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
 import '../../providers/search/clubs_search_provider.dart';
@@ -999,7 +1000,11 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       top: false,
                       child: _FloatingChatButton(
                         onTap: () {
-                          // TODO: Переход к чату клуба
+                          Navigator.of(context).push(
+                            TransparentPageRoute(
+                              builder: (_) => ClubChatScreen(clubId: widget.clubId),
+                            ),
+                          );
                         },
                       ),
                     ),
