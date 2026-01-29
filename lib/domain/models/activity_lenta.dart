@@ -30,6 +30,7 @@ class Activity {
   final String postDateText; // from "dates"
   final String postMediaUrl; // from "media"
   final String postContent; // from "content"
+  final String postTitle; // from "title" - название тренировки
   final bool islike;
   final List<String> mediaImages; // полные URL картинок
   final List<String> mediaVideos; // полные URL видео
@@ -52,10 +53,11 @@ class Activity {
     required this.equipments,
     required this.stats,
     required this.points,
-    this.postDateText = '',
-    this.postMediaUrl = '',
-    this.postContent = '',
-    this.islike = false,
+      this.postDateText = '',
+      this.postMediaUrl = '',
+      this.postContent = '',
+      this.postTitle = '',
+      this.islike = false,
     this.mediaImages = const [],
     this.mediaVideos = const [],
     this.mapSortOrder,
@@ -157,6 +159,7 @@ class Activity {
       postDateText: j['dates']?.toString() ?? '',
       postMediaUrl: j['media']?.toString() ?? '',
       postContent: j['content']?.toString() ?? '',
+      postTitle: j['title']?.toString() ?? '',
       islike: _asBool(
         j['islike'] ?? j['isLiked'] ?? j['is_like'] ?? j['liked'],
       ),
@@ -190,6 +193,7 @@ class Activity {
       postDateText: postDateText,
       postMediaUrl: postMediaUrl,
       postContent: postContent,
+      postTitle: postTitle,
       islike: islike,
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
@@ -219,6 +223,7 @@ class Activity {
       postDateText: postDateText,
       postMediaUrl: postMediaUrl,
       postContent: postContent,
+      postTitle: postTitle,
       islike: islike,
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
@@ -248,6 +253,7 @@ class Activity {
       postDateText: postDateText,
       postMediaUrl: postMediaUrl,
       postContent: postContent,
+      postTitle: postTitle,
       islike: islike,
       mediaImages: images ?? mediaImages,
       mediaVideos: videos ?? mediaVideos,

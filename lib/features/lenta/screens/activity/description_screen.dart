@@ -1193,6 +1193,44 @@ class _ActivityDescriptionPageState
                 ),
 
                 // ────────────────────────────────────────────────────────────────
+                // 📝 НАЗВАНИЕ И ОПИСАНИЕ ТРЕНИРОВКИ: после блока с эквипом
+                // ────────────────────────────────────────────────────────────────
+                if (a.postTitle.isNotEmpty || a.postContent.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                      ),
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Название тренировки (крупнее и жирным)
+                          if (a.postTitle.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Text(
+                                a.postTitle,
+                                style: AppTextStyles.h16w6.copyWith(
+                                  color: AppColors.getTextPrimaryColor(context),
+                                ),
+                              ),
+                            ),
+                          // Описание тренировки
+                          if (a.postContent.isNotEmpty)
+                            Text(
+                              a.postContent,
+                              style: AppTextStyles.h14w4.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // ────────────────────────────────────────────────────────────────
                 // 🎯 ДЕЙСТВИЯ: лайк, комментарии, совместно
                 // ────────────────────────────────────────────────────────────────
                 SliverToBoxAdapter(
