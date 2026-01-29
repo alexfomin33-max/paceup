@@ -5,6 +5,7 @@
 // ────────────────────────────────────────────────────────────────────────────
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../domain/models/activity_lenta.dart' as al;
 import '../../../../providers/services/api_provider.dart';
 
 /// Модель тренировки
@@ -201,6 +202,165 @@ class TrainingActivity {
       elevationPerKm: elevationPerKm,
       wattsPerKm: wattsPerKm,
       stats: stats,
+    );
+  }
+
+  /// Конвертирует в al.Activity для экрана описания тренировки
+  /// (например, при переходе из «Мои результаты» по маршруту).
+  al.Activity toLentaActivity(int userId, String userName, String userAvatar) {
+    final sportTypeStr = sportType == 0
+        ? 'run'
+        : (sportType == 1
+            ? 'bike'
+            : (sportType == 2 ? 'swim' : (sportType == 3 ? 'ski' : 'run')));
+    double calculatedAvgSpeed = 0.0;
+    if (pace > 0) calculatedAvgSpeed = 60.0 / pace;
+    final statsData = stats;
+    if (statsData != null &&
+        statsData.containsKey('avgSpeed') &&
+        statsData['avgSpeed'] != null) {
+      final v = statsData['avgSpeed'];
+      if (v is num) calculatedAvgSpeed = v.toDouble();
+    }
+    al.Coord? minAltitudeCoords;
+    al.Coord? maxAltitudeCoords;
+    if (statsData != null) {
+      if (statsData['minAltitudeCoords'] is Map) {
+        final c = statsData['minAltitudeCoords'] as Map;
+        if (c['lat'] != null && c['lng'] != null) {
+          minAltitudeCoords = al.Coord(
+            lat: (c['lat'] as num).toDouble(),
+            lng: (c['lng'] as num).toDouble(),
+          );
+        }
+      }
+      if (statsData['maxAltitudeCoords'] is Map) {
+        final c = statsData['maxAltitudeCoords'] as Map;
+        if (c['lat'] != null && c['lng'] != null) {
+          maxAltitudeCoords = al.Coord(
+            lat: (c['lat'] as num).toDouble(),
+            lng: (c['lng'] as num).toDouble(),
+          );
+        }
+      }
+    }
+    List<al.Coord> boundsList = [];
+    if (statsData != null && statsData['bounds'] is List) {
+      for (final b in statsData['bounds'] as List) {
+        if (b is Map && b['lat'] != null && b['lng'] != null) {
+          boundsList.add(al.Coord(
+            lat: (b['lat'] as num).toDouble(),
+            lng: (b['lng'] as num).toDouble(),
+          ));
+        }
+      }
+    }
+    if (boundsList.isEmpty && points.length >= 2) {
+      boundsList = [
+        al.Coord(lat: points.first.lat, lng: points.first.lng),
+        al.Coord(lat: points.last.lat, lng: points.last.lng),
+      ];
+    }
+    DateTime? startedAt = when;
+    DateTime? finishedAt = when.add(Duration(seconds: effectiveDuration));
+    if (statsData != null) {
+      if (statsData['startedAt'] != null) {
+        try {
+          startedAt = DateTime.parse(statsData['startedAt'].toString());
+        } catch (_) {}
+      }
+      if (statsData['finishedAt'] != null) {
+        try {
+          finishedAt = DateTime.parse(statsData['finishedAt'].toString());
+        } catch (_) {}
+      }
+    }
+    al.Coord? startedAtCoords;
+    al.Coord? finishedAtCoords;
+    if (statsData != null) {
+      if (statsData['startedAtCoords'] is Map) {
+        final c = statsData['startedAtCoords'] as Map;
+        if (c['lat'] != null && c['lng'] != null) {
+          startedAtCoords = al.Coord(
+            lat: (c['lat'] as num).toDouble(),
+            lng: (c['lng'] as num).toDouble(),
+          );
+        }
+      }
+      if (statsData['finishedAtCoords'] is Map) {
+        final c = statsData['finishedAtCoords'] as Map;
+        if (c['lat'] != null && c['lng'] != null) {
+          finishedAtCoords = al.Coord(
+            lat: (c['lat'] as num).toDouble(),
+            lng: (c['lng'] as num).toDouble(),
+          );
+        }
+      }
+    }
+    if (startedAtCoords == null && points.isNotEmpty) {
+      startedAtCoords = al.Coord(lat: points.first.lat, lng: points.first.lng);
+    }
+    if (finishedAtCoords == null && points.isNotEmpty) {
+      finishedAtCoords = al.Coord(lat: points.last.lat, lng: points.last.lng);
+    }
+    double realDistance = distance * 1000;
+    if (statsData != null &&
+        statsData['realDistance'] != null &&
+        statsData['realDistance'] is num) {
+      realDistance = (statsData['realDistance'] as num).toDouble();
+    }
+    final activityStats = al.ActivityStats(
+      distance: distance * 1000,
+      realDistance: realDistance,
+      avgSpeed: calculatedAvgSpeed,
+      avgPace: pace,
+      minAltitude: minAltitude ?? 0.0,
+      minAltitudeCoords: minAltitudeCoords,
+      maxAltitude: maxAltitude ?? 0.0,
+      maxAltitudeCoords: maxAltitudeCoords,
+      cumulativeElevationGain: cumulativeElevationGain ?? 0.0,
+      cumulativeElevationLoss: cumulativeElevationLoss ?? 0.0,
+      startedAt: startedAt,
+      startedAtCoords: startedAtCoords,
+      finishedAt: finishedAt,
+      finishedAtCoords: finishedAtCoords,
+      duration: duration,
+      movingDuration: movingDuration,
+      bounds: boundsList,
+      avgHeartRate: avgHeartRate,
+      avgCadence: avgCadence,
+      heartRatePerKm: heartRatePerKm,
+      pacePerKm: pacePerKm,
+      elevationPerKm: elevationPerKm,
+      wattsPerKm: wattsPerKm,
+      calories: calories,
+      totalSteps: steps,
+    );
+    final coordPoints = points
+        .map((p) => al.Coord(lat: p.lat, lng: p.lng))
+        .toList();
+    return al.Activity(
+      id: id,
+      type: sportTypeStr,
+      dateStart: when,
+      dateEnd: when.add(Duration(seconds: effectiveDuration)),
+      lentaId: id,
+      lentaDate: when,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: 0,
+      comments: 0,
+      userGroup: 0,
+      equipments: const [],
+      stats: activityStats,
+      points: coordPoints,
+      postDateText: '',
+      postMediaUrl: '',
+      postContent: '',
+      islike: false,
+      mediaImages: const [],
+      mediaVideos: const [],
     );
   }
 }

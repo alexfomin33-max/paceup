@@ -75,16 +75,18 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
       _detail?.difficulty ?? widget.initialRoute.difficulty;
 
   static Widget _mapPlaceholder(BuildContext context) {
-    return Container(
-      height: 200,
-      color: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.darkSurfaceMuted
-          : AppColors.skeletonBase,
-      alignment: Alignment.center,
-      child: Icon(
-        CupertinoIcons.map,
-        size: 28,
-        color: AppColors.getTextSecondaryColor(context),
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        color: Theme.of(context).brightness == Brightness.dark
+            ? AppColors.darkSurfaceMuted
+            : AppColors.skeletonBase,
+        alignment: Alignment.center,
+        child: Icon(
+          CupertinoIcons.map,
+          size: 28,
+          color: AppColors.getTextSecondaryColor(context),
+        ),
       ),
     );
   }
@@ -250,23 +252,31 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                   ),
 
                   // ── Карта-превью
+                  // Используем AspectRatio для сохранения пропорций и BoxFit.contain
+                  // для полного отображения карты без обрезки
                   SliverToBoxAdapter(
                     child: _mapImageUrl != null && _mapImageUrl!.isNotEmpty
-                        ? CachedNetworkImage(
-                            imageUrl: _mapImageUrl!,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) =>
-                                _mapPlaceholder(context),
+                        ? AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: CachedNetworkImage(
+                              imageUrl: _mapImageUrl!,
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              // Добавляем cacheKey для принудительного обновления при изменении URL
+                              cacheKey: '${_mapImageUrl}_v2',
+                              errorWidget: (_, __, ___) =>
+                                  _mapPlaceholder(context),
+                            ),
                           )
-                        : Image.asset(
-                            _mapAsset,
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, __) =>
-                                _mapPlaceholder(context),
+                        : AspectRatio(
+                            aspectRatio: 16 / 9,
+                            child: Image.asset(
+                              _mapAsset,
+                              width: double.infinity,
+                              fit: BoxFit.contain,
+                              errorBuilder: (_, _, __) =>
+                                  _mapPlaceholder(context),
+                            ),
                           ),
                   ),
 
@@ -362,6 +372,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                                   builder: (_) => MyResultsScreen(
                                     routeId: widget.routeId,
                                     routeTitle: _title,
+                                    userId: widget.userId,
                                     difficultyText:
                                         _difficultyText(_difficulty),
                                   ),

@@ -242,6 +242,8 @@ class _SavedRouteRow extends StatelessWidget {
                     width: 80,
                     height: 76,
                     fit: BoxFit.cover,
+                    // Добавляем cacheKey для принудительного обновления при изменении URL
+                    cacheKey: '${route.routeMapUrl}_v2',
                     errorWidget: (_, __, ___) => _mapPlaceholder(context),
                   )
                 : _mapPlaceholder(context),

@@ -129,6 +129,36 @@ class RouteDetail {
   }
 }
 
+/// Элемент списка «Мои результаты» по маршруту (тренировка).
+class RouteWorkoutItem {
+  const RouteWorkoutItem({
+    required this.activityId,
+    required this.when,
+    required this.durationText,
+    this.routeMapUrl,
+    required this.paceText,
+    this.heartRate,
+  });
+
+  final int activityId;
+  final String when;
+  final String durationText;
+  final String? routeMapUrl;
+  final String paceText;
+  final int? heartRate;
+
+  factory RouteWorkoutItem.fromJson(Map<String, dynamic> j) {
+    return RouteWorkoutItem(
+      activityId: (j['activity_id'] as num?)?.toInt() ?? 0,
+      when: (j['when'] as String?) ?? '',
+      durationText: (j['duration_text'] as String?) ?? '—',
+      routeMapUrl: j['route_map_url'] as String?,
+      paceText: (j['pace_text'] as String?) ?? '—',
+      heartRate: (j['heart_rate'] as num?)?.toInt(),
+    );
+  }
+}
+
 /// Результат сохранения маршрута.
 class SaveRouteResult {
   const SaveRouteResult({
@@ -227,6 +257,46 @@ class RoutesService {
     if (raw is int) return raw;
     if (raw is num) return (raw as num).toInt();
     return null;
+  }
+
+  /// Тренировки по выбранному маршруту (Мои результаты).
+  /// Карты из uploads (route_map_url).
+  Future<List<RouteWorkoutItem>> getRouteWorkouts({
+    required int routeId,
+    required int userId,
+  }) async {
+    final response = await _api.get(
+      '/get_route_workouts.php',
+      queryParams: {
+        'route_id': routeId.toString(),
+        'user_id': userId.toString(),
+      },
+    );
+    final list = response['workouts'];
+    if (list is! List) return [];
+    return (list as List)
+        .map((e) => RouteWorkoutItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  /// Одна тренировка по ID (для перехода на экран описания).
+  /// Возвращает объект в формате get_training_activities (activity).
+  Future<Map<String, dynamic>?> getActivityById({
+    required int activityId,
+    required int userId,
+  }) async {
+    final response = await _api.get(
+      '/get_activity_by_id.php',
+      queryParams: {
+        'activity_id': activityId.toString(),
+        'user_id': userId.toString(),
+      },
+    );
+    final activity = response['activity'];
+    if (activity is! Map<String, dynamic>) return null;
+    return Map<String, dynamic>.from(activity);
   }
 
   /// Детали маршрута по ID (дата, автор, личный рекорд, мои результаты,
