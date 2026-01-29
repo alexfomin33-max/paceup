@@ -159,6 +159,50 @@ class RouteWorkoutItem {
   }
 }
 
+/// Элемент лидерборда по маршруту (общие результаты).
+class RouteLeaderboardItem {
+  const RouteLeaderboardItem({
+    required this.rank,
+    required this.userId,
+    required this.name,
+    required this.surname,
+    required this.avatar,
+    required this.bestDurationSec,
+    required this.bestDate,
+    required this.durationText,
+    required this.dateText,
+    this.paceText,
+  });
+
+  final int rank;
+  final int userId;
+  final String name;
+  final String surname;
+  final String avatar;
+  final int bestDurationSec;
+  final String bestDate;
+  final String durationText;
+  final String dateText;
+  final String? paceText;
+
+  String get fullName => '${name.trim()} ${surname.trim()}'.trim();
+
+  factory RouteLeaderboardItem.fromJson(Map<String, dynamic> j) {
+    return RouteLeaderboardItem(
+      rank: (j['rank'] as num).toInt(),
+      userId: (j['user_id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      surname: (j['surname'] as String?) ?? '',
+      avatar: (j['avatar'] as String?) ?? '',
+      bestDurationSec: (j['best_duration_sec'] as num).toInt(),
+      bestDate: (j['best_date'] as String?) ?? '',
+      durationText: (j['duration_text'] as String?) ?? '—',
+      dateText: (j['date_text'] as String?) ?? '',
+      paceText: j['pace_text'] as String?,
+    );
+  }
+}
+
 /// Результат сохранения маршрута.
 class SaveRouteResult {
   const SaveRouteResult({
@@ -322,6 +366,34 @@ class RoutesService {
     return RouteDetail.fromJson(
       Map<String, dynamic>.from(routeMap as Map),
     );
+  }
+
+  /// Лидерборд по маршруту (общие результаты).
+  /// [filter] — "all" или "friends" (по умолчанию "all").
+  /// [userId] — текущий пользователь (обязателен для фильтра "friends").
+  Future<List<RouteLeaderboardItem>> getRouteLeaderboard({
+    required int routeId,
+    String filter = 'all',
+    int userId = 0,
+  }) async {
+    final queryParams = <String, String>{
+      'route_id': routeId.toString(),
+      'filter': filter,
+    };
+    if (userId > 0) {
+      queryParams['user_id'] = userId.toString();
+    }
+    final response = await _api.get(
+      '/get_route_leaderboard.php',
+      queryParams: queryParams,
+    );
+    final list = response['results'];
+    if (list is! List) return [];
+    return (list as List)
+        .map((e) => RouteLeaderboardItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
   }
 }
 
