@@ -233,6 +233,67 @@ class SaveRouteResult {
   }
 }
 
+/// Участник маршрута (для экрана "Все участники маршрута").
+class RouteParticipant {
+  const RouteParticipant({
+    required this.userId,
+    required this.name,
+    required this.surname,
+    required this.avatar,
+    required this.distanceKm,
+    required this.durationText,
+    this.heartRate,
+  });
+
+  final int userId;
+  final String name;
+  final String surname;
+  final String avatar;
+  final double distanceKm;
+  final String durationText;
+  final int? heartRate;
+
+  String get fullName => '${name.trim()} ${surname.trim()}'.trim();
+
+  factory RouteParticipant.fromJson(Map<String, dynamic> j) {
+    return RouteParticipant(
+      userId: (j['user_id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      surname: (j['surname'] as String?) ?? '',
+      avatar: (j['avatar'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      durationText: (j['duration_text'] as String?) ?? '—',
+      heartRate: (j['heart_rate'] as num?)?.toInt(),
+    );
+  }
+}
+
+/// Группа участников по дате (для экрана "Все участники маршрута").
+class RouteParticipantsByDate {
+  const RouteParticipantsByDate({
+    required this.date,
+    required this.dateLabel,
+    required this.participants,
+  });
+
+  final String date;
+  final String dateLabel;
+  final List<RouteParticipant> participants;
+
+  factory RouteParticipantsByDate.fromJson(Map<String, dynamic> j) {
+    final participantsList = j['participants'] as List? ?? [];
+    return RouteParticipantsByDate(
+      date: (j['date'] as String?) ?? '',
+      dateLabel: (j['date_label'] as String?) ?? '',
+      participants: participantsList
+          .map((e) => RouteParticipant.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ))
+          .toList(),
+    );
+  }
+}
+
 /// Сервис для работы с сохранёнными маршрутами.
 class RoutesService {
   RoutesService._();
@@ -391,6 +452,32 @@ class RoutesService {
     if (list is! List) return [];
     return (list as List)
         .map((e) => RouteLeaderboardItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  /// Участники маршрута с группировкой по датам.
+  /// [date] — опциональная дата фильтрации (формат YYYY-MM-DD).
+  /// Если null, возвращаются данные за всё время.
+  Future<List<RouteParticipantsByDate>> getRouteParticipants({
+    required int routeId,
+    String? date,
+  }) async {
+    final queryParams = <String, String>{
+      'route_id': routeId.toString(),
+    };
+    if (date != null && date.isNotEmpty) {
+      queryParams['date'] = date;
+    }
+    final response = await _api.get(
+      '/get_route_participants.php',
+      queryParams: queryParams,
+    );
+    final list = response['participants_by_date'];
+    if (list is! List) return [];
+    return (list as List)
+        .map((e) => RouteParticipantsByDate.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
         .toList();
