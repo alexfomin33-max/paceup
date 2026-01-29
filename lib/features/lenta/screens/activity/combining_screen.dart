@@ -6,6 +6,32 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 class CombiningScreen extends StatelessWidget {
   const CombiningScreen({super.key});
 
+  /// Кнопка объединения тренировок
+  Widget _buildCombineButton(BuildContext context) {
+    final textColor = AppColors.getSurfaceColor(context);
+
+    return ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.button,
+        foregroundColor: textColor,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 30),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(double.infinity, 50),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        alignment: Alignment.center,
+      ),
+      child: Text(
+        'Объединить',
+        style: AppTextStyles.h15w5.copyWith(
+          color: textColor,
+          height: 1.0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return InteractiveBackSwipe(
@@ -40,116 +66,98 @@ class CombiningScreen extends StatelessWidget {
             ),
           ),
         ),
-        body: CustomScrollView(
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // ——— Прокручиваемая область с контентом
+              Expanded(
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
 
-            // ——— Инфо-текст
-            const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: _InfoText(),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-            // ——— Две тренировки, которые можно объединить
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              sliver: SliverList.list(
-                children: const [
-                  _TrainingCard(
-                    dateText: '7 июня 2025, в 16:40',
-                    distance: '16,08',
-                    pace: '5:24',
-                    time: '1:26:34',
-                    hr: '148',
-                  ),
-                  SizedBox(height: 12),
-                  _TrainingCard(
-                    dateText: '7 июня 2025, в 18:24',
-                    distance: '5,12',
-                    pace: '5:47',
-                    time: '45:18',
-                    hr: '154',
-                  ),
-                ],
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 20)),
-
-            // ——— Заголовок "После объединения"
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Text(
-                  'После объединения',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
-                ),
-              ),
-            ),
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-            // ——— Итоговая карточка
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              sliver: SliverList.list(
-                children: const [
-                  _TrainingCard(
-                    dateText: '7 июня 2025, в 16:40',
-                    distance: '21,20',
-                    pace: '5:32',
-                    time: '2:11:52',
-                    hr: '150',
-                  ),
-                ],
-              ),
-            ),
-
-            const SliverToBoxAdapter(child: SizedBox(height: 18)),
-
-            // ——— Кнопка "Объединить"
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Center(
-                  child: SizedBox(
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.brandPrimary,
-                        foregroundColor:
-                            Theme.of(context).brightness == Brightness.dark
-                            ? AppColors.surface
-                            : AppColors.getSurfaceColor(context),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 40),
-                        shape: const StadiumBorder(),
+                    // ——— Инфо-текст
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20),
+                        child: _InfoText(),
                       ),
-                      child: const Text(
-                        'Объединить',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 12)),
+
+                    // ——— Две тренировки, которые можно объединить
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      sliver: SliverList.list(
+                        children: const [
+                          _TrainingCard(
+                            dateText: '7 июня, в 16:40',
+                            distance: '16,08',
+                            pace: '5:24',
+                            time: '1:26:34',
+                            hr: '148',
+                          ),
+                          SizedBox(height: 12),
+                          _TrainingCard(
+                            dateText: '7 июня, в 18:24',
+                            distance: '5,12',
+                            pace: '5:47',
+                            time: '45:18',
+                            hr: '154',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+
+                    // ——— Заголовок "После объединения"
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'После объединения',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                    // ——— Итоговая карточка
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      sliver: SliverList.list(
+                        children: const [
+                          _TrainingCard(
+                            dateText: '7 июня, в 16:40',
+                            distance: '21,20',
+                            pace: '5:32',
+                            time: '2:11:52',
+                            hr: '150',
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ——— Добавляем нижний отступ для контента перед зафиксированной кнопкой
+                    const SliverToBoxAdapter(child: SizedBox(height: 20)),
+                  ],
                 ),
               ),
-            ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
-          ],
+              // ——— Зафиксированная кнопка "Объединить" внизу экрана
+              Container(
+                padding: const EdgeInsets.all(16),
+                color: AppColors.getBackgroundColor(context),
+                child: _buildCombineButton(context),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -210,17 +218,17 @@ class _TrainingCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        border: Border.all(color: AppColors.getBorderColor(context)),
-        borderRadius: BorderRadius.circular(AppRadius.sm),
+        border: Border.all(color: AppColors.twinchip, width: 1),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           const BoxShadow(
-            color: AppColors.shadowSoft,
-            blurRadius: 1,
+            color: AppColors.twinshadow,
+            blurRadius: 10,
             offset: Offset(0, 1),
           ),
         ],
       ),
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -253,7 +261,7 @@ class _TrainingCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(AppRadius.xs),
                 child: Image.asset(
                   'assets/training_map.png',
-                  width: 140,
+                  width: 130,
                   height: 85,
                   fit: BoxFit.cover,
                 ),
@@ -264,7 +272,8 @@ class _TrainingCard extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    Expanded(
+                    SizedBox(
+                      width: 110,
                       child: _MetricColumn(
                         topTitle: 'Расстояние, км',
                         topValue: distance,
@@ -308,12 +317,12 @@ class _MetricColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     final label = TextStyle(
       fontFamily: 'Inter',
-      fontSize: 11,
+      fontSize: 12,
       color: AppColors.getTextSecondaryColor(context),
     );
     final value = TextStyle(
       fontFamily: 'Inter',
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: FontWeight.w600,
       color: AppColors.getTextPrimaryColor(context),
     );

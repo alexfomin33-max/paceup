@@ -61,6 +61,8 @@ class _MainTabState extends MainTabState
       GlobalKey<WeeklyActivityChartState>();
   // Выбранный вид спорта для фильтрации рекордов (0 - бег, 1 - вело, 2 - плавание, 3 - лыжи)
   int _selectedSport = 0;
+  // Выбранный год для фильтрации активности
+  int _selectedYear = DateTime.now().year;
 
   @override
   void initState() {
@@ -337,7 +339,22 @@ class _MainTabState extends MainTabState
     return [
       // ───────────────── Активность (горизонтальный скроллер) ─────────────────
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
-      const SliverToBoxAdapter(child: _SectionTitle('Активность')),
+      SliverToBoxAdapter(
+        child: _SectionTitleWithYear(
+          title: 'Активность',
+          selectedYear: _selectedYear,
+          onPrev: () {
+            setState(() {
+              _selectedYear--;
+            });
+          },
+          onNext: () {
+            setState(() {
+              _selectedYear++;
+            });
+          },
+        ),
+      ),
       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
       // Преобразуем модели активности в простые элементы для карточек
@@ -450,6 +467,63 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
+/// Заголовок секции с выбором года справа
+class _SectionTitleWithYear extends StatelessWidget {
+  final String title;
+  final int selectedYear;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+
+  const _SectionTitleWithYear({
+    required this.title,
+    required this.selectedYear,
+    required this.onPrev,
+    required this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          // Заголовок слева
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? AppColors.darkTextSecondary
+                      : AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+          ),
+          // Выбор года справа со стрелочками
+          _NavIcon(CupertinoIcons.left_chevron, onTap: onPrev),
+          const SizedBox(width: 6),
+          Text(
+            selectedYear.toString(),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.getTextPrimaryColor(context),
+            ),
+          ),
+          const SizedBox(width: 4),
+          _NavIcon(CupertinoIcons.right_chevron, onTap: onNext),
+        ],
+      ),
+    );
+  }
+}
+
 /// Заголовок секции с иконками вида спорта справа
 class _SectionTitleWithSportIcons extends StatelessWidget {
   final String title;
@@ -551,6 +625,29 @@ class _SportIcon extends StatelessWidget {
           color: selected
               ? AppColors.getSurfaceColor(context)
               : AppColors.getTextPrimaryColor(context),
+        ),
+      ),
+    );
+  }
+}
+
+/// Иконка навигации (стрелочка влево/вправо) для выбора года
+class _NavIcon extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+  const _NavIcon(this.icon, {required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.all(4),
+        child: Icon(
+          icon,
+          size: 18,
+          color: AppColors.getIconPrimaryColor(context),
         ),
       ),
     );

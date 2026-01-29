@@ -6,12 +6,19 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/utils/error_handler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../../core/widgets/more_menu_hub.dart';
 import '../../../../profile/screens/profile_screen.dart';
 
 /// ──────────────────────── Контент участников клуба из API с пагинацией ────────────────────────
 class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
   final int clubId;
-  const CoffeeRunVldMembersContent({super.key, required this.clubId});
+  final bool isOwner; // Является ли текущий пользователь владельцем клуба
+  const CoffeeRunVldMembersContent({
+    super.key,
+    required this.clubId,
+    this.isOwner = false,
+  });
 
   @override
   ConsumerState<CoffeeRunVldMembersContent> createState() =>
@@ -26,8 +33,6 @@ class CoffeeRunVldMembersContentState
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
-  final Map<int, bool> _togglingSubscriptions =
-      {}; // Для отслеживания процесса подписки/отписки
 
   @override
   void initState() {
@@ -109,45 +114,82 @@ class CoffeeRunVldMembersContentState
     }
   }
 
-  /// ──────────────────────── Подписка/отписка на пользователя ────────────────────────
-  Future<void> _toggleSubscribe(
-    int targetUserId,
-    bool currentlySubscribed,
-  ) async {
-    // Проверяем, не идет ли уже процесс подписки/отписки для этого пользователя
-    if (_togglingSubscriptions[targetUserId] == true) return;
+  /// ──────────────────────── Показать меню действий для участника (только для владельца) ────────────────────────
+  void _showMemberMenu(
+    BuildContext context,
+    GlobalKey menuKey,
+    int memberUserId,
+    String memberName,
+  ) {
+    final items = <MoreMenuItem>[];
 
-    if (!mounted) return;
-    setState(() {
-      _togglingSubscriptions[targetUserId] = true;
-    });
+    // Пункт "Сделать админом"
+    items.add(
+      MoreMenuItem(
+        text: 'Сделать админом',
+        icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+        onTap: () async {
+          MoreMenuHub.hide();
+          await _makeAdmin(memberUserId, memberName);
+        },
+      ),
+    );
 
+    // Пункт "Исключить из клуба"
+    items.add(
+      MoreMenuItem(
+        text: 'Исключить из клуба',
+        icon: CupertinoIcons.person_crop_circle_badge_minus,
+        iconColor: AppColors.red,
+        textStyle: const TextStyle(color: AppColors.red),
+        onTap: () async {
+          MoreMenuHub.hide();
+          await _removeMember(memberUserId, memberName);
+        },
+      ),
+    );
+
+    // Показываем попап меню
+    MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
+  }
+
+  /// ──────────────────────── Сделать участника админом ────────────────────────
+  Future<void> _makeAdmin(int memberUserId, String memberName) async {
     try {
       final api = ref.read(apiServiceProvider);
-      final action = currentlySubscribed ? 'unsubscribe' : 'subscribe';
-
       final data = await api.post(
-        '/toggle_subscribe.php',
-        body: {'target_user_id': targetUserId.toString(), 'action': action},
+        '/update_club_member_role.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': memberUserId.toString(),
+          'role': 'admin',
+        },
       );
 
       if (!mounted) return;
 
       if (data['success'] == true) {
-        final isSubscribed = data['is_subscribed'] as bool? ?? false;
-
-        // Обновляем статус подписки в списке участников
+        // Обновляем роль в списке участников
         setState(() {
           final index = _members.indexWhere(
-            (m) => (m['user_id'] as int?) == targetUserId,
+            (m) => (m['user_id'] as int?) == memberUserId,
           );
           if (index != -1) {
-            _members[index]['is_subscribed'] = isSubscribed;
+            _members[index]['role'] = 'admin';
           }
-          _togglingSubscriptions[targetUserId] = false;
         });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$memberName назначен администратором'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
       } else {
-        final errorMessage = data['message'] as String? ?? 'Ошибка подписки';
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка назначения администратора';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -156,9 +198,6 @@ class CoffeeRunVldMembersContentState
             ),
           );
         }
-        setState(() {
-          _togglingSubscriptions[targetUserId] = false;
-        });
       }
     } catch (e) {
       if (!mounted) return;
@@ -170,9 +209,61 @@ class CoffeeRunVldMembersContentState
           ),
         );
       }
-      setState(() {
-        _togglingSubscriptions[targetUserId] = false;
-      });
+    }
+  }
+
+  /// ──────────────────────── Исключить участника из клуба ────────────────────────
+  Future<void> _removeMember(int memberUserId, String memberName) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/remove_club_member.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': memberUserId.toString(),
+        },
+      );
+
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        // Удаляем участника из списка
+        setState(() {
+          _members.removeWhere(
+            (m) => (m['user_id'] as int?) == memberUserId,
+          );
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$memberName исключен из клуба'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        final errorMessage =
+            data['message'] as String? ?? 'Ошибка исключения из клуба';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(ErrorHandler.format(e)),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     }
   }
 
@@ -218,9 +309,6 @@ class CoffeeRunVldMembersContentState
         final role = m['role'] as String?;
         final userId = m['user_id'] as int?;
         final isCurrentUser = m['is_current_user'] as bool? ?? false;
-        final isSubscribed = m['is_subscribed'] as bool? ?? false;
-        final isToggling =
-            userId != null && (_togglingSubscriptions[userId] == true);
 
         return Builder(
           builder: (context) => Container(
@@ -231,8 +319,7 @@ class CoffeeRunVldMembersContentState
               avatarUrl: avatarUrl,
               userId: userId,
               isCurrentUser: isCurrentUser,
-              isSubscribed: isSubscribed,
-              isToggling: isToggling,
+              isOwner: widget.isOwner,
               onTap: userId != null
                   ? () {
                       Navigator.of(context).push(
@@ -242,8 +329,8 @@ class CoffeeRunVldMembersContentState
                       );
                     }
                   : null,
-              onToggleSubscribe: userId != null && !isCurrentUser
-                  ? () => _toggleSubscribe(userId, isSubscribed)
+              onShowMenu: widget.isOwner && userId != null && !isCurrentUser
+                  ? (menuKey) => _showMemberMenu(context, menuKey, userId, name)
                   : null,
             ),
           ),
@@ -260,10 +347,9 @@ class _MemberRow extends StatelessWidget {
   final String avatarUrl;
   final int? userId;
   final bool isCurrentUser;
-  final bool isSubscribed;
-  final bool isToggling;
+  final bool isOwner;
   final VoidCallback? onTap;
-  final VoidCallback? onToggleSubscribe;
+  final void Function(GlobalKey)? onShowMenu;
 
   const _MemberRow({
     required this.name,
@@ -271,10 +357,9 @@ class _MemberRow extends StatelessWidget {
     required this.avatarUrl,
     this.userId,
     this.isCurrentUser = false,
-    this.isSubscribed = false,
-    this.isToggling = false,
+    this.isOwner = false,
     this.onTap,
-    this.onToggleSubscribe,
+    this.onShowMenu,
   });
 
   @override
@@ -337,31 +422,29 @@ class _MemberRow extends StatelessWidget {
             // Иконка действий.
             // ── Для текущего пользователя показываем пустое место того же размера,
             //    чтобы высота карточки совпадала с другими пользователями.
+            // ── Для владельца клуба показываем иконку трех точек для меню действий.
             if (isCurrentUser)
               const SizedBox(width: 48, height: 48)
-            else if (userId != null)
-              IconButton(
-                onPressed: isToggling ? null : onToggleSubscribe,
-                splashRadius: 22,
-                icon: isToggling
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CupertinoActivityIndicator(radius: 10),
-                      )
-                    : Icon(
-                        isSubscribed
-                            ? CupertinoIcons.person_crop_circle_badge_minus
-                            : CupertinoIcons.person_crop_circle_badge_plus,
-                        size: 24,
-                      ),
-                style: IconButton.styleFrom(
-                  foregroundColor: isSubscribed
-                      ? Colors.red
-                      : AppColors.brandPrimary,
-                  disabledForegroundColor: AppColors.disabledText,
-                ),
-              ),
+            else if (isOwner && onShowMenu != null)
+              Builder(
+                builder: (context) {
+                  final menuKey = GlobalKey();
+                  return IconButton(
+                    key: menuKey,
+                    onPressed: () => onShowMenu!(menuKey),
+                    splashRadius: 22,
+                    icon: const Icon(
+                      CupertinoIcons.ellipsis_vertical,
+                      size: 24,
+                    ),
+                    style: IconButton.styleFrom(
+                      foregroundColor: AppColors.getIconPrimaryColor(context),
+                    ),
+                  );
+                },
+              )
+            else
+              const SizedBox(width: 48, height: 48),
           ],
         ),
       ),

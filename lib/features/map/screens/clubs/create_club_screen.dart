@@ -25,7 +25,8 @@ class CreateClubScreen extends ConsumerStatefulWidget {
 class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   // ── контроллеры
   final nameCtrl = TextEditingController();
-  final linkCtrl = TextEditingController();
+  // ── контроллеры для полей ввода страниц клуба
+  final List<TextEditingController> _linkControllers = [];
   final cityCtrl = TextEditingController();
   final descCtrl = TextEditingController();
 
@@ -61,6 +62,11 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   @override
   void initState() {
     super.initState();
+    // ── создаём первое поле для ввода страницы клуба
+    _linkControllers.add(TextEditingController());
+    _linkControllers.last.addListener(() {
+      _refresh();
+    });
     nameCtrl.addListener(() {
       _refresh();
       _clearFieldError('name');
@@ -108,7 +114,10 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   @override
   void dispose() {
     nameCtrl.dispose();
-    linkCtrl.dispose();
+    // ── освобождаем все контроллеры страниц клуба
+    for (final controller in _linkControllers) {
+      controller.dispose();
+    }
     cityCtrl.dispose();
     descCtrl.dispose();
     _pickerFocusNode.dispose();
@@ -126,6 +135,20 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   // ── очистка ошибки для конкретного поля при взаимодействии
   void _clearFieldError(String fieldName) {
     ref.read(formStateProvider.notifier).clearFieldError(fieldName);
+  }
+
+  // ── добавление нового поля для ввода страницы клуба (максимум 3 поля)
+  void _addLinkField() {
+    // ── ограничиваем количество полей до 3
+    if (_linkControllers.length >= 3) return;
+    
+    setState(() {
+      final newController = TextEditingController();
+      newController.addListener(() {
+        _refresh();
+      });
+      _linkControllers.add(newController);
+    });
   }
 
   Future<void> _pickLogo() async {
@@ -369,7 +392,16 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
         }
       fields['user_id'] = userId.toString();
       fields['name'] = nameCtrl.text.trim();
-      fields['link'] = linkCtrl.text.trim();
+      // ── собираем ссылки из контроллеров (только непустые)
+      final links = _linkControllers
+          .map((ctrl) => ctrl.text.trim())
+          .where((link) => link.isNotEmpty)
+          .toList();
+      if (links.isNotEmpty) {
+        fields['link'] = links.first; // Первая ссылка как основная
+        // Если есть дополнительные ссылки, можно передать их отдельно
+        // или объединить через запятую/JSON
+      }
       fields['city'] = cityCtrl.text.trim();
       fields['description'] = descCtrl.text.trim();
       fields['activity'] = activity!;
@@ -545,43 +577,82 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(
-                        color: AppColors.twinchip,
-                        width: 0.7,
-                      ),
-                    ),
-                    child: TextField(
-                      controller: linkCtrl,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      style: AppTextStyles.h14w4,
-                      decoration: InputDecoration(
-                        hintText: 'https://example.com/club',
-                        hintStyle: AppTextStyles.h14w4Place,
-                        filled: true,
-                        fillColor: AppColors.getSurfaceColor(context),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 22,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
+                  // ── динамические поля для ввода страниц клуба
+                  Column(
+                    children: List.generate(
+                      _linkControllers.length.clamp(0, 3),
+                      (index) {
+                        return Column(
+                          children: [
+                            if (index > 0) const SizedBox(height: 12),
+                            Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                border: Border.all(
+                                  color: AppColors.twinchip,
+                                  width: 0.7,
+                                ),
+                              ),
+                              child: TextField(
+                                controller: _linkControllers[index],
+                                keyboardType: TextInputType.url,
+                                textInputAction: TextInputAction.next,
+                                style: AppTextStyles.h14w4,
+                                decoration: InputDecoration(
+                                  hintText: 'https://example.com/club',
+                                  hintStyle: AppTextStyles.h14w4Place,
+                                  filled: true,
+                                  fillColor: AppColors.getSurfaceColor(context),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 22,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ).expand((widget) => [widget]).toList(),
                   ),
+                  // ── кнопка "добавить ещё" (показываем только если меньше 3 полей)
+                  if (_linkControllers.length < 3) ...[
+                    const SizedBox(height: 12),
+                    GestureDetector(
+                      onTap: _addLinkField,
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            CupertinoIcons.add_circled,
+                            size: 20,
+                            color: AppColors.brandPrimary,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'добавить ещё',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.brandPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 24),
 
                   // ---------- Вид активности ----------

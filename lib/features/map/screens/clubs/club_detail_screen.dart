@@ -515,13 +515,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
           body: SafeArea(
             top: false,
             bottom: true,
-            child: Builder(
-              builder: (context) {
-                final columnChildren = <Widget>[
-                  Expanded(
-                    child: Stack(
-                      children: [
-                        NotificationListener<ScrollNotification>(
+            child: Stack(
+              children: [
+                Builder(
+                  builder: (context) {
+                    final columnChildren = <Widget>[
+                      Expanded(
+                        child: NotificationListener<ScrollNotification>(
                           onNotification: (notification) {
                             // Закрываем попап меню при любом скролле или свайпе
                             if (notification is ScrollUpdateNotification ||
@@ -593,6 +593,55 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                         ),
                                       ),
                                     ),
+                                  // ── Плавающие круглые иконки (назад + меню) - скроллятся вместе с контентом
+                                  Positioned(
+                                    top: 12,
+                                    left: 0,
+                                    right: 0,
+                                    child: SafeArea(
+                                      bottom: false,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                        ),
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            _CircleIconBtn(
+                                              icon: CupertinoIcons.back,
+                                              semantic: 'Назад',
+                                              onTap: () {
+                                                // ── Если количество участников было обновлено, возвращаем результат
+                                                if (_updatedMembersCount !=
+                                                    null) {
+                                                  Navigator.of(context).pop({
+                                                    'members_count_updated':
+                                                        true,
+                                                    'members_count':
+                                                        _updatedMembersCount,
+                                                    'club_id': widget.clubId,
+                                                  });
+                                                } else {
+                                                  Navigator.of(context)
+                                                      .maybePop();
+                                                }
+                                              },
+                                            ),
+                                            Container(
+                                              key: _menuKey,
+                                              child: _CircleIconBtn(
+                                                icon: CupertinoIcons
+                                                    .ellipsis_vertical,
+                                                semantic: 'Меню',
+                                                onTap: () => _showMenu(context),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
                                   // ── Логотип внизу контейнера
                                   Positioned(
                                     left: 12,
@@ -869,6 +918,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               child: CoffeeRunVldMembersContent(
                                 key: _membersContentKey,
                                 clubId: widget.clubId,
+                                isOwner: _canEdit,
                               ),
                             ),
                           ),
@@ -901,54 +951,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                          ],
-                        ),
-                      ),
-
-                      // ───────── Плавающие круглые иконки (назад + редактирование)
-                    Positioned(
-                      top: 12,
-                      left: 0,
-                      right: 0,
-                      child: SafeArea(
-                        bottom: false,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _CircleIconBtn(
-                                icon: CupertinoIcons.back,
-                                semantic: 'Назад',
-                                onTap: () {
-                                  // ── Если количество участников было обновлено, возвращаем результат
-                                  if (_updatedMembersCount != null) {
-                                    Navigator.of(context).pop({
-                                      'members_count_updated': true,
-                                      'members_count': _updatedMembersCount,
-                                      'club_id': widget.clubId,
-                                    });
-                                  } else {
-                                    Navigator.of(context).maybePop();
-                                  }
-                                },
-                              ),
-                              Container(
-                                key: _menuKey,
-                                child: _CircleIconBtn(
-                                  icon: CupertinoIcons.ellipsis_vertical,
-                                  semantic: 'Меню',
-                                  onTap: () => _showMenu(context),
-                                ),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-                      ],
-                    ),
-                  ),
                   // ───────── Зафиксированная кнопка вступления (только для не участников)
                   if (!_isMember && !_isRequest)
                     Container(
@@ -960,6 +966,22 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                 return Column(children: columnChildren);
               },
+            ),
+                // ───────── Плавающая кнопка чата (только для участников клуба)
+                if (_isMember)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: SafeArea(
+                      top: false,
+                      child: _FloatingChatButton(
+                        onTap: () {
+                          // TODO: Переход к чату клуба
+                        },
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -1307,6 +1329,70 @@ class _MemberAvatars extends StatelessWidget {
             ),
           );
         }),
+      ),
+    );
+  }
+}
+
+/// Плавающая круглая кнопка чата (зафиксирована внизу справа)
+class _FloatingChatButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _FloatingChatButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    // Цвет иконки светлый
+    final iconColor = AppColors.getSurfaceColor(context);
+
+    // Цвет фона - оранжевый
+    final backgroundColor = AppColors.orange;
+
+    return Semantics(
+      label: 'Чат клуба',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+            boxShadow: [
+              const BoxShadow(
+                color: AppColors.shadowStrong,
+             
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              
+              )
+              
+            ],
+          ),
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                CupertinoIcons.chat_bubble,
+                size: 20,
+                color: iconColor,
+              ),
+              const SizedBox(height: 3),
+              Text(
+                'Чат',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: iconColor,
+                  height: 1.0,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
