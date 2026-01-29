@@ -796,12 +796,31 @@ class ActivityBlock extends ConsumerWidget {
               equipmentWidget,
 
               // ────────────────────────────────────────────────────────────────
-              // 📝 ОПИСАНИЕ ТРЕНИРОВКИ: после карты, до лайков/комментариев
+              // 📝 НАЗВАНИЕ И ОПИСАНИЕ ТРЕНИРОВКИ: после карты, до лайков/комментариев
               // ────────────────────────────────────────────────────────────────
-              if (updatedActivity.postContent.isNotEmpty)
+              if (updatedActivity.postTitle.isNotEmpty ||
+                  updatedActivity.postContent.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
-                  child: ExpandableText(text: updatedActivity.postContent),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Название тренировки (крупнее и жирным)
+                      if (updatedActivity.postTitle.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Text(
+                            updatedActivity.postTitle,
+                            style: AppTextStyles.h16w6.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ),
+                      // Описание тренировки
+                      if (updatedActivity.postContent.isNotEmpty)
+                        ExpandableText(text: updatedActivity.postContent),
+                    ],
+                  ),
                 ),
 
               const SizedBox(height: 12),

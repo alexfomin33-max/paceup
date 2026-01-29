@@ -770,6 +770,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           userId: userId,
           postId: post.id,
           initialText: post.postContent,
+          initialTitle: post.postTitle, // ── Передаем заголовок поста
           initialImageUrls: post.mediaImages,
           initialVisibility: post.userGroup.clamp(0, 2),
         ),

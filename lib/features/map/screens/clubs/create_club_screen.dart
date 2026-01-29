@@ -27,6 +27,10 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   final nameCtrl = TextEditingController();
   // ── контроллеры для полей ввода страниц клуба
   final List<TextEditingController> _linkControllers = [];
+  // ── контроллеры для ссылок на социальные сети
+  final vkLinkCtrl = TextEditingController();
+  final instagramLinkCtrl = TextEditingController();
+  final telegramLinkCtrl = TextEditingController();
   final cityCtrl = TextEditingController();
   final descCtrl = TextEditingController();
 
@@ -71,6 +75,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
       _refresh();
       _clearFieldError('name');
     });
+    vkLinkCtrl.addListener(() => _refresh());
+    instagramLinkCtrl.addListener(() => _refresh());
+    telegramLinkCtrl.addListener(() => _refresh());
     cityCtrl.addListener(() {
       _refresh();
       _clearFieldError('city');
@@ -118,6 +125,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     for (final controller in _linkControllers) {
       controller.dispose();
     }
+    vkLinkCtrl.dispose();
+    instagramLinkCtrl.dispose();
+    telegramLinkCtrl.dispose();
     cityCtrl.dispose();
     descCtrl.dispose();
     _pickerFocusNode.dispose();
@@ -402,6 +412,10 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
         // Если есть дополнительные ссылки, можно передать их отдельно
         // или объединить через запятую/JSON
       }
+      // ── добавляем ссылки на социальные сети
+      fields['vk_link'] = vkLinkCtrl.text.trim();
+      fields['instagram_link'] = instagramLinkCtrl.text.trim();
+      fields['telegram_link'] = telegramLinkCtrl.text.trim();
       fields['city'] = cityCtrl.text.trim();
       fields['description'] = descCtrl.text.trim();
       fields['activity'] = activity!;
@@ -653,6 +667,133 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 24),
+
+                  // ---------- Социальные сети ----------
+                  const Text(
+                    'Социальные сети',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // ── Поле для VK
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: vkLinkCtrl,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.next,
+                      style: AppTextStyles.h14w4,
+                      decoration: InputDecoration(
+                        hintText: 'https://vk.com/club',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 22,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // ── Поле для Instagram
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: instagramLinkCtrl,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.next,
+                      style: AppTextStyles.h14w4,
+                      decoration: InputDecoration(
+                        hintText: 'https://instagram.com/club',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 22,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // ── Поле для Telegram
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(
+                        color: AppColors.twinchip,
+                        width: 0.7,
+                      ),
+                    ),
+                    child: TextField(
+                      controller: telegramLinkCtrl,
+                      keyboardType: TextInputType.url,
+                      textInputAction: TextInputAction.next,
+                      style: AppTextStyles.h14w4,
+                      decoration: InputDecoration(
+                        hintText: 'https://t.me/club',
+                        hintStyle: AppTextStyles.h14w4Place,
+                        filled: true,
+                        fillColor: AppColors.getSurfaceColor(context),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 22,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 24),
 
                   // ---------- Вид активности ----------

@@ -111,6 +111,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
       postDateText: _currentPost.postDateText,
       postMediaUrl: _currentPost.postMediaUrl,
       postContent: _currentPost.postContent,
+      postTitle: _currentPost.postTitle, // ── Сохраняем заголовок поста
       islike: newIslike,
       mediaImages: _currentPost.mediaImages,
       mediaVideos: _currentPost.mediaVideos,
@@ -405,16 +406,37 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                       ),
 
                       // ──────────────────────────────────────────────────────────────
-                      // ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
+                      // ЗАГОЛОВОК И ТЕКСТ ПОСТА: после медиа, до лайков/комментариев (с раскрытием)
                       // ──────────────────────────────────────────────────────────────
-                      if (_currentPost.postContent.isNotEmpty)
+                      if (_currentPost.postTitle.isNotEmpty ||
+                          _currentPost.postContent.isNotEmpty)
                         Container(
                           width: double.infinity,
                           color: AppColors.getSurfaceColor(context),
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                            child: ExpandableText(
-                              text: _currentPost.postContent,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Заголовок поста (крупнее и жирным)
+                                if (_currentPost.postTitle.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 8),
+                                    child: Text(
+                                      _currentPost.postTitle,
+                                      style: AppTextStyles.h16w6.copyWith(
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                // Описание поста
+                                if (_currentPost.postContent.isNotEmpty)
+                                  ExpandableText(
+                                    text: _currentPost.postContent,
+                                  ),
+                              ],
                             ),
                           ),
                         ),

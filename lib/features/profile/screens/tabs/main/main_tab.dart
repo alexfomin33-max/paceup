@@ -98,7 +98,8 @@ class _MainTabState extends MainTabState
     _isCheckingCache = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final cacheKey = 'main_tab_${widget.userId}';
+      // Кэш-ключ включает год для правильной работы с данными за разные годы
+      final cacheKey = 'main_tab_${widget.userId}_$_selectedYear';
       final cachedJson = prefs.getString(cacheKey);
 
       // Если кэш был очищен, принудительно обновляем данные
@@ -176,14 +177,18 @@ class _MainTabState extends MainTabState
 
   // Запрос к API с offline-first кэшированием
   Future<MainTabData> _load({bool forceRefresh = false}) async {
-    final cacheKey = 'main_tab_${widget.userId}';
+    // Кэш-ключ включает год, чтобы данные за разные годы не перезаписывали друг друга
+    final cacheKey = 'main_tab_${widget.userId}_$_selectedYear';
 
     try {
       // Попытка загрузить с сервера
       final api = ref.read(apiServiceProvider);
       final jsonMap = await api.post(
         '/user_profile_maintab.php',
-        body: {'userId': widget.userId.toString()},
+        body: {
+          'userId': widget.userId.toString(),
+          'year': _selectedYear.toString(),
+        },
       );
 
       if (jsonMap['ok'] == false) {
@@ -346,11 +351,15 @@ class _MainTabState extends MainTabState
           onPrev: () {
             setState(() {
               _selectedYear--;
+              // Перезагружаем данные при изменении года
+              _future = _load(forceRefresh: true);
             });
           },
           onNext: () {
             setState(() {
               _selectedYear++;
+              // Перезагружаем данные при изменении года
+              _future = _load(forceRefresh: true);
             });
           },
         ),

@@ -79,8 +79,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
   void initState() {
     super.initState();
     // Инициализируем название из активности (если есть, иначе пустая строка)
-    // Пока в модели нет поля title, используем пустую строку
-    _titleController = TextEditingController(text: '');
+    _titleController = TextEditingController(
+      text: widget.activity.postTitle,
+    );
     _titleFocusNode = FocusNode();
     // Инициализируем описание из активности
     _descriptionController = TextEditingController(

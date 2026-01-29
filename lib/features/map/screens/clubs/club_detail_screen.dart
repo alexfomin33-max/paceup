@@ -16,6 +16,7 @@ import 'tabs/club_photo_content.dart';
 import 'tabs/members_content.dart';
 import 'tabs/stats_content.dart';
 import 'edit_club_screen.dart';
+import 'club_chat_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
 import '../../providers/search/clubs_search_provider.dart';
@@ -496,6 +497,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     final backgroundUrl = _clubData!['background_url'] as String? ?? '';
     final membersCount = _clubData!['members_count'] as int? ?? 0;
     final link = _clubData!['link'] as String? ?? '';
+    final vkLink = _clubData!['vk_link'] as String? ?? '';
+    final instagramLink = _clubData!['instagram_link'] as String? ?? '';
+    final telegramLink = _clubData!['telegram_link'] as String? ?? '';
 
     final description = _clubData!['description'] as String? ?? '';
 
@@ -764,7 +768,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Промежуточный блок: информация
-                    if (description.isNotEmpty || link.isNotEmpty)
+                    if (description.isNotEmpty || link.isNotEmpty || 
+                        vkLink.isNotEmpty || instagramLink.isNotEmpty || 
+                        telegramLink.isNotEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverToBoxAdapter(
@@ -810,7 +816,25 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                 if (link.isNotEmpty) ...[
                                   if (description.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  _LinkRow(link: link),
+                                  _LinkRow(link: link, icon: CupertinoIcons.globe),
+                                ],
+                                // ── Ссылки на социальные сети
+                                if (vkLink.isNotEmpty || instagramLink.isNotEmpty || 
+                                    telegramLink.isNotEmpty) ...[
+                                  if (description.isNotEmpty || link.isNotEmpty)
+                                    const SizedBox(height: 12),
+                                  if (vkLink.isNotEmpty) ...[
+                                    _LinkRow(link: vkLink, icon: CupertinoIcons.link),
+                                    if (instagramLink.isNotEmpty || telegramLink.isNotEmpty)
+                                      const SizedBox(height: 8),
+                                  ],
+                                  if (instagramLink.isNotEmpty) ...[
+                                    _LinkRow(link: instagramLink, icon: CupertinoIcons.link),
+                                    if (telegramLink.isNotEmpty)
+                                      const SizedBox(height: 8),
+                                  ],
+                                  if (telegramLink.isNotEmpty)
+                                    _LinkRow(link: telegramLink, icon: CupertinoIcons.link),
                                 ],
                               ],
                             ),
@@ -931,7 +955,11 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       top: false,
                       child: _FloatingChatButton(
                         onTap: () {
-                          // TODO: Переход к чату клуба
+                          Navigator.of(context).push(
+                            TransparentPageRoute(
+                              builder: (_) => ClubChatScreen(clubId: widget.clubId),
+                            ),
+                          );
                         },
                       ),
                     ),
@@ -1006,10 +1034,14 @@ class _CircleIconBtn extends StatelessWidget {
   }
 }
 
-/// Строка со ссылкой на сайт клуба (кликабельная)
+/// Строка со ссылкой на сайт клуба или социальную сеть (кликабельная)
 class _LinkRow extends StatelessWidget {
   final String link;
-  const _LinkRow({required this.link});
+  final IconData icon;
+  const _LinkRow({
+    required this.link,
+    this.icon = CupertinoIcons.globe,
+  });
 
   Future<void> _openLink(BuildContext context) async {
     try {
@@ -1046,8 +1078,8 @@ class _LinkRow extends StatelessWidget {
       onTap: () => _openLink(context),
       child: Row(
         children: [
-          const Icon(
-            CupertinoIcons.globe,
+          Icon(
+            icon,
             size: 18,
             color: AppColors.brandPrimary,
           ),
