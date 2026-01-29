@@ -21,6 +21,7 @@ import '../../../../profile/screens/profile_screen.dart';
 import '../../../../../features/complaint.dart';
 import '../../../../../features/lenta/providers/lenta_provider.dart';
 import 'description_post_card.dart';
+import '../../../../map/screens/clubs/club_detail_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 ///   КАРТОЧКА ПОСТА
@@ -334,21 +335,43 @@ class _PostCardState extends ConsumerState<PostCard>
               ),
 
               // ──────────────────────────────────────────────────────────────
-              // ✅ ПЕРЕХОД В ПРОФИЛЬ: клик на аватар или имя открывает профиль автора
+              // ✅ ПЕРЕХОД В ПРОФИЛЬ ИЛИ КЛУБ: клик на аватар или имя
+              // Если пост от имени клуба - переходим на экран клуба,
+              // иначе - на профиль автора
               // ──────────────────────────────────────────────────────────────
               onAvatarTap: () {
-                Navigator.of(context).push(
-                  TransparentPageRoute(
-                    builder: (_) => ProfileScreen(userId: post.userId),
-                  ),
-                );
+                if (post.clubId != null && post.clubId! > 0) {
+                  // Пост от имени клуба - переходим на экран клуба
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ClubDetailScreen(clubId: post.clubId!),
+                    ),
+                  );
+                } else {
+                  // Обычный пост - переходим на профиль автора
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ProfileScreen(userId: post.userId),
+                    ),
+                  );
+                }
               },
               onNameTap: () {
-                Navigator.of(context).push(
-                  TransparentPageRoute(
-                    builder: (_) => ProfileScreen(userId: post.userId),
-                  ),
-                );
+                if (post.clubId != null && post.clubId! > 0) {
+                  // Пост от имени клуба - переходим на экран клуба
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ClubDetailScreen(clubId: post.clubId!),
+                    ),
+                  );
+                } else {
+                  // Обычный пост - переходим на профиль автора
+                  Navigator.of(context).push(
+                    TransparentPageRoute(
+                      builder: (_) => ProfileScreen(userId: post.userId),
+                    ),
+                  );
+                }
               },
 
               // trailing — наша кнопка "…"
@@ -366,7 +389,8 @@ class _PostCardState extends ConsumerState<PostCard>
                   final items = <MoreMenuItem>[];
 
                   // ──────────────────────────────────────────────────────────────
-                  // 🔹 МЕНЮ ДЛЯ АВТОРА: редактирование, удаление и жалоба
+                  // 🔹 МЕНЮ ДЛЯ АВТОРА: редактирование и удаление (без "Пожаловаться")
+                  // Проверяем создателя поста по user_id, даже если пост от имени клуба
                   // ──────────────────────────────────────────────────────────────
                   if (post.userId == widget.currentUserId) {
                     items.addAll([
@@ -374,22 +398,6 @@ class _PostCardState extends ConsumerState<PostCard>
                         text: 'Редактировать пост',
                         icon: CupertinoIcons.pencil,
                         onTap: widget.onEdit ?? () {},
-                      ),
-                      MoreMenuItem(
-                        text: 'Пожаловаться',
-                        icon: CupertinoIcons.flag,
-                        iconColor: AppColors.warning,
-                        textStyle: const TextStyle(color: AppColors.warning),
-                        onTap: () {
-                          Navigator.of(context, rootNavigator: true).push(
-                            TransparentPageRoute(
-                              builder: (_) => ComplaintScreen(
-                                contentType: 'post',
-                                contentId: widget.post.id,
-                              ),
-                            ),
-                          );
-                        },
                       ),
                       MoreMenuItem(
                         text: _deleting ? 'Удаление…' : 'Удалить пост',
