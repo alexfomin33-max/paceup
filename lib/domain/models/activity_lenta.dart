@@ -35,6 +35,9 @@ class Activity {
   final List<String> mediaImages; // полные URL картинок
   final List<String> mediaVideos; // полные URL видео
   final int? mapSortOrder; // позиция карты в общем списке (изображения + карта)
+  final int? clubId; // ID клуба, от имени которого создан пост (null для обычных постов)
+  final String? clubName; // Название клуба (для постов от имени клуба)
+  final String? clubLogoUrl; // URL логотипа клуба (для постов от имени клуба)
 
   Activity({
     required this.id,
@@ -61,6 +64,9 @@ class Activity {
     this.mediaImages = const [],
     this.mediaVideos = const [],
     this.mapSortOrder,
+    this.clubId,
+    this.clubName,
+    this.clubLogoUrl,
   });
 
   factory Activity.fromApi(Map<String, dynamic> j) {
@@ -166,6 +172,9 @@ class Activity {
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
       mapSortOrder: j['map_sort_order'] != null ? _asInt(j['map_sort_order']) : null,
+      clubId: j['club_id'] != null ? _asInt(j['club_id']) : null,
+      clubName: j['club_name']?.toString(),
+      clubLogoUrl: j['club_logo_url']?.toString(),
     );
   }
 
@@ -198,6 +207,9 @@ class Activity {
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
       mapSortOrder: mapSortOrder,
+      clubId: clubId,
+      clubName: clubName,
+      clubLogoUrl: clubLogoUrl,
     );
   }
 
@@ -228,6 +240,9 @@ class Activity {
       mediaImages: mediaImages,
       mediaVideos: mediaVideos,
       mapSortOrder: mapSortOrder,
+      clubId: clubId,
+      clubName: clubName,
+      clubLogoUrl: clubLogoUrl,
     );
   }
 
@@ -258,6 +273,9 @@ class Activity {
       mediaImages: images ?? mediaImages,
       mediaVideos: videos ?? mediaVideos,
       mapSortOrder: mapSortOrder,
+      clubId: clubId,
+      clubName: clubName,
+      clubLogoUrl: clubLogoUrl,
     );
   }
 }

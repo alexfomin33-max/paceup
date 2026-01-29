@@ -54,8 +54,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
 
   // Создание от имени клуба
   bool _createFromClub = false;
-  List<String> _clubs = [];
-  String? _selectedClub;
+  List<Map<String, dynamic>> _clubs = [];
+  int? _selectedClubId;
 
   @override
   void initState() {
@@ -110,10 +110,13 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
       if (data['success'] == true && data['clubs'] != null) {
         final clubsList = data['clubs'] as List<dynamic>;
         setState(() {
-          _clubs = clubsList.map((c) => c.toString()).toList();
-          // Если список не пустой и selectedClub не установлен, выбираем первый
-          if (_clubs.isNotEmpty && _selectedClub == null) {
-            _selectedClub = _clubs.first;
+          _clubs = clubsList.map((c) => {
+            'id': c['id'] as int,
+            'name': c['name'] as String,
+          }).toList();
+          // Если список не пустой и selectedClubId не установлен, выбираем первый
+          if (_clubs.isNotEmpty && _selectedClubId == null) {
+            _selectedClubId = _clubs.first['id'] as int;
           }
         });
       } else {
@@ -319,8 +322,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                     ),
                                   ),
                                   child: DropdownButtonHideUnderline(
-                                    child: DropdownButton<String>(
-                                      value: _selectedClub,
+                                    child: DropdownButton<int>(
+                                      value: _selectedClubId,
                                       isExpanded: true,
                                       hint: const Text(
                                         'Выберите клуб',
@@ -328,9 +331,9 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                       ),
                                       onChanged: (_createFromClub &&
                                               _clubs.isNotEmpty)
-                                          ? (String? newValue) {
+                                          ? (int? newValue) {
                                               setState(() {
-                                                _selectedClub = newValue;
+                                                _selectedClubId = newValue;
                                               });
                                             }
                                           : null,
@@ -360,10 +363,10 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                               ),
                                       ),
                                       items: _clubs.map((item) {
-                                        return DropdownMenuItem<String>(
-                                          value: item,
+                                        return DropdownMenuItem<int>(
+                                          value: item['id'] as int,
                                           child: Text(
-                                            item,
+                                            item['name'] as String,
                                             style: AppTextStyles.h14w4.copyWith(
                                               color: AppColors
                                                   .getTextPrimaryColor(context),
@@ -820,8 +823,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         };
 
         // Добавляем клуб, если выбран
-        if (_createFromClub && _selectedClub != null) {
-          fields['club_name'] = _selectedClub!;
+        if (_createFromClub && _selectedClubId != null) {
+          fields['club_id'] = _selectedClubId.toString();
         }
 
         if (_images.isEmpty) {
