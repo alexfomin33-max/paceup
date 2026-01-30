@@ -340,22 +340,11 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
             )
             .toList();
 
-        // Исключаем уже показанный эквип (сравниваем по name и brand)
-        // Создаем множество идентификаторов показанного эквипа
-        final Set<String> shownEquipmentIds = widget.items
-            .map((e) => '${e.brand}|${e.name}'.toLowerCase())
-            .toSet();
-
-        final List<al.Equipment> filteredEquipment = allEquipment
-            .where(
-              (e) => !shownEquipmentIds.contains(
-                '${e.brand}|${e.name}'.toLowerCase(),
-              ),
-            )
-            .toList();
-
+        // Показываем весь эквип пользователя (включая текущий), чтобы пользователь
+        // всегда видел список для выбора другой экипировки; при выборе текущей —
+        // просто закрываем попап без вызова API
         setState(() {
-          _allEquipment = filteredEquipment;
+          _allEquipment = allEquipment;
           _isLoading = false;
         });
       } else {
@@ -417,6 +406,19 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
   /// Заменяет эквип в активности: обновляет activities.equip_id и пересчитывает дистанцию
   /// Если activityId == 0 (активность еще не создана), просто вызывает onEquipmentSelected
   Future<void> _replaceEquipment(al.Equipment newEquipment) async {
+    // Получаем текущий эквип (который был показан в блоке)
+    final currentEquipment = widget.items.isNotEmpty
+        ? widget.items.first
+        : null;
+
+    // Если выбран тот же эквип, что уже привязан — просто закрываем попап
+    if (currentEquipment != null &&
+        newEquipment.equipUserId != null &&
+        newEquipment.equipUserId == currentEquipment.equipUserId) {
+      widget.onDismiss?.call();
+      return;
+    }
+
     // ────────────────────────────────────────────────────────────────
     // 🔹 ОСОБЫЙ СЛУЧАЙ: если активность еще не создана (activityId == 0)
     // ────────────────────────────────────────────────────────────────
@@ -432,10 +434,6 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
       return;
     }
 
-    // Получаем текущий эквип (который был показан в блоке)
-    final currentEquipment = widget.items.isNotEmpty
-        ? widget.items.first
-        : null;
     if (currentEquipment == null || currentEquipment.equipUserId == null) {
       // Если нет текущего эквипа — не можем заменить
       return;
