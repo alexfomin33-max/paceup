@@ -24,7 +24,9 @@ class CoffeeRunVldStatsContent extends ConsumerStatefulWidget {
 
 class _CoffeeRunVldStatsContentState
     extends ConsumerState<CoffeeRunVldStatsContent> {
-  int _seg = 0; // 0 неделя, 1 месяц, 2 год
+  // Периоды для выпадающего списка
+  static const _periods = ['Эта неделя', 'Этот месяц', 'Этот год'];
+  String _period = 'Эта неделя';
   static const double _kmColW = 70;
   static const int _limit = 10;
   List<_StatRow> _statistics = [];
@@ -75,12 +77,12 @@ class _CoffeeRunVldStatsContentState
   }
 
   String _getPeriod() {
-    switch (_seg) {
-      case 0:
+    switch (_period) {
+      case 'Эта неделя':
         return 'week';
-      case 1:
+      case 'Этот месяц':
         return 'month';
-      case 2:
+      case 'Этот год':
         return 'year';
       default:
         return 'week';
@@ -180,10 +182,10 @@ class _CoffeeRunVldStatsContentState
     }
   }
 
-  void _onPeriodChanged(int index) {
-    if (_seg == index) return; // Если период не изменился, ничего не делаем
+  void _onPeriodChanged(String? newValue) {
+    if (newValue == null || newValue == _period) return;
     setState(() {
-      _seg = index;
+      _period = newValue;
     });
     _loadStatistics(reset: true);
   }
@@ -199,46 +201,56 @@ class _CoffeeRunVldStatsContentState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // сегмент
+        // ── Выпадающий список периода ──
         Container(
+          padding: const EdgeInsets.fromLTRB(8, 0, 14, 0),
           decoration: BoxDecoration(
-            color: AppColors.disabled,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: AppColors.border),
+            color: AppColors.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: AppColors.getBorderColor(context),
+              width: 1.0,
+            ),
           ),
-          padding: const EdgeInsets.all(2),
-          child: Row(
-            children: List.generate(3, (i) {
-              final labels = ['Эта неделя', 'Этот месяц', 'Этот год'];
-              final selected = _seg == i;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => _onPeriodChanged(i),
-                  child: Container(
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _period,
+              icon: Icon(
+                CupertinoIcons.chevron_down,
+                size: 14,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              dropdownColor: AppColors.getSurfaceColor(context),
+              menuMaxHeight: 300,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              itemHeight: 48,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+              onChanged: _onPeriodChanged,
+              items: _periods.map((String period) {
+                return DropdownMenuItem<String>(
+                  value: period,
+                  child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 8,
                       horizontal: 8,
+                      vertical: 8,
                     ),
-                    decoration: BoxDecoration(
-                      color: selected ? AppColors.surface : Colors.transparent,
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                    ),
-                    alignment: Alignment.center,
                     child: Text(
-                      labels[i],
+                      period,
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: selected
-                            ? AppColors.textPrimary
-                            : AppColors.textPrimary,
+                        color: AppColors.getTextPrimaryColor(context),
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
                   ),
-                ),
-              );
-            }),
+                );
+              }).toList(),
+            ),
           ),
         ),
         const SizedBox(height: 10),

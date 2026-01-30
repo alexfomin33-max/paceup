@@ -233,14 +233,16 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
     return InteractiveBackSwipe(
       child: Scaffold(
-        backgroundColor: AppColors.getBackgroundColor(context),
-        body: Column(
+        backgroundColor: AppColors.getSurfaceColor(context),
+        body: Stack(
           children: [
-            // ─────────── Прокручиваемая область с контентом
-            Expanded(
-              child: CustomScrollView(
-                physics: const BouncingScrollPhysics(),
-                slivers: [
+            Column(
+              children: [
+                // ─────────── Прокручиваемая область с контентом
+                Expanded(
+                  child: CustomScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    slivers: [
             // ─────────── Фоновая картинка + кнопка "назад" + логотип
             SliverToBoxAdapter(
               child: Builder(
@@ -418,18 +420,6 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                       Container(
                         decoration: BoxDecoration(
                           color: AppColors.getSurfaceColor(context),
-                          boxShadow: [
-                            // тонкая тень вниз ~1px
-                            BoxShadow(
-                              color:
-                                  Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? AppColors.darkShadowSoft
-                                  : AppColors.shadowSoft,
-                              offset: const Offset(0, 1),
-                              blurRadius: 0,
-                            ),
-                          ],
                         ),
                         // добавили +46 сверху, чтобы нижняя половина логотипа не перекрывала текст
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
@@ -521,52 +511,43 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
 
             // ─────────── Контент
             SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.fromLTRB(16, 24, 16, 10),
-                    child: _SectionTitle('Прогресс друзей'),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
-                      border: Border(
-                        top: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                          width: 0.5,
-                        ),
-                        bottom: BorderSide(
-                          color: AppColors.getBorderColor(context),
-                          width: 0.5,
+              child: participantsAsync.when(
+                data: (data) {
+                  // Используем данные из провайдера - они загружаются из API
+                  // После выполнения действия провайдер автоматически обновляется
+                  final participants = data.participants;
+
+                  if (participants.isEmpty) {
+                    return SizedBox(
+                      width: double.infinity,
+                      height: 200,
+                      child: Center(
+                        child: Text(
+                          'Пока нет участников',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                         ),
                       ),
-                    ),
-                    child: participantsAsync.when(
-                      data: (data) {
-                        // Используем данные из провайдера - они загружаются из API
-                        // После выполнения действия провайдер автоматически обновляется
-                        final participants = data.participants;
+                    );
+                  }
 
-                        if (participants.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(
-                              child: Text(
-                                'Пока нет участников',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 14,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-
-                        // Отображаем список участников из API
-                        // Если пользователь принял задачу, он автоматически появится в списке
-                        return Column(
+                  // Отображаем заголовок и список участников из API
+                  // Если пользователь принял задачу, он автоматически появится в списке
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(16, 24, 16, 10),
+                        child: _SectionTitle('Прогресс друзей'),
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.getSurfaceColor(context),
+                        ),
+                        child: Column(
                           children: List.generate(participants.length, (i) {
                             final participant = participants[i];
                             final isMe = participant.userId == _currentUserId;
@@ -579,16 +560,18 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                               value: participant.valueText,
                               avatar: participant.avatar,
                               highlight: isMe,
-                              isLast: i == participants.length - 1,
                             );
                           }),
-                        );
-                      },
-                      loading: () => const Padding(
-                        padding: EdgeInsets.all(16),
-                        child: Center(child: CupertinoActivityIndicator(radius: 10)),
+                        ),
                       ),
-                      error: (error, stackTrace) {
+                    ],
+                  );
+                },
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Center(child: CupertinoActivityIndicator(radius: 10)),
+                ),
+                error: (error, stackTrace) {
                         if (kDebugMode) {
                           debugPrint(
                             '❌ Run200kScreen: ошибка загрузки участников: $error',
@@ -641,33 +624,36 @@ class _Run200kScreenState extends ConsumerState<Run200kScreen> {
                           ),
                         );
                       },
-                    ),
-                  ),
-                ],
               ),
             ),
 
-            // ─────────── Добавляем нижний отступ для контента перед зафиксированной кнопкой
-            if (currentIsParticipating != null && !currentIsParticipating)
-              const SliverToBoxAdapter(child: SizedBox(height: 20)),
-                  ],
-                ),
-              ),
-
-              // ─────────── Зафиксированная кнопка "Начать" внизу экрана
-              // Показываем кнопку только если пользователь еще не участвует
-              // Не показываем кнопку, пока данные загружаются (currentIsParticipating == null)
-              if (currentIsParticipating != null && !currentIsParticipating)
-                SafeArea(
-                  top: false,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    color: AppColors.getBackgroundColor(context),
-                    child: _buildStartButton(context),
+                    // ─────────── Отступ под плавающую кнопку "Начать"
+                    if (currentIsParticipating != null &&
+                        !currentIsParticipating)
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: kToolbarHeight),
+                      ),
+                    ],
                   ),
                 ),
-            ],
-          ),
+              ],
+            ),
+
+            // ─────────── Плавающая кнопка "Начать"
+            // Показываем кнопку только если пользователь еще не участвует
+            // Не показываем кнопку, пока данные загружаются
+            if (currentIsParticipating != null && !currentIsParticipating)
+              Positioned(
+                left: 16,
+                right: 16,
+                bottom: 16,
+                child: SafeArea(
+                  top: false,
+                  child: _buildStartButton(context),
+                ),
+              ),
+          ],
+        ),
         ),
       );
   }
@@ -860,7 +846,7 @@ class _MiniProgress extends StatelessWidget {
           children: [
             Container(
               width: w,
-              height: 4,
+              height: 6,
               decoration: BoxDecoration(
                 color: _getProgressColor(clampedPercent),
                 borderRadius: isFull
@@ -875,7 +861,7 @@ class _MiniProgress extends StatelessWidget {
             ),
             Expanded(
               child: Container(
-                height: 4,
+                height: 6,
                 decoration: BoxDecoration(
                   color: AppColors.getBorderColor(context),
                   borderRadius: isFull
@@ -921,7 +907,6 @@ class _FriendRow extends StatelessWidget {
   final String value;
   final String avatar;
   final bool highlight;
-  final bool isLast;
 
   const _FriendRow({
     required this.rank,
@@ -929,7 +914,6 @@ class _FriendRow extends StatelessWidget {
     required this.value,
     required this.avatar,
     required this.highlight,
-    required this.isLast,
   });
 
   @override
@@ -1011,16 +995,6 @@ class _FriendRow extends StatelessWidget {
       ),
     );
 
-    return Column(
-      children: [
-        row,
-        if (!isLast)
-          Divider(
-            height: 1,
-            thickness: 0.5,
-            color: AppColors.getDividerColor(context),
-          ),
-      ],
-    );
+    return row;
   }
 }

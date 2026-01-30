@@ -652,13 +652,13 @@ class _ByTypeContentState extends State<_ByTypeContent> {
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+                padding: const EdgeInsets.fromLTRB(
+                  8,0,14,0
+
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.getSurfaceColor(context),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
                     color: AppColors.getBorderColor(context),
                     width: 1.0,
@@ -667,7 +667,6 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _period,
-                    isDense: true,
                     icon: Icon(
                       CupertinoIcons.chevron_down,
                       size: 14,
@@ -676,6 +675,7 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     dropdownColor: AppColors.getSurfaceColor(context),
                     menuMaxHeight: 300,
                     borderRadius: BorderRadius.circular(AppRadius.md),
+                    itemHeight: 48,
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
@@ -698,13 +698,19 @@ class _ByTypeContentState extends State<_ByTypeContent> {
                     items: _periods.map((String period) {
                       return DropdownMenuItem<String>(
                         value: period,
-                        child: Text(
-                          period,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            color: AppColors.getTextPrimaryColor(context),
-                            fontWeight: FontWeight.w400,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 8,
+                          ),
+                          child: Text(
+                            period,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 13,
+                              color: AppColors.getTextPrimaryColor(context),
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
                         ),
                       );
@@ -1118,13 +1124,13 @@ class _PeriodChartCardState extends State<_PeriodChartCard> {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
+          color: AppColors.twinchip,
           width: 1.0,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
       child: Column(
         children: [
           Row(
@@ -1217,9 +1223,9 @@ class _MetricsList extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.getBorderColor(context),
+          color: AppColors.twinchip,
           width: 1.0,
         ),
       ),
@@ -1231,14 +1237,16 @@ class _MetricsList extends StatelessWidget {
             return Divider(
               height: 1,
               thickness: 0.5,
-              indent: 38,
-              endIndent: 11,
-              color: AppColors.getDividerColor(context),
+              indent: 42,
+              endIndent: 16,
+              color: AppColors.getBorderColor(context),
             );
           }
           final r = metrics[i ~/ 2];
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.fromLTRB(
+              12,14,16,14
+            ),
             child: Row(
               children: [
                 Icon(r.icon, size: 16, color: AppColors.brandPrimary),
@@ -1249,11 +1257,12 @@ class _MetricsList extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
-                      color: AppColors.getTextPrimaryColor(context),
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? AppColors.darkTextSecondary
+                          : AppColors.getTextPrimaryColor(context),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -1262,7 +1271,7 @@ class _MetricsList extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w400,
                         color: AppColors.getTextPrimaryColor(context),
                       ),
                     ),

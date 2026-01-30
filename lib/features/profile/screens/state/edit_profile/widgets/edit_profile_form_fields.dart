@@ -146,16 +146,29 @@ class EditProfileFieldRow extends StatelessWidget {
   Widget _buildFieldContent(BuildContext context) {
     switch (type) {
       case EditProfileFieldRowType.input:
-        return TextField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          decoration: InputDecoration(
-            isDense: true,
-            border: InputBorder.none,
-            hintText: hint,
-          ),
-          style: const TextStyle(fontSize: 14),
+        return ValueListenableBuilder<TextEditingValue>(
+          valueListenable: controller!,
+          builder: (context, value, child) {
+            final isEmptyOrZero =
+                value.text.isEmpty || value.text == '0';
+            return TextField(
+              controller: controller,
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+              decoration: InputDecoration(
+                isDense: true,
+                border: InputBorder.none,
+                hintText: hint,
+                hintStyle: AppTextStyles.h14w4Place,
+              ),
+              style: TextStyle(
+                fontSize: 14,
+                color: isEmptyOrZero
+                    ? AppColors.textPlaceholder
+                    : AppColors.getTextPrimaryColor(context),
+              ),
+            );
+          },
         );
 
       case EditProfileFieldRowType.picker:
@@ -355,6 +368,7 @@ class _BareTextField extends StatelessWidget {
         isDense: true,
         border: InputBorder.none,
         hintText: hint,
+        hintStyle: AppTextStyles.h14w4Place,
       ),
       style: const TextStyle(fontSize: 14),
     );

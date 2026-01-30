@@ -1,4 +1,5 @@
 // lib/screens/map/events/event_detail_screen2.dart
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -308,46 +309,48 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
     }
   }
 
-  /// ──────────────────────── Кнопка присоединения (зафиксированная внизу) ────────────────────────
+  /// ──────────────────────── Кнопка присоединения (стеклянный эффект) ────────────────────────
   Widget _buildJoinButton() {
     // ─── Кнопка показывается только если пользователь не присоединился
     if (_isParticipant) {
       return const SizedBox.shrink();
     }
 
+    // ─────────── Цвет текста для стеклянного фона
     final textColor = AppColors.getSurfaceColor(context);
 
+    // ─────────── Содержимое кнопки без эффекта стекла
     final button = ElevatedButton(
       onPressed: _isTogglingParticipation ? null : _toggleParticipation,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.button,
-        foregroundColor: textColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(double.infinity, 50),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(
+          AppColors.button.withValues(alpha: 0.7),
+        ),
+        foregroundColor: WidgetStateProperty.all(textColor),
+        elevation: WidgetStateProperty.all(0),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 30),
+        ),
+        shape: WidgetStateProperty.all(
+          StadiumBorder(
+            side: BorderSide(
+              color: AppColors.button.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+        ),
+        minimumSize: WidgetStateProperty.all(
+          const Size(double.infinity, 50),
+        ),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
       child: _isTogglingParticipation
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: CupertinoActivityIndicator(
-                    radius: 9,
-                    color: textColor,
-                  ),
-                ),
-                Text(
-                  'Присоединиться',
-                  style: AppTextStyles.h15w5.copyWith(
-                    color: textColor,
-                    height: 1.0,
-                  ),
-                ),
-              ],
+          ? CupertinoActivityIndicator(
+              radius: 10,
+              color: textColor,
             )
           : Text(
               'Присоединиться',
@@ -358,11 +361,26 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
             ),
     );
 
+    // ─────────── Стеклянная оболочка с блюром как в iOS
+    final glassButton = ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(AppRadius.xxl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 8,
+          sigmaY: 8,
+        ),
+        child: button,
+      ),
+    );
+
+    // ─────────── Блокировка тапа при загрузке
     if (_isTogglingParticipation) {
-      return IgnorePointer(child: button);
+      return IgnorePointer(child: glassButton);
     }
 
-    return button;
+    return glassButton;
   }
 
   /// ──────────────────────── Показ меню с действиями ────────────────────────
@@ -1426,8 +1444,13 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                     ),
                   ),
 
-                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    // ── Добавляем нижний отступ для контента перед плавающей кнопкой
+                    if (!_isParticipant)
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: kToolbarHeight),
+                      )
+                    else
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
                           ],
                         ),
                       ),
@@ -1465,14 +1488,19 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                     ],
                   ),
                 ),
-                // ───────── Зафиксированная кнопка присоединения (только если пользователь не присоединился)
-                if (!_isParticipant)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: AppColors.getBackgroundColor(context),
+              ];
+
+              // ─────────── Плавающая кнопка присоединения (только если пользователь не присоединился)
+              if (!_isParticipant)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: SafeArea(
+                    top: false,
                     child: _buildJoinButton(),
                   ),
-              ];
+                ),
 
               return Column(children: columnChildren);
             },
