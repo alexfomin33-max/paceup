@@ -39,6 +39,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   bool _loading = true;
   String? _error;
   bool _canEdit = false; // Права на редактирование
+  bool _canManageMembers = false; // Права на управление участниками
+  bool _canAssignAdmins = false; // Права на назначение админов
+  bool _canManagePhotos = false; // Права на управление фото
   bool _isMember = false; // Является ли пользователь участником
   bool _isRequest = false; // Подана ли заявка (для закрытых клубов)
   bool _isJoining = false; // Идёт ли процесс вступления
@@ -82,6 +85,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         // Проверяем права на редактирование: только создатель может редактировать
         final clubUserId = club['user_id'] as int?;
         final canEdit = userId != null && clubUserId == userId;
+        final canManageMembers =
+            club['current_user_can_manage_members'] as bool? ?? false;
+        final canAssignAdmins =
+            club['current_user_can_assign_admins'] as bool? ?? false;
+        final canManagePhotos =
+            club['current_user_can_manage_photos'] as bool? ?? false;
 
         // Проверяем, является ли пользователь участником клуба
         bool isMember = false;
@@ -93,6 +102,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         setState(() {
           _clubData = club;
           _canEdit = canEdit;
+          _canManageMembers = canManageMembers || canEdit;
+          _canAssignAdmins = canAssignAdmins || canEdit;
+          _canManagePhotos = canManagePhotos || canEdit;
           _isMember = isMember;
           _isRequest = false; // Сбрасываем статус заявки при загрузке
           _loading = false;
@@ -930,7 +942,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             color: AppColors.getSurfaceColor(context),
                             child: ClubPhotoContent(
                               clubId: widget.clubId,
-                              canEdit: _canEdit,
+                              canEdit: _canManagePhotos,
                               clubData: _clubData,
                               onPhotosUpdated: _loadClub,
                             ),
@@ -947,6 +959,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               key: _membersContentKey,
                               clubId: widget.clubId,
                               isOwner: _canEdit,
+                              canManageMembers: _canManageMembers,
+                              canAssignAdmins: _canAssignAdmins,
                               scrollController: _scrollController,
                             ),
                           ),

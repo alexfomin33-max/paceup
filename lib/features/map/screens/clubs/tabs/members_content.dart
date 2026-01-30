@@ -14,12 +14,16 @@ import '../../../../profile/screens/profile_screen.dart';
 class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
   final int clubId;
   final bool isOwner; // Является ли текущий пользователь владельцем клуба
+  final bool canManageMembers;
+  final bool canAssignAdmins;
   final ScrollController scrollController;
   const CoffeeRunVldMembersContent({
     super.key,
     required this.clubId,
     required this.scrollController,
     this.isOwner = false,
+    this.canManageMembers = false,
+    this.canAssignAdmins = false,
   });
 
   @override
@@ -34,6 +38,11 @@ class CoffeeRunVldMembersContentState
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 25;
+  // ───── Права текущего пользователя ─────
+  bool _currentUserIsOwner = false;
+  bool _currentUserIsAdmin = false;
+  bool _currentUserCanManageMembers = false;
+  bool _currentUserCanAssignAdmins = false;
 
   @override
   void initState() {
@@ -108,12 +117,28 @@ class CoffeeRunVldMembersContentState
       if (data['success'] == true) {
         final members = data['members'] as List<dynamic>? ?? [];
         final hasMore = data['has_more'] as bool? ?? false;
+        final currentUserIsOwner =
+            data['current_user_is_owner'] as bool? ?? false;
+        final currentUserIsAdmin =
+            data['current_user_is_admin'] as bool? ?? false;
+        final currentUserCanManageMembers =
+            data['current_user_can_manage_members'] as bool? ?? false;
+        final currentUserCanAssignAdmins =
+            data['current_user_can_assign_admins'] as bool? ?? false;
 
         setState(() {
           _members.addAll(members.map((m) => m as Map<String, dynamic>));
           _hasMore = hasMore;
           _currentPage++;
           _loading = false;
+          _currentUserIsOwner = currentUserIsOwner || widget.isOwner;
+          _currentUserIsAdmin = currentUserIsAdmin;
+          _currentUserCanManageMembers = currentUserCanManageMembers ||
+              widget.canManageMembers ||
+              widget.isOwner;
+          _currentUserCanAssignAdmins = currentUserCanAssignAdmins ||
+              widget.canAssignAdmins ||
+              widget.isOwner;
         });
       } else {
         setState(() {
@@ -128,40 +153,49 @@ class CoffeeRunVldMembersContentState
     }
   }
 
-  /// ──────────────────────── Показать меню действий для участника (только для владельца) ────────────────────────
+  /// ──────────────────────── Показать меню действий для участника ────────────────────────
   void _showMemberMenu(
     BuildContext context,
     GlobalKey menuKey,
     int memberUserId,
     String memberName,
+    bool isMemberAdmin,
+    bool isMemberCreator,
   ) {
     final items = <MoreMenuItem>[];
 
-    // Пункт "Сделать админом"
-    items.add(
-      MoreMenuItem(
-        text: 'Сделать админом',
-        icon: CupertinoIcons.person_crop_circle_badge_checkmark,
-        onTap: () async {
-          MoreMenuHub.hide();
-          await _makeAdmin(memberUserId, memberName);
-        },
-      ),
-    );
+    // ───── Пункт "Сделать админом" (только владелец) ─────
+    if (_currentUserCanAssignAdmins && !isMemberCreator && !isMemberAdmin) {
+      items.add(
+        MoreMenuItem(
+          text: 'Сделать админом',
+          icon: CupertinoIcons.person_crop_circle_badge_checkmark,
+          onTap: () async {
+            MoreMenuHub.hide();
+            await _makeAdmin(memberUserId, memberName);
+          },
+        ),
+      );
+    }
 
-    // Пункт "Исключить из клуба"
-    items.add(
-      MoreMenuItem(
-        text: 'Исключить из клуба',
-        icon: CupertinoIcons.person_crop_circle_badge_minus,
-        iconColor: AppColors.red,
-        textStyle: const TextStyle(color: AppColors.red),
-        onTap: () async {
-          MoreMenuHub.hide();
-          await _removeMember(memberUserId, memberName);
-        },
-      ),
-    );
+    // ───── Пункт "Исключить из клуба" (владелец или админ) ─────
+    final canRemove = _currentUserCanManageMembers &&
+        !isMemberCreator &&
+        !(_currentUserIsAdmin && isMemberAdmin);
+    if (canRemove) {
+      items.add(
+        MoreMenuItem(
+          text: 'Исключить из клуба',
+          icon: CupertinoIcons.person_crop_circle_badge_minus,
+          iconColor: AppColors.red,
+          textStyle: const TextStyle(color: AppColors.red),
+          onTap: () async {
+            MoreMenuHub.hide();
+            await _removeMember(memberUserId, memberName);
+          },
+        ),
+      );
+    }
 
     // Показываем попап меню
     MoreMenuOverlay(anchorKey: menuKey, items: items).show(context);
@@ -189,7 +223,8 @@ class CoffeeRunVldMembersContentState
             (m) => (m['user_id'] as int?) == memberUserId,
           );
           if (index != -1) {
-            _members[index]['role'] = 'admin';
+            _members[index]['role'] = 'Админ';
+            _members[index]['is_admin'] = true;
           }
         });
 
@@ -204,25 +239,11 @@ class CoffeeRunVldMembersContentState
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка назначения администратора';
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+        _showErrorDialog(errorMessage);
       }
     } catch (e) {
       if (!mounted) return;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ErrorHandler.format(e)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      _showErrorDialog(ErrorHandler.format(e));
     }
   }
 
@@ -259,26 +280,42 @@ class CoffeeRunVldMembersContentState
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка исключения из клуба';
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
+        _showErrorDialog(errorMessage);
       }
     } catch (e) {
       if (!mounted) return;
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(ErrorHandler.format(e)),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
+      _showErrorDialog(ErrorHandler.format(e));
     }
+  }
+
+  /// ──────────────────────── Показ ошибки в диалоге ────────────────────────
+  Future<void> _showErrorDialog(String message) async {
+    if (!mounted) return;
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (context) => CupertinoAlertDialog(
+        title: const Text('Ошибка'),
+        content: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SelectableText.rich(
+            TextSpan(
+              text: message,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Ок'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -322,6 +359,15 @@ class CoffeeRunVldMembersContentState
         final role = m['role'] as String?;
         final userId = m['user_id'] as int?;
         final isCurrentUser = m['is_current_user'] as bool? ?? false;
+        final isCreator = m['is_creator'] as bool? ?? false;
+        final isAdmin = m['is_admin'] as bool? ?? false;
+        final canAssignAdmin =
+            _currentUserCanAssignAdmins && !isCreator && !isAdmin;
+        final canRemove = _currentUserCanManageMembers &&
+            !isCreator &&
+            !isCurrentUser &&
+            !(_currentUserIsAdmin && isAdmin);
+        final canShowMenu = canAssignAdmin || canRemove;
 
         return Builder(
           builder: (context) => Container(
@@ -332,7 +378,7 @@ class CoffeeRunVldMembersContentState
               avatarUrl: avatarUrl,
               userId: userId,
               isCurrentUser: isCurrentUser,
-              isOwner: widget.isOwner,
+              isOwner: _currentUserIsOwner || widget.isOwner,
               onTap: userId != null
                   ? () {
                       Navigator.of(context).push(
@@ -342,8 +388,15 @@ class CoffeeRunVldMembersContentState
                       );
                     }
                   : null,
-              onShowMenu: widget.isOwner && userId != null && !isCurrentUser
-                  ? (menuKey) => _showMemberMenu(context, menuKey, userId, name)
+              onShowMenu: canShowMenu && userId != null
+                  ? (menuKey) => _showMemberMenu(
+                        context,
+                        menuKey,
+                        userId,
+                        name,
+                        isAdmin,
+                        isCreator,
+                      )
                   : null,
             ),
           ),
