@@ -314,13 +314,13 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                               color: _isFormValid && !_isSubmitting
                                   ? AppColors.button
                                   : AppColors.button.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderRadius: BorderRadius.circular(AppRadius.xxl),
                               elevation: 0,
                               child: InkWell(
                                 onTap: _isFormValid && !_isSubmitting
                                     ? _submitFeedback
                                     : null,
-                                borderRadius: BorderRadius.circular(AppRadius.lg),
+                                borderRadius: BorderRadius.circular(AppRadius.xxl),
                                 child: Container(
                                   width: double.infinity,
                                   height: 50,
@@ -328,7 +328,7 @@ class _FeedbackScreenState extends ConsumerState<FeedbackScreen> {
                                     color: _isFormValid && !_isSubmitting
                                         ? AppColors.button
                                         : AppColors.button.withValues(alpha: 0.3),
-                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                    borderRadius: BorderRadius.circular(AppRadius.xxl),
                                   ),
                                   child: Center(
                                     child: _isSubmitting

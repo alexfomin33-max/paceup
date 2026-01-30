@@ -365,7 +365,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       onPressed: _isJoining ? null : _joinClub,
       style: ButtonStyle(
         backgroundColor: WidgetStateProperty.all(
-          AppColors.button.withValues(alpha: 0.7),
+          AppColors.brandPrimary.withValues(alpha: 0.8),
         ),
         foregroundColor: WidgetStateProperty.all(textColor),
         elevation: WidgetStateProperty.all(0),
@@ -377,7 +377,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         shape: WidgetStateProperty.all(
           StadiumBorder(
             side: BorderSide(
-              color: AppColors.button.withValues(alpha: 0.25),
+              color: AppColors.brandPrimary.withValues(alpha: 0.25),
               width: 1,
             ),
           ),

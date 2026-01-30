@@ -1,4 +1,5 @@
 // lib/screens/map/events/official_event_detail_screen.dart
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -302,19 +303,36 @@ class _OfficialEventDetailScreenState
     }
   }
 
-  /// ──────────────────────── Кнопка регистрации (зафиксированная внизу) ────────────────────────
+  /// ──────────────────────── Кнопка регистрации (стеклянный эффект) ────────────────────────
   Widget _buildRegisterButton(String registrationLink) {
+    // ─────────── Цвет текста для стеклянного фона
     final textColor = AppColors.getSurfaceColor(context);
 
-    return ElevatedButton(
+    // ─────────── Содержимое кнопки без эффекта стекла
+    final button = ElevatedButton(
       onPressed: () => _openEventLink(registrationLink),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.button,
-        foregroundColor: textColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(double.infinity, 50),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(
+          AppColors.brandPrimary.withValues(alpha: 0.8),
+        ),
+        foregroundColor: WidgetStateProperty.all(textColor),
+        elevation: WidgetStateProperty.all(0),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 30),
+        ),
+        shape: WidgetStateProperty.all(
+          StadiumBorder(
+            side: BorderSide(
+              color: AppColors.brandPrimary.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+        ),
+        minimumSize: WidgetStateProperty.all(
+          const Size(double.infinity, 50),
+        ),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
@@ -326,6 +344,22 @@ class _OfficialEventDetailScreenState
         ),
       ),
     );
+
+    // ─────────── Стеклянная оболочка с блюром как в iOS
+    final glassButton = ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(AppRadius.xxl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 8,
+          sigmaY: 8,
+        ),
+        child: button,
+      ),
+    );
+
+    return glassButton;
   }
 
   /// ──────────────────────── Форматирование даты с годом ────────────────────────

@@ -1,5 +1,6 @@
 // lib/screens/lenta/state/newpost/edit_post_screen.dart
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -18,7 +19,6 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../providers/lenta_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
-import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
 
 /// Модель «существующего» изображения, пришедшего с бэка
@@ -227,20 +227,17 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
-            child: Column(
+            child: Stack(
               children: [
                 // ────────────────────────────────────────────────────────────────
                 // 📜 ПРОКРУЧИВАЕМАЯ ОБЛАСТЬ С КОНТЕНТОМ
                 // ────────────────────────────────────────────────────────────────
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                           // ────────────────────────────────────────────────────────────────
                           // 📸 1. ФОТОГРАФИИ ПОСТА (горизонтальная карусель)
                           // ────────────────────────────────────────────────────────────────
@@ -477,16 +474,15 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                         ],
                       ),
                     ),
+                // ───────── Плавающая кнопка сохранения (стеклянный эффект)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: SafeArea(
+                    top: false,
+                    child: _buildSaveButton(),
                   ),
-                ),
-
-                // ────────────────────────────────────────────────────────────────
-                // 💾 ЗАФИКСИРОВАННАЯ КНОПКА СОХРАНЕНИЯ ВНИЗУ ЭКРАНА
-                // ────────────────────────────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  color: AppColors.twinBg,
-                  child: _buildSaveButton(),
                 ),
               ],
             ),
@@ -973,23 +969,48 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   /// Кнопка сохранения
   Widget _buildSaveButton() {
     final formState = ref.watch(formStateProvider);
-    final isSubmitting = formState.isSubmitting;
     final textColor = AppColors.getSurfaceColor(context);
+    final isLoading = formState.isSubmitting;
+    final isValid = _canSave;
 
+    // ─────────── Содержимое кнопки без эффекта стекла
     final button = ElevatedButton(
-      onPressed: !isSubmitting ? _submitEdit : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.textPrimary,
-        foregroundColor: textColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(double.infinity, 50),
+      onPressed: (isLoading || !isValid) ? null : _submitEdit,
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) {
+            if (states.contains(WidgetState.disabled)) {
+              return AppColors.button.withValues(alpha: 0.7);
+            }
+            return AppColors.button.withValues(alpha: 0.7);
+          },
+        ),
+        foregroundColor: WidgetStateProperty.all(textColor),
+        elevation: WidgetStateProperty.all(0),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 30),
+        ),
+        shape: WidgetStateProperty.all(
+          StadiumBorder(
+            side: BorderSide(
+              color: AppColors.button.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+        ),
+        minimumSize: WidgetStateProperty.all(
+          const Size(double.infinity, 50),
+        ),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
-      child: isSubmitting
-          ? CupertinoActivityIndicator(radius: 9, color: textColor)
+      child: isLoading
+          ? CupertinoActivityIndicator(
+              radius: 9,
+              color: textColor,
+            )
           : Text(
               'Сохранить',
               style: AppTextStyles.h15w5.copyWith(
@@ -999,11 +1020,26 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
             ),
     );
 
-    if (isSubmitting) {
-      return IgnorePointer(child: button);
+    // ─────────── Стеклянная оболочка с блюром как в iOS
+    final glassButton = ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(AppRadius.xxl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 8,
+          sigmaY: 8,
+        ),
+        child: button,
+      ),
+    );
+
+    // Блокировка нажатий во время загрузки
+    if (isLoading) {
+      return IgnorePointer(child: glassButton);
     }
 
-    return button;
+    return glassButton;
   }
 
   /// Сохраняет изменения поста на сервер

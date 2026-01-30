@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -581,24 +582,44 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     return '$hh:$mm';
   }
 
-  /// Кнопка сохранения в стиле add_event_screen
+  /// Кнопка сохранения (стеклянный эффект)
   Widget _buildSaveButton(AppFormState formState) {
+    // ─────────── Цвет текста для стеклянного фона
     final textColor = AppColors.getSurfaceColor(context);
     final isLoading = formState.isSubmitting;
 
+    // ─────────── Содержимое кнопки без эффекта стекла
     final button = ElevatedButton(
       onPressed: isLoading ? null : () {
         if (!formState.isSubmitting) _submit();
       },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.button,
-        foregroundColor: textColor,
-        disabledBackgroundColor: AppColors.button,
-        disabledForegroundColor: textColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(double.infinity, 50),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.resolveWith(
+          (states) {
+            if (states.contains(WidgetState.disabled)) {
+              return AppColors.button.withValues(alpha: 0.7);
+            }
+            return AppColors.button.withValues(alpha: 0.7);
+          },
+        ),
+        foregroundColor: WidgetStateProperty.all(textColor),
+        elevation: WidgetStateProperty.all(0),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 30),
+        ),
+        shape: WidgetStateProperty.all(
+          StadiumBorder(
+            side: BorderSide(
+              color: AppColors.button.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+        ),
+        minimumSize: WidgetStateProperty.all(
+          const Size(double.infinity, 50),
+        ),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
@@ -613,11 +634,26 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
             ),
     );
 
+    // ─────────── Стеклянная оболочка с блюром как в iOS
+    final glassButton = ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(AppRadius.xxl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 8,
+          sigmaY: 8,
+        ),
+        child: button,
+      ),
+    );
+
+    // Блокировка нажатий во время загрузки
     if (isLoading) {
-      return IgnorePointer(child: button);
+      return IgnorePointer(child: glassButton);
     }
 
-    return button;
+    return glassButton;
   }
 
   /// ──────────────────────── Удаление события ────────────────────────
@@ -908,12 +944,14 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
           onTap: () => FocusScope.of(context).unfocus(),
           behavior: HitTestBehavior.translucent,
           child: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 80),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                   // ---------- Медиа: логотип + фоновая картинка ----------
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1116,7 +1154,7 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                       final brightness = Theme.of(context).brightness;
                       final isLight = brightness == Brightness.light;
                       final fillColor = isLight
-                          ? AppColors.background
+                          ? AppColors.twinphoto
                           : AppColors.getSurfaceMutedColor(context);
                       final textColor = isLight
                           ? AppColors.getTextPlaceholderColor(context)
@@ -1627,14 +1665,20 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
                     FormErrorDisplay(formState: formState),
                     const SizedBox(height: 8),
                   ],
-
-                  // ───────── Кнопка "Сохранить"
-                  Center(
-                    child: _buildSaveButton(formState),
-                  ),
-                  
                 ],
               ),
+            ),
+                // ───────── Плавающая кнопка сохранения (стеклянный эффект)
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  child: SafeArea(
+                    top: false,
+                    child: _buildSaveButton(formState),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
