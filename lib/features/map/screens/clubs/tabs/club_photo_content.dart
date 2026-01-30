@@ -350,33 +350,27 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
           return ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),
             child: Builder(
-              builder: (context) => Container(
-                padding: const EdgeInsets.all(24),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 40),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          CupertinoIcons.photo_on_rectangle,
-                          size: 32,
-                          color: AppColors.getIconSecondaryColor(context),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Фотографий пока нет',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            color: AppColors.getTextSecondaryColor(context),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+              builder: (context) => Align(
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      CupertinoIcons.photo_on_rectangle,
+                      size: 32,
+                      color: AppColors.getTextPlaceholderColor(context),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Фотографий пока нет',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        color: AppColors.getTextPlaceholderColor(context),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

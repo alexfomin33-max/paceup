@@ -546,25 +546,21 @@ class _OfficialEventDetailScreenState
         body: SafeArea(
           top: false,
           bottom: true,
-          child: Builder(
-            builder: (context) {
-              final columnChildren = <Widget>[
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // ───────── Скроллируемый контент
-                      NotificationListener<ScrollNotification>(
-                        onNotification: (notification) {
-                          // Закрываем попап меню при любом скролле или свайпе
-                          if (notification is ScrollUpdateNotification ||
-                              notification is ScrollStartNotification) {
-                            MoreMenuHub.hide();
-                          }
-                          return false;
-                        },
-                        child: CustomScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          slivers: [
+          child: Stack(
+            children: [
+              // ───────── Скроллируемый контент
+              NotificationListener<ScrollNotification>(
+                onNotification: (notification) {
+                  // Закрываем попап меню при любом скролле или свайпе
+                  if (notification is ScrollUpdateNotification ||
+                      notification is ScrollStartNotification) {
+                    MoreMenuHub.hide();
+                  }
+                  return false;
+                },
+                child: CustomScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  slivers: [
                   // ───────── Верхний блок с метриками (на всю ширину)
                   SliverToBoxAdapter(
                     child: Builder(
@@ -796,7 +792,7 @@ class _OfficialEventDetailScreenState
 
                   // ───────── Промежуточный блок: дистанция
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.only(left: 8),
                     sliver: SliverToBoxAdapter(
                       child: Container(
                         padding: const EdgeInsets.all(12),
@@ -885,8 +881,13 @@ class _OfficialEventDetailScreenState
                     ),
                   ),
 
-                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    // ── Добавляем нижний отступ для контента перед плавающей кнопкой
+                    if (registrationLink.isNotEmpty)
+                      const SliverToBoxAdapter(
+                        child: SizedBox(height: 80),
+                      )
+                    else
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
                           ],
                         ),
                       ),
@@ -921,20 +922,18 @@ class _OfficialEventDetailScreenState
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                ),
-                // ───────── Зафиксированная кнопка регистрации (только если есть ссылка)
-                if (registrationLink.isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    color: AppColors.getBackgroundColor(context),
-                    child: _buildRegisterButton(registrationLink),
-                  ),
-              ];
-
-              return Column(children: columnChildren);
-            },
+                      // ─────────── Плавающая кнопка регистрации (только если есть ссылка)
+                      if (registrationLink.isNotEmpty)
+                        Positioned(
+                          left: 16,
+                          right: 16,
+                          bottom: 16,
+                          child: SafeArea(
+                            top: false,
+                            child: _buildRegisterButton(registrationLink),
+                          ),
+                        ),
+            ],
           ),
         ),
       ),
