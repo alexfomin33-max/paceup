@@ -162,8 +162,8 @@ class _ConnectedTrackersScreenState
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
                   // Заголовок «Подключенные»
-                  Padding(
-                    padding: const EdgeInsets.only(top: 16, bottom: 12),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16, bottom: 12),
                     child: Text(
                       'Подключенные',
                       style: AppTextStyles.h15w6,
@@ -186,7 +186,7 @@ class _ConnectedTrackersScreenState
                           width: 0.7,
                         ),
                       ),
-                      child: Text(
+                      child: const Text(
                         'Вы ещё не подключили ни один трекер',
                         style: AppTextStyles.h13w4,
                       ),
@@ -195,8 +195,8 @@ class _ConnectedTrackersScreenState
                   const SizedBox(height: 24),
 
                   // Заголовок «Доступные»
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
                     child: Text(
                       'Доступные',
                       style: AppTextStyles.h15w6,
@@ -263,7 +263,7 @@ class _ConnectedTrackerTile extends StatelessWidget {
               style: AppTextStyles.h15w5,
             ),
           ),
-          Icon(
+          const Icon(
             CupertinoIcons.checkmark_circle_fill,
             size: 20,
             color: AppColors.brandPrimary,

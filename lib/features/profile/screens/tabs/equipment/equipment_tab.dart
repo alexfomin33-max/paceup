@@ -496,10 +496,13 @@ class _SectionHeaderWithToggle extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          CupertinoSwitch(
-            value: value,
-            onChanged: onChanged,
-            activeTrackColor: AppColors.brandPrimary,
+          Transform.scale(
+            scale: 0.8,
+            child: CupertinoSwitch(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: AppColors.brandPrimary,
+            ),
           ),
         ],
       ),

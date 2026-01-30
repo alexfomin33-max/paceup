@@ -435,15 +435,16 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     final isOwner = widget.currentUserId == widget.activityUserId;
     
     // ───────────────────────────────────────────────────────────────────────
+    // 🗺️ ПРОВЕРКА НАЛИЧИЯ КАРТЫ: если нет карты маршрута, скрываем только
+    // иконку "совместно", шаринг всегда показывается
+    // ───────────────────────────────────────────────────────────────────────
+    final hasMap = widget.activity?.points.isNotEmpty ?? false;
+    
+    // ───────────────────────────────────────────────────────────────────────
     // 🏊 ПРОВЕРКА ТИПА ТРЕНИРОВКИ: для плавания скрываем только иконку "совместно"
     // ───────────────────────────────────────────────────────────────────────
     final activityType = widget.activity?.type.toLowerCase() ?? '';
     final isSwim = activityType == 'swim' || activityType == 'swimming';
-    
-    // ───────────────────────────────────────────────────────────────────────
-    // ✅ ИКОНКА ШАРИНГА: показывается всегда для владельца, независимо от наличия
-    // карты или фото (можно репостить даже без карты и фото)
-    // ───────────────────────────────────────────────────────────────────────
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -495,8 +496,8 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         ),
 
         // Правая группа: «совместно» + шаринг
-        // ✅ ИСПРАВЛЕНО: иконка совместной тренировки показывается всегда для владельца
-        // ✅ ИКОНКА ШАРИНГА: показывается всегда для владельца, даже без карты и фото
+        // 🗺️ СКРЫВАЕМ ИКОНКУ "СОВМЕСТНО": если нет карты маршрута, скрываем только
+        // иконку "совместно", шаринг всегда показывается
         // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем только иконку "совместно", шаринг показываем
         if (!widget.hideRightActions)
           _RightActionsGroup(
@@ -508,7 +509,7 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
             onOpenTogether: widget.onOpenTogether,
             onShareTap: _onShareTap,
             hideShare: false, // ✅ Шаринг всегда показывается
-            hideTogetherIcon: isSwim, // 🏊 Скрываем иконку "совместно" для плавания
+            hideTogetherIcon: isSwim || !hasMap, // 🗺️ Скрываем если нет карты или плавание
           ),
       ],
     );
@@ -520,8 +521,10 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
 // 🔹 ВИДЖЕТ ПРАВОЙ ГРУППЫ ДЕЙСТВИЙ: проверяет участие в совместной тренировке
 // ─────────────────────────────────────────────────────────────────────────────
 // Иконка «совместно» показывается только если:
-// 1. Пользователь является владельцем тренировки
-// 2. Пользователь является участником совместной тренировки (принял приглашение)
+// 1. Пользователь является владельцем тренировки ИЛИ участником (принял приглашение)
+// 2. Есть карта маршрута (points не пустой)
+// 3. Тип тренировки не плавание
+// Шаринг всегда показывается для владельца, независимо от наличия карты
 // ─────────────────────────────────────────────────────────────────────────────
 class _RightActionsGroup extends ConsumerWidget {
   final int activityId;
@@ -532,7 +535,7 @@ class _RightActionsGroup extends ConsumerWidget {
   final VoidCallback? onOpenTogether;
   final VoidCallback onShareTap;
   final bool hideShare; // ✅ Устаревший параметр (шаринг всегда показывается)
-  final bool hideTogetherIcon; // 🏊 Скрывать иконку "совместно" для плавания
+  final bool hideTogetherIcon; // 🗺️ Скрывать иконку "совместно" если нет карты или плавание
 
   const _RightActionsGroup({
     required this.activityId,
@@ -543,20 +546,20 @@ class _RightActionsGroup extends ConsumerWidget {
     this.onOpenTogether,
     required this.onShareTap,
     this.hideShare = false,
-    this.hideTogetherIcon = false, // 🏊 По умолчанию показываем иконку
+    this.hideTogetherIcon = false, // 🗺️ По умолчанию показываем иконку
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // ───────────────────────────────────────────────────────────────────────
-    // ✅ ВЛАДЕЛЕЦ: всегда видит иконку совместной тренировки
-    // ✅ ИКОНКА ШАРИНГА: показывается всегда, даже без карты и фото
-    // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем иконку "совместно", но показываем шаринг
+    // ✅ ВЛАДЕЛЕЦ: видит иконку совместной тренировки (если есть карта) и шаринг
+    // 🗺️ ИКОНКА "СОВМЕСТНО": скрывается если нет карты маршрута или это плавание
+    // ✅ ШАРИНГ: всегда показывается для владельца, независимо от наличия карты
     // ───────────────────────────────────────────────────────────────────────
     if (isOwner) {
       return _buildActionsRow(
         context: context,
-        showTogetherIcon: !hideTogetherIcon, // 🏊 Скрываем для плавания
+        showTogetherIcon: !hideTogetherIcon, // 🗺️ Скрываем если нет карты или плавание
         togetherCount: activity?.togetherCount ?? 1,
         showShareIcon: true, // ✅ Шаринг всегда показывается для владельца
         onOpenTogether: onOpenTogether,
@@ -606,13 +609,13 @@ class _RightActionsGroup extends ConsumerWidget {
         }
 
         // ───────────────────────────────────────────────────────────────────
-        // ✅ ЯВЛЯЕТСЯ УЧАСТНИКОМ: показываем иконку
+        // ✅ ЯВЛЯЕТСЯ УЧАСТНИКОМ: показываем иконку "совместно" (если есть карта)
+        // 🗺️ ИКОНКА "СОВМЕСТНО": скрывается если нет карты маршрута или это плавание
         // Шаринг только для владельца
-        // 🏊 ДЛЯ ПЛАВАНИЯ: скрываем иконку "совместно"
         // ───────────────────────────────────────────────────────────────────
         return _buildActionsRow(
           context: context,
-          showTogetherIcon: !hideTogetherIcon, // 🏊 Скрываем для плавания
+          showTogetherIcon: !hideTogetherIcon, // 🗺️ Скрываем если нет карты или плавание
           togetherCount: togetherCount,
           showShareIcon: false, // Шаринг только для владельца
           onOpenTogether: onOpenTogether,
@@ -635,8 +638,8 @@ class _RightActionsGroup extends ConsumerWidget {
     return Row(
       children: [
         // ───────────────────────────────────────────────────────────────────
-        // 🏊 ИКОНКА И СЧЕТЧИК УЧАСТНИКОВ: показываем только если не скрыта
-        // иконка "совместно" (для плавания скрываем)
+        // 🗺️ ИКОНКА И СЧЕТЧИК УЧАСТНИКОВ: показываем только если не скрыта
+        // иконка "совместно" (скрывается если нет карты или это плавание)
         // ───────────────────────────────────────────────────────────────────
         if (showTogetherIcon) ...[
           const Icon(

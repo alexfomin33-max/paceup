@@ -37,6 +37,7 @@ import '../../../../core/widgets/more_menu_hub.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../core/widgets/transparent_route.dart';
+import 'lenta_filters_bottom_sheet.dart';
 
 /// Единые размеры для AppBar в iOS-стиле
 const double kAppBarIconSize = 22.0; // сама иконка ~20–22pt
@@ -567,6 +568,45 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
     ref.read(notificationsProvider.notifier).updateUnreadCount();
   }
 
+  /// Открывает bottom sheet с фильтрами ленты
+  void _openFilters() {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => LentaFiltersBottomSheet(
+        initialParams: LentaFilterParams(
+          contentTypes: [
+            if (_showTrainings) ContentType.trainings,
+            if (_showPosts) ContentType.posts,
+          ],
+          authorTypes: [
+            if (_showOwn) AuthorType.own,
+            if (_showOthers) AuthorType.others,
+          ],
+        ),
+        onApplyFilters: (params) async {
+          // Применяем фильтры
+          setState(() {
+            _showTrainings = params.contentTypes.contains(ContentType.trainings);
+            _showPosts = params.contentTypes.contains(ContentType.posts);
+            _showOwn = params.authorTypes.contains(AuthorType.own);
+            _showOthers = params.authorTypes.contains(AuthorType.others);
+          });
+
+          // Перезагружаем данные с новыми фильтрами
+          await _reloadWithFilters(
+            showTrainings: _showTrainings,
+            showPosts: _showPosts,
+            showOwn: _showOwn,
+            showOthers: _showOthers,
+          );
+        },
+      ),
+    );
+  }
+
   /// Показывает выпадающее меню для кнопки создания поста
   void _showCreateMenu() {
     final items = <MoreMenuItem>[
@@ -1029,26 +1069,28 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         ],
       ),
 
-      body: () {
-        // Показываем ошибку, если есть
-        if (lentaSnapshot.error != null && lentaSnapshot.items.isEmpty) {
-          return ErrorDisplay.centered(
-            error: lentaSnapshot.error,
-            onRetry: () async {
-              // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
-              final userId = await _auth.getUserId();
-              if (userId == null) return;
-              ref
-                  .read(lentaProvider(userId).notifier)
-                  .loadInitial(
-                    showTrainings: _showTrainings,
-                    showPosts: _showPosts,
-                    showOwn: _showOwn,
-                    showOthers: _showOthers,
-                  );
-            },
-          );
-        }
+      body: Stack(
+        children: [
+          () {
+            // Показываем ошибку, если есть
+            if (lentaSnapshot.error != null && lentaSnapshot.items.isEmpty) {
+              return ErrorDisplay.centered(
+                error: lentaSnapshot.error,
+                onRetry: () async {
+                  // ✅ Всегда получаем userId из AuthService для гарантии правильного ID
+                  final userId = await _auth.getUserId();
+                  if (userId == null) return;
+                  ref
+                      .read(lentaProvider(userId).notifier)
+                      .loadInitial(
+                        showTrainings: _showTrainings,
+                        showPosts: _showPosts,
+                        showOwn: _showOwn,
+                        showOthers: _showOthers,
+                      );
+                },
+              );
+            }
 
         final items = lentaSnapshot.items;
 
@@ -1117,76 +1159,6 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                 parent: BouncingScrollPhysics(),
               ),
               children: [
-                // ────────────────────────────────────────────────────────
-                // 🔍 ФИЛЬТРЫ: блок с кнопками фильтрации
-                // ────────────────────────────────────────────────────────
-                const SizedBox(height: 12),
-                // ────────────────────────────────────────────────────────
-                // ⚡ ОПТИМИЗАЦИЯ: мемоизируем фильтры через RepaintBoundary
-                // ────────────────────────────────────────────────────────
-                RepaintBoundary(
-                  child: _FeedFilterBar(
-                    showTrainings: _showTrainings,
-                    showPosts: _showPosts,
-                    showOwn: _showOwn,
-                    showOthers: _showOthers,
-                    onTrainingsChanged: (value) async {
-                      final newPosts = (!value && !_showPosts)
-                          ? true
-                          : _showPosts;
-                      setState(() {
-                        _showTrainings = value;
-                        _showPosts = newPosts;
-                      });
-                      // Перезагружаем данные с новыми фильтрами
-                      await _reloadWithFilters(
-                        showTrainings: value,
-                        showPosts: newPosts,
-                      );
-                    },
-                    onPostsChanged: (value) async {
-                      final newTrainings = (!value && !_showTrainings)
-                          ? true
-                          : _showTrainings;
-                      setState(() {
-                        _showPosts = value;
-                        _showTrainings = newTrainings;
-                      });
-                      // Перезагружаем данные с новыми фильтрами
-                      await _reloadWithFilters(
-                        showPosts: value,
-                        showTrainings: newTrainings,
-                      );
-                    },
-                    onOwnChanged: (value) async {
-                      final newOthers = (!value && !_showOthers)
-                          ? true
-                          : _showOthers;
-                      setState(() {
-                        _showOwn = value;
-                        _showOthers = newOthers;
-                      });
-                      // Перезагружаем данные с новыми фильтрами
-                      await _reloadWithFilters(
-                        showOwn: value,
-                        showOthers: newOthers,
-                      );
-                    },
-                    onOthersChanged: (value) async {
-                      final newOwn = (!value && !_showOwn) ? true : _showOwn;
-                      setState(() {
-                        _showOthers = value;
-                        _showOwn = newOwn;
-                      });
-                      // Перезагружаем данные с новыми фильтрами
-                      await _reloadWithFilters(
-                        showOthers: value,
-                        showOwn: newOwn,
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 12),
                 const SizedBox(height: 32),
                 const Center(
                   child: Text('Пока в ленте пусто', style: AppTextStyles.h14w4),
@@ -1249,7 +1221,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             onRefresh: _onRefresh,
             child: ListView.builder(
               controller: _scrollController,
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(top: 12, bottom: 12),
               physics: const AlwaysScrollableScrollPhysics(
                 parent: BouncingScrollPhysics(),
               ),
@@ -1258,9 +1230,9 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
               // ⚡ ОПТИМИЗАЦИЯ: используем предвычисленное значение вместо MediaQuery.of(context)
               // Увеличение с 1.5x до 2.0x снижает лаги при быстрой прокрутке на ~10%
               cacheExtent: screenHeight * 2.0,
-              // itemCount = 1 (фильтр) + filteredItems.length + (isLoadingMore ? 1 : 0)
+              // itemCount = (isPublishingPost ? 1 : 0) + filteredItems.length + (isLoadingMore ? 1 : 0)
               itemCount:
-                  1 +
+                  (_isPublishingPost ? 1 : 0) +
                   filteredItems.length +
                   (lentaSnapshot.isLoadingMore ? 1 : 0),
               // ────────────────────────────────────────────────────────
@@ -1273,93 +1245,19 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
                   false, // отключаем автоматическое добавление
               addSemanticIndexes: false,
               itemBuilder: (context, i) {
-                // ────────────────────────────────────────────────────────
-                // 🔍 ФИЛЬТРЫ: показываем блок фильтров перед первой записью
-                // ────────────────────────────────────────────────────────
-                if (i == 0) {
-                  // ────────────────────────────────────────────────────────
-                  // ⚡ ОПТИМИЗАЦИЯ: мемоизируем фильтры через RepaintBoundary
-                  // ────────────────────────────────────────────────────────
-                  // Это предотвращает перерисовку фильтров при скролле
-                  // Ожидаемый эффект: -50% rebuild'ов фильтров
-                  return RepaintBoundary(
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 12),
-                        _FeedFilterBar(
-                          showTrainings: _showTrainings,
-                          showPosts: _showPosts,
-                          showOwn: _showOwn,
-                          showOthers: _showOthers,
-                          onTrainingsChanged: (value) async {
-                            final newPosts = (!value && !_showPosts)
-                                ? true
-                                : _showPosts;
-                            setState(() {
-                              _showTrainings = value;
-                              _showPosts = newPosts;
-                            });
-                            // Перезагружаем данные с новыми фильтрами
-                            await _reloadWithFilters(
-                              showTrainings: value,
-                              showPosts: newPosts,
-                            );
-                          },
-                          onPostsChanged: (value) async {
-                            final newTrainings = (!value && !_showTrainings)
-                                ? true
-                                : _showTrainings;
-                            setState(() {
-                              _showPosts = value;
-                              _showTrainings = newTrainings;
-                            });
-                            // Перезагружаем данные с новыми фильтрами
-                            await _reloadWithFilters(
-                              showPosts: value,
-                              showTrainings: newTrainings,
-                            );
-                          },
-                          onOwnChanged: (value) async {
-                            final newOthers = (!value && !_showOthers)
-                                ? true
-                                : _showOthers;
-                            setState(() {
-                              _showOwn = value;
-                              _showOthers = newOthers;
-                            });
-                            // Перезагружаем данные с новыми фильтрами
-                            await _reloadWithFilters(
-                              showOwn: value,
-                              showOthers: newOthers,
-                            );
-                          },
-                          onOthersChanged: (value) async {
-                            final newOwn = (!value && !_showOwn)
-                                ? true
-                                : _showOwn;
-                            setState(() {
-                              _showOthers = value;
-                              _showOwn = newOwn;
-                            });
-                            // Перезагружаем данные с новыми фильтрами
-                            await _reloadWithFilters(
-                              showOthers: value,
-                              showOwn: newOwn,
-                            );
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        if (_isPublishingPost) ...[
-                          const _PublishingPostPlaceholder(),
-                          const SizedBox(height: 16),
-                        ],
-                      ],
-                    ),
+                // Показываем плейсхолдер публикации поста перед первой записью
+                if (i == 0 && _isPublishingPost) {
+                  return const Column(
+                    children: [
+                      SizedBox(height: 12),
+                      _PublishingPostPlaceholder(),
+                      SizedBox(height: 16),
+                    ],
                   );
                 }
 
-                // Корректируем индекс для элементов ленты (i - 1, так как i == 0 это фильтр)
-                final itemIndex = i - 1;
+                // Корректируем индекс для элементов ленты
+                final itemIndex = _isPublishingPost ? i - 1 : i;
 
                 // Индикатор загрузки в конце списка
                 if (lentaSnapshot.isLoadingMore &&
@@ -1439,7 +1337,19 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
             ),
           ),
         );
-      }(),
+          }(),
+          // ────────────────────────────────────────────────────────────────
+          // 🔍 КНОПКА ФИЛЬТРОВ: размещена справа над нижней навигацией
+          // ────────────────────────────────────────────────────────────────
+          Positioned(
+            right: 12,
+            bottom: kBottomNavigationBarHeight - 40,
+            child: _FilterButton(
+              onTap: _openFilters,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1679,128 +1589,49 @@ class _SkeletonPostCard extends StatelessWidget {
 }
 
 // ────────────────────────────────────────────────────────────────
-// 🔍 ФИЛЬТРЫ: блок фильтрации постов и тренировок
+// 🔍 КНОПКА ФИЛЬТРОВ: плавающая кнопка справа над нижней навигацией
 // ────────────────────────────────────────────────────────────────
 
-/// Блок фильтров для ленты с кнопками:
-/// - "Тренировки" / "Посты" (тип контента)
-/// - "Свои" / "Других" (автор)
-/// Использует стиль пилюль из events_filters_bottom_sheet
-class _FeedFilterBar extends StatelessWidget {
-  final bool showTrainings;
-  final bool showPosts;
-  final bool showOwn;
-  final bool showOthers;
-  final ValueChanged<bool>? onTrainingsChanged;
-  final ValueChanged<bool>? onPostsChanged;
-  final ValueChanged<bool>? onOwnChanged;
-  final ValueChanged<bool>? onOthersChanged;
-
-  const _FeedFilterBar({
-    this.showTrainings = true,
-    this.showPosts = true,
-    this.showOwn = true,
-    this.showOthers = true,
-    this.onTrainingsChanged,
-    this.onPostsChanged,
-    this.onOwnChanged,
-    this.onOthersChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-      child: Row(
-        children: [
-          _FilterPillButton(
-            label: 'Тренировки',
-            isSelected: showTrainings,
-            onTap: () {
-              // Нельзя отключить последний активный фильтр
-              if (!showTrainings || showPosts) {
-                onTrainingsChanged?.call(!showTrainings);
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          _FilterPillButton(
-            label: 'Посты',
-            isSelected: showPosts,
-            onTap: () {
-              // Нельзя отключить последний активный фильтр
-              if (!showPosts || showTrainings) {
-                onPostsChanged?.call(!showPosts);
-              }
-            },
-          ),
-          const Spacer(),
-          _FilterPillButton(
-            label: 'Свои',
-            isSelected: showOwn,
-            onTap: () {
-              // Нельзя отключить последний активный фильтр
-              if (!showOwn || showOthers) {
-                onOwnChanged?.call(!showOwn);
-              }
-            },
-          ),
-          const SizedBox(width: 8),
-          _FilterPillButton(
-            label: 'Других',
-            isSelected: showOthers,
-            onTap: () {
-              // Нельзя отключить последний активный фильтр
-              if (!showOthers || showOwn) {
-                onOthersChanged?.call(!showOthers);
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Кнопка-пилюля для фильтра (в стиле events_filters_bottom_sheet)
-class _FilterPillButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
+/// Кнопка фильтров в стиле кнопок из clubs_screen.dart
+class _FilterButton extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _FilterPillButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _FilterButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final bg = isSelected
-        ? AppColors.brandPrimary
-        : AppColors.getSurfaceColor(context);
-    final textColor = isSelected
-        ? AppColors.surface
-        : AppColors.getTextPrimaryColor(context);
-    final borderColor = isSelected
-        ? AppColors.brandPrimary
-        : AppColors.getBorderColor(context);
+    // ── определяем цвета в зависимости от темы
+    final brightness = Theme.of(context).brightness;
+    final isDark = brightness == Brightness.dark;
+    // ── в темной теме убираем тень, чтобы фон был идентичен нижнему меню
+    final shadowColor = isDark ? null : AppColors.shadowMedium;
 
     return Material(
       color: Colors.transparent,
+      elevation: 0,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderRadius: BorderRadius.circular(24),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: borderColor, width: 1),
+            color: AppColors.getSurfaceColor(context),
+            shape: BoxShape.circle,
+            boxShadow: shadowColor != null
+                ? [
+                    BoxShadow(
+                      color: shadowColor,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1),
+                    ),
+                  ]
+                : null,
           ),
-          child: Text(
-            label,
-            style: AppTextStyles.h14w4.copyWith(color: textColor),
+          child: Icon(
+            Icons.tune,
+            size: 20,
+            color: AppColors.getIconPrimaryColor(context),
           ),
         ),
       ),

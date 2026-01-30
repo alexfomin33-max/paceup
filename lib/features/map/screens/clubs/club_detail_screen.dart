@@ -42,6 +42,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   bool _isJoining = false; // Идёт ли процесс вступления
   int?
   _updatedMembersCount; // Обновленное количество участников (если было изменено)
+  // ──────────────────────── Контроллер основного скролла ────────────────────────
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey<ClubLentaContentState> _lentaContentKey =
+      GlobalKey<ClubLentaContentState>();
   final GlobalKey _menuKey =
       GlobalKey(); // Ключ для позиционирования попапа меню
 
@@ -49,6 +53,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   void initState() {
     super.initState();
     _loadClub();
+  }
+
+  @override
+  void dispose() {
+    // ───── Освобождаем контроллер основного скролла ─────
+    _scrollController.dispose();
+    super.dispose();
   }
 
   /// Загрузка данных клуба через API
@@ -536,9 +547,17 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             }
                             return false;
                           },
-                          child: CustomScrollView(
-                            physics: const BouncingScrollPhysics(),
-                            slivers: [
+                          child: Builder(
+                            builder: (context) {
+                              // ───── Единый скролл для всех табов ─────
+                              final scrollView = CustomScrollView(
+                                controller: _scrollController,
+                                physics: _tab == 0
+                                    ? const AlwaysScrollableScrollPhysics(
+                                        parent: BouncingScrollPhysics(),
+                                      )
+                                    : const BouncingScrollPhysics(),
+                                slivers: [
                     // ───────── Cover + overlay-кнопки + логотип
                     SliverToBoxAdapter(
                       child: Builder(
@@ -874,17 +893,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     // ───────── Контент табов
                     if (_tab == 0)
-                      SliverFillRemaining(
-                        hasScrollBody: true,
-                        child: Builder(
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(8),
-                            color: AppColors.getSurfaceColor(context),
-                            child: ClubLentaContent(
-                              clubId: widget.clubId,
-                            ),
-                          ),
-                        ),
+                      ClubLentaContent(
+                        key: _lentaContentKey,
+                        clubId: widget.clubId,
+                        scrollController: _scrollController,
                       )
                     else if (_tab == 1)
                       SliverToBoxAdapter(
@@ -911,6 +923,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               key: _membersContentKey,
                               clubId: widget.clubId,
                               isOwner: _canEdit,
+                              scrollController: _scrollController,
                             ),
                           ),
                         ),
@@ -923,6 +936,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             color: AppColors.getSurfaceColor(context),
                             child: CoffeeRunVldStatsContent(
                               clubId: widget.clubId,
+                              scrollController: _scrollController,
                             ),
                           ),
                         ),
@@ -930,18 +944,30 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                            ],
-                          ),
+                  ],
+                );
+                // ───── Pull-to-refresh только для ленты ─────
+                if (_tab == 0) {
+                  return RefreshIndicator(
+                    onRefresh: () =>
+                        _lentaContentKey.currentState?.refreshLenta() ??
+                        Future.value(),
+                    child: scrollView,
+                  );
+                }
+                return scrollView;
+              },
+            ),
+          ),
+        ),
+                      // ───────── Зафиксированная кнопка вступления (только для не участников)
+                      if (!_isMember && !_isRequest)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          color: AppColors.getBackgroundColor(context),
+                          child: _buildJoinButton(),
                         ),
-                      ),
-                  // ───────── Зафиксированная кнопка вступления (только для не участников)
-                  if (!_isMember && !_isRequest)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: AppColors.getBackgroundColor(context),
-                      child: _buildJoinButton(),
-                    ),
-                ];
+                    ];
 
                 return Column(children: columnChildren);
               },

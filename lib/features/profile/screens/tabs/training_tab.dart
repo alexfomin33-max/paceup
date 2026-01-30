@@ -1381,6 +1381,31 @@ class _Workout {
       }
     }
 
+    // ──────────────────────────────────────────────────────────────
+    // 🚴 ПЕРЕСЧЕТ СКОРОСТИ ДЛЯ ВЕЛОСИПЕДА: км/ч из расстояния и времени
+    // ──────────────────────────────────────────────────────────────
+    if (activity.sportType == 1) {
+      // Для велосипеда пересчитываем скорость из расстояния и времени
+      if (activity.distance > 0 && activity.effectiveDuration > 0) {
+        // Рассчитываем скорость: (расстояние в метрах / время в секундах) * 3.6 = км/ч
+        final distanceMeters = activity.distance * 1000; // конвертируем км в метры
+        final speedKmh = (distanceMeters / activity.effectiveDuration) * 3.6;
+        // Сохраняем скорость как строку с числом (без единиц измерения)
+        paceText = speedKmh.toStringAsFixed(1);
+        pace = speedKmh;
+      } else if (activity.stats != null &&
+          activity.stats!.containsKey('avgSpeed') &&
+          activity.stats!['avgSpeed'] != null) {
+        // Если есть avgSpeed в stats, используем его
+        final speedValue = activity.stats!['avgSpeed'];
+        if (speedValue is num) {
+          final speedKmh = speedValue.toDouble();
+          paceText = speedKmh.toStringAsFixed(1);
+          pace = speedKmh;
+        }
+      }
+    }
+
     if (activity.sportType == 2) {
       // Для плавания пересчитываем темп в формат "мин/100м"
       if (activity.distance > 0 && activity.effectiveDuration > 0) {
@@ -1584,25 +1609,25 @@ class _Workout {
       realDistance: realDistance,
       avgSpeed: calculatedAvgSpeed,
       avgPace: pace,
-      minAltitude: this.minAltitude ?? 0.0,
+      minAltitude: minAltitude ?? 0.0,
       minAltitudeCoords: minAltitudeCoords,
-      maxAltitude: this.maxAltitude ?? 0.0,
+      maxAltitude: maxAltitude ?? 0.0,
       maxAltitudeCoords: maxAltitudeCoords,
-      cumulativeElevationGain: this.cumulativeElevationGain ?? 0.0,
-      cumulativeElevationLoss: this.cumulativeElevationLoss ?? 0.0,
+      cumulativeElevationGain: cumulativeElevationGain ?? 0.0,
+      cumulativeElevationLoss: cumulativeElevationLoss ?? 0.0,
       startedAt: startedAt,
       startedAtCoords: startedAtCoords,
       finishedAt: finishedAt,
       finishedAtCoords: finishedAtCoords,
       duration: duration,
-      movingDuration: this.movingDuration,
+      movingDuration: movingDuration,
       bounds: boundsList,
-      avgHeartRate: this.avgHeartRate,
-      avgCadence: this.avgCadence,
-      heartRatePerKm: this.heartRatePerKm,
-      pacePerKm: this.pacePerKm,
-      calories: this.calories,
-      totalSteps: this.steps,
+      avgHeartRate: avgHeartRate,
+      avgCadence: avgCadence,
+      heartRatePerKm: heartRatePerKm,
+      pacePerKm: pacePerKm,
+      calories: calories,
+      totalSteps: steps,
     );
 
     // Конвертируем LatLng в Coord

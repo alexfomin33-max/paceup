@@ -1398,9 +1398,9 @@ class _BubbleRight extends StatelessWidget {
           if (isSelectedForDelete)
             GestureDetector(
               onTap: onDelete,
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: const Icon(
+              child: const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(
                   CupertinoIcons.delete,
                   size: 18,
                   color: AppColors.error,

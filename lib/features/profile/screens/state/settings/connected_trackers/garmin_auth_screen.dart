@@ -108,24 +108,24 @@ class _GarminAuthScreenState extends ConsumerState<GarminAuthScreen> {
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(color: AppColors.border),
                     ),
-                    child: Column(
+                    child: const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               CupertinoIcons.info_circle_fill,
                               color: AppColors.brandPrimary,
                               size: 20,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text(
                               'Авторизация Garmin Connect',
                               style: AppTextStyles.h14w6,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Text(
                           'Введите email и пароль от вашего аккаунта Garmin Connect. '
                           'Данные используются только для синхронизации тренировок и не сохраняются на сервере.',

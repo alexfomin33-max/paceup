@@ -9,29 +9,29 @@ import '../../../../../domain/models/activity_lenta.dart';
 import '../../../../lenta/screens/widgets/post/post_card.dart';
 import '../../../../lenta/screens/widgets/activity/activity_block.dart';
 import '../../../../../providers/services/auth_provider.dart';
-import '../../../../../providers/services/auth_provider.dart';
 
 /// Контент вкладки "Лента" для детальной страницы клуба
 /// Отображает активность участников клуба
 class ClubLentaContent extends ConsumerStatefulWidget {
   final int clubId;
+  final ScrollController scrollController;
 
   const ClubLentaContent({
     super.key,
     required this.clubId,
+    required this.scrollController,
   });
 
   @override
-  ConsumerState<ClubLentaContent> createState() => _ClubLentaContentState();
+  ConsumerState<ClubLentaContent> createState() => ClubLentaContentState();
 }
 
-class _ClubLentaContentState extends ConsumerState<ClubLentaContent> {
+class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
   List<Activity> _activities = [];
   bool _isLoading = false;
   bool _hasMore = true;
   int _currentPage = 1;
   static const int _limit = 20;
-  final ScrollController _scrollController = ScrollController();
   String? _error;
   int? _currentUserId;
 
@@ -40,7 +40,18 @@ class _ClubLentaContentState extends ConsumerState<ClubLentaContent> {
     super.initState();
     _loadCurrentUserId();
     _loadActivities();
-    _scrollController.addListener(_onScroll);
+    // ───── Подписываемся на скролл родительского контроллера ─────
+    widget.scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(ClubLentaContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ───── Если контроллер скролла изменился, переназначаем слушатель ─────
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_onScroll);
+      widget.scrollController.addListener(_onScroll);
+    }
   }
 
   /// Загружает ID текущего пользователя
@@ -54,7 +65,8 @@ class _ClubLentaContentState extends ConsumerState<ClubLentaContent> {
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    // ───── Отписываемся от родительского контроллера ─────
+    widget.scrollController.removeListener(_onScroll);
     super.dispose();
   }
 
@@ -147,8 +159,9 @@ class _ClubLentaContentState extends ConsumerState<ClubLentaContent> {
 
   /// ──────────────────────── Обработка скролла для пагинации ────────────────────────
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.8 &&
+    if (!widget.scrollController.hasClients) return;
+    if (widget.scrollController.position.pixels >=
+            widget.scrollController.position.maxScrollExtent * 0.8 &&
         !_isLoading &&
         _hasMore) {
       _loadActivities();
@@ -156,141 +169,142 @@ class _ClubLentaContentState extends ConsumerState<ClubLentaContent> {
   }
 
   /// ──────────────────────── Обновление ленты ────────────────────────
-  void refreshLenta() {
-    _loadActivities(reset: true);
-  }
+  Future<void> refreshLenta() => _loadActivities(reset: true);
 
   @override
   Widget build(BuildContext context) {
     if (_error != null && _activities.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                CupertinoIcons.exclamationmark_triangle,
-                size: 48,
-                color: AppColors.getIconSecondaryColor(context),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                _error!,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.getTextSecondaryColor(context),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.exclamationmark_triangle,
+                  size: 48,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => _loadActivities(reset: true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.button,
-                  foregroundColor: AppColors.getSurfaceColor(context),
+                const SizedBox(height: 16),
+                Text(
+                  _error!,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                child: const Text('Повторить'),
-              ),
-            ],
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _loadActivities(reset: true),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.button,
+                    foregroundColor: AppColors.getSurfaceColor(context),
+                  ),
+                  child: const Text('Повторить'),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
     if (_activities.isEmpty && !_isLoading) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                CupertinoIcons.news,
-                size: 48,
-                color: AppColors.getIconSecondaryColor(context),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Лента пуста',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.getTextPrimaryColor(context),
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  CupertinoIcons.news,
+                  size: 48,
+                  color: AppColors.getIconSecondaryColor(context),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Участники клуба еще не добавили активности',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.getTextSecondaryColor(context),
+                const SizedBox(height: 16),
+                Text(
+                  'Лента пуста',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Участники клуба еще не добавили активности',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.getTextSecondaryColor(context),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
-    // Отображаем список постов
-    return RefreshIndicator(
-      onRefresh: () => _loadActivities(reset: true),
-      child: ListView.builder(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(
-          parent: BouncingScrollPhysics(),
+    // Отображаем список постов (скролл управляется родителем)
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      sliver: SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) {
+            if (index >= _activities.length) {
+              return const Padding(
+                padding: EdgeInsets.all(16),
+                child: Center(
+                  child: CupertinoActivityIndicator(radius: 10),
+                ),
+              );
+            }
+
+            final activity = _activities[index];
+
+            if (_currentUserId == null) {
+              return const SizedBox.shrink();
+            }
+
+            // Отображаем пост или активность в зависимости от типа
+            if (activity.type == 'post') {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: PostCard(
+                  post: activity,
+                  currentUserId: _currentUserId!,
+                  onEdit: () {
+                    // TODO: Реализовать редактирование поста
+                  },
+                  onDelete: () {
+                    // Удаляем пост из списка после успешного удаления
+                    setState(() {
+                      _activities.removeAt(index);
+                    });
+                  },
+                ),
+              );
+            } else {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ActivityBlock(
+                  activity: activity,
+                  currentUserId: _currentUserId!,
+                ),
+              );
+            }
+          },
+          childCount: _activities.length + (_hasMore ? 1 : 0),
         ),
-        padding: const EdgeInsets.all(8),
-        itemCount: _activities.length + (_hasMore ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= _activities.length) {
-            return const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: CupertinoActivityIndicator(radius: 10),
-              ),
-            );
-          }
-
-          final activity = _activities[index];
-          
-          if (_currentUserId == null) {
-            return const SizedBox.shrink();
-          }
-
-          // Отображаем пост или активность в зависимости от типа
-          if (activity.type == 'post') {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: PostCard(
-                post: activity,
-                currentUserId: _currentUserId!,
-                onEdit: () {
-                  // TODO: Реализовать редактирование поста
-                },
-                onDelete: () {
-                  // Удаляем пост из списка после успешного удаления
-                  setState(() {
-                    _activities.removeAt(index);
-                  });
-                },
-              ),
-            );
-          } else {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: ActivityBlock(
-                activity: activity,
-                currentUserId: _currentUserId!,
-              ),
-            );
-          }
-        },
       ),
     );
   }

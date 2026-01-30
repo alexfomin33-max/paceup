@@ -3,10 +3,8 @@
 // Сервис для сохранённых маршрутов: сохранение из тренировки, список избранного.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import 'api_service.dart';
-import '../config/app_config.dart';
 import '../utils/static_map_url_builder.dart';
 
 /// Элемент маршрута из API (список «Избранное — Маршруты»).
@@ -334,7 +332,7 @@ class RoutesService {
     );
     final list = response['routes'];
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => SavedRouteItem.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
@@ -360,7 +358,7 @@ class RoutesService {
     final raw = response['route_id'];
     if (raw == null) return null;
     if (raw is int) return raw;
-    if (raw is num) return (raw as num).toInt();
+    if (raw is num) return raw.toInt();
     return null;
   }
 
@@ -379,7 +377,7 @@ class RoutesService {
     );
     final list = response['workouts'];
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => RouteWorkoutItem.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
@@ -450,7 +448,7 @@ class RoutesService {
     );
     final list = response['results'];
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => RouteLeaderboardItem.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
@@ -476,7 +474,7 @@ class RoutesService {
     );
     final list = response['participants_by_date'];
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => RouteParticipantsByDate.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))

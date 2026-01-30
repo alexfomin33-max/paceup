@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/theme/radius.dart';
+
 
 /// Горизонтальные вкладки без индикатора (ползунка).
 /// Синхронизируется с PageView через [value]; для будущей совместимости

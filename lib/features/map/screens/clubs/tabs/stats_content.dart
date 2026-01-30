@@ -10,7 +10,12 @@ import '../../../../profile/screens/profile_screen.dart';
 
 class CoffeeRunVldStatsContent extends ConsumerStatefulWidget {
   final int clubId;
-  const CoffeeRunVldStatsContent({super.key, required this.clubId});
+  final ScrollController scrollController;
+  const CoffeeRunVldStatsContent({
+    super.key,
+    required this.clubId,
+    required this.scrollController,
+  });
 
   @override
   ConsumerState<CoffeeRunVldStatsContent> createState() =>
@@ -28,19 +33,20 @@ class _CoffeeRunVldStatsContentState
   bool _hasMore = true;
   int _currentPage = 1;
   String? _error;
-  final ScrollController _scrollController = ScrollController();
   String? _currentPeriod; // Для отслеживания смены периода
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
+    // ───── Подписываемся на скролл родительского контроллера ─────
+    widget.scrollController.addListener(_onScroll);
     _loadStatistics(reset: true);
   }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    // ───── Отписываемся от родительского контроллера ─────
+    widget.scrollController.removeListener(_onScroll);
     super.dispose();
   }
 
@@ -50,11 +56,17 @@ class _CoffeeRunVldStatsContentState
     if (oldWidget.clubId != widget.clubId) {
       _loadStatistics(reset: true);
     }
+    // ───── Если контроллер скролла изменился, переназначаем слушатель ─────
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_onScroll);
+      widget.scrollController.addListener(_onScroll);
+    }
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.8 &&
+    if (!widget.scrollController.hasClients) return;
+    if (widget.scrollController.position.pixels >=
+            widget.scrollController.position.maxScrollExtent * 0.8 &&
         !_loadingMore &&
         !_loading &&
         _hasMore) {
@@ -264,8 +276,7 @@ class _CoffeeRunVldStatsContentState
           Stack(
             children: [
               ListView.builder(
-                controller: _scrollController,
-                physics: const BouncingScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 padding: EdgeInsets.zero,
                 itemCount: _statistics.length + (_loadingMore ? 1 : 0),

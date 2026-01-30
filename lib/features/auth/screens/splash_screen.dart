@@ -9,7 +9,7 @@ import '../../../core/services/garmin_sync_service.dart';
 import '../../../core/services/sync_provider_service.dart';
 import '../../../core/services/health_sync_service.dart';
 import '../../../core/utils/error_handler.dart';
-import '../../../providers/services/api_provider.dart';
+
 import '../../../providers/services/auth_provider.dart';
 import '../../../providers/services/fcm_provider.dart';
 

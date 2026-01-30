@@ -14,9 +14,11 @@ import '../../../../profile/screens/profile_screen.dart';
 class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
   final int clubId;
   final bool isOwner; // Является ли текущий пользователь владельцем клуба
+  final ScrollController scrollController;
   const CoffeeRunVldMembersContent({
     super.key,
     required this.clubId,
+    required this.scrollController,
     this.isOwner = false,
   });
 
@@ -28,7 +30,6 @@ class CoffeeRunVldMembersContent extends ConsumerStatefulWidget {
 class CoffeeRunVldMembersContentState
     extends ConsumerState<CoffeeRunVldMembersContent> {
   final List<Map<String, dynamic>> _members = [];
-  final ScrollController _scrollController = ScrollController();
   bool _loading = false;
   bool _hasMore = true;
   int _currentPage = 1;
@@ -38,7 +39,18 @@ class CoffeeRunVldMembersContentState
   void initState() {
     super.initState();
     _loadMembers();
-    _scrollController.addListener(_onScroll);
+    // ───── Подписываемся на скролл родительского контроллера ─────
+    widget.scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void didUpdateWidget(CoffeeRunVldMembersContent oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // ───── Если контроллер скролла изменился, переназначаем слушатель ─────
+    if (oldWidget.scrollController != widget.scrollController) {
+      oldWidget.scrollController.removeListener(_onScroll);
+      widget.scrollController.addListener(_onScroll);
+    }
   }
 
   /// ──────────────────────── Обновление списка участников (сброс и перезагрузка) ────────────────────────
@@ -55,14 +67,16 @@ class CoffeeRunVldMembersContentState
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    // ───── Отписываемся от родительского контроллера ─────
+    widget.scrollController.removeListener(_onScroll);
     super.dispose();
   }
 
   /// ──────────────────────── Обработка прокрутки для подгрузки новых участников ────────────────────────
   void _onScroll() {
-    if (_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent * 0.8 &&
+    if (!widget.scrollController.hasClients) return;
+    if (widget.scrollController.position.pixels >=
+            widget.scrollController.position.maxScrollExtent * 0.8 &&
         !_loading &&
         _hasMore) {
       _loadMembers();
@@ -286,8 +300,7 @@ class CoffeeRunVldMembersContentState
     }
 
     return ListView.builder(
-      controller: _scrollController,
-      physics: const BouncingScrollPhysics(),
+      physics: const NeverScrollableScrollPhysics(),
       shrinkWrap: true,
       padding: EdgeInsets.zero,
       itemCount: _members.length + (_loading ? 1 : 0),

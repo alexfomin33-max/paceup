@@ -250,7 +250,7 @@ class _ResultsList extends ConsumerWidget {
         child: SelectableText.rich(
           TextSpan(
             text: 'Ошибка загрузки: ${error.toString()}',
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               color: AppColors.error,

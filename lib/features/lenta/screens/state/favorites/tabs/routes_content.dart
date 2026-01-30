@@ -600,7 +600,6 @@ class _RouteItem {
     required this.difficulty,
   });
 }
-
 // — утилита: перевод enum сложности в строковый ключ для экрана описания
 String _difficultyKey(_Difficulty d) {
   switch (d) {
@@ -612,3 +611,4 @@ String _difficultyKey(_Difficulty d) {
       return 'hard';
   }
 }
+

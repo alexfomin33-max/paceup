@@ -170,6 +170,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (text.contains('закончил заплыв') || text.contains('заплыв')) {
       return Icons.pool;
     }
+    // Проверяем лыжи перед заездом, чтобы приоритет был у лыж
+    if (text.contains('лыжах') || text.contains('лыж') || text.contains('лыжный')) {
+      return Icons.downhill_skiing;
+    }
     if (text.contains('закончил заезд') || text.contains('заезд') || text.contains('велотренажер')) {
       return Icons.pedal_bike;
     }
