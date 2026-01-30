@@ -101,6 +101,15 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
     return markedDays;
   }
 
+  // ── Фильтрация событий по выбранному месяцу календаря
+  List<Event> _getFilteredEventsByMonth(List<Event> events) {
+    return events.where((event) {
+      final eventDate = event.parsedDate;
+      if (eventDate == null) return false;
+      return eventDate.year == month.year && eventDate.month == month.month;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     // Получаем текущего пользователя из AuthService
@@ -257,36 +266,61 @@ class _MyEventsContentState extends ConsumerState<MyEventsContent> {
               else
                 // ── Карточный список с зазором 2 px (как в Закладках/Маршрутах)
                 // ── Горизонтальный отступ как у календаря
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverList.separated(
-                    itemCount: eventsState.events.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
-                    itemBuilder: (context, i) {
-                      final event = eventsState.events[i];
-                      return GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () async {
-                          final result = await Navigator.of(context)
-                              .push<dynamic>(
-                                TransparentPageRoute(
-                                  builder: (_) =>
-                                      EventDetailScreen2(eventId: event.id),
-                                ),
-                              );
-                          // Если событие было удалено или обновлено, обновляем список
-                          if (result == true || result == 'deleted') {
-                            if (mounted) {
-                              await ref
-                                  .read(myEventsProvider(userId).notifier)
-                                  .refresh();
-                            }
-                          }
-                        },
-                        child: _EventCard(event: event),
+                // ── Фильтруем события по выбранному месяцу календаря
+                Builder(
+                  builder: (context) {
+                    final filteredEvents = _getFilteredEventsByMonth(eventsState.events);
+                    
+                    // Если для выбранного месяца нет событий, показываем пустое состояние
+                    if (filteredEvents.isEmpty) {
+                      return SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Center(
+                            child: Text(
+                              'В ${_monthTitle(month).toLowerCase()} нет событий',
+                              // ── Цвет текста из темы
+                              style: AppTextStyles.h14w4.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ),
+                        ),
                       );
-                    },
-                  ),
+                    }
+                    
+                    return SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: SliverList.separated(
+                        itemCount: filteredEvents.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, i) {
+                          final event = filteredEvents[i];
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () async {
+                              final result = await Navigator.of(context)
+                                  .push<dynamic>(
+                                    TransparentPageRoute(
+                                      builder: (_) =>
+                                          EventDetailScreen2(eventId: event.id),
+                                    ),
+                                  );
+                              // Если событие было удалено или обновлено, обновляем список
+                              if (result == true || result == 'deleted') {
+                                if (mounted) {
+                                  await ref
+                                      .read(myEventsProvider(userId).notifier)
+                                      .refresh();
+                                }
+                              }
+                            },
+                            child: _EventCard(event: event),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 ),
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
