@@ -280,15 +280,20 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
                                 );
                               }
 
-                              // Если экипировка не выбрана и тип активности позволяет выбрать экипировку
+                              // Если экипировка не выбрана — блок как на экране добавления
                               if (_shouldShowEquipment()) {
+                                final addTitle = widget.activity.type
+                                            .toLowerCase() ==
+                                        'bike'
+                                    ? 'Добавить велосипед'
+                                    : 'Добавить кроссовки';
                                 return Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const SizedBox(height: 30),
-                                    const Text(
-                                      'Экипировка',
-                                      style: TextStyle(
+                                    Text(
+                                      addTitle,
+                                      style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -1080,7 +1085,9 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             value: _selectedEquipment,
             isExpanded: true,
             hint: Text(
-              'Выберите экипировку',
+              widget.activity.type.toLowerCase() == 'bike'
+                  ? 'Выберите велосипед'
+                  : 'Выберите кроссовки',
               style: AppTextStyles.h14w4.copyWith(
                 color: AppColors.getTextPlaceholderColor(context),
               ),
@@ -1104,13 +1111,75 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
               final displayName = equipment.brand.isNotEmpty
                   ? '${equipment.brand} ${equipment.name}'
                   : equipment.name;
+              final bool isBike =
+                  _activityTypeToEquipmentType(widget.activity.type) == 'bike';
+              final String defaultImageAsset = isBike
+                  ? 'assets/add_bike.png'
+                  : 'assets/add_boots.png';
+              final bool hasValidImageUrl =
+                  equipment.img.isNotEmpty &&
+                  (equipment.img.startsWith('http://') ||
+                      equipment.img.startsWith('https://'));
+
               return DropdownMenuItem<Equipment>(
                 value: equipment,
-                child: Text(
-                  displayName,
-                  style: AppTextStyles.h14w4.copyWith(
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
+                child: Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: SizedBox(
+                        height: 64,
+                        width: 64,
+                        child: hasValidImageUrl
+                            ? CachedNetworkImage(
+                                imageUrl: equipment.img,
+                                fit: BoxFit.contain,
+                                memCacheWidth:
+                                    (64 * MediaQuery.of(context).devicePixelRatio)
+                                        .round(),
+                                maxWidthDiskCache:
+                                    (64 * MediaQuery.of(context).devicePixelRatio)
+                                        .round(),
+                                placeholder: (context, url) => Container(
+                                  width: 64,
+                                  height: 64,
+                                  color: AppColors.getBackgroundColor(context),
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 10,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                errorWidget: (context, url, error) =>
+                                    Image.asset(
+                                  defaultImageAsset,
+                                  height: 64,
+                                  width: 64,
+                                  fit: BoxFit.contain,
+                                ),
+                              )
+                            : Image.asset(
+                                defaultImageAsset,
+                                height: 64,
+                                width: 64,
+                                fit: BoxFit.contain,
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        displayName,
+                        style: AppTextStyles.h14w4.copyWith(
+                          color: AppColors.getTextPrimaryColor(context),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
               );
             }).toList(),

@@ -246,6 +246,39 @@ class Activity {
     );
   }
 
+  /// Создаёт копию с обновлённым списком экипировки (для оптимистичного открепления)
+  Activity copyWithEquipments(List<Equipment> newEquipments) {
+    return Activity(
+      id: id,
+      type: type,
+      dateStart: dateStart,
+      dateEnd: dateEnd,
+      lentaId: lentaId,
+      lentaDate: lentaDate,
+      userId: userId,
+      userName: userName,
+      userAvatar: userAvatar,
+      likes: likes,
+      comments: comments,
+      userGroup: userGroup,
+      togetherCount: togetherCount,
+      equipments: newEquipments,
+      stats: stats,
+      points: points,
+      postDateText: postDateText,
+      postMediaUrl: postMediaUrl,
+      postContent: postContent,
+      postTitle: postTitle,
+      islike: islike,
+      mediaImages: mediaImages,
+      mediaVideos: mediaVideos,
+      mapSortOrder: mapSortOrder,
+      clubId: clubId,
+      clubName: clubName,
+      clubLogoUrl: clubLogoUrl,
+    );
+  }
+
   /// Создаёт копию с обновлёнными медиафайлами
   Activity copyWithMedia({List<String>? images, List<String>? videos}) {
     return Activity(

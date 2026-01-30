@@ -21,6 +21,7 @@ class EquipmentChip extends StatefulWidget {
   final int activityId; // ID активности для обновления эквипа
   final double activityDistance; // дистанция активности в километрах
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
+  final VoidCallback? onEquipmentDetached; // оптимистичное скрытие блока при откреплении
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
   final Function(al.Equipment)?
   onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
@@ -39,6 +40,7 @@ class EquipmentChip extends StatefulWidget {
     required this.activityId,
     this.activityDistance = 0.0,
     this.onEquipmentChanged,
+    this.onEquipmentDetached,
     this.showMenuButton =
         true, // по умолчанию показываем кнопку для обратной совместимости
     this.onEquipmentSelected,
@@ -262,6 +264,7 @@ class _EquipmentChipState extends State<EquipmentChip> {
                           activityId: widget.activityId,
                           activityDistance: widget.activityDistance,
                           onEquipmentChanged: widget.onEquipmentChanged,
+                          onEquipmentDetached: widget.onEquipmentDetached,
                           onEquipmentSelected: widget.onEquipmentSelected,
                         ),
                         child: Container(

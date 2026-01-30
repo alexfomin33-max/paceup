@@ -342,6 +342,14 @@ class _ActivityDescriptionPageState
     return widget.activity;
   }
 
+  /// Оптимистичное открепление: сразу скрываем блок с эквипом (без ожидания API).
+  void _optimisticDetachEquipment() {
+    if (!mounted) return;
+    setState(() {
+      _updatedActivity = _currentActivity.copyWithEquipments([]);
+    });
+  }
+
   /// Обновляет активность после замены экипировки
   Future<void> _refreshActivityAfterEquipmentChange() async {
     final userId = widget.currentUserId > 0
@@ -1166,31 +1174,27 @@ class _ActivityDescriptionPageState
                 ),
 
                 // ────────────────────────────────────────────────────────────────
-                // 📦 ЭКИПИРОВКА: на всю ширину экрана, под блоком с хэдером
+                // 📦 ЭКИПИРОВКА: показываем только если у тренировки есть эквип
                 // ────────────────────────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: Container(
-                    width: double.infinity,
-                    // ────────────────────────────────────────────────────────────────
-                    // 🌓 ФОН: используем surface цвет (белый в светлой теме)
-                    // ────────────────────────────────────────────────────────────────
-                    decoration: BoxDecoration(
-                      color: AppColors.getSurfaceColor(context),
-                    ),
-                    child: ab.EquipmentChip(
-                      items: a.equipments,
-                      userId: a.userId,
-                      activityType: a.type,
-                      activityId: a.id,
-                      activityDistance: (stats?.distance ?? 0.0) / 1000.0,
-                      // ────────────────────────────────────────────────────────────────
-                      // 🔹 ПОКАЗ КНОПКИ МЕНЮ: только для владельца тренировки
-                      // ────────────────────────────────────────────────────────────────
-                      showMenuButton: a.userId == widget.currentUserId,
-                      onEquipmentChanged: _refreshActivityAfterEquipmentChange,
+                if (a.equipments.isNotEmpty)
+                  SliverToBoxAdapter(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.getSurfaceColor(context),
+                      ),
+                      child: ab.EquipmentChip(
+                        items: a.equipments,
+                        userId: a.userId,
+                        activityType: a.type,
+                        activityId: a.id,
+                        activityDistance: (stats?.distance ?? 0.0) / 1000.0,
+                        showMenuButton: a.userId == widget.currentUserId,
+                        onEquipmentChanged: _refreshActivityAfterEquipmentChange,
+                        onEquipmentDetached: _optimisticDetachEquipment,
+                      ),
                     ),
                   ),
-                ),
 
                 // ────────────────────────────────────────────────────────────────
                 // 📝 НАЗВАНИЕ И ОПИСАНИЕ ТРЕНИРОВКИ: после блока с эквипом

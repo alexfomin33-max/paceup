@@ -8,6 +8,7 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../../../domain/models/activity_lenta.dart';
 import '../../../../lenta/screens/widgets/post/post_card.dart';
 import '../../../../lenta/screens/widgets/activity/activity_block.dart';
+import '../../../../lenta/screens/widgets/comments_bottom_sheet.dart';
 import '../../../../../providers/services/auth_provider.dart';
 
 /// Контент вкладки "Лента" для детальной страницы клуба
@@ -290,6 +291,39 @@ class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
                     setState(() {
                       _activities.removeAt(index);
                     });
+                  },
+                  onOpenComments: () {
+                    // Открываем bottom sheet с комментариями к посту
+                    showCommentsBottomSheet(
+                      context: context,
+                      itemType: 'post',
+                      itemId: activity.id,
+                      currentUserId: _currentUserId!,
+                      lentaId: activity.lentaId,
+                      onCommentAdded: () {
+                        setState(() {
+                          final idx = _activities
+                              .indexWhere((a) => a.lentaId == activity.lentaId);
+                          if (idx >= 0) {
+                            _activities[idx] = _activities[idx]
+                                .copyWithComments(
+                                    _activities[idx].comments + 1);
+                          }
+                        });
+                      },
+                      onCommentDeleted: () {
+                        setState(() {
+                          final idx = _activities
+                              .indexWhere((a) => a.lentaId == activity.lentaId);
+                          if (idx >= 0) {
+                            final newCount = (_activities[idx].comments - 1)
+                                .clamp(0, 0x7FFFFFFF);
+                            _activities[idx] = _activities[idx]
+                                .copyWithComments(newCount);
+                          }
+                        });
+                      },
+                    );
                   },
                 ),
               );

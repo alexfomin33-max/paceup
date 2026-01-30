@@ -31,6 +31,16 @@ class AuthService {
   Future<String?> getRefreshToken() async =>
       await storage.read(key: "refresh_token");
 
+  /// 🔹 Получение номера телефона из безопасного хранилища
+  /// Нужен для экрана ввода PIN при холодном старте (check_pin_code по phone)
+  Future<String?> getPhone() async => await storage.read(key: "user_phone");
+
+  /// 🔹 Сохранение номера телефона в безопасное хранилище
+  /// Вызывается при успешном входе/регистрации перед переходом на экран PIN
+  Future<void> savePhone(String phone) async {
+    await storage.write(key: "user_phone", value: phone);
+  }
+
   /// 🔹 Получение ID пользователя из безопасного хранилища
   Future<int?> getUserId() async {
     try {

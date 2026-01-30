@@ -28,6 +28,7 @@ class EquipmentPopup {
     required int activityId,
     required double activityDistance,
     VoidCallback? onEquipmentChanged,
+    VoidCallback? onEquipmentDetached, // оптимистичное скрытие блока при откреплении
     Function(al.Equipment)?
     onEquipmentSelected, // callback для выбора экипировки (для экрана добавления)
   }) {
@@ -80,6 +81,7 @@ class EquipmentPopup {
         activityId: activityId,
         activityDistance: activityDistance,
         onEquipmentChanged: onEquipmentChanged,
+        onEquipmentDetached: onEquipmentDetached,
         onEquipmentSelected: onEquipmentSelected,
       ),
     );
@@ -101,6 +103,7 @@ class _AnimatedPopup extends StatefulWidget {
   final int activityId;
   final double activityDistance;
   final VoidCallback? onEquipmentChanged;
+  final VoidCallback? onEquipmentDetached;
   final Function(al.Equipment)? onEquipmentSelected;
 
   const _AnimatedPopup({
@@ -114,8 +117,9 @@ class _AnimatedPopup extends StatefulWidget {
     required this.userId,
     required this.activityType,
     required this.activityId,
-    required this.activityDistance,
+    required     this.activityDistance,
     this.onEquipmentChanged,
+    this.onEquipmentDetached,
     this.onEquipmentSelected,
   });
 
@@ -221,10 +225,10 @@ class _AnimatedPopupState extends State<_AnimatedPopup>
                         activityId: widget.activityId,
                         activityDistance: widget.activityDistance,
                         onEquipmentChanged: () {
-                          widget.onDismiss(); // закрываем попап
-                          widget.onEquipmentChanged
-                              ?.call(); // вызываем callback
+                          widget.onDismiss();
+                          widget.onEquipmentChanged?.call();
                         },
+                        onEquipmentDetached: widget.onEquipmentDetached,
                         onEquipmentSelected: widget.onEquipmentSelected,
                         onDismiss: widget.onDismiss,
                       ),
@@ -252,6 +256,7 @@ class _PopupContent extends ConsumerStatefulWidget {
   final int activityId;
   final double activityDistance;
   final VoidCallback? onEquipmentChanged;
+  final VoidCallback? onEquipmentDetached;
   final Function(al.Equipment)? onEquipmentSelected;
   final VoidCallback? onDismiss;
 
@@ -262,6 +267,7 @@ class _PopupContent extends ConsumerStatefulWidget {
     required this.activityId,
     required this.activityDistance,
     this.onEquipmentChanged,
+    this.onEquipmentDetached,
     this.onEquipmentSelected,
     this.onDismiss,
   });
@@ -378,6 +384,36 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
     return '';
   }
 
+  /// Открепляет эквип от тренировки: activities.equip_id = null,
+  /// пересчёт пробега у эквипа и обновление данных в БД.
+  /// Сначала вызываем onEquipmentDetached (блок исчезает сразу), затем API в фоне.
+  Future<void> _detachEquipment() async {
+    if (widget.activityId <= 0) return;
+
+    // Оптимистичное обновление: блок с эквипом исчезает сразу
+    widget.onEquipmentDetached?.call();
+    widget.onDismiss?.call();
+
+    try {
+      final auth = ref.read(authServiceProvider);
+      final userId = await auth.getUserId();
+      if (userId == null) return;
+
+      final api = ref.read(apiServiceProvider);
+      await api.post(
+        '/detach_activity_equipment.php',
+        body: {
+          'user_id': userId.toString(),
+          'activity_id': widget.activityId.toString(),
+        },
+      );
+      widget.onEquipmentChanged?.call();
+    } catch (_) {
+      // Ошибка — обновляем ленту, чтобы вернуть корректное состояние
+      widget.onEquipmentChanged?.call();
+    }
+  }
+
   /// Заменяет эквип в активности: обновляет activities.equip_id и пересчитывает дистанцию
   /// Если activityId == 0 (активность еще не создана), просто вызывает onEquipmentSelected
   Future<void> _replaceEquipment(al.Equipment newEquipment) async {
@@ -472,17 +508,17 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
       );
     }
 
-    // Если нет эквипа — показываем сообщение
+    // Если нет другого эквипа — показываем только «Открепить» (если тренировка уже создана)
     if (_allEquipment.isEmpty) {
+      if (widget.activityId > 0) {
+        return _DetachRow(onTap: _detachEquipment);
+      }
       return SizedBox(
         height: 56,
         child: Center(
           child: Text(
             'Нет другого эквипа',
             style: AppTextStyles.h12w4.copyWith(
-              // ────────────────────────────────────────────────────────────────
-              // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет текста пустого состояния
-              // ────────────────────────────────────────────────────────────────
               color: AppColors.getTextSecondaryColor(context),
             ),
           ),
@@ -495,15 +531,22 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
     // ────────────────────────────────────────────────────────────────
     final displayItems = _allEquipment.take(5).toList();
     final List<Widget> children = [];
+
+    // Пункт «Открепить» только для существующей тренировки (activityId > 0)
+    if (widget.activityId > 0) {
+      children.add(
+        _DetachRow(
+          onTap: _detachEquipment,
+        ),
+      );
+    }
+
     for (int i = 0; i < displayItems.length; i++) {
-      if (i > 0) {
+      if (children.isNotEmpty) {
         children.add(
           Divider(
             height: 1,
             thickness: 0.5,
-            // ────────────────────────────────────────────────────────────────
-            // 🌓 ТЕМНАЯ ТЕМА: адаптивный цвет разделителя
-            // ────────────────────────────────────────────────────────────────
             color: AppColors.getDividerColor(context),
             indent: 8,
             endIndent: 8,
@@ -511,8 +554,6 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
         );
       }
       final item = displayItems[i];
-      // Формируем полное название: бренд + название обуви
-      // Если бренд есть — показываем "Бренд Название", иначе только название
       final String displayName = (item.brand.isNotEmpty && item.name.isNotEmpty)
           ? '${item.brand} ${item.name}'
           : item.name;
@@ -527,6 +568,46 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
     }
 
     return Column(children: children);
+  }
+}
+
+/// Строка «Открепить» в попапе экипировки (56px).
+class _DetachRow extends StatelessWidget {
+  final VoidCallback? onTap;
+
+  const _DetachRow({this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 56,
+      width: double.infinity,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  CupertinoIcons.minus_circle,
+                  size: 20,
+                  color: AppColors.getIconSecondaryColor(context),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Открепить',
+                  style: AppTextStyles.h14w4.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

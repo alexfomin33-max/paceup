@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/api_service.dart';
 import '../../../providers/services/api_provider.dart';
+import '../../../providers/services/auth_provider.dart';
 import '../../lenta/providers/lenta_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:developer' as developer;
@@ -109,14 +110,58 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
 
   /// 🔹 Проверка PIN-кода через API
   Future<void> _checkPinCode() async {
-    // 🔹 Получаем userId и phone из аргументов маршрута
+    // 🔹 Получаем userId и phone из аргументов маршрута или из AuthService (холодный старт)
     final args = ModalRoute.of(context)?.settings.arguments;
-    final userId = (args is Map && args.containsKey('userId'))
+    int? userId = (args is Map && args.containsKey('userId'))
         ? args['userId'] as int
         : null;
-    final phone = (args is Map && args.containsKey('phone'))
+    String phone = (args is Map && args.containsKey('phone'))
         ? args['phone'] as String
         : '';
+    if (phone.isEmpty) {
+      final auth = ref.read(authServiceProvider);
+      phone = await auth.getPhone() ?? '';
+    }
+    // 🔹 Если телефона нет в хранилище (старый вход до savePhone) — подгружаем по API
+    // Сначала обновляем access_token при необходимости (он живёт ~15 мин, при холодном старте мог истечь)
+    if (phone.isEmpty) {
+      final auth = ref.read(authServiceProvider);
+      try {
+        await auth.validateToken();
+        if (!mounted) return;
+        final api = ref.read(apiServiceProvider);
+        final data = await api.post('/get_my_phone.php');
+        if (data['ok'] == true && data['phone'] != null) {
+          phone = data['phone'].toString();
+          await auth.savePhone(phone);
+        }
+      } catch (e) {
+        if (kDebugMode) debugPrint('get_my_phone error: $e');
+        // 🔹 Токены недействительны (access истёк, refresh не обновился) — выход и переход на вход
+        final err = e.toString().toLowerCase();
+        if (err.contains('токен') ||
+            err.contains('token') ||
+            err.contains('refresh_token') ||
+            err.contains('401') ||
+            err.contains('недействителен')) {
+          if (!mounted) return;
+          await auth.logout();
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Сессия истекла. Войдите снова.'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          Navigator.pushReplacementNamed(context, '/home');
+          return;
+        }
+      }
+    }
+    if (userId == null) {
+      final auth = ref.read(authServiceProvider);
+      userId = await auth.getUserId();
+    }
 
     if (userId == null || phone.isEmpty) {
       if (mounted) {
