@@ -3554,14 +3554,15 @@ class _ChartMetricsHeader extends StatelessWidget {
 }
 
 /// ────────────────────────────────────────────────────────────────────
-/// 🎨 КНОПКА-ИКОНКА: иконка для AppBar без фонового кружка
+/// 🎨 КНОПКА-ИКОНКА: полупрозрачный кружок + иконка (как на экране профиля)
 /// Плавно меняет цвет при скролле: от светлого (на карте) к темному (в AppBar)
+/// Кружок исчезает при скролле (прозрачный фон в свёрнутом AppBar)
 /// ────────────────────────────────────────────────────────────────────
 class _CircleAppIcon extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final bool isScrolled;
-  final double fadeOpacity; // Плавное изменение цвета иконки при скролле
+  final double fadeOpacity; // Плавное изменение цвета иконки и кружка при скролле
   const _CircleAppIcon({
     required this.icon,
     required this.isScrolled,
@@ -3582,13 +3583,29 @@ class _CircleAppIcon extends StatelessWidget {
       (1 - fadeOpacity.clamp(0.0, 1.0)),
     );
 
+    // Полупрозрачный кружок: как на экране профиля; при скролле — прозрачный
+    final backgroundColor = isScrolled
+        ? Colors.transparent
+        : AppColors.getTextPrimaryColor(context).withValues(
+            alpha: 0.5 * fadeOpacity.clamp(0.0, 1.0),
+          );
+
     return SizedBox(
-      width: 46.0,
-      height: 44.0,
+      width: 38.0,
+      height: 38.0,
       child: GestureDetector(
         onTap: onPressed ?? () {},
         behavior: HitTestBehavior.opaque,
-        child: Center(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
           child: Icon(icon, size: 20, color: iconColor),
         ),
       ),

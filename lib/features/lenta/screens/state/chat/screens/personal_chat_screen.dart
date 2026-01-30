@@ -288,9 +288,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       if (response['success'] == true) {
         final List<dynamic> messagesJson =
             response['messages'] as List<dynamic>;
+        // API возвращает ORDER BY created_at DESC (сначала новые) — используем как есть:
+        // при reverse: true индекс 0 рисуется внизу, т.о. сверху старые, снизу новые
         final messages = messagesJson
             .map((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
-            .toList(); // Сообщения от старых к новым (старые в начале, новые в конце)
+            .toList();
 
         // Обновляем last_message_id (берем самый последний ID)
         if (messages.isNotEmpty) {
@@ -366,9 +368,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
         if (!mounted) return;
         setState(() {
-          // При reverse: true старые сообщения добавляются в начало списка
-          // чтобы они отображались выше на экране
-          _messages.insertAll(0, newMessages);
+          // При reverse: true и порядке newest-first старые сообщения
+          // добавляем в конец списка (отображаются выше на экране)
+          _messages.addAll(newMessages);
           _hasMore = response['has_more'] as bool? ?? false;
           _offset += newMessages.length;
           _isLoadingMore = false;
@@ -497,9 +499,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         );
 
         setState(() {
-          // При reverse: true новые сообщения добавляем в конец списка,
-          // чтобы они отображались снизу на экране
-          _messages.add(tempMessage);
+          // При reverse: true индекс 0 внизу — добавляем в начало,
+          // чтобы новое сообщение сразу отображалось внизу
+          _messages.insert(0, tempMessage);
         });
 
         // Прокрутка вниз (при reverse: true это позиция 0)
@@ -534,8 +536,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         // Обновляем временное сообщение с реальными данными
         if (!mounted) return;
         setState(() {
-          // Ищем последнее временное сообщение (id == -1) в конце списка
-          final index = _messages.lastIndexWhere((m) => m.id == -1);
+          // Ищем временное сообщение (id == -1), при insert(0) оно в начале
+          final index = _messages.indexWhere((m) => m.id == -1);
           if (index != -1) {
             _messages[index] = ChatMessage(
               id: messageId,
@@ -622,11 +624,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           date: _formatDateForBackend(now), // Форматируем дату на клиенте для временного сообщения
         );
 
-    setState(() {
-      // При reverse: true новые сообщения добавляем в конец списка,
-      // чтобы они отображались снизу на экране
-      _messages.add(tempMessage);
-    });
+        setState(() {
+          // При reverse: true индекс 0 внизу — добавляем в начало,
+          // чтобы новое сообщение сразу отображалось внизу
+          _messages.insert(0, tempMessage);
+        });
 
     // Прокрутка вниз (при reverse: true это позиция 0)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -693,8 +695,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         // Обновляем временное сообщение с реальными данными
         if (!mounted) return;
         setState(() {
-          // Ищем последнее временное сообщение (id == -1) в конце списка
-          final index = _messages.lastIndexWhere((m) => m.id == -1);
+          // Ищем временное сообщение (id == -1), при insert(0) оно в начале
+          final index = _messages.indexWhere((m) => m.id == -1);
           if (index != -1) {
             _messages[index] = ChatMessage(
               id: messageId,
@@ -872,9 +874,12 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
           if (uniqueNewMessages.isNotEmpty) {
             setState(() {
-              // При reverse: true новые сообщения добавляем в конец списка,
-              // чтобы они отображались внизу экрана
-              _messages.addAll(uniqueNewMessages);
+              // Порядок newest-first: новые с сервера (хронология) вставляем
+              // в начало, чтобы отображались внизу при reverse: true
+              _messages.insertAll(
+                0,
+                uniqueNewMessages.reversed,
+              );
               // Всегда обновляем на максимальный ID, если он больше текущего
               if (maxNewId > (lastId)) {
                 _lastMessageId = maxNewId;
