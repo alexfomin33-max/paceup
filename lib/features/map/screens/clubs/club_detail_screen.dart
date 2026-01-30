@@ -1,4 +1,6 @@
 // lib/features/map/screens/clubs/club_detail_screen.dart
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -339,42 +341,45 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     }
   }
 
-  /// ──────────────────────── Кнопка вступления (зафиксированная внизу) ────────────────────────
+  /// ──────────────────────── Кнопка вступления (стеклянный эффект) ────────────────────────
   Widget _buildJoinButton() {
+    // ─────────── Данные для отображения текста кнопки
     final isOpen = _clubData?['is_open'] as bool? ?? true;
+    // ─────────── Цвет текста для стеклянного фона
     final textColor = AppColors.getSurfaceColor(context);
 
+    // ─────────── Содержимое кнопки без эффекта стекла
     final button = ElevatedButton(
       onPressed: _isJoining ? null : _joinClub,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.button,
-        foregroundColor: textColor,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 30),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(double.infinity, 50),
+      style: ButtonStyle(
+        backgroundColor: WidgetStateProperty.all(
+          AppColors.button.withValues(alpha: 0.7),
+        ),
+        foregroundColor: WidgetStateProperty.all(textColor),
+        elevation: WidgetStateProperty.all(0),
+        overlayColor: WidgetStateProperty.all(Colors.transparent),
+        splashFactory: NoSplash.splashFactory,
+        padding: WidgetStateProperty.all(
+          const EdgeInsets.symmetric(horizontal: 30),
+        ),
+        shape: WidgetStateProperty.all(
+          StadiumBorder(
+            side: BorderSide(
+              color: AppColors.button.withValues(alpha: 0.25),
+              width: 1,
+            ),
+          ),
+        ),
+        minimumSize: WidgetStateProperty.all(
+          const Size(double.infinity, 50),
+        ),
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
       child: _isJoining
-          ? Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: CupertinoActivityIndicator(
-                    radius: 9,
-                    color: textColor,
-                  ),
-                ),
-                Text(
-                  isOpen ? 'Вступить' : 'Подать заявку',
-                  style: AppTextStyles.h15w5.copyWith(
-                    color: textColor,
-                    height: 1.0,
-                  ),
-                ),
-              ],
+          ? CupertinoActivityIndicator(
+              radius: 10,
+              color: textColor,
             )
           : Text(
               isOpen ? 'Вступить' : 'Подать заявку',
@@ -385,11 +390,26 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             ),
     );
 
+    // ─────────── Стеклянная оболочка с блюром как в iOS
+    final glassButton = ClipRRect(
+      borderRadius: const BorderRadius.all(
+        Radius.circular(AppRadius.xxl),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(
+          sigmaX: 8,
+          sigmaY: 8,
+        ),
+        child: button,
+      ),
+    );
+
+    // ─────────── Блокировка тапа при загрузке
     if (_isJoining) {
-      return IgnorePointer(child: button);
+      return IgnorePointer(child: glassButton);
     }
 
-    return button;
+    return glassButton;
   }
 
   /// ──────────────────────── Показ меню с действиями ────────────────────────
@@ -942,8 +962,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                       ),
 
-                    // ── Добавляем нижний отступ для контента перед зафиксированной кнопкой
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
+                    // ── Добавляем нижний отступ для контента перед плавающей кнопкой
+                    if (!_isMember && !_isRequest)
+                      SliverToBoxAdapter(
+                        child: SizedBox(height: kToolbarHeight),
+                      )
+                    else
+                      const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   ],
                 );
                 // ───── Pull-to-refresh только для ленты ─────
@@ -960,18 +985,22 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             ),
           ),
         ),
-                      // ───────── Зафиксированная кнопка вступления (только для не участников)
-                      if (!_isMember && !_isRequest)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          color: AppColors.getBackgroundColor(context),
-                          child: _buildJoinButton(),
-                        ),
                     ];
 
                 return Column(children: columnChildren);
               },
             ),
+                // ───────── Плавающая кнопка вступления (только для не участников)
+                if (!_isMember && !_isRequest)
+                  Positioned(
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    child: SafeArea(
+                      top: false,
+                      child: _buildJoinButton(),
+                    ),
+                  ),
                 // ───────── Плавающая кнопка чата (только для участников клуба)
                 if (_isMember)
                   Positioned(

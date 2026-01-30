@@ -710,7 +710,7 @@ class _ActivityCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.twinchip,
-            width: 0.7,
+            width: 1.0,
           ),
         ),
         clipBehavior: Clip.antiAlias,
@@ -805,7 +805,7 @@ class _PRRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: AppColors.twinchip,
-            width: 0.7,
+            width: 1.0,
           ),
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
