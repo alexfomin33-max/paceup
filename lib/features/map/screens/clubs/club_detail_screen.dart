@@ -508,9 +508,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
     final backgroundUrl = _clubData!['background_url'] as String? ?? '';
     final membersCount = _clubData!['members_count'] as int? ?? 0;
     final link = _clubData!['link'] as String? ?? '';
-    final vkLink = _clubData!['vk_link'] as String? ?? '';
-    final instagramLink = _clubData!['instagram_link'] as String? ?? '';
-    final telegramLink = _clubData!['telegram_link'] as String? ?? '';
+    final extraLinksRaw = _clubData!['extra_links'];
+    final extraLinks = extraLinksRaw is List
+        ? (extraLinksRaw)
+            .map((e) => e?.toString().trim() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList()
+        : <String>[];
 
     final description = _clubData!['description'] as String? ?? '';
 
@@ -787,9 +791,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Промежуточный блок: информация
-                    if (description.isNotEmpty || link.isNotEmpty || 
-                        vkLink.isNotEmpty || instagramLink.isNotEmpty || 
-                        telegramLink.isNotEmpty)
+                    if (description.isNotEmpty || link.isNotEmpty ||
+                        extraLinks.isNotEmpty)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverToBoxAdapter(
@@ -835,25 +838,26 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                                 if (link.isNotEmpty) ...[
                                   if (description.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  _LinkRow(link: link, icon: CupertinoIcons.globe),
+                                  _LinkRow(
+                                    link: link,
+                                    icon: CupertinoIcons.globe,
+                                  ),
                                 ],
-                                // ── Ссылки на социальные сети
-                                if (vkLink.isNotEmpty || instagramLink.isNotEmpty || 
-                                    telegramLink.isNotEmpty) ...[
+                                // ── Дополнительные ссылки (страница клуба, соцсети)
+                                if (extraLinks.isNotEmpty) ...[
                                   if (description.isNotEmpty || link.isNotEmpty)
                                     const SizedBox(height: 12),
-                                  if (vkLink.isNotEmpty) ...[
-                                    _LinkRow(link: vkLink, icon: CupertinoIcons.link),
-                                    if (instagramLink.isNotEmpty || telegramLink.isNotEmpty)
-                                      const SizedBox(height: 8),
-                                  ],
-                                  if (instagramLink.isNotEmpty) ...[
-                                    _LinkRow(link: instagramLink, icon: CupertinoIcons.link),
-                                    if (telegramLink.isNotEmpty)
-                                      const SizedBox(height: 8),
-                                  ],
-                                  if (telegramLink.isNotEmpty)
-                                    _LinkRow(link: telegramLink, icon: CupertinoIcons.link),
+                                  ...extraLinks.asMap().entries.map((e) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(
+                                        top: e.key > 0 ? 8 : 0,
+                                      ),
+                                      child: _LinkRow(
+                                        link: e.value,
+                                        icon: CupertinoIcons.link,
+                                      ),
+                                    );
+                                  }),
                                 ],
                               ],
                             ),
