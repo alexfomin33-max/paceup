@@ -1485,22 +1485,21 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
                           ),
                         ),
                       ),
+                    // ─────────── Плавающая кнопка присоединения (только если пользователь не присоединился)
+                    if (!_isParticipant)
+                      Positioned(
+                        left: 16,
+                        right: 16,
+                        bottom: 16,
+                        child: SafeArea(
+                          top: false,
+                          child: _buildJoinButton(),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ];
-
-              // ─────────── Плавающая кнопка присоединения (только если пользователь не присоединился)
-              if (!_isParticipant)
-                Positioned(
-                  left: 16,
-                  right: 16,
-                  bottom: 16,
-                  child: SafeArea(
-                    top: false,
-                    child: _buildJoinButton(),
-                  ),
-                ),
 
               return Column(children: columnChildren);
             },
