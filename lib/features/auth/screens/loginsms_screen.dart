@@ -171,6 +171,8 @@ class LoginSmsScreenState extends ConsumerState<LoginSmsScreen> {
           
           // 🔹 Сохраняем токены и ждем завершения операции
           await auth.saveTokens(accessToken, refreshToken, codeValue);
+          // 🔹 Сохраняем телефон для экрана PIN при холодном старте приложения
+          await auth.savePhone(widget.phone);
           
           // 🔹 Дополнительная проверка: убеждаемся, что токены действительно сохранились
           final hasTokens = await auth.hasStoredTokens();

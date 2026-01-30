@@ -140,6 +140,8 @@ class AddAccSmsScreenState extends ConsumerState<AddAccSmsScreen> {
           
           // 🔹 Сохраняем токены и ждем завершения операции
           await auth.saveTokens(accessToken, refreshToken, codeValue);
+          // 🔹 Сохраняем телефон для экрана PIN при холодном старте (после регистрации и установки PIN)
+          await auth.savePhone(widget.phone);
           
           // 🔹 Дополнительная проверка: убеждаемся, что токены действительно сохранились
           final hasTokens = await auth.hasStoredTokens();
