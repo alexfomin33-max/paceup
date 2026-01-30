@@ -164,7 +164,7 @@ class CoffeeRunVldMembersContentState
   ) {
     final items = <MoreMenuItem>[];
 
-    // ───── Пункт "Сделать админом" (только владелец) ─────
+    // ───── Пункт "Сделать админом" (только владелец, только для не-админов) ─────
     if (_currentUserCanAssignAdmins && !isMemberCreator && !isMemberAdmin) {
       items.add(
         MoreMenuItem(
@@ -173,6 +173,22 @@ class CoffeeRunVldMembersContentState
           onTap: () async {
             MoreMenuHub.hide();
             await _makeAdmin(memberUserId, memberName);
+          },
+        ),
+      );
+    }
+
+    // ───── Пункт "Забрать Админа" (только владелец, только для админов) ─────
+    if (_currentUserCanAssignAdmins && !isMemberCreator && isMemberAdmin) {
+      items.add(
+        MoreMenuItem(
+          text: 'Забрать Админа',
+          icon: CupertinoIcons.minus_circle,
+          iconColor: AppColors.red,
+          textStyle: const TextStyle(color: AppColors.red),
+          onTap: () async {
+            MoreMenuHub.hide();
+            await _removeAdmin(memberUserId, memberName);
           },
         ),
       );
@@ -239,6 +255,52 @@ class CoffeeRunVldMembersContentState
       } else {
         final errorMessage =
             data['message'] as String? ?? 'Ошибка назначения администратора';
+        _showErrorDialog(errorMessage);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorDialog(ErrorHandler.format(e));
+    }
+  }
+
+  /// ──────────────────────── Забрать права администратора у участника ────────────────────────
+  Future<void> _removeAdmin(int memberUserId, String memberName) async {
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/update_club_member_role.php',
+        body: {
+          'club_id': widget.clubId.toString(),
+          'user_id': memberUserId.toString(),
+          'role': 'member',
+        },
+      );
+
+      if (!mounted) return;
+
+      if (data['success'] == true) {
+        // Обновляем роль в списке участников
+        setState(() {
+          final index = _members.indexWhere(
+            (m) => (m['user_id'] as int?) == memberUserId,
+          );
+          if (index != -1) {
+            _members[index]['role'] = null;
+            _members[index]['is_admin'] = false;
+          }
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('У $memberName сняты права администратора'),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      } else {
+        final errorMessage = data['message'] as String? ??
+            'Ошибка снятия прав администратора';
         _showErrorDialog(errorMessage);
       }
     } catch (e) {

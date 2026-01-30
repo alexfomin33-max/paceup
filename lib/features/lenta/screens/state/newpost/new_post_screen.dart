@@ -14,7 +14,6 @@ import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
-import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
 
@@ -68,7 +67,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     _titleFocusNode.addListener(_updatePublishState);
     _descriptionController.addListener(_updatePublishState);
     _descriptionFocusNode.addListener(_updatePublishState);
-    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
+    // ── загрузка клубов после первого кадра, когда ref уже доступен
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserClubs());
   }
 
   @override
@@ -88,23 +88,17 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     });
   }
 
-  // ── загрузка списка клубов пользователя
+  // ── загрузка списка клубов пользователя (владелец или админ)
   Future<void> _loadUserClubs() async {
+    if (widget.userId <= 0) {
+      setState(() => _clubs = []);
+      return;
+    }
     try {
       final api = ref.read(apiServiceProvider);
-      final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _clubs = [];
-        });
-        return;
-      }
-
       final data = await api.get(
         '/get_user_clubs.php',
-        queryParams: {'user_id': userId.toString()},
+        queryParams: {'user_id': widget.userId.toString()},
       );
 
       if (data['success'] == true && data['clubs'] != null) {

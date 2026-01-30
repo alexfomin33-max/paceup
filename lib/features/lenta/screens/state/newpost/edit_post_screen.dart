@@ -19,7 +19,6 @@ import '../../../../../providers/services/api_provider.dart';
 import '../../../providers/lenta_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
-import '../../../../../providers/services/auth_provider.dart';
 
 /// Модель «существующего» изображения, пришедшего с бэка
 class _ExistingImage {
@@ -117,7 +116,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     _titleFocusNode.addListener(_updateSaveState);
     _descriptionController.addListener(_updateSaveState);
     _descriptionFocusNode.addListener(_updateSaveState);
-    _loadUserClubs(); // ── загружаем клубы пользователя при инициализации
+    // ── загрузка клубов после первого кадра, когда ref уже доступен
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserClubs());
     _updateSaveState();
   }
 
@@ -166,23 +166,17 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     setState(() => _canSave = _hasChanges() && !formState.isSubmitting);
   }
 
-  // ── загрузка списка клубов пользователя
+  // ── загрузка списка клубов пользователя (владелец или админ)
   Future<void> _loadUserClubs() async {
+    if (widget.userId <= 0) {
+      setState(() => _clubs = []);
+      return;
+    }
     try {
       final api = ref.read(apiServiceProvider);
-      final authService = ref.read(authServiceProvider);
-      final userId = await authService.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _clubs = [];
-        });
-        return;
-      }
-
       final data = await api.get(
         '/get_user_clubs.php',
-        queryParams: {'user_id': userId.toString()},
+        queryParams: {'user_id': widget.userId.toString()},
       );
 
       if (data['success'] == true && data['clubs'] != null) {
