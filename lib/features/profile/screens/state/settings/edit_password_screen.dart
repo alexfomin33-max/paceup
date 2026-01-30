@@ -271,13 +271,13 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                         color: _isFormValid && !_isSubmitting
                             ? AppColors.button
                             : AppColors.button.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderRadius: BorderRadius.circular(AppRadius.xxl),
                         elevation: 0,
                         child: InkWell(
                           onTap: _isFormValid && !_isSubmitting
                               ? _savePassword
                               : null,
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderRadius: BorderRadius.circular(AppRadius.xxl),
                           child: Container(
                             width: double.infinity,
                             height: 50,
@@ -285,7 +285,7 @@ class _EditPasswordScreenState extends ConsumerState<EditPasswordScreen> {
                               color: _isFormValid && !_isSubmitting
                                   ? AppColors.button
                                   : AppColors.button.withValues(alpha: 0.3),
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
+                              borderRadius: BorderRadius.circular(AppRadius.xxl),
                             ),
                             child: Center(
                               child: _isSubmitting

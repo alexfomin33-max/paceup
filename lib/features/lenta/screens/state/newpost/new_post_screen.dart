@@ -396,19 +396,17 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                               return const SizedBox.shrink();
                             },
                           ),
+
+                          const SizedBox(height: 32),
+
+                          // ────────────────────────────────────────────────────────────────
+                          // 💾 КНОПКА ПУБЛИКАЦИИ
+                          // ────────────────────────────────────────────────────────────────
+                          Center(child: _buildPublishButton()),
                         ],
                       ),
                     ),
                   ),
-                ),
-
-                // ────────────────────────────────────────────────────────────────
-                // 💾 ЗАФИКСИРОВАННАЯ КНОПКА ПУБЛИКАЦИИ ВНИЗУ ЭКРАНА
-                // ────────────────────────────────────────────────────────────────
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  color: AppColors.twinBg,
-                  child: _buildPublishButton(),
                 ),
               ],
             ),
@@ -601,7 +599,10 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
           ),
           filled: true,
           fillColor: AppColors.surface,
-          contentPadding: const EdgeInsets.all(12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 22,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(AppRadius.lg),
             borderSide: BorderSide.none,
@@ -761,20 +762,24 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   }
 
   /// Кнопка публикации
+  /// При загрузке: только индикатор (без текста), тёмный фон, блокировка нажатий.
   Widget _buildPublishButton() {
     final formState = ref.watch(formStateProvider);
-    final isSubmitting = formState.isSubmitting;
-    final isEnabled = _canPublish;
     final textColor = AppColors.getSurfaceColor(context);
+    final isLoading = formState.isSubmitting;
+    final isEnabled = _canPublish;
 
     // ────────────────────────────────────────────────────────────────
     // 💾 КНОПКА ПУБЛИКАЦИИ (единый стиль с экраном добавления)
     // ────────────────────────────────────────────────────────────────
+    // disabledBackgroundColor = AppColors.button — кнопка остаётся тёмной при загрузке
     final button = ElevatedButton(
-      onPressed: isEnabled ? _submitPost : null,
+      onPressed: (isLoading || !isEnabled) ? null : _submitPost,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.button,
         foregroundColor: textColor,
+        disabledBackgroundColor: AppColors.button,
+        disabledForegroundColor: textColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(horizontal: 30),
         shape: const StadiumBorder(),
@@ -782,7 +787,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         alignment: Alignment.center,
       ),
-      child: isSubmitting
+      child: isLoading
           ? CupertinoActivityIndicator(radius: 9, color: textColor)
           : Text(
               'Опубликовать',
@@ -793,7 +798,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
             ),
     );
 
-    if (isSubmitting) {
+    // Блокировка нажатий во время загрузки (onPressed: null уже отключает, дублируем на всякий)
+    if (isLoading) {
       return IgnorePointer(child: button);
     }
 
