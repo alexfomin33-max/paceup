@@ -370,10 +370,13 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // 🔹 Приветствие с именем пользователя
-                          if (!_isLoadingUserName)
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
+                          // 🔹 Приветствие с именем пользователя (или невидимый плейсхолдер при загрузке)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: AnimatedOpacity(
+                              opacity: _isLoadingUserName ? 0.0 : 1.0,
+                              duration: const Duration(milliseconds: 500),
+                              curve: Curves.easeIn,
                               child: Text(
                                 _userFirstName.isNotEmpty
                                     ? 'Здравствуйте, $_userFirstName'
@@ -387,6 +390,7 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
                                 textAlign: TextAlign.center,
                               ),
                             ),
+                          ),
                           // 🔹 Заголовок
                           const SizedBox(height: 25),
                           const Text(

@@ -10,7 +10,7 @@ import '../../../../../../core/utils/static_map_url_builder.dart';
 
 /// Тип изображения для репоста
 enum ShareImageType {
-  map, // Карта с треком
+  map, // Карта с треком 
   photo, // Фото из активности
 }
 

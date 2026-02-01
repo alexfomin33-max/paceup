@@ -1,22 +1,16 @@
 // lib/screens/lenta/widgets/activity/actions/activity_actions_row.dart
 
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/cupertino.dart';
-
-import 'package:share_plus/share_plus.dart';
 
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../core/services/api_service.dart'; // для ApiException
-import '../../../../../../core/services/share_image_generator.dart';
 import '../../../../../../domain/models/activity_lenta.dart' as al;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'share_image_selector_dialog.dart';
-import 'package:latlong2/latlong.dart';
-import '../../../../../../core/utils/static_map_url_builder.dart';
 import '../../../../../lenta/providers/lenta_provider.dart';
 import '../../../activity/together/together_providers.dart';
+import '../../../activity/share_activity_screen.dart';
 
 /// Панель действий: лайк/комменты/совместно.
 /// Здесь локальная анимация лайка + вызов API лайка.
@@ -165,269 +159,14 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
     if (widget.activity == null) return;
 
     final activity = widget.activity!;
-    final hasPhotos = activity.mediaImages.isNotEmpty;
-    final hasMap = activity.points.isNotEmpty;
 
-    // Если только карта (нет фото) - сразу репостим карту
-    if (hasMap && !hasPhotos) {
-      // Генерируем URL карты с размерами для Stories (чтобы использовать кэш)
-      final points = activity.points.map((c) => LatLng(c.lat, c.lng)).toList();
-      final mapUrl = StaticMapUrlBuilder.fromPoints(
-        points: points,
-        widthPx: ShareImageGenerator.storyWidth.toDouble(),
-        heightPx: ShareImageGenerator.storyHeight.toDouble(),
-        strokeWidth: 3.0,
-        padding: 12.0,
-        maxWidth: 1280.0,
-        maxHeight: 1280.0,
-      );
-
-      await _generateAndShare(
-        activity: activity,
-        useMap: true,
-        selectedPhotoUrl: null,
-        mapImageUrl: mapUrl,
-      );
-      return;
-    }
-
-    // Если есть фото (с картой или без) - показываем слайдер выбора
-    if (hasPhotos) {
-      // Проверяем mounted перед показом диалога
-      if (!mounted) return;
-      
-      final selection = await ShareImageSelectorDialog.show(
-        context: context,
-        photoUrls: activity.mediaImages,
-        hasMap: hasMap,
-        activity: activity,
-      );
-
-      // Проверяем mounted после закрытия диалога
-      if (selection == null || !mounted) return;
-
-      // Небольшая задержка для стабилизации состояния после закрытия диалога
-      await Future.delayed(const Duration(milliseconds: 100));
-      
-      // Еще раз проверяем mounted перед генерацией
-      if (!mounted) return;
-
-      await _generateAndShare(
-        activity: activity,
-        useMap: selection.type == ShareImageType.map,
-        selectedPhotoUrl: selection.photoUrl,
-        mapImageUrl: selection.mapImageUrl,
-      );
-    } else {
-      // Если нет ни фото, ни карты - делимся текстом
-      if (mounted) {
-        try {
-          await Share.share('Моя тренировка в PaceUp!');
-          debugPrint('Текстовый share выполнен успешно');
-        } catch (shareError) {
-          debugPrint('Ошибка при текстовом share: $shareError');
-          if (mounted) {
-            showCupertinoDialog(
-              context: context,
-              builder: (context) => CupertinoAlertDialog(
-                title: const Text('Ошибка'),
-                content: Text('Не удалось открыть меню шаринга: $shareError'),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('ОК'),
-                  ),
-                ],
-              ),
-            );
-          }
-        }
-      }
-    }
-  }
-
-  Future<void> _generateAndShare({
-    required al.Activity activity,
-    required bool useMap,
-    String? selectedPhotoUrl,
-    String? mapImageUrl,
-  }) async {
-    // Проверяем, что виджет все еще смонтирован перед началом операции
     if (!mounted) return;
 
-    BuildContext? dialogContext;
-
-    try {
-      // Показываем индикатор загрузки только если контекст валиден
-      if (!mounted) return;
-      
-      showCupertinoDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogCtx) {
-          dialogContext = dialogCtx;
-          return const CupertinoAlertDialog(
-            content: Padding(
-              padding: EdgeInsets.all(20),
-              child: CupertinoActivityIndicator(),
-            ),
-          );
-        },
-      );
-
-      // Генерируем финальное изображение для шаринга
-      // Используем контекст только если виджет все еще смонтирован
-      if (!mounted) {
-        if (dialogContext != null && Navigator.of(dialogContext!).canPop()) {
-          Navigator.of(dialogContext!).pop();
-        }
-        return;
-      }
-
-      final imagePath = await ShareImageGenerator.generateShareImage(
-        activity: activity,
-        context: context,
-        routeImageBytes: null,
-        selectedPhotoUrl: selectedPhotoUrl,
-        useMap: useMap,
-        mapImageUrl: mapImageUrl,
-      );
-
-      debugPrint('Изображение сгенерировано: $imagePath');
-
-      // Закрываем индикатор загрузки безопасно
-      if (mounted && dialogContext != null) {
-        try {
-          if (Navigator.of(dialogContext!).canPop()) {
-            Navigator.of(dialogContext!).pop();
-          }
-        } catch (_) {
-          // Игнорируем ошибку если диалог уже закрыт или история пуста
-        }
-        dialogContext = null;
-      }
-
-      // Небольшая задержка после закрытия диалога загрузки для стабилизации состояния
-      await Future.delayed(const Duration(milliseconds: 200));
-
-      // Проверяем mounted перед открытием share sheet
-      if (!mounted) {
-        debugPrint('Виджет размонтирован перед открытием share sheet');
-        return;
-      }
-
-      if (imagePath != null) {
-        // Проверяем, что файл существует
-        final file = File(imagePath);
-        if (!await file.exists()) {
-          debugPrint('Файл изображения не существует: $imagePath');
-          if (mounted) {
-            showCupertinoDialog(
-              context: context,
-              builder: (context) => const CupertinoAlertDialog(
-                title: Text('Ошибка'),
-                content: Text('Не удалось найти сгенерированное изображение'),
-                actions: [
-                  CupertinoDialogAction(
-                    child: Text('ОК'),
-                  ),
-                ],
-              ),
-            );
-          }
-          return;
-        }
-
-        debugPrint('Открываем share sheet с изображением: $imagePath');
-        try {
-          // Получаем размер экрана для sharePositionOrigin (требуется на iOS)
-          final mediaQuery = MediaQuery.of(context);
-          final screenSize = mediaQuery.size;
-          
-          // Используем центр экрана для позиционирования share sheet
-          // На iOS требуется sharePositionOrigin для правильного позиционирования popover
-          final sharePositionOrigin = Rect.fromLTWH(
-            screenSize.width / 2 - 1,
-            screenSize.height / 2 - 1,
-            2,
-            2,
-          );
-          
-          // Открываем системный share sheet
-          await Share.shareXFiles(
-            [XFile(imagePath)],
-            text: 'Моя тренировка в PaceUp!',
-            sharePositionOrigin: sharePositionOrigin,
-          );
-          debugPrint('Share sheet открыт успешно');
-          
-          // Небольшая задержка после закрытия share sheet для стабилизации состояния на iOS
-          await Future.delayed(const Duration(milliseconds: 300));
-          
-          // Проверяем mounted после закрытия share sheet
-          if (!mounted) return;
-        } catch (shareError) {
-          debugPrint('Ошибка при открытии share sheet: $shareError');
-          // Показываем сообщение об ошибке пользователю
-          if (mounted) {
-            showCupertinoDialog(
-              context: context,
-              builder: (context) => CupertinoAlertDialog(
-                title: const Text('Ошибка'),
-                content: Text('Не удалось открыть меню шаринга: $shareError'),
-                actions: [
-                  CupertinoDialogAction(
-                    onPressed: () {
-                      if (Navigator.of(context).canPop()) {
-                        Navigator.of(context).pop();
-                      }
-                    },
-                    child: const Text('ОК'),
-                  ),
-                ],
-              ),
-            );
-          }
-        }
-      } else {
-        debugPrint('Изображение не сгенерировано, делимся текстом');
-        // Если не удалось сгенерировать изображение, делимся текстом
-        if (mounted) {
-          try {
-            await Share.share('Моя тренировка в PaceUp!');
-            debugPrint('Текстовый share выполнен успешно');
-            
-            // Небольшая задержка после закрытия share sheet для стабилизации состояния на iOS
-            await Future.delayed(const Duration(milliseconds: 300));
-          } catch (shareError) {
-            debugPrint('Ошибка при текстовом share: $shareError');
-          }
-        }
-      }
-    } catch (e) {
-      // Гарантируем закрытие диалога при любой ошибке безопасно
-      if (mounted) {
-        if (dialogContext != null) {
-          try {
-            if (Navigator.of(dialogContext!).canPop()) {
-              Navigator.of(dialogContext!).pop();
-            }
-          } catch (_) {
-            // Игнорируем ошибку если диалог уже закрыт или история пуста
-          }
-        } else {
-          // Пытаемся закрыть через основной контекст
-          try {
-            if (mounted && Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
-          } catch (_) {
-            // Игнорируем ошибку если диалог уже закрыт или история пуста
-          }
-        }
-      }
-      debugPrint('Ошибка шаринга: $e');
-    }
+    await Navigator.of(context, rootNavigator: true).push(
+      CupertinoPageRoute<void>(
+        builder: (_) => ShareActivityScreen(activity: activity),
+      ),
+    );
   }
 
   @override

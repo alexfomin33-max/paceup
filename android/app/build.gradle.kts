@@ -55,6 +55,20 @@ android {
             )
         }
     }
+
+    // ────────────────────────── Переименование выходного APK ──────────────────────────
+    // Настраиваем имя выходного APK файла: paceup-release.apk вместо app-release.apk
+    applicationVariants.all {
+        val variant = this
+        variant.outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            output.outputFileName = when (variant.buildType.name) {
+                "release" -> "paceup-release.apk"
+                "debug" -> "paceup-debug.apk"
+                else -> "paceup-${variant.buildType.name}.apk"
+            }
+        }
+    }
 }
 
 dependencies {
