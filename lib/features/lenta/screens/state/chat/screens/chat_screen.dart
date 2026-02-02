@@ -16,11 +16,14 @@ import 'personal_chat_screen.dart';
 import 'start_chat_screen.dart';
 import '../../../../../market/screens/tabs/slots/tradechat_slots_screen.dart';
 import '../../../../../market/screens/tabs/things/tradechat_things_screen.dart';
+import '../../../../../map/screens/clubs/club_chat_screen.dart';
+import '../../../../../map/screens/events/event_chat_screen.dart';
+import '../pinned_chats_api.dart';
 
-/// Модель чата из API
+/// Модель чата из API (и закреплённых чатов событий/клубов с экрана чата).
 class ChatItem {
   final int id;
-  final String chatType; // 'regular', 'slot' или 'thing'
+  final String chatType; // 'regular', 'slot', 'thing', 'event' или 'club'
 
   // Для обычных чатов
   final int? userId;
@@ -36,6 +39,15 @@ class ChatItem {
   final int? thingId;
   final String? thingTitle;
   final String? thingImageUrl;
+
+  // Для закреплённых чатов событий (отображаются в списке «Чаты»)
+  final int? eventId;
+  final String? eventName;
+
+  // Для закреплённых чатов клубов
+  final int? clubId;
+  final String? clubName;
+  final String? clubLogoUrl;
 
   final String lastMessage;
   final bool
@@ -56,6 +68,11 @@ class ChatItem {
     this.thingId,
     this.thingTitle,
     this.thingImageUrl,
+    this.eventId,
+    this.eventName,
+    this.clubId,
+    this.clubName,
+    this.clubLogoUrl,
     required this.lastMessage,
     required this.lastMessageHasImage,
     required this.lastMessageAt,
@@ -96,6 +113,36 @@ class ChatItem {
         unread: json['unread'] as bool? ?? false,
         createdAt: DateTime.parse(json['created_at'] as String),
       );
+    } else if (chatType == 'event') {
+      return ChatItem(
+        id: (json['id'] as num).toInt(),
+        chatType: chatType,
+        eventId: json['event_id'] != null
+            ? (json['event_id'] as num).toInt()
+            : null,
+        eventName: json['event_name'] as String?,
+        eventLogoUrl: json['event_logo_url'] as String?,
+        lastMessage: json['last_message'] as String? ?? '',
+        lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
+        lastMessageAt: DateTime.parse(json['last_message_at'] as String),
+        unread: json['unread'] as bool? ?? false,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
+    } else if (chatType == 'club') {
+      return ChatItem(
+        id: (json['id'] as num).toInt(),
+        chatType: chatType,
+        clubId: json['club_id'] != null
+            ? (json['club_id'] as num).toInt()
+            : null,
+        clubName: json['club_name'] as String?,
+        clubLogoUrl: json['club_logo_url'] as String?,
+        lastMessage: json['last_message'] as String? ?? '',
+        lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
+        lastMessageAt: DateTime.parse(json['last_message_at'] as String),
+        unread: json['unread'] as bool? ?? false,
+        createdAt: DateTime.parse(json['created_at'] as String),
+      );
     } else {
       return ChatItem(
         id: (json['id'] as num).toInt(),
@@ -117,6 +164,39 @@ class ChatItem {
   bool get isSlotChat => chatType == 'slot';
   bool get isThingChat => chatType == 'thing';
   bool get isRegularChat => chatType == 'regular';
+  bool get isEventChat => chatType == 'event';
+  bool get isClubChat => chatType == 'club';
+
+  /// Создать ChatItem из закреплённого чата (API: событие или клуб).
+  static ChatItem fromPinnedEntry(PinnedChatEntry entry) {
+    final at = entry.lastMessageAt ?? DateTime.now();
+    if (entry.isEvent) {
+      return ChatItem(
+        id: entry.chatId,
+        chatType: 'event',
+        eventId: entry.referenceId,
+        eventName: entry.title,
+        eventLogoUrl: entry.logoUrl,
+        lastMessage: entry.lastMessage,
+        lastMessageHasImage: false,
+        lastMessageAt: at,
+        unread: false,
+        createdAt: at,
+      );
+    }
+    return ChatItem(
+      id: entry.chatId,
+      chatType: 'club',
+      clubId: entry.referenceId,
+      clubName: entry.title,
+      clubLogoUrl: entry.logoUrl,
+      lastMessage: entry.lastMessage,
+      lastMessageHasImage: false,
+      lastMessageAt: at,
+      unread: false,
+      createdAt: at,
+    );
+  }
 }
 
 /// ─── Обертка для навигации к TradeChatSlotsScreen ───
@@ -230,6 +310,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
         // ─── Фильтруем пустые чаты (без сообщений) ───
         final filteredChats = _filterEmptyChats(newChats);
+        final merged = await _mergeWithPinnedChats(filteredChats);
 
         // ─── Обновляем список, сохраняя позицию скролла ───
         final currentScrollPosition = _scrollController.hasClients
@@ -237,7 +318,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             : 0.0;
 
         setState(() {
-          _chats = filteredChats;
+          _chats = merged;
           _hasMore = response['has_more'] as bool? ?? false;
           _offset = filteredChats.length;
         });
@@ -296,9 +377,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
 
         // ─── Фильтруем пустые чаты (без сообщений) ───
         final filteredChats = _filterEmptyChats(chats);
+        final merged = await _mergeWithPinnedChats(filteredChats);
 
         setState(() {
-          _chats = filteredChats;
+          _chats = merged;
           _hasMore = response['has_more'] as bool? ?? false;
           _offset = filteredChats.length;
           _isLoading = false;
@@ -396,6 +478,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     } else if (chat.isThingChat) {
       // Для thing чатов возвращаем URL изображения вещи
       return chat.thingImageUrl;
+    } else if (chat.isEventChat) {
+      return chat.eventLogoUrl;
+    } else if (chat.isClubChat) {
+      return chat.clubLogoUrl;
     } else {
       // Для обычных чатов возвращаем URL аватара пользователя
       if (chat.userAvatar == null || chat.userAvatar!.isEmpty) {
@@ -415,6 +501,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       return chat.slotTitle ?? 'Слот';
     } else if (chat.isThingChat) {
       return chat.thingTitle ?? 'Вещь';
+    } else if (chat.isEventChat) {
+      return chat.eventName ?? 'Событие';
+    } else if (chat.isClubChat) {
+      return chat.clubName ?? 'Клуб';
     } else {
       return chat.userName ?? 'Пользователь';
     }
@@ -428,6 +518,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// ─── Фильтрация пустых чатов из списка ───
   List<ChatItem> _filterEmptyChats(List<ChatItem> chats) {
     return chats.where((chat) => !_isEmptyChat(chat)).toList();
+  }
+
+  /// ─── Объединение списка чатов из API с закреплёнными (события и клубы) ───
+  /// и сортировка по дате последнего сообщения (новые сверху).
+  Future<List<ChatItem>> _mergeWithPinnedChats(
+    List<ChatItem> apiChats,
+  ) async {
+    final pinned = await PinnedChatsApi.getPinnedChats();
+    final pinnedItems =
+        pinned.map((e) => ChatItem.fromPinnedEntry(e)).toList();
+    final merged = [...pinnedItems, ...apiChats];
+    merged.sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
+    return merged;
   }
 
   @override
@@ -539,8 +642,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Аватар или logo события/вещи
-                      (chat.isSlotChat || chat.isThingChat)
+                      // Аватар или logo события/вещи/чата события/клуба
+                      (chat.isSlotChat ||
+                              chat.isThingChat ||
+                              chat.isEventChat ||
+                              chat.isClubChat)
                           ? ClipRRect(
                               borderRadius: BorderRadius.circular(26),
                               child: Builder(
@@ -555,16 +661,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       height: 52,
                                       color: AppColors.surfaceMuted,
                                       child: Icon(
-                                        chat.isSlotChat
-                                            ? CupertinoIcons.calendar
-                                            : CupertinoIcons.bag,
+                                        chat.isClubChat
+                                            ? CupertinoIcons.person_2
+                                            : chat.isEventChat ||
+                                                    chat.isSlotChat
+                                                ? CupertinoIcons.calendar
+                                                : CupertinoIcons.bag,
                                         size: 24,
                                       ),
                                     );
                                   }
                                   return CachedNetworkImage(
                                     key: ValueKey(
-                                      '${chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
+                                      '${chat.isClubChat ? 'club' : chat.isEventChat ? 'event' : chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
                                     ),
                                     imageUrl: imageUrl,
                                     width: 52,
@@ -589,9 +698,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                         height: 52,
                                         color: AppColors.surfaceMuted,
                                         child: Icon(
-                                          chat.isSlotChat
-                                              ? CupertinoIcons.calendar
-                                              : CupertinoIcons.bag,
+                                          chat.isClubChat
+                                              ? CupertinoIcons.person_2
+                                              : chat.isEventChat ||
+                                                      chat.isSlotChat
+                                                  ? CupertinoIcons.calendar
+                                                  : CupertinoIcons.bag,
                                           size: 24,
                                         ),
                                       );
@@ -736,7 +848,79 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                   onTap: () async {
                     dynamic result;
 
-                    if (chat.isSlotChat) {
+                    if (chat.isEventChat && chat.eventId != null) {
+                      result =
+                          await Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).push(
+                            TransparentPageRoute(
+                              builder: (_) => EventChatScreen(
+                                eventId: chat.eventId!,
+                              ),
+                            ),
+                          );
+                      if (result is Map && mounted) {
+                        final unpinned = result['unpinned'] == true;
+                        if (unpinned) {
+                          await _softRefresh();
+                        } else {
+                          final eventId = result['eventId'] as int?;
+                          final lastMessage =
+                              result['lastMessage'] as String? ?? '';
+                          final lastMessageAt =
+                              result['lastMessageAt'] as DateTime?;
+                          if (eventId != null && lastMessageAt != null) {
+                            await PinnedChatsApi.addPinnedChat(
+                              chatType: 'event',
+                              referenceId: eventId,
+                              chatId: chat.id,
+                              title: chat.eventName ?? 'Событие',
+                              logoUrl: chat.eventLogoUrl,
+                              lastMessage: lastMessage,
+                              lastMessageAt: lastMessageAt,
+                            );
+                            await _softRefresh();
+                          }
+                        }
+                      }
+                    } else if (chat.isClubChat && chat.clubId != null) {
+                      result =
+                          await Navigator.of(
+                            context,
+                            rootNavigator: true,
+                          ).push(
+                            TransparentPageRoute(
+                              builder: (_) => ClubChatScreen(
+                                clubId: chat.clubId!,
+                              ),
+                            ),
+                          );
+                      if (result is Map && mounted) {
+                        final unpinned = result['unpinned'] == true;
+                        if (unpinned) {
+                          await _softRefresh();
+                        } else {
+                          final clubId = result['clubId'] as int?;
+                          final lastMessage =
+                              result['lastMessage'] as String? ?? '';
+                          final lastMessageAt =
+                              result['lastMessageAt'] as DateTime?;
+                          if (clubId != null && lastMessageAt != null) {
+                            await PinnedChatsApi.addPinnedChat(
+                              chatType: 'club',
+                              referenceId: clubId,
+                              chatId: chat.id,
+                              title: chat.clubName ?? 'Клуб',
+                              logoUrl: chat.clubLogoUrl,
+                              lastMessage: lastMessage,
+                              lastMessageAt: lastMessageAt,
+                            );
+                            await _softRefresh();
+                          }
+                        }
+                      }
+                    } else if (chat.isSlotChat) {
                       // Для slot чатов открываем TradeChatSlotsScreen
                       if (chat.slotId != null) {
                         result =
