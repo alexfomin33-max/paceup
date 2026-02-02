@@ -139,7 +139,8 @@ flutter:
      - assets/logo_text_color.png
      - assets/logo_text_color2.png
      - assets/back.jpg
-     - assets/gorizont.png
+     - assets/white_text.png
+     - assets/black_text.png
      - assets/logo_white.png
      - assets/logo_icon.png
      - assets/avatar_0.png
@@ -225,6 +226,8 @@ flutter:
      - assets/nogsp_bike.jpg
      - assets/nogps_ski.jpg
      - assets/fon.jpg
+     - assets/opacity.jpg
+     - assets/opacity_white.png
 
 
  

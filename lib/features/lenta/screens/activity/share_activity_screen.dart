@@ -45,9 +45,25 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   late int _selectedIndex;
   int _displayModeIndex = 0;
   // ────────────────────────────────────────────────────────────────
+  // 🔹 ИНТЕНСИВНОСТЬ ГРАДИЕНТНОГО ЗАТЕМНЕНИЯ (0.0 - 1.0)
+  // ────────────────────────────────────────────────────────────────
+  late final ValueNotifier<double> _darknessOpacityNotifier;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ЦВЕТ ТЕКСТА: БЕЛЫЙ ИЛИ ЧЕРНЫЙ
+  // ────────────────────────────────────────────────────────────────
+  bool _isTextWhite = true;
+  // ────────────────────────────────────────────────────────────────
   // 🔹 КЛЮЧ ДЛЯ ЗАХВАТА ВЕРХНЕГО ИЗОБРАЖЕНИЯ
   // ────────────────────────────────────────────────────────────────
   final GlobalKey _shareImageKey = GlobalKey();
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 КЛЮЧ ДЛЯ СКРЫТОГО ЭКСПОРТА С ПРОЗРАЧНЫМ ФОНОМ
+  // ────────────────────────────────────────────────────────────────
+  final GlobalKey _shareExportImageKey = GlobalKey();
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПУТЬ К ПРОЗРАЧНОМУ АССЕТУ
+  // ────────────────────────────────────────────────────────────────
+  static const String _opacityAssetPath = 'assets/opacity.jpg';
 
   @override
   void initState() {
@@ -58,18 +74,29 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     // ────────────────────────────────────────────────────────────────
     _mediaItems = _buildMediaItems(widget.activity);
     _selectedIndex = _mediaItems.isNotEmpty ? 0 : -1;
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 NOTIFIER ДЛЯ ЗАТЕМНЕНИЯ (МИНИМУМ ПЕРЕСТРОЕНИЙ)
+    // ────────────────────────────────────────────────────────────────
+    _darknessOpacityNotifier = ValueNotifier<double>(0.0);
+  }
+
+  @override
+  void dispose() {
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ОЧИЩАЕМ NOTIFIER, ЧТОБЫ ИЗБЕЖАТЬ УТЕЧЕК ПАМЯТИ
+    // ────────────────────────────────────────────────────────────────
+    _darknessOpacityNotifier.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     // ────────────────────────────────────────────────────────────────
-    // 🔹 ОГРАНИЧИВАЕМ СПИСОК 3 ЭЛЕМЕНТАМИ
+    // 🔹 ИСПОЛЬЗУЕМ ВСЕ ЭЛЕМЕНТЫ МЕДИА (ВКЛЮЧАЯ АССЕТ opacity.jpg)
     // ────────────────────────────────────────────────────────────────
-    final visibleItems = _mediaItems.take(3).toList(growable: false);
-    final selectedItem = (_selectedIndex >= 0 &&
-            _selectedIndex < visibleItems.length)
-        ? visibleItems[_selectedIndex]
-        : null;
+    final visibleItems = _mediaItems;
+    final selectedItem = _currentSelectedItem;
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 ОСНОВНОЙ КОНТЕЙНЕР ЭКРАНА
@@ -77,289 +104,567 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: const PaceAppBar(
-        title: 'Настройка',
+        title: 'Репост',
         backgroundColor: AppColors.surface,
         showBottomDivider: false,
         elevation: 0,
         scrolledUnderElevation: 0,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // ────────────────────────────────────────────────────────
-              // 🖼️ ВЕРХНЕЕ ИЗОБРАЖЕНИЕ (КАК В КАРТОЧКЕ)
-              // ────────────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 4, 24, 0),
-                child: RepaintBoundary(
-                  key: _shareImageKey,
-                  child: _ShareTopImage(
-                    activity: widget.activity,
-                    selectedItem: selectedItem,
-                    heightFactor: 1.0, // Чуть меньше по высоте
-                    displayModeIndex: _displayModeIndex,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // ────────────────────────────────────────────────────────
-              // 🏷️ ЗАГОЛОВОК СЕКЦИИ ВЫБОРА
-              // ────────────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Фото для публикации',
-                    style: AppTextStyles.h15w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ────────────────────────────────────────────────────────
-              // 📸 МИНИАТЮРЫ МЕДИА: ВЫБРАННАЯ 100%, ОСТАЛЬНЫЕ 50%
-              // ────────────────────────────────────────────────────────
-              _SharePhotoSelector(
-                activity: widget.activity,
-                items: visibleItems,
-                selectedIndex: _selectedIndex,
-                onSelected: (index) {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-
-              // ────────────────────────────────────────────────────────
-              // 🧩 ВИД ОТОБРАЖЕНИЯ: ЗАГОЛОВОК
-              // ────────────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Вид отображения',
-                    style: AppTextStyles.h15w4.copyWith(
-                      color: AppColors.getTextPrimaryColor(context),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // ────────────────────────────────────────────────────────
-              // 🧩 ВИД ОТОБРАЖЕНИЯ: 4 ПЛЕЙСХОЛДЕРА
-              // ────────────────────────────────────────────────────────
-              SizedBox(
-                height: 100,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(left: 16),
-                  itemCount: 4,
-                  separatorBuilder: (context, index) =>
-                      const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final opacity = index == _displayModeIndex ? 1.0 : 0.5;
-                    return GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _displayModeIndex = index;
-                        });
-                      },
-                      behavior: HitTestBehavior.opaque,
-                      child: Opacity(
-                        opacity: opacity,
-                        child: Stack(
-                          children: [
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  const Color.fromARGB(255, 135, 206, 250), // Светлый голубой
-                                  const Color.fromARGB(255, 70, 130, 180), // Средний голубой
-                                  const Color.fromARGB(255, 30, 90, 150), // Темный синий
-                                ],
-                                stops: const [0.0, 0.5, 1.0],
-                              ),
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                            ),
+        child: Column(
+          children: [
+            // ────────────────────────────────────────────────────────
+            // 🖼️ ВЕРХНЕЕ ИЗОБРАЖЕНИЕ (ЗАФИКСИРОВАНО, НЕ СКРОЛЛИТСЯ)
+            // ────────────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+              child: Stack(
+                children: [
+                  // ────────────────────────────────────────────────────────
+                  // 🧊 СКРЫТЫЙ ЭКСПОРТ: ПРОЗРАЧНЫЙ ФОН ТОЛЬКО ДЛЯ ШАРИНГА
+                  // ────────────────────────────────────────────────────────
+                  if (_isOpacitySelected)
+                    Positioned.fill(
+                      child: IgnorePointer(
+                        child: RepaintBoundary(
+                          key: _shareExportImageKey,
+                          // ────────────────────────────────────────────────────────
+                          // 🔹 СЛУШАЕМ ЗАТЕМНЕНИЕ И ПЕРЕСТРАИВАЕМ ТОЛЬКО КАРТИНКУ
+                          // ────────────────────────────────────────────────────────
+                          child: ValueListenableBuilder<double>(
+                            valueListenable: _darknessOpacityNotifier,
+                            builder: (context, darknessOpacity, child) {
+                              return _ShareTopImage(
+                                activity: widget.activity,
+                                selectedItem: selectedItem,
+                                heightFactor: 1.0, // Чуть меньше по высоте
+                                displayModeIndex: _displayModeIndex,
+                                isTransparentMode: _isOpacitySelected,
+                                darknessOpacity: darknessOpacity,
+                                isTextWhite: _isTextWhite,
+                              );
+                            },
                           ),
-                          // ────────────────────────────────────────────────────────
-                          // 🔹 ОВАЛЫ ДЛЯ ПЕРВОЙ МИНИАТЮРЫ: 3 СНИЗУ СЛЕВА, 1 СВЕРХУ СПРАВА
-                          // ────────────────────────────────────────────────────────
-                          if (index == 0) ...[
-                            Positioned(
-                              bottom: 12,
-                              left: 12,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(
-                                  3,
-                                  (_) => Container(
-                                    margin: const EdgeInsets.only(right: 4),
-                                    width: 20,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: Container(
-                                width: 20,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ],
-                          // ────────────────────────────────────────────────────────
-                          // 🔹 ОВАЛЫ ДЛЯ ВТОРОЙ МИНИАТЮРЫ: 3 СВЕРХУ СЛЕВА, 1 СНИЗУ СПРАВА
-                          // ────────────────────────────────────────────────────────
-                          if (index == 1) ...[
-                            Positioned(
-                              top: 12,
-                              left: 12,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(
-                                  3,
-                                  (_) => Container(
-                                    margin: const EdgeInsets.only(right: 4),
-                                    width: 20,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 12,
-                              right: 12,
-                              child: Container(
-                                width: 20,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ],
-                          // ────────────────────────────────────────────────────────
-                          // 🔹 ОВАЛЫ ДЛЯ ТРЕТЬЕЙ МИНИАТЮРЫ: 3 ВЕРТИКАЛЬНО СЛЕВА СНИЗУ, 1 СВЕРХУ СПРАВА
-                          // ────────────────────────────────────────────────────────
-                          if (index == 2) ...[
-                            Positioned(
-                              bottom: 12,
-                              left: 12,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(
-                                  3,
-                                  (_) => Container(
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    width: 20,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 12,
-                              right: 12,
-                              child: Container(
-                                width: 20,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ],
-                          // ────────────────────────────────────────────────────────
-                          // 🔹 ОВАЛЫ ДЛЯ ЧЕТВЕРТОЙ МИНИАТЮРЫ: 3 ВЕРТИКАЛЬНО СПРАВА СНИЗУ, 1 СЛЕВА СВЕРХУ
-                          // ────────────────────────────────────────────────────────
-                          if (index == 3) ...[
-                            Positioned(
-                              bottom: 12,
-                              right: 12,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: List.generate(
-                                  3,
-                                  (_) => Container(
-                                    margin: const EdgeInsets.only(bottom: 4),
-                                    width: 20,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white,
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              top: 12,
-                              left: 12,
-                              child: Container(
-                                width: 20,
-                                height: 6,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
                         ),
                       ),
-                    );
-                  },
+                    ),
+                  // ────────────────────────────────────────────────────────
+                  // 🖼️ ВЕРХНЕЕ ИЗОБРАЖЕНИЕ ДЛЯ ПРЕДПРОСМОТРА
+                  // ────────────────────────────────────────────────────────
+                  RepaintBoundary(
+                    key: _shareImageKey,
+                    // ────────────────────────────────────────────────────────
+                    // 🔹 СЛУШАЕМ ЗАТЕМНЕНИЕ И ПЕРЕСТРАИВАЕМ ТОЛЬКО КАРТИНКУ
+                    // ────────────────────────────────────────────────────────
+                    child: ValueListenableBuilder<double>(
+                      valueListenable: _darknessOpacityNotifier,
+                      builder: (context, darknessOpacity, child) {
+                        return _ShareTopImage(
+                          activity: widget.activity,
+                          selectedItem: selectedItem,
+                          heightFactor: 1.0, // Чуть меньше по высоте
+                          displayModeIndex: _displayModeIndex,
+                          darknessOpacity: darknessOpacity,
+                          isTextWhite: _isTextWhite,
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // ────────────────────────────────────────────────────────
+            // 📜 СКРОЛЛИРУЕМЫЙ КОНТЕНТ
+            // ────────────────────────────────────────────────────────
+            Expanded(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.zero,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 12),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🏷️ ЗАГОЛОВОК СЕКЦИИ ВЫБОРА
+                    // ────────────────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Фото для публикации',
+                          style: AppTextStyles.h15w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ────────────────────────────────────────────────────────
+                    // 📸 МИНИАТЮРЫ МЕДИА: ВЫБРАННАЯ 100%, ОСТАЛЬНЫЕ 50%
+                    // ────────────────────────────────────────────────────────
+                    _SharePhotoSelector(
+                      activity: widget.activity,
+                      items: visibleItems,
+                      selectedIndex: _selectedIndex,
+                      onSelected: (index) {
+                        setState(() {
+                          _selectedIndex = index;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🎨 ЦВЕТ ТЕКСТА: ЗАГОЛОВОК И КНОПКИ
+                    // ────────────────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: Row(
+                        children: [
+                          Text(
+                            'Цвет текста',
+                            style: AppTextStyles.h15w4.copyWith(
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                          const Spacer(),
+                          // ────────────────────────────────────────────────────────
+                          // 🔹 КНОПКА "БЕЛЫЙ" (СВЕТЛАЯ С ТЕМНЫМ ТЕКСТОМ)
+                          // ────────────────────────────────────────────────────────
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isTextWhite = true;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                                border: _isTextWhite
+                                    ? Border.all(
+                                        color: AppColors.brandPrimary,
+                                        width: 2,
+                                      )
+                                    : Border.all(
+                                        color: AppColors.getSurfaceColor(context),
+                                        width: 2,
+                                      ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(AppRadius.xxl),
+                                  border: Border.all(
+                                    color: AppColors.getSurfaceColor(context),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 1),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  'Белый',
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color: AppColors.getTextPrimaryColor(context),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // ────────────────────────────────────────────────────────
+                          // 🔹 КНОПКА "ЧЕРНЫЙ" (ТЕМНАЯ СО СВЕТЛЫМ ТЕКСТОМ)
+                          // ────────────────────────────────────────────────────────
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _isTextWhite = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(1),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                                border: !_isTextWhite
+                                    ? Border.all(
+                                        color: AppColors.brandPrimary,
+                                        width: 2,
+                                      )
+                                    : Border.all(
+                                        color: AppColors.getSurfaceColor(context),
+                                        width: 2,
+                                      ),
+                              ),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.button,
+                                  borderRadius: BorderRadius.circular(AppRadius.xxl),
+                                  border: Border.all(
+                                    color: AppColors.getSurfaceColor(context),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Черный',
+                                  style: AppTextStyles.h14w4.copyWith(
+                                    color: AppColors.getSurfaceColor(context),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🧩 ВИД ОТОБРАЖЕНИЯ: ЗАГОЛОВОК
+                    // ────────────────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Вид отображения',
+                          style: AppTextStyles.h15w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🧩 ВИД ОТОБРАЖЕНИЯ: 5 ПЛЕЙСХОЛДЕРА
+                    // ────────────────────────────────────────────────────────
+                    SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: 5,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 12),
+                        itemBuilder: (context, index) {
+                          final opacity = index == _displayModeIndex ? 1.0 : 0.5;
+                          return GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _displayModeIndex = index;
+                              });
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Opacity(
+                              opacity: opacity,
+                              child: Stack(
+                                children: [
+                                Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                      colors: [
+                                        Color.fromARGB(255, 135, 206, 250), // Светлый голубой
+                                        Color.fromARGB(255, 70, 130, 180), // Средний голубой
+                                        Color.fromARGB(255, 30, 90, 150), // Темный синий
+                                      ],
+                                      stops: [0.0, 0.5, 1.0],
+                                    ),
+                                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                                  ),
+                                ),
+                                // ────────────────────────────────────────────────────────
+                                // 🔹 ОВАЛЫ ДЛЯ ПЕРВОЙ МИНИАТЮРЫ: 3 СНИЗУ СЛЕВА, 1 СВЕРХУ СПРАВА
+                                // ────────────────────────────────────────────────────────
+                                if (index == 0) ...[
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 12,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: List.generate(
+                                        3,
+                                        (_) => Container(
+                                          margin: const EdgeInsets.only(right: 4),
+                                          width: 20,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: Container(
+                                      width: 20,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                // ────────────────────────────────────────────────────────
+                                // 🔹 ОВАЛЫ ДЛЯ ВТОРОЙ МИНИАТЮРЫ: 3 СВЕРХУ СЛЕВА, 1 СНИЗУ СПРАВА
+                                // ────────────────────────────────────────────────────────
+                                if (index == 1) ...[
+                                  Positioned(
+                                    top: 12,
+                                    left: 12,
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: List.generate(
+                                        3,
+                                        (_) => Container(
+                                          margin: const EdgeInsets.only(right: 4),
+                                          width: 20,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: Container(
+                                      width: 20,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                // ────────────────────────────────────────────────────────
+                                // 🔹 ОВАЛЫ ДЛЯ ТРЕТЬЕЙ МИНИАТЮРЫ: 3 ВЕРТИКАЛЬНО СЛЕВА СНИЗУ, 1 СВЕРХУ СПРАВА
+                                // ────────────────────────────────────────────────────────
+                                if (index == 2) ...[
+                                  Positioned(
+                                    bottom: 12,
+                                    left: 12,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: List.generate(
+                                        3,
+                                        (_) => Container(
+                                          margin: const EdgeInsets.only(bottom: 4),
+                                          width: 20,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 12,
+                                    right: 12,
+                                    child: Container(
+                                      width: 20,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                // ────────────────────────────────────────────────────────
+                                // 🔹 ОВАЛЫ ДЛЯ ЧЕТВЕРТОЙ МИНИАТЮРЫ: 3 ВЕРТИКАЛЬНО СПРАВА СНИЗУ, 1 СЛЕВА СВЕРХУ
+                                // ────────────────────────────────────────────────────────
+                                if (index == 3) ...[
+                                  Positioned(
+                                    bottom: 12,
+                                    right: 12,
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.start,
+                                      children: List.generate(
+                                        3,
+                                        (_) => Container(
+                                          margin: const EdgeInsets.only(bottom: 4),
+                                          width: 20,
+                                          height: 6,
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius: BorderRadius.circular(3),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    top: 12,
+                                    left: 12,
+                                    child: Container(
+                                      width: 20,
+                                      height: 6,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(3),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                                // ────────────────────────────────────────────────────────
+                                // 🔹 ОВАЛЫ ДЛЯ ПЯТОЙ МИНИАТЮРЫ: 4 ОВАЛА ПО ЦЕНТРУ ВЕРТИКАЛЬНО
+                                // ────────────────────────────────────────────────────────
+                                if (index == 4)
+                                  Positioned.fill(
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: List.generate(
+                                          4,
+                                          (_) => Container(
+                                            margin: const EdgeInsets.only(bottom: 4),
+                                            width: 20,
+                                            height: 6,
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius: BorderRadius.circular(3),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🌑 ЗАТЕМНЕНИЕ ФОНА: ЗАГОЛОВОК И СЛАЙДЕР (СКРЫВАЕМ ДЛЯ opacity.jpg)
+                    // ────────────────────────────────────────────────────────
+                    if (!_isOpacitySelected) ...[
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+                        child: Row(
+                          children: [
+                            Text(
+                              'Затемнение фона',
+                              style: AppTextStyles.h15w4.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            // ────────────────────────────────────────────────────────
+                            // 🔹 СМЕЩАЕМ СЛАЙДЕР К ПРАВОМУ КРАЮ СТРОКИ
+                            // ────────────────────────────────────────────────────────
+                            const Spacer(),
+                            Expanded(
+                              flex: 8,
+                              child: SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  // ────────────────────────────────────────────────────────
+                                  // 🔹 УВЕЛИЧЕННАЯ ВЫСОТА ДОРОЖКИ
+                                  // ────────────────────────────────────────────────────────
+                                  trackHeight: 8.0,
+                                  // ────────────────────────────────────────────────────────
+                                  // 🔹 КАСТОМНАЯ ДОРОЖКА С ГРАДИЕНТОМ ОТ БЕЛОГО ДО ЧЕРНОГО
+                                  // ────────────────────────────────────────────────────────
+                                  trackShape: const _GradientSliderTrackShape(),
+                                  // Цвета не используются, так как градиент рисуется кастомной формой
+                                  activeTrackColor: Colors.grey,
+                                  inactiveTrackColor: Colors.grey,
+                                  // ────────────────────────────────────────────────────────
+                                  // 🔹 КАСТОМНЫЙ THUMB
+                                  // ────────────────────────────────────────────────────────
+                                  thumbShape: const RoundSliderThumbShape(
+                                    enabledThumbRadius: 12.0,
+                                  ),
+                                  thumbColor: AppColors.button,
+                                  // ────────────────────────────────────────────────────────
+                                  // 🔹 ОБЛАСТЬ НАЖАТИЯ
+                                  // ────────────────────────────────────────────────────────
+                                  overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 24.0,
+                                  ),
+                                  overlayColor: AppColors.button
+                                      .withValues(alpha: 0.12),
+                                  // ────────────────────────────────────────────────────────
+                                  // 🔹 ОТКЛЮЧАЕМ VALUE INDICATOR
+                                  // ────────────────────────────────────────────────────────
+                                  showValueIndicator: ShowValueIndicator.never,
+                                ),
+                              child: ValueListenableBuilder<double>(
+                                valueListenable: _darknessOpacityNotifier,
+                                builder: (context, darknessOpacity, child) {
+                                  // ────────────────────────────────────────────────
+                                  // 🔹 ПЕРЕСТРАИВАЕМ ТОЛЬКО СЛАЙДЕР ПРИ ИЗМЕНЕНИИ
+                                  // ────────────────────────────────────────────────
+                                  return Slider(
+                                    value: darknessOpacity,
+                                    min: 0.0,
+                                    max: 1.0,
+                                    divisions: 100,
+                                    onChanged: (value) {
+                                      _darknessOpacityNotifier.value = value;
+                                    },
+                                  );
+                                },
+                              ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                    ],
+
+                    // ────────────────────────────────────────────────────────
+                    // 🔹 ОТСТУП ПЕРЕД КНОПКОЙ, ЕСЛИ РАЗДЕЛ "ЗАТЕМНЕНИЕ ФОНА" СКРЫТ
+                    // ────────────────────────────────────────────────────────
+                    if (_isOpacitySelected) const SizedBox(height: 14),
+
+                    // ────────────────────────────────────────────────────────
+                    // 🔹 КНОПКА "ПОДЕЛИТЬСЯ"
+                    // ────────────────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                      child: _buildShareButton(context),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // ────────────────────────────────────────────────────────
-              // 🔹 КНОПКА "ПОДЕЛИТЬСЯ"
-              // ────────────────────────────────────────────────────────
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                child: _buildShareButton(context),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -438,9 +743,13 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   // ────────────────────────────────────────────────────────────────
   Future<Uint8List?> _captureShareImageBytes() async {
     // ────────────────────────────────────────────────────────────────
+    // 🔹 ВЫБИРАЕМ КЛЮЧ: ПРОЗРАЧНЫЙ ЭКСПОРТ ТОЛЬКО ДЛЯ opacity.jpg
+    // ────────────────────────────────────────────────────────────────
+    final key = _isOpacitySelected ? _shareExportImageKey : _shareImageKey;
+    // ────────────────────────────────────────────────────────────────
     // 🔹 ПОЛУЧАЕМ RepaintBoundary ДЛЯ СНИМКА
     // ────────────────────────────────────────────────────────────────
-    final renderObject = _shareImageKey.currentContext?.findRenderObject();
+    final renderObject = key.currentContext?.findRenderObject();
     if (renderObject is! RenderRepaintBoundary) {
       log(
         'RenderRepaintBoundary не найден для захвата изображения',
@@ -452,13 +761,46 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     // 🔹 РЕНДЕР В PNG С УЧЕТОМ PIXEL RATIO
     // ────────────────────────────────────────────────────────────────
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
-    final image = await renderObject.toImage(pixelRatio: pixelRatio);
-    final byteData = await image.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-    image.dispose();
-    return byteData?.buffer.asUint8List();
+    for (var attempt = 0; attempt < 3; attempt++) {
+      if (renderObject.debugNeedsPaint) {
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 ЖДЕМ КАДР, ЧТОБЫ RENDEROBJECT УСПЕЛ ПРОРИСОВАТЬСЯ
+        // ────────────────────────────────────────────────────────────────
+        await WidgetsBinding.instance.endOfFrame;
+      }
+      try {
+        final image = await renderObject.toImage(pixelRatio: pixelRatio);
+        final byteData = await image.toByteData(
+          format: ui.ImageByteFormat.png,
+        );
+        image.dispose();
+        return byteData?.buffer.asUint8List();
+      } catch (e, stackTrace) {
+        log(
+          'Ошибка захвата изображения (попытка ${attempt + 1})',
+          error: e,
+          stackTrace: stackTrace,
+        );
+        await WidgetsBinding.instance.endOfFrame;
+      }
+    }
+    return null;
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ТЕКУЩИЙ ВЫБРАННЫЙ ЭЛЕМЕНТ
+  // ────────────────────────────────────────────────────────────────
+  _ShareMediaItem? get _currentSelectedItem =>
+      (_selectedIndex >= 0 && _selectedIndex < _mediaItems.length)
+          ? _mediaItems[_selectedIndex]
+          : null;
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПРОЗРАЧНЫЙ РЕЖИМ ДЛЯ opacity.jpg
+  // ────────────────────────────────────────────────────────────────
+  bool get _isOpacitySelected =>
+      _currentSelectedItem?.isAsset == true &&
+      _currentSelectedItem?.imageUrl == _opacityAssetPath;
 }
 
 /// ────────────────────────────────────────────────────────────────
@@ -469,13 +811,51 @@ class _ShareTopImage extends StatelessWidget {
   final _ShareMediaItem? selectedItem;
   final double heightFactor;
   final int displayModeIndex;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 РЕЖИМ ПРОЗРАЧНОГО ФОНА ДЛЯ opacity.jpg
+  // ────────────────────────────────────────────────────────────────
+  final bool isTransparentMode;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ИНТЕНСИВНОСТЬ ГРАДИЕНТНОГО ЗАТЕМНЕНИЯ (0.0 - 1.0)
+  // ────────────────────────────────────────────────────────────────
+  final double darknessOpacity;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ЦВЕТ ТЕКСТА: БЕЛЫЙ ИЛИ ЧЕРНЫЙ
+  // ────────────────────────────────────────────────────────────────
+  final bool isTextWhite;
 
   const _ShareTopImage({
     required this.activity,
     required this.selectedItem,
     this.heightFactor = 1.1,
     required this.displayModeIndex,
+    this.isTransparentMode = false,
+    this.darknessOpacity = 0.0,
+    this.isTextWhite = true,
   });
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПОЛУЧЕНИЕ ИКОНКИ ВИДА СПОРТА
+  // ────────────────────────────────────────────────────────────────
+  IconData _getSportIcon(String activityType) {
+    final type = activityType.toLowerCase();
+    if (type == 'run' || type == 'running' || type == 'indoor-running') {
+      return Icons.directions_run;
+    } else if (type == 'bike' ||
+        type == 'cycling' ||
+        type == 'bicycle' ||
+        type == 'indoor-cycling') {
+      return Icons.directions_bike;
+    } else if (type == 'swim' || type == 'swimming') {
+      return Icons.pool;
+    } else if (type == 'ski' || type == 'skiing') {
+      return Icons.downhill_skiing;
+    } else if (type == 'walking' || type == 'hiking') {
+      return Icons.directions_walk;
+    }
+    // Дефолтная иконка для бега
+    return Icons.directions_run;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -496,162 +876,101 @@ class _ShareTopImage extends StatelessWidget {
               fit: StackFit.expand,
               clipBehavior: Clip.hardEdge,
               children: [
-                _buildTopImageContent(context, width, height),
-                // ────────────────────────────────────────────────────────
-                // 🌑 ТЕМНЫЙ ГРАДИЕНТ: позиция зависит от выбранного вида
-                // ────────────────────────────────────────────────────────
-                if (displayModeIndex != 2 && displayModeIndex != 3)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: displayModeIndex == 1 ? 0 : null,
-                    bottom: displayModeIndex == 1 ? null : 0,
-                    height: 140,
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: displayModeIndex == 1
-                                ? Alignment.bottomCenter
-                                : Alignment.topCenter,
-                            end: displayModeIndex == 1
-                                ? Alignment.topCenter
-                                : Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(
-                              alpha: displayModeIndex == 0 ? 0.15 : 0.15,
-                            ),
-                          ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                // ────────────────────────────────────────────────────────
-                // 🌑 ЛЕГКИЙ ГРАДИЕНТ: позиция зависит от выбранного вида
-                // ────────────────────────────────────────────────────────
-                if (displayModeIndex != 2 && displayModeIndex != 3)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: displayModeIndex == 1 ? null : 0,
-                    bottom: displayModeIndex == 1 ? 0 : null,
-                    height: 80,
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: displayModeIndex == 1
-                                ? Alignment.bottomCenter
-                                : Alignment.topCenter,
-                            end: displayModeIndex == 1
-                                ? Alignment.topCenter
-                                : Alignment.bottomCenter,
-                            colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                // ────────────────────────────────────────────────────────
-                // 🌑 ЛЕГКИЙ ГРАДИЕНТ СВЕРХУ: для 3-го и 4-го вида
-                // ────────────────────────────────────────────────────────
-                if (displayModeIndex == 2 || displayModeIndex == 3)
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    height: 80,
-                    child: IgnorePointer(
-                      child: Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black.withValues(alpha: 0.15),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                // ────────────────────────────────────────────────────────
-                // 🌑 ЛЕГКИЙ ГРАДИЕНТ СЛЕВА: для читабельности на светлом фоне
-                // ────────────────────────────────────────────────────────
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: width * 0.5,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                            Colors.transparent,
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                _buildTopImageContent(
+                  context,
+                  width,
+                  height,
+                  isTransparentMode: isTransparentMode,
                 ),
                 // ────────────────────────────────────────────────────────
-                // 🌑 ЛЕГКИЙ ГРАДИЕНТ СПРАВА: симметрично левому
+                // 🌑 РАДИАЛЬНОЕ ЗАТЕМНЕНИЕ: от центра к краям
                 // ────────────────────────────────────────────────────────
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  child: IgnorePointer(
-                    child: Container(
-                      width: width * 0.5,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerRight,
-                          end: Alignment.centerLeft,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.15),
-                            Colors.transparent,
-                          ],
+                if (!isTransparentMode && darknessOpacity > 0.0)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: Alignment.center,
+                            radius: 1.0,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(
+                                alpha: darknessOpacity,
+                              ),
+                            ],
+                            stops: [0.0, 1.0],
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 // ────────────────────────────────────────────────────────
                 // 🖼️ ОВЕРЛЕЙ ИЗ АССЕТОВ: позиция зависит от выбранного вида
                 // ────────────────────────────────────────────────────────
                 // ────────────────────────────────────────────────────────
-                // 🧩 ПОЗИЦИЯ ЛОГОТИПА: 4-ЫЙ ВИД — СЛЕВА СВЕРХУ
+                // 🧩 ПОЗИЦИЯ ЛОГОТИПА: 4-ЫЙ ВИД — СЛЕВА СВЕРХУ, 5-ЫЙ ВИД — ПО ЦЕНТРУ
                 // ────────────────────────────────────────────────────────
                 Positioned(
                   top: displayModeIndex == 1
                       ? null
-                      : (displayModeIndex == 0 ||
-                              displayModeIndex == 2 ||
-                              displayModeIndex == 3)
-                          ? 16
-                          : 12,
-                  bottom: displayModeIndex == 1 ? 12 : null,
-                  left: displayModeIndex == 3 ? 16 : null,
-                  right: displayModeIndex == 3 ? null : 20,
-                  child: Image.asset(
-                    'assets/gorizont.png',
-                    width: 100,
-                    fit: BoxFit.contain,
-                  ),
+                      : displayModeIndex == 4
+                          ? null
+                          : (displayModeIndex == 0 ||
+                                  displayModeIndex == 2 ||
+                                  displayModeIndex == 3)
+                              ? 16
+                              : 12,
+                  bottom: displayModeIndex == 1
+                      ? 12
+                      : displayModeIndex == 4
+                          ? null
+                          : null,
+                  left: displayModeIndex == 3
+                      ? 16
+                      : displayModeIndex == 4
+                          ? null
+                          : null,
+                  right: displayModeIndex == 3
+                      ? null
+                      : displayModeIndex == 4
+                          ? null
+                          : 20,
+                  child: displayModeIndex == 4
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                isTextWhite
+                                    ? 'assets/white_text.png'
+                                    : 'assets/black_text.png',
+                                width: 90,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(height: 16),
+                              Icon(
+                                _getSportIcon(activity.type),
+                                size: 32,
+                                color: isTextWhite
+                                    ? Colors.white
+                                    : Colors.black,
+                              ),
+                              const SizedBox(height: 12),
+                              _buildOverlayMetricsColumnCentered(context),
+                            ],
+                          ),
+                        )
+                      : Image.asset(
+                          isTextWhite
+                              ? 'assets/white_logo.png'
+                              : 'assets/black_logo.png',
+                          width: 100,
+                          fit: BoxFit.contain,
+                        ),
                 ),
                 // ────────────────────────────────────────────────────────
-                // 🧩 МЕТРИКИ: 4-ЫЙ ВИД — ВЕРТИКАЛЬНО СНИЗУ СПРАВА
+                // 🧩 МЕТРИКИ: 4-ЫЙ ВИД — ВЕРТИКАЛЬНО СНИЗУ СПРАВА, 5-ЫЙ ВИД — В COLUMN ПОД ИКОНКОЙ
                 // ────────────────────────────────────────────────────────
                 if (displayModeIndex == 2)
                   Positioned(
@@ -668,7 +987,7 @@ class _ShareTopImage extends StatelessWidget {
                       isRightAligned: true,
                     ),
                   )
-                else
+                else if (displayModeIndex != 4)
                   Positioned(
                     left: 16,
                     right: 16,
@@ -690,8 +1009,17 @@ class _ShareTopImage extends StatelessWidget {
   Widget _buildTopImageContent(
     BuildContext context,
     double width,
-    double height,
-  ) {
+    double height, {
+    bool isTransparentMode = false,
+  }) {
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ПРОЗРАЧНЫЙ ФОН: ТОЛЬКО ОВЕРЛЕИ
+    // ────────────────────────────────────────────────────────────────
+    if (isTransparentMode) {
+      return const ColoredBox(
+        color: Colors.transparent,
+      );
+    }
     // ────────────────────────────────────────────────────────────────
     // 🔹 ЕСЛИ ВЫБРАН КОНКРЕТНЫЙ ЭЛЕМЕНТ — ПОКАЗЫВАЕМ ЕГО
     // ────────────────────────────────────────────────────────────────
@@ -700,11 +1028,19 @@ class _ShareTopImage extends StatelessWidget {
         return _buildMapImage(context, width, height);
       }
       if (!selectedItem!.isMap && selectedItem!.imageUrl != null) {
+        // ────────────────────────────────────────────────────────
+        // 🔹 ЕСЛИ ВЫБРАН ЧЕРНЫЙ ТЕКСТ И opacity.jpg — ИСПОЛЬЗУЕМ opacity_white.png
+        // ────────────────────────────────────────────────────────
+        final imageUrl = selectedItem!.imageUrl == 'assets/opacity.jpg' &&
+                !isTextWhite
+            ? 'assets/opacity_white.png'
+            : selectedItem!.imageUrl!;
         return _buildPhotoImage(
           context,
           width,
           height,
-          selectedItem!.imageUrl!,
+          imageUrl,
+          isAsset: selectedItem!.isAsset,
         );
       }
     }
@@ -756,8 +1092,28 @@ class _ShareTopImage extends StatelessWidget {
     BuildContext context,
     double width,
     double height,
-    String imageUrl,
-  ) {
+    String imageUrl, {
+    bool isAsset = false,
+  }) {
+    if (isAsset) {
+      return Image.asset(
+        imageUrl,
+        fit: BoxFit.cover,
+        width: width,
+        height: height,
+        errorBuilder: (context, error, stackTrace) => Container(
+          color: AppColors.twinphoto,
+          child: const Center(
+            child: Icon(
+              CupertinoIcons.photo,
+              size: 40,
+              color: AppColors.scrim20,
+            ),
+          ),
+        ),
+      );
+    }
+
     final dpr = MediaQuery.of(context).devicePixelRatio;
     final w = (width * dpr).round();
     final h = (height * dpr).round();
@@ -843,6 +1199,9 @@ class _ShareTopImage extends StatelessWidget {
   // 🔹 МЕТРИКИ ПОВЕРХ ФОТО: БЕЗ ТЕМНОГО ГРАДИЕНТА
   // ────────────────────────────────────────────────────────────────
   Widget _buildOverlayMetricsRow(BuildContext context) {
+    final textColor = isTextWhite
+        ? Colors.white
+        : AppColors.getTextPrimaryColor(context);
     final stats = activity.stats;
     final activityTypeLower = activity.type.toLowerCase();
     final isSwim =
@@ -938,7 +1297,7 @@ class _ShareTopImage extends StatelessWidget {
               Text(
                 'Расстояние',
                 style: AppTextStyles.h11w4Sec.copyWith(
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 1),
@@ -946,7 +1305,7 @@ class _ShareTopImage extends StatelessWidget {
                   ? Text(
                       distanceText,
                       style: AppTextStyles.h17w6.copyWith(
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     )
                   : Text.rich(
@@ -957,14 +1316,14 @@ class _ShareTopImage extends StatelessWidget {
                                 .replaceAll(' км', '')
                                 .replaceAll(' м', ''),
                             style: AppTextStyles.h17w6.copyWith(
-                              color: Colors.white,
+                              color: textColor,
                             ),
                           ),
                           TextSpan(
                             text: distanceText.contains(' км') ? ' км' : ' м',
                             style: AppTextStyles.h17w6.copyWith(
                               fontSize: 16,
-                              color: Colors.white,
+                              color: textColor,
                             ),
                           ),
                         ],
@@ -981,14 +1340,14 @@ class _ShareTopImage extends StatelessWidget {
               Text(
                 'Время, мин',
                 style: AppTextStyles.h11w4Sec.copyWith(
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 0),
               Text(
                 durationText,
                 style: AppTextStyles.h17w6.copyWith(
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
             ],
@@ -1005,7 +1364,7 @@ class _ShareTopImage extends StatelessWidget {
                         ? 'Темп, /100м'
                         : 'Темп, /км',
                 style: AppTextStyles.h11w4Sec.copyWith(
-                  color: Colors.white,
+                  color: textColor,
                 ),
               ),
               const SizedBox(height: 0),
@@ -1014,7 +1373,7 @@ class _ShareTopImage extends StatelessWidget {
                       ? Text(
                           speedText,
                           style: AppTextStyles.h17w6.copyWith(
-                            color: Colors.white,
+                            color: textColor,
                           ),
                         )
                       : Text.rich(
@@ -1023,14 +1382,14 @@ class _ShareTopImage extends StatelessWidget {
                               TextSpan(
                                 text: speedText.replaceAll(' км/ч', ''),
                                 style: AppTextStyles.h17w6.copyWith(
-                                  color: Colors.white,
+                                  color: textColor,
                                 ),
                               ),
                               TextSpan(
                                 text: ' км/ч',
                                 style: AppTextStyles.h17w6.copyWith(
                                   fontSize: 16,
-                                  color: Colors.white,
+                                  color: textColor,
                                 ),
                               ),
                             ],
@@ -1039,7 +1398,7 @@ class _ShareTopImage extends StatelessWidget {
                   : Text(
                       paceText,
                       style: AppTextStyles.h17w6.copyWith(
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     ),
             ],
@@ -1056,6 +1415,9 @@ class _ShareTopImage extends StatelessWidget {
     BuildContext context, {
     bool isRightAligned = false,
   }) {
+    final textColor = isTextWhite
+        ? Colors.white
+        : AppColors.getTextPrimaryColor(context);
     final textAlign = isRightAligned ? TextAlign.right : TextAlign.left;
     final itemCrossAxisAlignment = isRightAligned
         ? CrossAxisAlignment.end
@@ -1153,7 +1515,7 @@ class _ShareTopImage extends StatelessWidget {
           Text(
             label,
             style: AppTextStyles.h11w4Sec.copyWith(
-              color: Colors.white,
+              color: textColor,
             ),
             textAlign: textAlign,
           ),
@@ -1170,7 +1532,7 @@ class _ShareTopImage extends StatelessWidget {
         ? Text(
             distanceText,
             style: AppTextStyles.h17w6.copyWith(
-              color: Colors.white,
+              color: textColor,
             ),
             textAlign: textAlign,
           )
@@ -1182,14 +1544,14 @@ class _ShareTopImage extends StatelessWidget {
                       .replaceAll(' км', '')
                       .replaceAll(' м', ''),
                   style: AppTextStyles.h17w6.copyWith(
-                    color: Colors.white,
+                    color: textColor,
                   ),
                 ),
                 TextSpan(
                   text: distanceText.contains(' км') ? ' км' : ' м',
                   style: AppTextStyles.h17w6.copyWith(
                     fontSize: 16,
-                    color: Colors.white,
+                    color: textColor,
                   ),
                 ),
               ],
@@ -1200,7 +1562,7 @@ class _ShareTopImage extends StatelessWidget {
     final durationValue = Text(
       durationText,
       style: AppTextStyles.h17w6.copyWith(
-        color: Colors.white,
+        color: textColor,
       ),
       textAlign: textAlign,
     );
@@ -1210,7 +1572,7 @@ class _ShareTopImage extends StatelessWidget {
             ? Text(
                 speedText,
                 style: AppTextStyles.h17w6.copyWith(
-                  color: Colors.white,
+                  color: textColor,
                 ),
                 textAlign: textAlign,
               )
@@ -1220,14 +1582,14 @@ class _ShareTopImage extends StatelessWidget {
                     TextSpan(
                       text: speedText.replaceAll(' км/ч', ''),
                       style: AppTextStyles.h17w6.copyWith(
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     ),
                     TextSpan(
                       text: ' км/ч',
                       style: AppTextStyles.h17w6.copyWith(
                         fontSize: 16,
-                        color: Colors.white,
+                        color: textColor,
                       ),
                     ),
                   ],
@@ -1237,7 +1599,7 @@ class _ShareTopImage extends StatelessWidget {
         : Text(
             paceText,
             style: AppTextStyles.h17w6.copyWith(
-              color: Colors.white,
+              color: textColor,
             ),
             textAlign: textAlign,
           );
@@ -1255,6 +1617,225 @@ class _ShareTopImage extends StatelessWidget {
               : isSwim
                   ? 'Темп, /100м'
                   : 'Темп, /км',
+          paceValue,
+        ),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 МЕТРИКИ С ЦЕНТРИРОВАНИЕМ ДЛЯ 5-ГО ВИДА
+  // ────────────────────────────────────────────────────────────────
+  Widget _buildOverlayMetricsColumnCentered(BuildContext context) {
+    final textColor = isTextWhite
+        ? Colors.white
+        : AppColors.getTextPrimaryColor(context);
+    final stats = activity.stats;
+    final activityTypeLower = activity.type.toLowerCase();
+    final isSwim =
+        activityTypeLower == 'swim' || activityTypeLower == 'swimming';
+    final isBike =
+        activityTypeLower == 'bike' ||
+        activityTypeLower == 'bicycle' ||
+        activityTypeLower == 'cycling' ||
+        activityTypeLower == 'indoor-cycling';
+
+    String formatSwimDistance(double meters) {
+      final value = meters.toStringAsFixed(0);
+      final buffer = StringBuffer();
+      for (int i = 0; i < value.length; i++) {
+        if (i > 0 && (value.length - i) % 3 == 0) {
+          buffer.write(' ');
+        }
+        buffer.write(value[i]);
+      }
+      return buffer.toString();
+    }
+
+    final distanceText = stats?.distance != null
+        ? isSwim
+            ? '${formatSwimDistance(stats!.distance)} м'
+            : '${(stats!.distance / 1000.0).toStringAsFixed(2)} км'
+        : '—';
+
+    final durationText = stats?.effectiveDuration != null
+        ? formatDuration(stats!.effectiveDuration)
+        : '—';
+
+    String paceText;
+    double? speedKmh;
+
+    if (isSwim) {
+      if (stats?.avgPace != null && stats!.avgPace > 0) {
+        paceText = formatPace(stats.avgPace / 10.0);
+      } else if (stats?.distance != null &&
+          stats?.effectiveDuration != null &&
+          stats!.distance > 0 &&
+          stats.effectiveDuration > 0) {
+        final duration = stats.effectiveDuration.toDouble();
+        final paceMinPer100m = (duration * 100) / (stats.distance * 60);
+        paceText = formatPace(paceMinPer100m);
+      } else {
+        paceText = '—';
+      }
+    } else {
+      paceText = stats?.avgPace != null ? formatPace(stats!.avgPace) : '—';
+    }
+
+    if (isBike) {
+      if (activity.points.isEmpty &&
+          stats?.distance != null &&
+          stats?.effectiveDuration != null &&
+          stats!.distance > 0 &&
+          stats.effectiveDuration > 0) {
+        final duration = stats.effectiveDuration.toDouble();
+        speedKmh = (stats.distance / duration) * 3.6;
+      } else if (stats?.avgSpeed != null && stats!.avgSpeed > 0) {
+        speedKmh = stats.avgSpeed;
+      } else if (stats?.distance != null &&
+          stats?.effectiveDuration != null &&
+          stats!.distance > 0 &&
+          stats.effectiveDuration > 0) {
+        final duration = stats.effectiveDuration.toDouble();
+        speedKmh = (stats.distance / duration) * 3.6;
+      }
+    } else {
+      if (stats?.distance != null &&
+          stats?.effectiveDuration != null &&
+          stats!.distance > 0 &&
+          stats.effectiveDuration > 0) {
+        final duration = stats.effectiveDuration.toDouble();
+        speedKmh = (stats.distance / duration) * 3.6;
+      }
+    }
+
+    final speedText = speedKmh != null
+        ? '${speedKmh.toStringAsFixed(1)} км/ч'
+        : '—';
+
+    Widget buildMetricItem(String label, Widget value) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.h13w4Sec.copyWith(
+              fontWeight: FontWeight.w500,
+              color: textColor,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 0),
+          Center(
+            child: value,
+          ),
+        ],
+      );
+    }
+
+    final distanceValue = distanceText == '—'
+        ? Text(
+            distanceText,
+            style: AppTextStyles.h18w6.copyWith(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+            textAlign: TextAlign.center,
+          )
+        : Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: distanceText
+                      .replaceAll(' км', '')
+                      .replaceAll(' м', ''),
+                  style: AppTextStyles.h18w6.copyWith(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+                TextSpan(
+                  text: distanceText.contains(' км') ? ' км' : ' м',
+                  style: AppTextStyles.h18w6.copyWith(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+            textAlign: TextAlign.center,
+          );
+
+    final durationValue = Text(
+      durationText,
+      style: AppTextStyles.h18w6.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.w700,
+        color: textColor,
+      ),
+      textAlign: TextAlign.center,
+    );
+
+    final paceValue = isBike
+        ? (speedText == '—'
+            ? Text(
+                speedText,
+                style: AppTextStyles.h18w6.copyWith(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: textColor,
+                ),
+                textAlign: TextAlign.center,
+              )
+            : Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: speedText.replaceAll(' км/ч', ''),
+                      style: AppTextStyles.h18w6.copyWith(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' км/ч',
+                      style: AppTextStyles.h18w6.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+                textAlign: TextAlign.center,
+              ))
+        : Text(
+            paceText,
+            style: AppTextStyles.h18w6.copyWith(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: textColor,
+            ),
+            textAlign: TextAlign.center,
+          );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        buildMetricItem('Расстояние', distanceValue),
+        const SizedBox(height: 12),
+        buildMetricItem('Время', durationValue),
+        const SizedBox(height: 12),
+        buildMetricItem(
+          isBike
+              ? 'Скорость'
+              : isSwim
+                  ? 'Темп, /100м'
+                  : 'Темп',
           paceValue,
         ),
       ],
@@ -1307,29 +1888,51 @@ class _SharePhotoSelector extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.only(left: 16),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             itemCount: items.length,
             separatorBuilder: (context, index) => const SizedBox(width: 12),
             itemBuilder: (context, index) {
               final item = items[index];
               final opacity = index == selectedIndex ? 1.0 : 0.5;
+              final isOpacityAsset = item.isAsset &&
+                  item.imageUrl == 'assets/opacity.jpg';
 
               return GestureDetector(
                 onTap: () => onSelected(index),
                 behavior: HitTestBehavior.opaque,
                 child: Opacity(
                   opacity: opacity,
-                  child: item.isMap
-                      ? _ShareMapItem(
-                          points: activity.points
-                              .map((c) => LatLng(c.lat, c.lng))
-                              .toList(),
-                          size: itemSize,
-                        )
-                      : _SharePhotoItem(
-                          imageUrl: item.imageUrl!,
-                          size: itemSize,
+                  child: Stack(
+                    children: [
+                      item.isMap
+                          ? _ShareMapItem(
+                              points: activity.points
+                                  .map((c) => LatLng(c.lat, c.lng))
+                                  .toList(),
+                              size: itemSize,
+                            )
+                          : _SharePhotoItem(
+                              imageUrl: item.imageUrl!,
+                              size: itemSize,
+                              isAsset: item.isAsset,
+                            ),
+                      // ────────────────────────────────────────────────────────
+                      // 🔹 ТЕКСТ "ПРОЗРАЧНЫЙ ФОН" ДЛЯ opacity.jpg
+                      // ────────────────────────────────────────────────────────
+                      if (isOpacityAsset)
+                        Positioned.fill(
+                          child: Center(
+                            child: Text(
+                              'Прозрачный\nфон',
+                              style: AppTextStyles.h12w4.copyWith(
+                                color: AppColors.surface,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
+                    ],
+                  ),
                 ),
               );
             },
@@ -1346,44 +1949,65 @@ class _SharePhotoSelector extends StatelessWidget {
 class _SharePhotoItem extends StatelessWidget {
   final String imageUrl;
   final double size;
+  final bool isAsset;
 
   const _SharePhotoItem({
     required this.imageUrl,
     required this.size,
+    this.isAsset = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final dpr = MediaQuery.of(context).devicePixelRatio;
-    final w = (size * dpr).round();
-
     return SizedBox(
       width: size,
       height: size,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: CachedNetworkImage(
-          imageUrl: imageUrl,
-          fit: BoxFit.cover,
-          memCacheWidth: w,
-          maxWidthDiskCache: w,
-          placeholder: (context, url) => Container(
-            color: AppColors.twinphoto,
-            child: const Center(
-              child: CupertinoActivityIndicator(),
-            ),
-          ),
-          errorWidget: (context, url, error) => Container(
-            color: AppColors.twinphoto,
-            child: const Center(
-              child: Icon(
-                CupertinoIcons.photo,
-                size: 24,
-                color: AppColors.scrim20,
+        child: isAsset
+            ? Image.asset(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: AppColors.twinphoto,
+                  child: const Center(
+                    child: Icon(
+                      CupertinoIcons.photo,
+                      size: 24,
+                      color: AppColors.scrim20,
+                    ),
+                  ),
+                ),
+              )
+            : Builder(
+                builder: (context) {
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final w = (size * dpr).round();
+
+                  return CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    memCacheWidth: w,
+                    maxWidthDiskCache: w,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.twinphoto,
+                      child: const Center(
+                        child: CupertinoActivityIndicator(),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.twinphoto,
+                      child: const Center(
+                        child: Icon(
+                          CupertinoIcons.photo,
+                          size: 24,
+                          color: AppColors.scrim20,
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -1458,11 +2082,18 @@ class _ShareMapItem extends StatelessWidget {
 class _ShareMediaItem {
   final String? imageUrl;
   final bool isMap;
+  final bool isAsset;
 
-  const _ShareMediaItem.photo(this.imageUrl) : isMap = false;
+  const _ShareMediaItem.photo(this.imageUrl)
+      : isMap = false,
+        isAsset = false;
+  const _ShareMediaItem.asset(this.imageUrl)
+      : isMap = false,
+        isAsset = true;
   const _ShareMediaItem.map()
       : imageUrl = null,
-        isMap = true;
+        isMap = true,
+        isAsset = false;
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -1481,5 +2112,84 @@ List<_ShareMediaItem> _buildMediaItems(Activity activity) {
     items.insert(mapInsertIndex, const _ShareMediaItem.map());
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДОБАВЛЯЕМ АССЕТ opacity.jpg В КОНЕЦ СПИСКА
+  // ────────────────────────────────────────────────────────────────
+  items.add(const _ShareMediaItem.asset('assets/opacity.jpg'));
+
   return items;
+}
+
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 КАСТОМНАЯ ДОРОЖКА СЛАЙДЕРА С ГРАДИЕНТОМ ОТ БЕЛОГО ДО ЧЕРНОГО
+/// ────────────────────────────────────────────────────────────────
+class _GradientSliderTrackShape extends SliderTrackShape
+    with BaseSliderTrackShape {
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 CONST-КОНСТРУКТОР ДЛЯ ПЕРЕИСПОЛЬЗОВАНИЯ И ЭКОНОМИИ АЛЛОКАЦИЙ
+  // ────────────────────────────────────────────────────────────────
+  const _GradientSliderTrackShape();
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required Animation<double> enableAnimation,
+    required TextDirection textDirection,
+    required Offset thumbCenter,
+    Offset? secondaryOffset,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    double additionalActiveTrackHeight = 2,
+  }) {
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 РАСЧЕТ РАЗМЕРОВ ДОРОЖКИ
+    // ────────────────────────────────────────────────────────────────
+    final trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 РИСУЕМ ГРАДИЕНТ ОТ БЕЛОГО СЛЕВА ДО ЧЕРНОГО СПРАВА
+    // ────────────────────────────────────────────────────────────────
+    final gradient = const LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: [
+        Colors.white,
+        Colors.black,
+      ],
+      stops: [0.0, 1.0],
+    );
+
+    final gradientPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..shader = gradient.createShader(trackRect);
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 РИСУЕМ ДОРОЖКУ С ГРАДИЕНТОМ (СКРУГЛЕННЫЕ УГЛЫ)
+    // ────────────────────────────────────────────────────────────────
+    final trackRRect = RRect.fromRectAndRadius(
+      trackRect,
+      Radius.circular(trackRect.height / 2),
+    );
+
+    context.canvas.drawRRect(trackRRect, gradientPaint);
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 РИСУЕМ ТОНКУЮ ОБВОДКУ ВОКРУГ ДОРОЖКИ
+    // ────────────────────────────────────────────────────────────────
+    final borderPaint = Paint()
+      ..color = Colors.grey.withValues(alpha: 0.3)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    context.canvas.drawRRect(trackRRect, borderPaint);
+  }
 }

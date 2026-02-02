@@ -131,7 +131,7 @@ class _AddAccScreenState extends ConsumerState<AddAccScreen> {
                           child: Opacity(
                             opacity: 0.9,
                             child: Image.asset(
-                              'assets/gorizont.png',
+                              'assets/white_logo.png',
                               width: 180,
                               filterQuality: FilterQuality.high,
                             ),

@@ -118,7 +118,7 @@ class _Code1ScreenState extends ConsumerState<Code1Screen> {
                         child: Opacity(
                           opacity: 0.9,
                           child: Image.asset(
-                            'assets/gorizont.png',
+                            'assets/white_logo.png',
                             width: 180,
                             filterQuality: FilterQuality.high,
                           ),

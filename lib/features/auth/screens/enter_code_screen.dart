@@ -355,7 +355,7 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
                         child: Opacity(
                           opacity: 0.9,
                           child: Image.asset(
-                            'assets/gorizont.png',
+                            'assets/white_logo.png',
                             width: 180,
                             filterQuality: FilterQuality.high,
                           ),
