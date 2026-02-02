@@ -146,6 +146,8 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
             err.contains('недействителен')) {
           if (!mounted) return;
           await auth.logout();
+          ref.invalidate(currentUserIdProvider);
+          ref.invalidate(isAuthorizedProvider);
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
