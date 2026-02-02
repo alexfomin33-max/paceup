@@ -24,6 +24,7 @@ class Activity {
   final int comments;
   final int userGroup;
   final int togetherCount; // ✅ Количество участников совместной тренировки
+  final int sameWorkoutCount; // ✅ Количество пользователей с одинаковой тренировкой (автоопределение)
   final List<Equipment> equipments; // note: server key is 'equpments'
   final ActivityStats? stats; // server key 'params'
   final List<Coord> points;
@@ -53,6 +54,7 @@ class Activity {
     required this.comments,
     required this.userGroup,
     this.togetherCount = 1,
+    this.sameWorkoutCount = 1,
     required this.equipments,
     required this.stats,
     required this.points,
@@ -159,6 +161,8 @@ class Activity {
       comments: _asInt(j['comments']),
       userGroup: _asInt(j['user_group']),
       togetherCount: j['together_count'] == null ? 1 : _asInt(j['together_count']),
+      sameWorkoutCount:
+          j['same_workout_count'] == null ? 1 : _asInt(j['same_workout_count']),
       equipments: _parseEquipments(j['equpments']),
       stats: stats,
       points: _parsePoints(j['points']),
@@ -196,6 +200,7 @@ class Activity {
       comments: comments,
       userGroup: userGroup,
       togetherCount: togetherCount,
+      sameWorkoutCount: sameWorkoutCount,
       equipments: equipments,
       stats: stats,
       points: points,
@@ -229,6 +234,7 @@ class Activity {
       comments: newComments,
       userGroup: userGroup,
       togetherCount: togetherCount,
+      sameWorkoutCount: sameWorkoutCount,
       equipments: equipments,
       stats: stats,
       points: points,
@@ -262,6 +268,7 @@ class Activity {
       comments: comments,
       userGroup: userGroup,
       togetherCount: togetherCount,
+      sameWorkoutCount: sameWorkoutCount,
       equipments: newEquipments,
       stats: stats,
       points: points,
@@ -295,6 +302,7 @@ class Activity {
       comments: comments,
       userGroup: userGroup,
       togetherCount: togetherCount,
+      sameWorkoutCount: sameWorkoutCount,
       equipments: equipments,
       stats: stats,
       points: points,

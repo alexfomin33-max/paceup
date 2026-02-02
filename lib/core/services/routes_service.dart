@@ -339,6 +339,32 @@ class RoutesService {
         .toList();
   }
 
+  /// Обновление маршрута (название и сложность). Маршрут должен быть в избранном.
+  Future<void> updateRoute({
+    required int routeId,
+    required int userId,
+    required String name,
+    required String difficulty,
+  }) async {
+    await _api.post('/update_route.php', body: {
+      'route_id': routeId.toString(),
+      'user_id': userId.toString(),
+      'name': name,
+      'difficulty': difficulty,
+    });
+  }
+
+  /// Удаление маршрута пользователя (из избранного).
+  Future<void> deleteRoute({
+    required int routeId,
+    required int userId,
+  }) async {
+    await _api.post('/delete_route.php', body: {
+      'route_id': routeId.toString(),
+      'user_id': userId.toString(),
+    });
+  }
+
   /// ID маршрута, созданного из данной тренировки (source_activity_id = activityId).
   /// null — маршрут по этой тренировке ещё не сохранён.
   Future<int?> getRouteIdBySourceActivity({

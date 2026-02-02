@@ -8,6 +8,11 @@ import 'tabs/my_events_content.dart';
 import 'tabs/bookmarks_content.dart';
 import 'tabs/routes_content.dart';
 
+/// Высота нижней панели навигации (совпадает с app_bottom_nav_shell).
+const double _kBottomNavHeight = 60;
+/// Небольшой запас, чтобы контент не обрезался под плашкой.
+const double _kBottomNavExtra = 12;
+
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
 
@@ -88,11 +93,11 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
           ),
           Expanded(
             child: Padding(
-              // Добавляем padding снизу, чтобы контент не перекрывал нижнее меню
+              // Контент до плашки меню: навбар + safe area + запас (viewPadding не обнуляется в SafeArea)
               padding: EdgeInsets.only(
-                bottom:
-                    MediaQuery.of(context).padding.bottom +
-                    60, // высота нижнего меню + системный отступ
+                bottom: _kBottomNavHeight +
+                    _kBottomNavExtra +
+                    MediaQuery.of(context).viewPadding.bottom,
               ),
               child: TabBarView(
                 controller: _tab,

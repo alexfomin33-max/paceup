@@ -11,6 +11,7 @@ import 'all_results/all_results_screen.dart';
 import 'members_route/members_route_screen.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
+import '../../edit_route_bottom_sheet.dart';
 
 /// Экран описания маршрута. Загружает детали из API (дата, автор, рекорды).
 class RouteDescriptionScreen extends StatefulWidget {
@@ -19,11 +20,14 @@ class RouteDescriptionScreen extends StatefulWidget {
     required this.routeId,
     required this.userId,
     required this.initialRoute,
+    this.onRouteDeleted,
   });
 
   final int routeId;
   final int userId;
   final SavedRouteItem initialRoute;
+  /// Вызывается после удаления маршрута; затем выполняется pop на экран избранных.
+  final VoidCallback? onRouteDeleted;
 
   @override
   State<RouteDescriptionScreen> createState() => _RouteDescriptionScreenState();
@@ -57,7 +61,8 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     }
   }
 
-  String get _title => widget.initialRoute.name;
+  String get _title =>
+      _detail?.name ?? widget.initialRoute.name;
   String get _mapAsset => 'assets/training_map.png';
   String? get _mapImageUrl =>
       _detail?.routeMapUrl ?? widget.initialRoute.routeMapUrl;
@@ -101,6 +106,60 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     }
   }
 
+  /// Диалог подтверждения удаления; после удаления — pop на экран избранных.
+  Future<void> _confirmAndDeleteRoute(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Удалить маршрут?'),
+        content: Text(
+          'Маршрут «${widget.initialRoute.name}» будет удалён из избранного.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Отмена',
+              style: TextStyle(
+                color: AppColors.getTextSecondaryColor(ctx),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text(
+              'Удалить',
+              style: TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    try {
+      await RoutesService().deleteRoute(
+        routeId: widget.routeId,
+        userId: widget.userId,
+      );
+      if (!mounted) return;
+      widget.onRouteDeleted?.call();
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: SelectableText.rich(
+              TextSpan(
+                text: 'Ошибка: $e',
+                style: const TextStyle(color: AppColors.error),
+              ),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chip = _difficultyChip(_difficulty);
@@ -119,14 +178,77 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
           title: 'Маршрут',
           showBottomDivider: false, // ← без нижней линии
           actions: [
-            IconButton(
-              onPressed: () {},
-              icon: Icon(
-                CupertinoIcons.ellipsis,
-                size: 18,
-                color: AppColors.getIconPrimaryColor(context),
+            PopupMenuButton<String>(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 1),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.xll),
               ),
-              tooltip: 'Ещё',
+              color: AppColors.surface,
+              elevation: 8,
+              icon: Icon(
+                Icons.more_horiz,
+                size: 20,
+                color: AppColors.getIconSecondaryColor(context),
+              ),
+              onSelected: (value) {
+                if (value == 'edit') {
+                  showEditRouteBottomSheet(
+                    context,
+                    route: widget.initialRoute,
+                    userId: widget.userId,
+                    onSaved: () {
+                      _loadDetail();
+                    },
+                  );
+                } else if (value == 'delete') {
+                  _confirmAndDeleteRoute(context);
+                }
+              },
+              itemBuilder: (ctx) => [
+                PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 22,
+                        color: AppColors.brandPrimary,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Изменить',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          color: AppColors.getTextPrimaryColor(ctx),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.delete_outline,
+                        size: 22,
+                        color: AppColors.error,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Удалить',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          color: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),

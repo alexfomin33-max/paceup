@@ -46,6 +46,8 @@ class TogetherCandidateDto {
   final String city;
   final String avatar;
   final bool pending;
+  /// Пользователь с такой же тренировкой (автоопределение по треку + время ±5 мин)
+  final bool sameWorkout;
 
   const TogetherCandidateDto({
     required this.id,
@@ -54,6 +56,7 @@ class TogetherCandidateDto {
     required this.city,
     required this.avatar,
     required this.pending,
+    this.sameWorkout = false,
   });
 
   factory TogetherCandidateDto.fromJson(Map<String, dynamic> j) {
@@ -64,6 +67,7 @@ class TogetherCandidateDto {
       city: j['city']?.toString() ?? '',
       avatar: j['avatar']?.toString() ?? '',
       pending: _asBool(j['pending']),
+      sameWorkout: _asBool(j['same_workout']),
     );
   }
 }
@@ -123,7 +127,7 @@ class TogetherApi {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Кандидаты (mutual followers)
+  // Кандидаты (подписки + подписчики) + пользователи с такой же тренировкой
   // ───────────────────────────────────────────────────────────────────────────
   Future<List<TogetherCandidateDto>> getCandidates({
     required int activityId,
@@ -132,12 +136,23 @@ class TogetherApi {
       '/together_get_candidates.php',
       body: {'activity_id': activityId},
     );
-    final raw = data['users'];
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map<String, dynamic>>()
-        .map(TogetherCandidateDto.fromJson)
-        .toList(growable: false);
+    final rawUsers = data['users'];
+    final rawSame = data['same_workout_users'];
+    final List<TogetherCandidateDto> sameWorkout = rawSame is List
+        ? rawSame
+            .whereType<Map<String, dynamic>>()
+            .map(TogetherCandidateDto.fromJson)
+            .toList(growable: false)
+        : <TogetherCandidateDto>[];
+    final Set<int> sameIds = sameWorkout.map((e) => e.id).toSet();
+    final List<TogetherCandidateDto> users = rawUsers is List
+        ? rawUsers
+            .whereType<Map<String, dynamic>>()
+            .map(TogetherCandidateDto.fromJson)
+            .where((u) => !sameIds.contains(u.id))
+            .toList(growable: false)
+        : <TogetherCandidateDto>[];
+    return [...sameWorkout, ...users];
   }
 
   // ───────────────────────────────────────────────────────────────────────────
