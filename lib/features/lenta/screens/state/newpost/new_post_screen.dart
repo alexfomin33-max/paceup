@@ -13,8 +13,9 @@ import '../../../../../core/utils/error_handler.dart';
 import '../../../../../core/utils/image_picker_helper.dart';
 import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
-import '../../../../../providers/services/api_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
+import '../../../../../providers/services/api_provider.dart';
+import '../../../providers/user_clubs_for_posting_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
 
 /// ────────────────────────────────────────────────────────────────
@@ -51,9 +52,8 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
   // Состояние видимости: 0 = Все пользователи, 1 = Только подписчики, 2 = Только Вы
   int _selectedVisibility = 0;
 
-  // Создание от имени клуба
+  // Создание от имени клуба (список клубов — из userClubsForPostingProvider)
   bool _createFromClub = false;
-  List<Map<String, dynamic>> _clubs = [];
   int? _selectedClubId;
 
   @override
@@ -67,8 +67,6 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     _titleFocusNode.addListener(_updatePublishState);
     _descriptionController.addListener(_updatePublishState);
     _descriptionFocusNode.addListener(_updatePublishState);
-    // ── загрузка клубов после первого кадра, когда ref уже доступен
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserClubs());
   }
 
   @override
@@ -88,45 +86,24 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
     });
   }
 
-  // ── загрузка списка клубов пользователя (владелец или админ)
-  Future<void> _loadUserClubs() async {
-    if (widget.userId <= 0) {
-      setState(() => _clubs = []);
-      return;
-    }
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.get(
-        '/get_user_clubs.php',
-        queryParams: {'user_id': widget.userId.toString()},
-      );
-
-      if (data['success'] == true && data['clubs'] != null) {
-        final clubsList = data['clubs'] as List<dynamic>;
-        setState(() {
-          _clubs = clubsList.map((c) => {
-            'id': c['id'] as int,
-            'name': c['name'] as String,
-          }).toList();
-          // Если список не пустой и selectedClubId не установлен, выбираем первый
-          if (_clubs.isNotEmpty && _selectedClubId == null) {
-            _selectedClubId = _clubs.first['id'] as int;
-          }
-        });
-      } else {
-        setState(() {
-          _clubs = [];
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _clubs = [];
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ── клубы, от имени которых пользователь может публиковать (владелец/админ)
+    final clubsAsync =
+        ref.watch(userClubsForPostingProvider(widget.userId));
+    final clubs = clubsAsync.valueOrNull ?? [];
+    final clubsLoading = clubsAsync.isLoading;
+    final clubsError = clubsAsync.hasError;
+    // При первой загрузке списка выбираем первый клуб по умолчанию
+    if (clubs.isNotEmpty && _selectedClubId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _selectedClubId != null) return;
+        setState(
+          () => _selectedClubId = clubs.first['id'] as int,
+        );
+      });
+    }
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
@@ -270,16 +247,24 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                           if (_createFromClub) ...[
                             const SizedBox(height: 8),
                             Builder(
-                              builder: (context) => Container(
-                                decoration: BoxDecoration(
-                                  borderRadius:
-                                      BorderRadius.circular(AppRadius.lg),
-                                  border: Border.all(
-                                    color: AppColors.twinchip,
-                                    width: 0.7,
+                              builder: (context) => GestureDetector(
+                                onTap: clubsError
+                                    ? () => ref.invalidate(
+                                          userClubsForPostingProvider(
+                                            widget.userId,
+                                          ),
+                                        )
+                                    : null,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadius.lg),
+                                    border: Border.all(
+                                      color: AppColors.twinchip,
+                                      width: 0.7,
+                                    ),
                                   ),
-                                ),
-                                child: InputDecorator(
+                                  child: InputDecorator(
                                   decoration: InputDecoration(
                                     filled: true,
                                     fillColor: AppColors.getSurfaceColor(
@@ -319,12 +304,18 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                     child: DropdownButton<int>(
                                       value: _selectedClubId,
                                       isExpanded: true,
-                                      hint: const Text(
-                                        'Выберите клуб',
+                                      hint: Text(
+                                        clubsLoading
+                                            ? 'Загрузка клубов...'
+                                            : clubsError
+                                                ? 'Ошибка. Нажмите для повтора'
+                                                : clubs.isEmpty
+                                                    ? 'Нет клубов (владелец или админ?)'
+                                                    : 'Выберите клуб',
                                         style: AppTextStyles.h14w4Place,
                                       ),
                                       onChanged: (_createFromClub &&
-                                              _clubs.isNotEmpty)
+                                              clubs.isNotEmpty)
                                           ? (int? newValue) {
                                               setState(() {
                                                 _selectedClubId = newValue;
@@ -340,7 +331,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                       icon: Icon(
                                         Icons.arrow_drop_down,
                                         color: (_createFromClub &&
-                                                _clubs.isNotEmpty)
+                                                clubs.isNotEmpty)
                                             ? AppColors.getIconSecondaryColor(
                                                 context,
                                               )
@@ -348,7 +339,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                       ),
                                       style: AppTextStyles.h14w4.copyWith(
                                         color: (_createFromClub &&
-                                                _clubs.isNotEmpty)
+                                                clubs.isNotEmpty)
                                             ? AppColors.getTextPrimaryColor(
                                                 context,
                                               )
@@ -356,7 +347,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                                 context,
                                               ),
                                       ),
-                                      items: _clubs.map((item) {
+                                      items: clubs.map((item) {
                                         return DropdownMenuItem<int>(
                                           value: item['id'] as int,
                                           child: Text(
@@ -372,6 +363,7 @@ class _NewPostScreenState extends ConsumerState<NewPostScreen> {
                                   ),
                                 ),
                               ),
+                            ),
                             ),
                           ],
 

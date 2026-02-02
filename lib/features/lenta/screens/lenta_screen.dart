@@ -813,6 +813,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           initialTitle: post.postTitle, // ── Передаем заголовок поста
           initialImageUrls: post.mediaImages,
           initialVisibility: post.userGroup.clamp(0, 2),
+          initialClubId: post.clubId, // ── Пост от клуба: чекбокс и список предзаполняются
         ),
       ),
     );

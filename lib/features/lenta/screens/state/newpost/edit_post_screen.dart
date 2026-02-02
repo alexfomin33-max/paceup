@@ -17,6 +17,7 @@ import '../../../../../core/widgets/app_bar.dart';
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../providers/lenta_provider.dart';
+import '../../../providers/user_clubs_for_posting_provider.dart';
 import '../../../../../core/providers/form_state_provider.dart';
 import '../../../../../core/widgets/form_error_display.dart';
 
@@ -60,6 +61,9 @@ class EditPostScreen extends ConsumerStatefulWidget {
   final List<String> initialImageUrls;
   final int initialVisibility;
 
+  /// ID клуба, от имени которого создан пост (если пост от клуба — чекбокс и список предзаполняются)
+  final int? initialClubId;
+
   const EditPostScreen({
     super.key,
     required this.userId,
@@ -68,6 +72,7 @@ class EditPostScreen extends ConsumerStatefulWidget {
     this.initialTitle = '',
     required this.initialImageUrls,
     this.initialVisibility = 0,
+    this.initialClubId,
   });
 
   @override
@@ -98,9 +103,8 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
   late final int _initialVisibility;
   int _selectedVisibility = 0;
 
-  // Создание от имени клуба
+  // Создание от имени клуба (список клубов — из userClubsForPostingProvider)
   bool _createFromClub = false;
-  List<Map<String, dynamic>> _clubs = [];
   int? _selectedClubId;
 
   @override
@@ -112,12 +116,15 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     _descriptionFocusNode = FocusNode();
     _initialVisibility = widget.initialVisibility.clamp(0, 2);
     _selectedVisibility = _initialVisibility;
+    // Если пост от имени клуба — сразу включаем чекбокс и выбираем этот клуб
+    if (widget.initialClubId != null) {
+      _createFromClub = true;
+      _selectedClubId = widget.initialClubId;
+    }
     _titleController.addListener(_updateSaveState);
     _titleFocusNode.addListener(_updateSaveState);
     _descriptionController.addListener(_updateSaveState);
     _descriptionFocusNode.addListener(_updateSaveState);
-    // ── загрузка клубов после первого кадра, когда ref уже доступен
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadUserClubs());
     _updateSaveState();
   }
 
@@ -153,11 +160,17 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     // Проверяем изменение видимости поста
     final visibilityChanged = _selectedVisibility != _initialVisibility;
 
+    // Проверяем изменение «редактировать от имени клуба» или выбранного клуба
+    final clubChanged =
+        _createFromClub != (widget.initialClubId != null) ||
+        _selectedClubId != widget.initialClubId;
+
     return textChanged ||
         titleChanged ||
         !sameExisting ||
         newFilesAdded ||
-        visibilityChanged;
+        visibilityChanged ||
+        clubChanged;
   }
 
   /// Обновляет состояние доступности кнопки сохранения
@@ -166,45 +179,24 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     setState(() => _canSave = _hasChanges() && !formState.isSubmitting);
   }
 
-  // ── загрузка списка клубов пользователя (владелец или админ)
-  Future<void> _loadUserClubs() async {
-    if (widget.userId <= 0) {
-      setState(() => _clubs = []);
-      return;
-    }
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.get(
-        '/get_user_clubs.php',
-        queryParams: {'user_id': widget.userId.toString()},
-      );
-
-      if (data['success'] == true && data['clubs'] != null) {
-        final clubsList = data['clubs'] as List<dynamic>;
-        setState(() {
-          _clubs = clubsList.map((c) => {
-            'id': c['id'] as int,
-            'name': c['name'] as String,
-          }).toList();
-          // Если список не пустой и selectedClubId не установлен, выбираем первый
-          if (_clubs.isNotEmpty && _selectedClubId == null) {
-            _selectedClubId = _clubs.first['id'] as int;
-          }
-        });
-      } else {
-        setState(() {
-          _clubs = [];
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _clubs = [];
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    // ── клубы, от имени которых пользователь может публиковать (владелец/админ)
+    final clubsAsync =
+        ref.watch(userClubsForPostingProvider(widget.userId));
+    final clubs = clubsAsync.valueOrNull ?? [];
+    // При первой загрузке списка и включённом «от имени клуба» без выбора — выбираем первый клуб
+    if (clubs.isNotEmpty &&
+        _createFromClub &&
+        _selectedClubId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _selectedClubId != null) return;
+        setState(
+          () => _selectedClubId = clubs.first['id'] as int,
+        );
+      });
+    }
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
@@ -399,7 +391,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                                         style: AppTextStyles.h14w4Place,
                                       ),
                                       onChanged: (_createFromClub &&
-                                              _clubs.isNotEmpty)
+                                              clubs.isNotEmpty)
                                           ? (int? newValue) {
                                               setState(() {
                                                 _selectedClubId = newValue;
@@ -415,7 +407,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                                       icon: Icon(
                                         Icons.arrow_drop_down,
                                         color: (_createFromClub &&
-                                                _clubs.isNotEmpty)
+                                                clubs.isNotEmpty)
                                             ? AppColors.getIconSecondaryColor(
                                                 context,
                                               )
@@ -423,7 +415,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                                       ),
                                       style: AppTextStyles.h14w4.copyWith(
                                         color: (_createFromClub &&
-                                                _clubs.isNotEmpty)
+                                                clubs.isNotEmpty)
                                             ? AppColors.getTextPrimaryColor(
                                                 context,
                                               )
@@ -431,7 +423,7 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
                                                 context,
                                               ),
                                       ),
-                                      items: _clubs.map((item) {
+                                      items: clubs.map((item) {
                                         return DropdownMenuItem<int>(
                                           value: item['id'] as int,
                                           child: Text(
