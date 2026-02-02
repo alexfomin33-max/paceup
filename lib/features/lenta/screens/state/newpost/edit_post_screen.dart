@@ -61,6 +61,9 @@ class EditPostScreen extends ConsumerStatefulWidget {
   final List<String> initialImageUrls;
   final int initialVisibility;
 
+  /// ID клуба, от имени которого создан пост (если пост от клуба — чекбокс и список предзаполняются)
+  final int? initialClubId;
+
   const EditPostScreen({
     super.key,
     required this.userId,
@@ -69,6 +72,7 @@ class EditPostScreen extends ConsumerStatefulWidget {
     this.initialTitle = '',
     required this.initialImageUrls,
     this.initialVisibility = 0,
+    this.initialClubId,
   });
 
   @override
@@ -112,6 +116,11 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     _descriptionFocusNode = FocusNode();
     _initialVisibility = widget.initialVisibility.clamp(0, 2);
     _selectedVisibility = _initialVisibility;
+    // Если пост от имени клуба — сразу включаем чекбокс и выбираем этот клуб
+    if (widget.initialClubId != null) {
+      _createFromClub = true;
+      _selectedClubId = widget.initialClubId;
+    }
     _titleController.addListener(_updateSaveState);
     _titleFocusNode.addListener(_updateSaveState);
     _descriptionController.addListener(_updateSaveState);
@@ -151,11 +160,17 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     // Проверяем изменение видимости поста
     final visibilityChanged = _selectedVisibility != _initialVisibility;
 
+    // Проверяем изменение «редактировать от имени клуба» или выбранного клуба
+    final clubChanged =
+        _createFromClub != (widget.initialClubId != null) ||
+        _selectedClubId != widget.initialClubId;
+
     return textChanged ||
         titleChanged ||
         !sameExisting ||
         newFilesAdded ||
-        visibilityChanged;
+        visibilityChanged ||
+        clubChanged;
   }
 
   /// Обновляет состояние доступности кнопки сохранения
@@ -170,8 +185,10 @@ class _EditPostScreenState extends ConsumerState<EditPostScreen> {
     final clubsAsync =
         ref.watch(userClubsForPostingProvider(widget.userId));
     final clubs = clubsAsync.valueOrNull ?? [];
-    // При первой загрузке списка выбираем первый клуб по умолчанию
-    if (clubs.isNotEmpty && _selectedClubId == null) {
+    // При первой загрузке списка и включённом «от имени клуба» без выбора — выбираем первый клуб
+    if (clubs.isNotEmpty &&
+        _createFromClub &&
+        _selectedClubId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _selectedClubId != null) return;
         setState(
