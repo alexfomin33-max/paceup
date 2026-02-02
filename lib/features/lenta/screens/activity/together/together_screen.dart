@@ -12,6 +12,10 @@ import '../../../../profile/screens/profile_screen.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // TogetherScreen: объединенный экран с контентом добавления и участников
 // ─────────────────────────────────────────────────────────────────────────────
+// Для владельца/участника: показываем «Группа участников» + «Добавить участников».
+// Для зрителя (видит тренировку в ленте, но не участник): только «Группа участников»,
+// чтобы посмотреть, с кем тренировались (в т.ч. тех, на кого не подписан).
+// ─────────────────────────────────────────────────────────────────────────────
 class TogetherScreen extends ConsumerStatefulWidget {
   final int activityId;
 
@@ -37,6 +41,22 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ────────────────────────────────────────────────────────────────────────
+    // Показывать блок «Добавить участников» только владельцу/участнику группы
+    // ────────────────────────────────────────────────────────────────────────
+    final membersState = ref.watch(
+      togetherMembersProvider(widget.activityId),
+    );
+    final currentUserIdAsync = ref.watch(currentUserIdProvider);
+    final canAddMembers = membersState.maybeWhen(
+      data: (members) {
+        final userId = currentUserIdAsync.valueOrNull;
+        if (userId == null) return false;
+        return members.any((m) => m.id == userId);
+      },
+      orElse: () => false,
+    );
+
     return Scaffold(
       backgroundColor: AppColors.getSurfaceColor(context),
       appBar: PaceAppBar(
@@ -50,7 +70,7 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ────────────────────────────────────────────────────────────────────
-          // Секция участников (сверху)
+          // Секция участников (сверху) — видна всем (владелец, участник, зритель)
           // ────────────────────────────────────────────────────────────────────
           SliverToBoxAdapter(
             child: Column(
@@ -72,45 +92,46 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
           ),
 
           // ────────────────────────────────────────────────────────────────────
-          // Секция добавления кандидатов (снизу)
+          // Секция добавления кандидатов — только для владельца/участника
           // ────────────────────────────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    'Добавить участников',
-                    style: AppTextStyles.h15w6,
+          if (canAddMembers)
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      'Добавить участников',
+                      style: AppTextStyles.h15w6,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: _SearchField(
-                    controller: _searchController,
-                    onChanged: (v) => setState(() => _query = v),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: _SearchField(
+                      controller: _searchController,
+                      onChanged: (v) => setState(() => _query = v),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                _CandidatesSection(
-                  activityId: widget.activityId,
-                  query: _query,
-                  busyIds: _busyIds,
-                  onBusyChanged: (id, isBusy) {
-                    setState(() {
-                      if (isBusy) {
-                        _busyIds.add(id);
-                      } else {
-                        _busyIds.remove(id);
-                      }
-                    });
-                  },
-                ),
-              ],
+                  const SizedBox(height: 12),
+                  _CandidatesSection(
+                    activityId: widget.activityId,
+                    query: _query,
+                    busyIds: _busyIds,
+                    onBusyChanged: (id, isBusy) {
+                      setState(() {
+                        if (isBusy) {
+                          _busyIds.add(id);
+                        } else {
+                          _busyIds.remove(id);
+                        }
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
           // ────────────────────────────────────────────────────────────────────
           // Нижний отступ
@@ -215,6 +236,7 @@ class _CandidatesSection extends ConsumerWidget {
                   u.avatar,
                   pending: u.pending || busyIds.contains(u.id),
                   id: u.id,
+                  sameWorkout: u.sameWorkout,
                 ),
               )
               .toList(growable: false);
@@ -280,6 +302,7 @@ class _MembersSection extends ConsumerWidget {
                 m.city,
                 m.avatar,
                 id: m.id,
+                sameWorkout: false,
               ),
             )
             .toList(growable: false);
@@ -452,6 +475,18 @@ class _CandidateRowTile extends ConsumerWidget {
                               fontWeight: FontWeight.w500,
                             ),
                           ),
+                          if (person.sameWorkout)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                'Та же тренировка',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 12,
+                                  color: AppColors.brandPrimary,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -690,6 +725,7 @@ class _Person {
   final String city;
   final String avatar;
   final bool pending;
+  final bool sameWorkout;
   const _Person(
     this.name,
     this.age,
@@ -697,5 +733,6 @@ class _Person {
     this.avatar, {
     this.id = 0,
     this.pending = false,
+    this.sameWorkout = false,
   });
 }
