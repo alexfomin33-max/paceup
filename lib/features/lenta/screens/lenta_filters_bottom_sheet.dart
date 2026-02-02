@@ -104,17 +104,8 @@ class _LentaFiltersBottomSheetState extends State<LentaFiltersBottomSheet> {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
 
-            // ──── Разделительная линия ────
-            Divider(
-              height: 1,
-              thickness: 0.5,
-              color: AppColors.getBorderColor(context),
-              indent: 4,
-              endIndent: 4,
-            ),
-            const SizedBox(height: 16),
 
             // ──── Контент ────
             SingleChildScrollView(
@@ -178,7 +169,7 @@ class _LentaFiltersBottomSheetState extends State<LentaFiltersBottomSheet> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 34),
+                  const SizedBox(height: 50),
 
                   // ──── Кнопка "Применить" ────
                   ElevatedButton(

@@ -12,7 +12,6 @@ import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
-import '../../../../core/utils/feed_date.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
@@ -688,11 +687,6 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
     }
   }
 
-  // ─── Форматирование даты и времени создания чата ───
-  String _formatChatDate(DateTime? date) {
-    return formatFeedDateText(date: date);
-  }
-
   // ─── Подсчет общего количества элементов (сообщения + разделители дат) ───
   int _calculateTotalItemsCount() {
     if (_messages.isEmpty) return 0;
@@ -877,6 +871,19 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
                   ],
                 ),
               ),
+              actions: [
+                IconButton(
+                  icon: Icon(
+                    CupertinoIcons.star,
+                    size: 22,
+                  ),
+                  onPressed: () {
+                    // ─── Функционал закрепления будет добавлен позже ───
+                  },
+                  color: AppColors.getIconSecondaryColor(context),
+                  splashRadius: 22,
+                ),
+              ],
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
                 child: Divider(
@@ -914,46 +921,9 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
                             ),
                           ),
 
-                        // ─── Основной контент (дата создания чата) ───
-                        SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                          sliver: SliverList(
-                            delegate: SliverChildBuilderDelegate((
-                              context,
-                              index,
-                            ) {
-                              // 0 — дата создания чата
-                              if (index == 0) {
-                                return _DateSeparator(
-                                  text: _formatChatDate(chatData.chatCreatedAt),
-                                );
-                              }
-
-                              return const SizedBox.shrink();
-                            }, childCount: 1),
-                          ),
-                        ),
-
-                        // ─── Divider ───
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            child: Column(
-                              children: [
-                                Divider(
-                                  height: 16,
-                                  thickness: 0.5,
-                                  color: AppColors.getDividerColor(context),
-                                ),
-                                const SizedBox(height: 6),
-                              ],
-                            ),
-                          ),
-                        ),
-
                         // ─── Сообщения ───
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+                          padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
                           sliver: SliverList(
                             delegate: SliverChildBuilderDelegate((
                               context,

@@ -77,51 +77,6 @@ class ActiveContent extends ConsumerWidget {
                     );
                   }),
 
-                  // Захардкоженные задачи (пока оставляем)
-                  if (tasksByMonth.isEmpty) ...[
-                    const _MonthLabel('Январь 2026'),
-                    const SizedBox(height: 8),
-                  ],
-                  const TaskCard(
-                    title: '10 дней активности',
-                    progressText: '10 / 10 дней',
-                    percent: 1.0,
-                    image: _RectImage(
-                      provider: AssetImage('assets/activity10.png'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const TaskCard(
-                    title: '200 км бега',
-                    progressText: '145,8 / 200 км',
-                    percent: 0.729,
-                    image: _RectImage(
-                      provider: AssetImage('assets/card200run.jpg'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const TaskCard(
-                    title: '1000 метров набора высоты',
-                    progressText: '243 / 1000 м',
-                    percent: 0.243,
-                    image: _RectImage(
-                      provider: AssetImage('assets/height1000.jpg'),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  const TaskCard(
-                    title: '1000 минут активности',
-                    progressText: '486 / 1000 мин',
-                    percent: 0.486,
-                    image: _RectImage(
-                      provider: AssetImage('assets/activity1000.png'),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
                   const _SectionLabel('Экспедиции'),
                   const SizedBox(height: 8),
 
