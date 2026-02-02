@@ -46,11 +46,13 @@ import '../../../../../features/complaint.dart';
 class ActivityBlock extends ConsumerWidget {
   final Activity activity;
   final int currentUserId;
+  final VoidCallback? onOpenDescription;
 
   const ActivityBlock({
     super.key,
     required this.activity,
     this.currentUserId = 0,
+    this.onOpenDescription,
   });
 
   @override
@@ -413,10 +415,16 @@ class ActivityBlock extends ConsumerWidget {
               // ────────────────────────────────────────────────────────────────
               // ⚡ ОПТИМИЗАЦИЯ: используем предвычисленные значения
               // ────────────────────────────────────────────────────────────────
-              ClipRRect(
-                borderRadius: BorderRadius.zero,
-                child: Builder(
-                  builder: (context) {
+              // ────────────────────────────────────────────────────────────────
+              // 🔹 НАВИГАЦИЯ: переход в описание ТОЛЬКО по карте/фото тренировки
+              // ────────────────────────────────────────────────────────────────
+              GestureDetector(
+                behavior: HitTestBehavior.deferToChild,
+                onTap: onOpenDescription,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.zero,
+                  child: Builder(
+                    builder: (context) {
                     // ────────────────────────────────────────────────────────────────
                     // 📊 ФОРМАТИРОВАНИЕ МЕТРИК: вычисляем значения для первой строки
                     // ────────────────────────────────────────────────────────────────
@@ -785,8 +793,9 @@ class ActivityBlock extends ConsumerWidget {
                       );
                     }
 
-                    return const SizedBox.shrink();
-                  },
+                      return const SizedBox.shrink();
+                    },
+                  ),
                 ),
               ),
 
@@ -800,26 +809,33 @@ class ActivityBlock extends ConsumerWidget {
               // ────────────────────────────────────────────────────────────────
               if (updatedActivity.postTitle.isNotEmpty ||
                   updatedActivity.postContent.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Название тренировки (крупнее и жирным)
-                      if (updatedActivity.postTitle.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Text(
-                            updatedActivity.postTitle,
-                            style: AppTextStyles.h16w6.copyWith(
-                              color: AppColors.getTextPrimaryColor(context),
+                // ────────────────────────────────────────────────────────────────
+                // 🔹 НАВИГАЦИЯ: переход в описание по заголовку и описанию
+                // ────────────────────────────────────────────────────────────────
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: onOpenDescription,
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Название тренировки (крупнее и жирным)
+                        if (updatedActivity.postTitle.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Text(
+                              updatedActivity.postTitle,
+                              style: AppTextStyles.h15w6.copyWith(
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
                             ),
                           ),
-                        ),
-                      // Описание тренировки
-                      if (updatedActivity.postContent.isNotEmpty)
-                        ExpandableText(text: updatedActivity.postContent),
-                    ],
+                        // Описание тренировки
+                        if (updatedActivity.postContent.isNotEmpty)
+                          ExpandableText(text: updatedActivity.postContent),
+                      ],
+                    ),
                   ),
                 ),
 

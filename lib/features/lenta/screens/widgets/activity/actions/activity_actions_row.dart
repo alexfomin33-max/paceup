@@ -191,23 +191,26 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
         Row(
           children: [
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: _onLikeTap,
               child: Container(
-                width: 25,
-                height: 25,
+                width: 32,
+                height: 32,
+                // ────────────────────────────────────────────────────────────────
+                // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: по центру контейнера
+                // ────────────────────────────────────────────────────────────────
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(shape: BoxShape.circle),
                 child: ScaleTransition(
                   scale: _likeAnimation,
                   child: Icon(
                     isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
-                    size: 20,
+                    size: 22,
                     color: isLiked ? AppColors.error : AppColors.error,
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 0),
+           
             Text(
               likesCount.toString(),
               style: AppTextStyles.h14w4.copyWith(
@@ -216,14 +219,23 @@ class _ActivityActionsRowState extends ConsumerState<ActivityActionsRow>
             ),
             const SizedBox(width: 16),
             GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: widget.onOpenComments,
-              child: const Icon(
-                CupertinoIcons.chat_bubble,
-                size: 20,
-                color: AppColors.warning,
+              child: Container(
+                width: 32,
+                height: 32,
+                // ────────────────────────────────────────────────────────────────
+                // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: по центру контейнера
+                // ────────────────────────────────────────────────────────────────
+                alignment: Alignment.center,
+                child: const Icon(
+                  CupertinoIcons.chat_bubble,
+                  size: 22,
+                  color: AppColors.warning,
+                ),
               ),
             ),
-            const SizedBox(width: 4),
+           
             Text(
               widget.commentsCount.toString(),
               style: AppTextStyles.h14w4.copyWith(
@@ -350,12 +362,20 @@ class _RightActionsGroup extends ConsumerWidget {
         // (автоопределение по треку + время ±5 мин)
         // ───────────────────────────────────────────────────────────────────
         if (showTogetherIcon) ...[
-          const Icon(
-            CupertinoIcons.person_2,
-            size: 20,
-            color: AppColors.success,
+          Container(
+            width: 32,
+            height: 32,
+            // ────────────────────────────────────────────────────────────────
+            // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: прижимаем вправо, чтобы счетчик был ближе
+            // ────────────────────────────────────────────────────────────────
+            alignment: Alignment.center,
+            child: const Icon(
+              CupertinoIcons.person_2,
+              size: 22,
+              color: AppColors.success,
+            ),
           ),
-          const SizedBox(width: 4),
+          
           Text(
             countToShow.toString(),
             style: AppTextStyles.h14w4.copyWith(
@@ -370,11 +390,20 @@ class _RightActionsGroup extends ConsumerWidget {
         // ───────────────────────────────────────────────────────────────────
         if (showTogetherIcon)
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: onOpenTogether,
-            child: const Icon(
-              CupertinoIcons.person_crop_circle_badge_plus,
-              size: 20,
-              color: AppColors.brandPrimary,
+            child: Container(
+              width: 32,
+              height: 32,
+              // ────────────────────────────────────────────────────────────────
+              // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: прижимаем вправо, чтобы счетчик был ближе
+              // ────────────────────────────────────────────────────────────────
+              alignment: Alignment.center,
+              child: const Icon(
+                CupertinoIcons.person_crop_circle_badge_plus,
+                size: 22,
+                color: AppColors.brandPrimary,
+              ),
             ),
           ),
         // ───────────────────────────────────────────────────────────────────
@@ -383,7 +412,7 @@ class _RightActionsGroup extends ConsumerWidget {
         // ───────────────────────────────────────────────────────────────────
         if (showTogetherIcon &&
             (isOwner || togetherCount > 1 || sameWorkoutCount > 1)) ...[
-          const SizedBox(width: 4),
+         
           Text(
             countToShow.toString(),
             style: AppTextStyles.h14w4.copyWith(
@@ -397,11 +426,17 @@ class _RightActionsGroup extends ConsumerWidget {
         if (showShareIcon) ...[
           const SizedBox(width: 12),
           GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: onShareTap,
-            child: const Icon(
-              CupertinoIcons.square_arrow_up,
-              size: 20,
-              color: AppColors.brandPrimary,
+            child: Container(
+              width: 32,
+              height: 32,
+              alignment: Alignment.center,
+              child: const Icon(
+                CupertinoIcons.share,
+                size: 22,
+                color: AppColors.brandPrimary,
+              ),
             ),
           ),
         ],

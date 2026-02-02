@@ -163,16 +163,9 @@ class TrainingTabState extends ConsumerState<TrainingTab>
               const SliverToBoxAdapter(child: SizedBox(height: 14)),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: _MonthToolbar(
-                    month: _month,
                     sports: _sports,
-                    onPrev: () => setState(
-                      () => _month = DateTime(_month.year, _month.month - 1, 1),
-                    ),
-                    onNext: () => setState(
-                      () => _month = DateTime(_month.year, _month.month + 1, 1),
-                    ),
                     onToggleSport: (i) => setState(() {
                       final newSports = Set<int>.from(_sports);
                       if (newSports.contains(i)) {
@@ -189,7 +182,16 @@ class TrainingTabState extends ConsumerState<TrainingTab>
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: _CalendarCard(month: _month, dayBubbles: dayBubbles),
+                  child: _CalendarCard(
+                    month: _month,
+                    dayBubbles: dayBubbles,
+                    onPrev: () => setState(
+                      () => _month = DateTime(_month.year, _month.month - 1, 1),
+                    ),
+                    onNext: () => setState(
+                      () => _month = DateTime(_month.year, _month.month + 1, 1),
+                    ),
+                  ),
                 ),
               ),
               const SliverToBoxAdapter(child: SizedBox(height: 10)),
@@ -202,7 +204,7 @@ class TrainingTabState extends ConsumerState<TrainingTab>
                         data.activities.isEmpty
                             ? 'Нет тренировок за выбранный месяц'
                             : 'Нет тренировок в '
-                                  '${_MonthToolbar._monthTitle(_month)}',
+                                  '${_CalendarCard._monthTitle(_month)}',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 14,
@@ -284,42 +286,19 @@ class TrainingTabState extends ConsumerState<TrainingTab>
 /// ===================
 
 class _MonthToolbar extends StatelessWidget {
-  final DateTime month;
   final Set<int> sports; // выбранные виды спорта
-  final VoidCallback onPrev;
-  final VoidCallback onNext;
   final ValueChanged<int> onToggleSport;
 
   const _MonthToolbar({
-    required this.month,
     required this.sports,
-    required this.onPrev,
-    required this.onNext,
     required this.onToggleSport,
   });
 
   @override
   Widget build(BuildContext context) {
-    final title = _monthTitle(month);
     return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        _NavIcon(CupertinoIcons.left_chevron, onTap: onPrev),
-        const SizedBox(width: 6),
-        Text(
-          title,
-          style: TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: AppColors.getTextPrimaryColor(context),
-          ),
-        ),
-        const SizedBox(width: 4),
-        _NavIcon(
-          CupertinoIcons.right_chevron,
-          onTap: onNext,
-        ), // ► рядом с заголовком
-        const Spacer(),
         _SportIcon(
           selected: sports.contains(0),
           icon: Icons.directions_run,
@@ -363,24 +342,6 @@ class _MonthToolbar extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static String _monthTitle(DateTime m) {
-    const mnames = [
-      'Январь',
-      'Февраль',
-      'Март',
-      'Апрель',
-      'Май',
-      'Июнь',
-      'Июль',
-      'Август',
-      'Сентябрь',
-      'Октябрь',
-      'Ноябрь',
-      'Декабрь',
-    ];
-    return '${mnames[m.month - 1]} ${m.year}';
   }
 }
 
@@ -479,14 +440,40 @@ class _BubbleData {
 class _CalendarCard extends StatelessWidget {
   final DateTime month;
   final Map<int, List<_BubbleData>> dayBubbles; // день => список пилюль
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
 
-  const _CalendarCard({required this.month, required this.dayBubbles});
+  const _CalendarCard({
+    required this.month,
+    required this.dayBubbles,
+    required this.onPrev,
+    required this.onNext,
+  });
 
   // 🔽 две высоты вместо одной
   static const double _cellHeightTall = 52; // есть облачка
   static const double _cellHeightCompact = 34; // нет облачков
   static const double _dayTop = 6;
   static const double _bubbleTop = 24;
+
+  /// Получает название месяца для отображения
+  static String _monthTitle(DateTime m) {
+    const mnames = [
+      'Январь',
+      'Февраль',
+      'Март',
+      'Апрель',
+      'Май',
+      'Июнь',
+      'Июль',
+      'Август',
+      'Сентябрь',
+      'Октябрь',
+      'Ноябрь',
+      'Декабрь',
+    ];
+    return '${mnames[m.month - 1]} ${m.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -502,6 +489,35 @@ class _CalendarCard extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(8, 16, 8, 12),
       child: Column(
         children: [
+          // ── Навигация месяца (как в графиках)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 0,12,12),
+            child: Row(
+              children: [
+                _NavIcon(
+                  CupertinoIcons.left_chevron,
+                  onTap: onPrev,
+                ),
+                Expanded(
+                  child: Text(
+                    _monthTitle(month),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                ),
+                _NavIcon(
+                  CupertinoIcons.right_chevron,
+                  onTap: onNext,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 6),
           const Row(
             children: [
               _Dow('Пн'),

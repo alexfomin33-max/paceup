@@ -1369,10 +1369,10 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
       );
     }
 
-    return GestureDetector(
-      behavior: HitTestBehavior.deferToChild,
-      onTap: () => _openActivity(a),
-      child: ActivityBlock(activity: a, currentUserId: _actualUserId!),
+    return ActivityBlock(
+      activity: a,
+      currentUserId: _actualUserId!,
+      onOpenDescription: () => _openActivity(a),
     );
   }
 }

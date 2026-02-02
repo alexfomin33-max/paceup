@@ -488,58 +488,173 @@ class _ByTypeContentState extends State<_ByTypeContent> {
 
   /// Вычисляет minY, maxY и tick для графика расстояния
   /// Возвращает (minY, maxY, tick)
+  /// Гарантирует от 5 до 7 линий на вертикальной оси для всех периодов
   (double, double, double) _getDistanceRange() {
     final values = _getDistanceChart();
     if (values.isEmpty || values.every((v) => v <= 0)) {
       return (0.0, 100.0, 20.0);
     }
 
-    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
 
-    // Добавляем отступ ~5% сверху и снизу
-    final range = max - min;
-    final padding = range * 0.05;
-    final rawMinY = (min - padding).clamp(0.0, double.infinity);
+    // Добавляем отступ ~5% сверху
+    final padding = max * 0.05;
     final rawMaxY = max + padding;
 
-    // Округляем minY вниз, maxY вверх до разумных значений
-    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 10).floor() * 10).toDouble();
+    // Вертикальная ось всегда начинается с нуля
+    const minY = 0.0;
     final maxY = ((rawMaxY / 10).ceil() * 10).toDouble();
 
-    // Вычисляем tick для 5-7 линий
     final rangeY = maxY - minY;
-    final targetLines = 6;
-    final rawTick = rangeY / targetLines;
-
-    // Округляем tick до разумного значения
-    double tick;
-    if (rawTick <= 5) {
-      tick = 5;
-    } else if (rawTick <= 10) {
-      tick = 10;
-    } else if (rawTick <= 20) {
-      tick = 20;
-    } else if (rawTick <= 50) {
-      tick = 50;
-    } else if (rawTick <= 100) {
-      tick = 100;
-    } else {
-      tick = ((rawTick / 50).ceil() * 50).toDouble();
-    }
+    
+    // Вычисляем tick, гарантируя от 5 до 7 линий
+    // Для периодов "За неделю" и "За месяц" добавляем меньшие значения
+    final candidates = _period == 'За неделю' || _period == 'За месяц'
+        ? [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+        : [5, 10, 20, 50, 100, 200, 500, 1000];
+    
+    double tick = _calculateOptimalTick(rangeY, candidates);
 
     return (minY, maxY, tick);
+  }
+
+  /// Вычисляет оптимальный tick для заданного диапазона
+  /// Гарантирует от 5 до 7 линий на вертикальной оси
+  /// Возможные значения tick должны быть переданы в candidates
+  /// Количество линий вычисляется как: (rangeY / tick).floor() + 1
+  double _calculateOptimalTick(double rangeY, List<int> candidates) {
+    // Сначала пробуем найти tick, который дает от 5 до 7 линий
+    for (final candidate in candidates) {
+      final candidateTick = candidate.toDouble();
+      // Количество линий: 0, tick, 2*tick, ..., n*tick <= rangeY
+      // Это равно (rangeY / tick).floor() + 1
+      final lines = (rangeY / candidateTick).floor() + 1;
+      if (lines >= 5 && lines <= 7) {
+        return candidateTick;
+      }
+    }
+
+    // Если не нашли подходящий, используем ближайший к целевому значению
+    // Целевое значение для 6 линий
+    final targetTick = rangeY / 6;
+    
+    // Находим ближайший candidate
+    double bestTick = candidates.first.toDouble();
+    double bestDiff = (targetTick - bestTick).abs();
+    
+    for (final candidate in candidates) {
+      final candidateTick = candidate.toDouble();
+      final diff = (targetTick - candidateTick).abs();
+      if (diff < bestDiff) {
+        bestTick = candidateTick;
+        bestDiff = diff;
+      }
+    }
+    
+    // Проверяем количество линий и корректируем при необходимости
+    var lines = (rangeY / bestTick).floor() + 1;
+    
+    // Если линий меньше 5, пробуем найти меньший tick из кандидатов
+    // или вычисляем оптимальный tick динамически
+    if (lines < 5) {
+      // Сначала пробуем кандидаты в обратном порядке (от больших к меньшим)
+      for (final candidate in candidates.reversed) {
+        final candidateTick = candidate.toDouble();
+        final candidateLines = (rangeY / candidateTick).floor() + 1;
+        if (candidateLines >= 5 && candidateLines <= 7) {
+          return candidateTick;
+        }
+      }
+      
+      // Если все кандидаты дают меньше 5 линий, вычисляем оптимальный tick
+      // для получения ровно 5 линий
+      final optimalTickFor5Lines = rangeY / 5;
+      
+      // Округляем до ближайшего "красивого" значения
+      // Пробуем округлить до ближайшего кратного 1, 2, 5, 10, 20, 50
+      double roundedTick;
+      if (optimalTickFor5Lines <= 1) {
+        roundedTick = 1.0;
+      } else if (optimalTickFor5Lines <= 2) {
+        roundedTick = ((optimalTickFor5Lines / 1).ceil() * 1).toDouble();
+      } else if (optimalTickFor5Lines <= 5) {
+        roundedTick = ((optimalTickFor5Lines / 2).ceil() * 2).toDouble();
+      } else if (optimalTickFor5Lines <= 10) {
+        roundedTick = ((optimalTickFor5Lines / 5).ceil() * 5).toDouble();
+      } else if (optimalTickFor5Lines <= 20) {
+        roundedTick = ((optimalTickFor5Lines / 10).ceil() * 10).toDouble();
+      } else if (optimalTickFor5Lines <= 50) {
+        roundedTick = ((optimalTickFor5Lines / 20).ceil() * 20).toDouble();
+      } else {
+        roundedTick = ((optimalTickFor5Lines / 50).ceil() * 50).toDouble();
+      }
+      
+      // Проверяем, что получилось не меньше 5 линий
+      final finalLines = (rangeY / roundedTick).floor() + 1;
+      if (finalLines >= 5) {
+        return roundedTick;
+      }
+      
+      // Если все еще меньше 5, используем точное значение для 5 линий
+      return optimalTickFor5Lines;
+    }
+    
+    // Если линий больше 7, увеличиваем tick (уменьшаем шаг)
+    // Пробуем кандидаты в прямом порядке (от меньших к большим)
+    if (lines > 7) {
+      for (final candidate in candidates) {
+        final candidateTick = candidate.toDouble();
+        final candidateLines = (rangeY / candidateTick).floor() + 1;
+        if (candidateLines >= 5 && candidateLines <= 7) {
+          return candidateTick;
+        }
+      }
+      
+      // Если все кандидаты дают больше 7 линий, вычисляем оптимальный tick
+      // для получения ровно 7 линий
+      final optimalTickFor7Lines = rangeY / 7;
+      
+      // Округляем до ближайшего "красивого" значения
+      double roundedTick;
+      if (optimalTickFor7Lines <= 1) {
+        roundedTick = 1.0;
+      } else if (optimalTickFor7Lines <= 2) {
+        roundedTick = ((optimalTickFor7Lines / 1).ceil() * 1).toDouble();
+      } else if (optimalTickFor7Lines <= 5) {
+        roundedTick = ((optimalTickFor7Lines / 2).ceil() * 2).toDouble();
+      } else if (optimalTickFor7Lines <= 10) {
+        roundedTick = ((optimalTickFor7Lines / 5).ceil() * 5).toDouble();
+      } else if (optimalTickFor7Lines <= 20) {
+        roundedTick = ((optimalTickFor7Lines / 10).ceil() * 10).toDouble();
+      } else if (optimalTickFor7Lines <= 50) {
+        roundedTick = ((optimalTickFor7Lines / 20).ceil() * 20).toDouble();
+      } else {
+        roundedTick = ((optimalTickFor7Lines / 50).ceil() * 50).toDouble();
+      }
+      
+      // Проверяем, что получилось не больше 7 линий
+      final finalLines = (rangeY / roundedTick).floor() + 1;
+      if (finalLines <= 7) {
+        return roundedTick;
+      }
+      
+      // Если все еще больше 7, используем точное значение для 7 линий
+      return optimalTickFor7Lines;
+    }
+    
+    return bestTick;
   }
 
   /// Вычисляет minY, maxY и tick для графика дней активности
   /// Для периодов "За неделю" и "За месяц": бинарная шкала 0-1
   /// Для периода "За год": диапазон 0-31 (максимальное количество дней в месяце)
+  /// Гарантирует от 5 до 7 линий на вертикальной оси
   (double, double, double) _getActiveDaysRange(List<double> values) {
     // Для периодов "За неделю" и "За месяц" используем бинарную шкалу 0-1
     if (_period == 'За неделю' || _period == 'За месяц') {
       const minY = 0.0;
       const maxY = 1.0;
-      const tick = 0.5; // Для отображения линий на 0, 0.5, 1.0
+      const tick = 1.0 / 6.0; // Для отображения 7 линий: 0, 1/6, 2/6, 3/6, 4/6, 5/6, 1
       return (minY, maxY, tick);
     }
     
@@ -547,59 +662,42 @@ class _ByTypeContentState extends State<_ByTypeContent> {
     const minY = 0.0;
     const maxY = 31.0;
     
-    // Вычисляем tick для 6-7 линий на диапазоне 0-31
+    // Вычисляем tick, гарантируя от 5 до 7 линий
     const rangeY = maxY - minY; // 31
-    const targetLines = 6;
-    final rawTick = rangeY / targetLines; // ~5.17
-
-    // Округляем tick до разумного значения
-    double tick;
-    if (rawTick <= 5) {
-      tick = 5; // Для диапазона 0-31: 0, 5, 10, 15, 20, 25, 30
-    } else {
-      tick = ((rawTick / 5).ceil() * 5).toDouble();
-    }
+    final tick = _calculateOptimalTick(rangeY, [5, 6, 7, 8, 10]);
 
     return (minY, maxY, tick);
   }
 
   /// Вычисляет minY, maxY и tick для графика времени активности
+  /// Гарантирует от 5 до 7 линий на вертикальной оси для всех периодов
   (double, double, double) _getActiveTimeRange(List<double> values) {
     if (values.isEmpty || values.every((v) => v <= 0)) {
       return (0.0, 3000.0, 500.0);
     }
 
-    final min = values.where((v) => v > 0).reduce((a, b) => a < b ? a : b);
     final max = values.reduce((a, b) => a > b ? a : b);
 
-    // Добавляем отступ ~5% сверху и снизу
-    final range = max - min;
-    final padding = range * 0.05;
-    final rawMinY = (min - padding).clamp(0.0, double.infinity);
+    // Добавляем отступ ~5% сверху
+    final padding = max * 0.05;
     final rawMaxY = max + padding;
 
-    // Округляем minY вниз, maxY вверх
-    final minY = rawMinY <= 0 ? 0.0 : ((rawMinY / 50).floor() * 50).toDouble();
-    final maxY = ((rawMaxY / 50).ceil() * 50).toDouble();
+    // Вертикальная ось всегда начинается с нуля
+    const minY = 0.0;
+    // Для периодов "За неделю" и "За месяц" округляем до меньших значений
+    final maxY = (_period == 'За неделю' || _period == 'За месяц')
+        ? ((rawMaxY / 10).ceil() * 10).toDouble()
+        : ((rawMaxY / 50).ceil() * 50).toDouble();
 
-    // Вычисляем tick для 5-7 линий
     final rangeY = maxY - minY;
-    final targetLines = 6;
-    final rawTick = rangeY / targetLines;
-
-    // Округляем tick до разумного значения
-    double tick;
-    if (rawTick <= 50) {
-      tick = 50;
-    } else if (rawTick <= 100) {
-      tick = 100;
-    } else if (rawTick <= 250) {
-      tick = 250;
-    } else if (rawTick <= 500) {
-      tick = 500;
-    } else {
-      tick = ((rawTick / 500).ceil() * 500).toDouble();
-    }
+    
+    // Вычисляем tick, гарантируя от 5 до 7 линий
+    // Для периодов "За неделю" и "За месяц" добавляем меньшие значения
+    final candidates = _period == 'За неделю' || _period == 'За месяц'
+        ? [10, 20, 30, 50, 100, 250, 500, 1000, 2000, 5000]
+        : [50, 100, 250, 500, 1000, 2000, 5000];
+    
+    double tick = _calculateOptimalTick(rangeY, candidates);
 
     return (minY, maxY, tick);
   }
@@ -826,38 +924,37 @@ class _ByTypeContentState extends State<_ByTypeContent> {
         ),
         const SizedBox(height: 20),
 
-        // ── Заголовок графика "Дней активности"
-        const _SectionTitle('Дней активности'),
-        const SizedBox(height: 10),
+        // ── Заголовок графика "Дней активности" (только для периода "За год")
+        if (_period == 'За год') ...[
+          const _SectionTitle('Дней активности'),
+          const SizedBox(height: 10),
 
-        // ── Карточка с графиком "Дней активности"
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-          child: _PeriodChartCard(
-            period: _period,
-            currentYear: _currentYear,
-            currentWeekStart: _currentWeekStart,
-            currentMonthStart: _currentMonthStart,
-            color: AppColors.female,
-            minY: activeDaysMinY,
-            maxY: activeDaysMaxY,
-            tick: activeDaysTick,
-            height: 200,
-            values: activeDaysValues,
-            userId: widget.userId,
-            periodApi: _getPeriodApi(),
-            sportType: _getSportTypeApi(),
-            onYearChanged: (year) => _loadStats(year: year),
-            onWeekChanged: (weekStart) => _loadStats(weekStart: weekStart),
-            onMonthChanged: (monthStart) => _loadStats(monthStart: monthStart),
-            valueFormatter: (_period == 'За неделю' || _period == 'За месяц')
-                ? (value) => value >= 0.5 ? '1' : '0'
-                : (value) => value.toInt().toString(),
-            periodInfo: _statsData?.periodInfo,
-            isBinaryScale: _period == 'За неделю' || _period == 'За месяц',
+          // ── Карточка с графиком "Дней активности"
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            child: _PeriodChartCard(
+              period: _period,
+              currentYear: _currentYear,
+              currentWeekStart: _currentWeekStart,
+              currentMonthStart: _currentMonthStart,
+              color: AppColors.female,
+              minY: activeDaysMinY,
+              maxY: activeDaysMaxY,
+              tick: activeDaysTick,
+              height: 200,
+              values: activeDaysValues,
+              userId: widget.userId,
+              periodApi: _getPeriodApi(),
+              sportType: _getSportTypeApi(),
+              onYearChanged: (year) => _loadStats(year: year),
+              onWeekChanged: (weekStart) => _loadStats(weekStart: weekStart),
+              onMonthChanged: (monthStart) => _loadStats(monthStart: monthStart),
+              valueFormatter: (value) => value.toInt().toString(),
+              periodInfo: _statsData?.periodInfo,
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
+          const SizedBox(height: 20),
+        ],
 
         // ── Заголовок графика "Время активности"
         const _SectionTitle('Время активности, мин'),
@@ -1629,15 +1726,14 @@ class _BarsPainter extends CustomPainter {
       // Форматируем значение для оси Y
       String yLabel;
       if (isBinaryScale) {
-        // Для бинарной шкалы показываем 0, 0.5, 1
+        // Для бинарной шкалы показываем значения с точностью до 2 знаков
         if (y == 0.0) {
           yLabel = '0';
-        } else if (y == 0.5) {
-          yLabel = '0.5';
         } else if (y == 1.0) {
           yLabel = '1';
         } else {
-          yLabel = y.toStringAsFixed(1);
+          // Для промежуточных значений показываем дробную часть
+          yLabel = y.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
         }
       } else {
         yLabel = y.toInt().toString();
