@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/services/routes_service.dart';
 import '../../../../../../providers/services/auth_provider.dart';
+import '../edit_route_bottom_sheet.dart';
 import 'rout_description/rout_description_screen.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 
@@ -46,6 +47,9 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
         return routesAsync.when(
           data: (routes) {
             if (routes.isEmpty) {
+              // До плашки меню: навбар 60 + запас 12 + viewPadding
+              final bottomPadding =
+                  MediaQuery.of(context).viewPadding.bottom + 60 + 12;
               return CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -62,9 +66,13 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
                       ),
                     ),
                   ),
+                  SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
                 ],
               );
             }
+            // До плашки меню: навбар 60 + запас 12 + viewPadding
+            final bottomPadding =
+                MediaQuery.of(context).viewPadding.bottom + 60 + 12;
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -84,6 +92,9 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
                           child: _SavedRouteCard(
                             route: r,
                             userId: userId,
+                            onRouteDeleted: () {
+                              if (uid > 0) ref.invalidate(myRoutesProvider(uid));
+                            },
                           ),
                         );
                       },
@@ -91,7 +102,7 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
                     ),
                   ),
                 ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
               ],
             );
           },
@@ -140,10 +151,12 @@ class _SavedRouteCard extends StatelessWidget {
   const _SavedRouteCard({
     required this.route,
     required this.userId,
+    required this.onRouteDeleted,
   });
 
   final SavedRouteItem route;
   final int userId;
+  final VoidCallback onRouteDeleted;
 
   @override
   Widget build(BuildContext context) {
@@ -156,6 +169,7 @@ class _SavedRouteCard extends StatelessWidget {
               routeId: route.id,
               userId: userId,
               initialRoute: route,
+              onRouteDeleted: onRouteDeleted,
             ),
           ),
         );
@@ -170,7 +184,67 @@ class _SavedRouteCard extends StatelessWidget {
           ),
         ),
         padding: const EdgeInsets.all(6),
-        child: _SavedRouteRow(route: route),
+        child: _SavedRouteRow(
+          route: route,
+          onEdit: () {
+            showEditRouteBottomSheet(
+              context,
+              route: route,
+              userId: userId,
+              onSaved: onRouteDeleted,
+            );
+          },
+          onDelete: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Удалить маршрут?'),
+                content: Text(
+                  'Маршрут «${route.name}» будет удалён из избранного.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: Text(
+                      'Отмена',
+                      style: TextStyle(
+                        color: AppColors.getTextSecondaryColor(ctx),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text(
+                      'Удалить',
+                      style: TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                ],
+              ),
+            );
+            if (confirm != true || !context.mounted) return;
+            try {
+              await RoutesService().deleteRoute(
+                routeId: route.id,
+                userId: userId,
+              );
+              if (context.mounted) onRouteDeleted();
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: SelectableText.rich(
+                      TextSpan(
+                        text: 'Ошибка: $e',
+                        style: const TextStyle(color: AppColors.error),
+                      ),
+                    ),
+                  ),
+                );
+              }
+            }
+          },
+        ),
       ),
     );
   }
@@ -223,9 +297,15 @@ class _RouteCard extends StatelessWidget {
 
 /// Строка карточки сохранённого маршрута (картинка по URL, название, чип, метрики).
 class _SavedRouteRow extends StatelessWidget {
-  const _SavedRouteRow({required this.route});
+  const _SavedRouteRow({
+    required this.route,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final SavedRouteItem route;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -269,6 +349,74 @@ class _SavedRouteRow extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     _difficultyChipFromString(route.difficulty),
+                    const SizedBox(width: 4),
+                    // Иконка «три точки» — меню Изменить / Удалить
+                    PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 1),
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.xll),
+                      ),
+                      color: AppColors.surface,
+                      elevation: 8,
+                      icon: Icon(
+                        Icons.more_horiz,
+                        size: 20,
+                        color: AppColors.getIconSecondaryColor(context),
+                      ),
+                      onSelected: (value) {
+                        if (value == 'edit') {
+                          onEdit();
+                        } else if (value == 'delete') {
+                          onDelete();
+                        }
+                      },
+                      itemBuilder: (ctx) => [
+                        PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.edit_outlined,
+                                size: 22,
+                                color: AppColors.brandPrimary,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Изменить',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  color: AppColors.getTextPrimaryColor(ctx),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 22,
+                                color: AppColors.error,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                'Удалить',
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  fontSize: 16,
+                                  color: AppColors.error,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 18),
