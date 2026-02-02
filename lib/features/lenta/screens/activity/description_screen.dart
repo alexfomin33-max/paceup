@@ -2141,17 +2141,19 @@ class _TogetherInviteBottomBar extends ConsumerWidget {
                       height: 40,
                       child: ElevatedButton(
                         onPressed: () async {
-                          onDismiss();
                           try {
                             final api = ref.read(togetherApiProvider);
                             await api.respondInvite(
                               inviteId: dto.inviteId!,
                               accept: true,
                             );
-                          } finally {
-                            // ────────────────────────────────────────────
-                            // Обновляем локальные данные
-                            // ────────────────────────────────────────────
+                            // Все операции с ref — до onDismiss(), иначе
+                            // "Cannot use ref after the widget was disposed"
+                            ref
+                                .read(
+                                  lentaProvider(currentUserId).notifier,
+                                )
+                                .forceRefresh();
                             ref.invalidate(
                               togetherInviteStatusProvider(activityId),
                             );
@@ -2159,6 +2161,8 @@ class _TogetherInviteBottomBar extends ConsumerWidget {
                             ref.invalidate(
                               togetherCandidatesProvider(activityId),
                             );
+                          } finally {
+                            onDismiss();
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -2187,20 +2191,20 @@ class _TogetherInviteBottomBar extends ConsumerWidget {
                       height: 40,
                       child: OutlinedButton(
                         onPressed: () async {
-                          onDismiss();
                           try {
                             final api = ref.read(togetherApiProvider);
                             await api.respondInvite(
                               inviteId: dto.inviteId!,
                               accept: false,
                             );
-                          } finally {
                             ref.invalidate(
                               togetherInviteStatusProvider(activityId),
                             );
                             ref.invalidate(
                               togetherCandidatesProvider(activityId),
                             );
+                          } finally {
+                            onDismiss();
                           }
                         },
                         style: OutlinedButton.styleFrom(
