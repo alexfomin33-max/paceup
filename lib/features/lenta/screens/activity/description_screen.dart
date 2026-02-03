@@ -35,6 +35,7 @@ import 'together/together_screen.dart';
 import '../../../../domain/models/activity_lenta.dart' as al;
 import 'combining_screen.dart';
 import 'fullscreen_route_map_screen.dart';
+import 'create_segment_screen.dart';
 import 'edit_activity_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
@@ -446,6 +447,43 @@ class _ActivityDescriptionPageState
             onTap: () {
               MoreMenuHub.hide();
               _showSaveRouteDialog(context, a);
+            },
+          ),
+        // ────────────────────────────────────────────────────────────────
+        // 🔹 СОЗДАНИЕ УЧАСТКА: доступно при наличии трека
+        // ────────────────────────────────────────────────────────────────
+        if (a.points.isNotEmpty)
+          MoreMenuItem(
+            text: 'Создать участок',
+            icon: CupertinoIcons.flag,
+            iconColor: AppColors.brandPrimary,
+            onTap: () {
+              MoreMenuHub.hide();
+              final userId = widget.currentUserId > 0
+                  ? widget.currentUserId
+                  : a.userId;
+              Navigator.of(context, rootNavigator: true)
+                  .push(
+                    TransparentPageRoute(
+                      builder: (_) => CreateSegmentScreen(
+                        points: a.points
+                            .map((c) => ll.LatLng(c.lat, c.lng))
+                            .toList(),
+                        activityId: a.id,
+                        activityType: a.type,
+                        userId: userId,
+                        elevationPerKm:
+                            a.stats?.elevationPerKm ?? const {},
+                      ),
+                    ),
+                  )
+                  .then((result) {
+                    if (result is String && result.isNotEmpty && mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(result)),
+                      );
+                    }
+                  });
             },
           ),
         MoreMenuItem(
@@ -993,6 +1031,9 @@ class _ActivityDescriptionPageState
                                                       ),
                                                     )
                                                     .toList(),
+                                            activityType: a.type,
+                                            elevationPerKm:
+                                                a.stats?.elevationPerKm ?? const {},
                                               ),
                                         ),
                                       );
