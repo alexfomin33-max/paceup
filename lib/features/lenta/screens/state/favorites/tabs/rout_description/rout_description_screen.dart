@@ -68,8 +68,13 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
       _detail?.routeMapUrl ?? widget.initialRoute.routeMapUrl;
   double get _distanceKm =>
       _detail != null ? _detail!.distanceKm : widget.initialRoute.distanceKm;
-  /// Время: при загруженных деталях — личный рекорд (лучший среди забегов), иначе из списка.
+  /// Время: при загруженных деталях — лучшее время лидера маршрута (самого быстрого),
+  /// иначе личный рекорд или из списка.
   String get _durationText {
+    final leaderTime = _detail?.leaderBestDurationText;
+    if (leaderTime != null && leaderTime.isNotEmpty && leaderTime != '—') {
+      return leaderTime;
+    }
     final pb = _detail?.personalBestText;
     if (pb != null && pb.isNotEmpty && pb != '—') return pb;
     return widget.initialRoute.durationText ?? '—';
@@ -166,7 +171,8 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     final createdText = _loading && _detail == null
         ? '—'
         : _formatCreatedAt(_detail?.createdAt);
-    final author = _detail?.author;
+    // Лидер — самый быстрый по маршруту; если нет результатов — не показываем блок
+    final leader = _detail?.leader;
     final personalBestText = _detail?.personalBestText ?? '—';
     final myWorkoutsCount = _detail?.myWorkoutsCount ?? 0;
     final participantsCount = _detail?.participantsCount ?? 0;
@@ -305,69 +311,69 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          // Автор: аватар и имя из базы, кликабельно — переход в профиль
-                          InkWell(
-                            onTap: author != null
-                                ? () {
-                                    Navigator.of(context).push(
-                                      TransparentPageRoute(
-                                        builder: (_) => ProfileScreen(
-                                          userId: author.id,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                            borderRadius: BorderRadius.circular(8),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.emoji_events_outlined,
-                                  size: 22,
-                                  color: AppColors.gold,
-                                ),
-                                const SizedBox(width: 8),
-                                author != null && author.avatar.isNotEmpty
-                                    ? ClipOval(
-                                        child: CachedNetworkImage(
-                                          imageUrl: author.avatar,
-                                          width: 36,
-                                          height: 36,
-                                          fit: BoxFit.cover,
-                                          errorWidget: (_, __, ___) =>
-                                              _avatarPlaceholder(context),
-                                        ),
-                                      )
-                                    : CircleAvatar(
-                                        radius: 18,
-                                        backgroundColor:
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? AppColors.darkSurfaceMuted
-                                                : AppColors.skeletonBase,
-                                        child:
-                                            _avatarPlaceholder(context),
-                                      ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    author != null && author.fullName.isNotEmpty
-                                        ? author.fullName
-                                        : '—',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color:
-                                          AppColors.getTextPrimaryColor(context),
+                          // Лидер: самый быстрый по маршруту (аватар и имя), кликабельно — переход в профиль
+                          if (leader != null)
+                            InkWell(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  TransparentPageRoute(
+                                    builder: (_) => ProfileScreen(
+                                      userId: leader.id,
                                     ),
                                   ),
-                                ),
-                              ],
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(8),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.emoji_events_outlined,
+                                    size: 22,
+                                    color: AppColors.gold,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  leader.avatar.isNotEmpty
+                                      ? ClipOval(
+                                          child: CachedNetworkImage(
+                                            imageUrl: leader.avatar,
+                                            width: 36,
+                                            height: 36,
+                                            fit: BoxFit.cover,
+                                            errorWidget: (_, __, ___) =>
+                                                _avatarPlaceholder(context),
+                                          ),
+                                        )
+                                      : CircleAvatar(
+                                          radius: 18,
+                                          backgroundColor:
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? AppColors.darkSurfaceMuted
+                                                  : AppColors.skeletonBase,
+                                          child:
+                                              _avatarPlaceholder(context),
+                                        ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      leader.fullName.isNotEmpty
+                                          ? leader.fullName
+                                          : '—',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.getTextPrimaryColor(
+                                          context,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
                         ],
                       ),
                     ),
