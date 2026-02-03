@@ -163,6 +163,49 @@ class GarminSyncService {
     }
   }
 
+  /// 🔹 Получение учётных данных Garmin для редактирования (только email)
+  /// 
+  /// Пароль никогда не возвращается с сервера.
+  Future<Map<String, dynamic>> getCredentials() async {
+    try {
+      final userId = await _authService.getUserId();
+      final response = await _apiService.post(
+        '/garmin/get_garmin_credentials.php',
+        body: userId != null ? {'user_id': userId} : null,
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// 🔹 Обновление учётных данных Garmin (email и опционально новый пароль)
+  /// 
+  /// [password] — если передан, выполняется повторная авторизация и сохранение;
+  /// если не передан, обновляется только email.
+  Future<Map<String, dynamic>> updateCredentials({
+    required String email,
+    String? password,
+  }) async {
+    try {
+      final userId = await _authService.getUserId();
+      final body = <String, dynamic>{
+        'email': email.trim(),
+        if (userId != null) 'user_id': userId,
+      };
+      if (password != null && password.isNotEmpty) {
+        body['password'] = password;
+      }
+      final response = await _apiService.post(
+        '/garmin/update_garmin_credentials.php',
+        body: body,
+      );
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// 🔹 Отключение Garmin аккаунта
   /// 
   /// Удаляет сохраненные токены
