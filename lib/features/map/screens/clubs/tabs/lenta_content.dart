@@ -214,41 +214,54 @@ class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
       );
     }
 
+    // ───── Белый блок-плейсхолдер высотой 400 с индикатором загрузки ─────
+    if (_activities.isEmpty && _isLoading) {
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Container(
+          height: 400,
+          color: AppColors.getSurfaceColor(context),
+          child: Center(
+            child: CupertinoActivityIndicator(
+              radius: 12,
+              color: AppColors.getIconSecondaryColor(context),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ───── Белый блок высотой 400, когда лента пуста ─────
     if (_activities.isEmpty && !_isLoading) {
       return SliverFillRemaining(
         hasScrollBody: false,
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  CupertinoIcons.news,
-                  size: 48,
-                  color: AppColors.getIconSecondaryColor(context),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Лента пуста',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.getTextPrimaryColor(context),
+        child: Container(
+          height: 400,
+          color: AppColors.getSurfaceColor(context),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    CupertinoIcons.news,
+                    size: 32,
+                    color: AppColors.getTextPlaceholderColor(context),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Участники клуба еще не добавили активности',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: AppColors.getTextSecondaryColor(context),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Пока в ленте пусто',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.getTextPlaceholderColor(context),
+                    ),
                   ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

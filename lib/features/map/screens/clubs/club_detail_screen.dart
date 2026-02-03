@@ -927,15 +927,22 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                       ),
                     ),
 
-                    // ───────── Контент табов
-                    if (_tab == 0)
-                      ClubLentaContent(
+                    // ───────── Контент табов (с сохранением состояния)
+                    // ───── Лента: сохраняем состояние при скрытии ─────
+                    SliverVisibility(
+                      visible: _tab == 0,
+                      maintainState: true,
+                      sliver: ClubLentaContent(
                         key: _lentaContentKey,
                         clubId: widget.clubId,
                         scrollController: _scrollController,
-                      )
-                    else if (_tab == 1)
-                      SliverToBoxAdapter(
+                      ),
+                    ),
+                    // ───── Фото: сохраняем состояние при скрытии ─────
+                    SliverVisibility(
+                      visible: _tab == 1,
+                      maintainState: true,
+                      sliver: SliverToBoxAdapter(
                         child: Builder(
                           builder: (context) => Container(
                             padding: const EdgeInsets.all(2),
@@ -948,9 +955,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             ),
                           ),
                         ),
-                      )
-                    else if (_tab == 2)
-                      SliverToBoxAdapter(
+                      ),
+                    ),
+                    // ───── Участники: сохраняем состояние при скрытии ─────
+                    SliverVisibility(
+                      visible: _tab == 2,
+                      maintainState: true,
+                      sliver: SliverToBoxAdapter(
                         child: Builder(
                           builder: (context) => Container(
                             padding: const EdgeInsets.all(8),
@@ -965,9 +976,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                             ),
                           ),
                         ),
-                      )
-                    else
-                      SliverToBoxAdapter(
+                      ),
+                    ),
+                    // ───── Статистика: сохраняем состояние при скрытии ─────
+                    SliverVisibility(
+                      visible: _tab == 3,
+                      maintainState: true,
+                      sliver: SliverToBoxAdapter(
                         child: Builder(
                           builder: (context) => Container(
                             padding: const EdgeInsets.all(12),
@@ -979,6 +994,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                           ),
                         ),
                       ),
+                    ),
 
                     // ── Добавляем нижний отступ для контента перед плавающей кнопкой
                     if (!_isMember && !_isRequest)

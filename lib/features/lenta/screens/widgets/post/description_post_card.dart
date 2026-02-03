@@ -414,7 +414,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                           width: double.infinity,
                           color: AppColors.getSurfaceColor(context),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+                            padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -424,7 +424,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                                     padding: const EdgeInsets.only(bottom: 8),
                                     child: Text(
                                       _currentPost.postTitle,
-                                      style: AppTextStyles.h16w6.copyWith(
+                                      style: AppTextStyles.h15w6.copyWith(
                                         color: AppColors.getTextPrimaryColor(
                                           context,
                                         ),
@@ -442,8 +442,15 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                         ),
 
                       // ──────────────────────────────────────────────────────────────
-                      // НИЖНЯЯ ПАНЕЛЬ: лайк и комментарии
+                      // 🔹 УСЛОВНЫЙ ОТСТУП: если есть описание — больше, если только заголовок — меньше
                       // ──────────────────────────────────────────────────────────────
+                      SizedBox(height: _currentPost.postContent.isNotEmpty ? 12 : 0),
+
+                      // ───────────────── НИЖНЯЯ ПАНЕЛЬ ДЕЙСТВИЙ ─────────────────
+                      // ────────────────────────────────────────────────────────────────
+                      // 🔹 БЛОКИРОВКА КЛИКА: оборачиваем в GestureDetector для предотвращения
+                      // перехода на экран описания при клике на полоску действий
+                      // ────────────────────────────────────────────────────────────────
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -454,34 +461,45 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                           ),
                         ),
                         clipBehavior: Clip.antiAlias,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Row(
-                            children: [
-                              // Лайк-бар: локальная анимация + API
-                              _PostLikeBar(
-                                post: _currentPost,
-                                currentUserId: widget.currentUserId,
-                                likedUsers: _likedUsers,
-                                onLikeChanged: (likes, isLiked) {
-                                  // Обновляем состояние поста при изменении лайка
-                                  setState(() {
-                                    _currentPost = _updatePostLikes(
-                                      likes,
-                                      isLiked,
-                                    );
-                                  });
-                                  // Обновляем список пользователей, которые поставили лайк
-                                  if (_currentPost.likes > 0) {
-                                    _loadLikedUsers();
-                                  } else {
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            // Пустой обработчик — поглощает клики, не давая им распространяться
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              left: 13,
+                              right: 16,
+                              top: 0,
+                              bottom: 12,
+                            ),
+                            child: Row(
+                              children: [
+                                // Лайк-бар: локальная анимация + API
+                                _PostLikeBar(
+                                  post: _currentPost,
+                                  currentUserId: widget.currentUserId,
+                                  likedUsers: _likedUsers,
+                                  onLikeChanged: (likes, isLiked) {
+                                    // Обновляем состояние поста при изменении лайка
                                     setState(() {
-                                      _likedUsers = [];
+                                      _currentPost = _updatePostLikes(
+                                        likes,
+                                        isLiked,
+                                      );
                                     });
-                                  }
-                                },
-                              ),
-                            ],
+                                    // Обновляем список пользователей, которые поставили лайк
+                                    if (_currentPost.likes > 0) {
+                                      _loadLikedUsers();
+                                    } else {
+                                      setState(() {
+                                        _likedUsers = [];
+                                      });
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
@@ -543,6 +561,7 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 12),
                       ],
                     ],
                   ),
@@ -1481,15 +1500,22 @@ class _PostLikeBarState extends ConsumerState<_PostLikeBar>
       onTap: _onTap,
       child: Row(
         children: [
-          ScaleTransition(
-            scale: _likeAnimation,
-            child: Icon(
-              isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
-              size: 20,
-              color: AppColors.error,
+          Container(
+            width: 32,
+            height: 32,
+            // ────────────────────────────────────────────────────────────────
+            // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: по центру контейнера
+            // ────────────────────────────────────────────────────────────────
+            alignment: Alignment.center,
+            child: ScaleTransition(
+              scale: _likeAnimation,
+              child: Icon(
+                isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
+                size: 22,
+                color: AppColors.error,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
           Text(
             likesCount.toString(),
             style: AppTextStyles.h14w4.copyWith(
