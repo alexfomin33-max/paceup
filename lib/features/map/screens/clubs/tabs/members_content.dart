@@ -380,90 +380,144 @@ class CoffeeRunVldMembersContentState
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
+  /// ── Построение контента в зависимости от состояния ──
+  Widget _buildContent() {
+    // Плейсхолдер загрузки - белый блок с индикатором по центру
+    if (_loading && _members.isEmpty) {
+      return Container(
+        key: const ValueKey('loading'),
+        constraints: const BoxConstraints(minHeight: 400),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Center(
+          child: CupertinoActivityIndicator(radius: 10),
+        ),
+      );
+    }
+
+    // Пустое состояние
     if (_members.isEmpty && !_loading) {
-      return Builder(
-        builder: (context) => Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            'Участники отсутствуют',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              color: AppColors.getTextSecondaryColor(context),
+      return ConstrainedBox(
+        key: const ValueKey('empty'),
+        constraints: const BoxConstraints(minHeight: 400),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.person_2,
+                  size: 32,
+                  color: AppColors.getTextPlaceholderColor(context),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Участники отсутствуют',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.getTextPlaceholderColor(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
       );
     }
 
-    return ListView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      shrinkWrap: true,
-      padding: EdgeInsets.zero,
-      itemCount: _members.length + (_loading ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index >= _members.length) {
-          // Индикатор загрузки в конце списка
+    // Список участников
+    return ConstrainedBox(
+      key: ValueKey('list_${_members.length}'),
+      constraints: const BoxConstraints(minHeight: 400),
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        padding: EdgeInsets.zero,
+        itemCount: _members.length + (_loading ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= _members.length) {
+            // Индикатор загрузки в конце списка при подгрузке
+            return Builder(
+              builder: (context) => Container(
+                color: AppColors.getSurfaceColor(context),
+                padding: const EdgeInsets.all(16),
+                child: const Center(
+                  child: CupertinoActivityIndicator(radius: 10),
+                ),
+              ),
+            );
+          }
+
+          final m = _members[index];
+          final name = m['name'] as String? ?? 'Пользователь';
+          final avatarUrl = m['avatar_url'] as String? ?? '';
+          final role = m['role'] as String?;
+          final userId = m['user_id'] as int?;
+          final isCurrentUser = m['is_current_user'] as bool? ?? false;
+          final isCreator = m['is_creator'] as bool? ?? false;
+          final isAdmin = m['is_admin'] as bool? ?? false;
+          final canAssignAdmin =
+              _currentUserCanAssignAdmins && !isCreator && !isAdmin;
+          final canRemove = _currentUserCanManageMembers &&
+              !isCreator &&
+              !isCurrentUser &&
+              !(_currentUserIsAdmin && isAdmin);
+          final canShowMenu = canAssignAdmin || canRemove;
+
           return Builder(
             builder: (context) => Container(
               color: AppColors.getSurfaceColor(context),
-              padding: const EdgeInsets.all(16),
-              child: const Center(child: CupertinoActivityIndicator(radius: 10)),
+              child: _MemberRow(
+                name: name,
+                role: role,
+                avatarUrl: avatarUrl,
+                userId: userId,
+                isCurrentUser: isCurrentUser,
+                isOwner: _currentUserIsOwner || widget.isOwner,
+                onTap: userId != null
+                    ? () {
+                        Navigator.of(context).push(
+                          TransparentPageRoute(
+                            builder: (_) => ProfileScreen(userId: userId),
+                          ),
+                        );
+                      }
+                    : null,
+                onShowMenu: canShowMenu && userId != null
+                    ? (menuKey) => _showMemberMenu(
+                          context,
+                          menuKey,
+                          userId,
+                          name,
+                          isAdmin,
+                          isCreator,
+                        )
+                    : null,
+              ),
             ),
           );
-        }
+        },
+      ),
+    );
+  }
 
-        final m = _members[index];
-        final name = m['name'] as String? ?? 'Пользователь';
-        final avatarUrl = m['avatar_url'] as String? ?? '';
-        final role = m['role'] as String?;
-        final userId = m['user_id'] as int?;
-        final isCurrentUser = m['is_current_user'] as bool? ?? false;
-        final isCreator = m['is_creator'] as bool? ?? false;
-        final isAdmin = m['is_admin'] as bool? ?? false;
-        final canAssignAdmin =
-            _currentUserCanAssignAdmins && !isCreator && !isAdmin;
-        final canRemove = _currentUserCanManageMembers &&
-            !isCreator &&
-            !isCurrentUser &&
-            !(_currentUserIsAdmin && isAdmin);
-        final canShowMenu = canAssignAdmin || canRemove;
-
-        return Builder(
-          builder: (context) => Container(
-            color: AppColors.getSurfaceColor(context),
-            child: _MemberRow(
-              name: name,
-              role: role,
-              avatarUrl: avatarUrl,
-              userId: userId,
-              isCurrentUser: isCurrentUser,
-              isOwner: _currentUserIsOwner || widget.isOwner,
-              onTap: userId != null
-                  ? () {
-                      Navigator.of(context).push(
-                        TransparentPageRoute(
-                          builder: (_) => ProfileScreen(userId: userId),
-                        ),
-                      );
-                    }
-                  : null,
-              onShowMenu: canShowMenu && userId != null
-                  ? (menuKey) => _showMemberMenu(
-                        context,
-                        menuKey,
-                        userId,
-                        name,
-                        isAdmin,
-                        isCreator,
-                      )
-                  : null,
-            ),
-          ),
+  @override
+  Widget build(BuildContext context) {
+    // ── Контент с анимацией fade-in ──
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: child,
         );
       },
+      child: _buildContent(),
     );
   }
 }

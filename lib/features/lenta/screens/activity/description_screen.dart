@@ -1206,7 +1206,7 @@ class _ActivityDescriptionPageState
                       decoration: BoxDecoration(
                         color: AppColors.getSurfaceColor(context),
                       ),
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                      padding: const EdgeInsets.only(left: 16, right: 16, top: 12),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -1216,7 +1216,7 @@ class _ActivityDescriptionPageState
                               padding: const EdgeInsets.only(bottom: 8),
                               child: Text(
                                 a.postTitle,
-                                style: AppTextStyles.h16w6.copyWith(
+                                style: AppTextStyles.h15w6.copyWith(
                                   color: AppColors.getTextPrimaryColor(context),
                                 ),
                               ),
@@ -1233,6 +1233,15 @@ class _ActivityDescriptionPageState
                       ),
                     ),
                   ),
+
+                // ────────────────────────────────────────────────────────────────
+                // 🔹 УСЛОВНЫЙ ОТСТУП: если есть описание — больше, если только заголовок — меньше
+                // ────────────────────────────────────────────────────────────────
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: a.postContent.isNotEmpty ? 12 : 0,
+                  ),
+                ),
 
                 // ────────────────────────────────────────────────────────────────
                 // 🎯 ДЕЙСТВИЯ: лайк, комментарии, совместно
@@ -1252,20 +1261,23 @@ class _ActivityDescriptionPageState
                           width: 1.0,
                         ),
                       ),
-                          boxShadow: const [
-          BoxShadow(
-            color: AppColors.twinchip,
-            blurRadius: 10,
-            offset: Offset(0, 1),
-          ),
-        ],
+                      boxShadow: const [
+                        BoxShadow(
+                          color: AppColors.twinchip,
+                          blurRadius: 10,
+                          offset: Offset(0, 1),
+                        ),
+                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    child: ActivityActionsRow(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        // Пустой обработчик — поглощает клики, не давая им распространяться
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(13, 0, 16, 12),
+                        child: ActivityActionsRow(
                       activityId: a.id,
                       activityUserId: a.userId,
                       currentUserId: widget.currentUserId,
@@ -1343,6 +1355,8 @@ class _ActivityDescriptionPageState
                           ),
                         );
                       },
+                    ),
+                      ),
                     ),
                   ),
                 ),

@@ -505,7 +505,7 @@ class _PostCardState extends ConsumerState<PostCard>
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
                           post.postTitle,
-                          style: AppTextStyles.h16w6.copyWith(
+                          style: AppTextStyles.h15w6.copyWith(
                             color: AppColors.getTextPrimaryColor(context),
                           ),
                         ),
@@ -518,45 +518,64 @@ class _PostCardState extends ConsumerState<PostCard>
               ),
             ),
 
-          const SizedBox(height: 12),
-
           // ──────────────────────────────────────────────────────────────
-          // НИЖНЯЯ ПАНЕЛЬ: лайк и комментарии
+          // 🔹 УСЛОВНЫЙ ОТСТУП: если есть описание — больше, если только заголовок — меньше
           // ──────────────────────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(left: 14, right: 16),
-            child: Row(
-              children: [
-                // Лайк-бар: локальная анимация + API
-                _PostLikeBar(post: post, currentUserId: widget.currentUserId),
-                const SizedBox(width: 16),
+          SizedBox(height: post.postContent.isNotEmpty ? 12 : 0),
 
-                // Кнопка «комментарии» — экран ленты откроет bottom sheet
-                GestureDetector(
-                  onTap: widget.onOpenComments,
-                  behavior: HitTestBehavior.opaque,
-                  child: Row(
-                    children: [
-                      const Icon(
-                        CupertinoIcons.chat_bubble,
-                        size: 20,
-                        color: AppColors.warning,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        post.comments.toString(),
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextPrimaryColor(context),
+          // ───────────────── НИЖНЯЯ ПАНЕЛЬ ДЕЙСТВИЙ ─────────────────
+          // ────────────────────────────────────────────────────────────────
+          // 🔹 БЛОКИРОВКА КЛИКА: оборачиваем в GestureDetector для предотвращения
+          // перехода на экран описания при клике на полоску действий
+          // ────────────────────────────────────────────────────────────────
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              // Пустой обработчик — поглощает клики, не давая им распространяться
+              // вверх к родительскому GestureDetector в lenta_screen.dart
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(left: 13, right: 16),
+              child: Row(
+                children: [
+                  // Лайк-бар: локальная анимация + API
+                  _PostLikeBar(post: post, currentUserId: widget.currentUserId),
+                  const SizedBox(width: 16),
+
+                  // Кнопка «комментарии» — экран ленты откроет bottom sheet
+                  GestureDetector(
+                    onTap: widget.onOpenComments,
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          // ────────────────────────────────────────────────────────────────
+                          // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: по центру контейнера
+                          // ────────────────────────────────────────────────────────────────
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            CupertinoIcons.chat_bubble,
+                            size: 22,
+                            color: AppColors.warning,
+                          ),
                         ),
-                      ),
-                    ],
+                        Text(
+                          post.comments.toString(),
+                          style: AppTextStyles.h14w4.copyWith(
+                            color: AppColors.getTextPrimaryColor(context),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
         ],
       ),
     );
@@ -685,15 +704,22 @@ class _PostLikeBarState extends ConsumerState<_PostLikeBar>
       onTap: _onTap,
       child: Row(
         children: [
-          ScaleTransition(
-            scale: _likeAnimation,
-            child: Icon(
-              isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
-              size: 20,
-              color: AppColors.error,
+          Container(
+            width: 32,
+            height: 32,
+            // ────────────────────────────────────────────────────────────────
+            // 🔹 ВЫРАВНИВАНИЕ ИКОНКИ: по центру контейнера
+            // ────────────────────────────────────────────────────────────────
+            alignment: Alignment.center,
+            child: ScaleTransition(
+              scale: _likeAnimation,
+              child: Icon(
+                isLiked ? CupertinoIcons.heart_solid : CupertinoIcons.heart,
+                size: 22,
+                color: AppColors.error,
+              ),
             ),
           ),
-          const SizedBox(width: 4),
           Text(
             likesCount.toString(),
             style: AppTextStyles.h14w4.copyWith(

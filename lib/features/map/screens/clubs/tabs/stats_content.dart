@@ -196,6 +196,223 @@ class _CoffeeRunVldStatsContentState
     ).push(TransparentPageRoute(builder: (_) => ProfileScreen(userId: userId)));
   }
 
+  /// ── Построение контента в зависимости от состояния ──
+  Widget _buildContent() {
+    // Ошибка при пустом списке
+    if (_error != null && _statistics.isEmpty) {
+      return Padding(
+        key: const ValueKey('error'),
+        padding: const EdgeInsets.all(20.0),
+        child: Center(
+          child: Text(
+            _error!,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Плейсхолдер загрузки - белый блок с индикатором
+    if (_loading && _statistics.isEmpty) {
+      return Container(
+        key: const ValueKey('loading'),
+        constraints: const BoxConstraints(minHeight: 300),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
+        child: const Center(
+          child: CupertinoActivityIndicator(radius: 10),
+        ),
+      );
+    }
+
+    // Пустое состояние
+    if (_statistics.isEmpty && !_loading) {
+      return ConstrainedBox(
+        key: const ValueKey('empty'),
+        constraints: const BoxConstraints(minHeight: 300),
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  CupertinoIcons.chart_bar,
+                  size: 32,
+                  color: AppColors.getTextPlaceholderColor(context),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Нет данных за выбранный период',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: AppColors.getTextPlaceholderColor(context),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Список статистики
+    return Stack(
+      key: ValueKey('list_${_statistics.length}'),
+      children: [
+        ListView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          padding: EdgeInsets.zero,
+          itemCount: _statistics.length + (_loadingMore ? 1 : 0),
+          itemBuilder: (context, i) {
+            if (i == _statistics.length) {
+              // Индикатор загрузки в конце списка
+              return const Padding(
+                padding: EdgeInsets.all(20.0),
+                child: Center(child: CupertinoActivityIndicator(radius: 10)),
+              );
+            }
+
+            final m = _statistics[i];
+            final isCurrentUser = m.isCurrentUser;
+            return Column(
+              children: [
+                InkWell(
+                  onTap: m.userId != null
+                      ? () => _navigateToProfile(m.userId!)
+                      : null,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 0,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          child: Text(
+                            m.rank.toString(),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              color: isCurrentUser
+                                  ? Colors.green
+                                  : AppColors.textPrimary,
+                              fontWeight: isCurrentUser
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        ClipOval(
+                          child: CachedNetworkImage(
+                            imageUrl: m.avatarUrl,
+                            width: 36,
+                            height: 36,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Container(
+                              width: 36,
+                              height: 36,
+                              color: AppColors.border,
+                              child: const Icon(
+                                Icons.person,
+                                size: 20,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) =>
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  color: AppColors.border,
+                                  child: const Icon(
+                                    Icons.person,
+                                    size: 20,
+                                    color: AppColors.textSecondary,
+                                  ),
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            m.name,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 13,
+                              color: isCurrentUser
+                                  ? Colors.green
+                                  : AppColors.textPrimary,
+                              fontWeight: isCurrentUser
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: _kmColW,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              '${m.distance.toStringAsFixed(2).replaceAll('.', ',')} км',
+                              softWrap: false,
+                              overflow: TextOverflow.fade,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: isCurrentUser
+                                    ? Colors.green
+                                    : AppColors.textPrimary,
+                                // табличные цифры, чтобы разряды не «прыгали»
+                                fontFeatures: [
+                                  const FontFeature.tabularFigures(),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                if (i != _statistics.length - 1)
+                  const Divider(
+                    height: 1,
+                    thickness: 0.5,
+                    color: AppColors.border,
+                  ),
+              ],
+            );
+          },
+        ),
+        // Индикатор загрузки поверх списка при смене периода
+        if (_loading && _statistics.isNotEmpty)
+          Container(
+            color: AppColors.surface.withValues(alpha: 0.8),
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20.0),
+                child: CupertinoActivityIndicator(radius: 10),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -255,181 +472,17 @@ class _CoffeeRunVldStatsContentState
         ),
         const SizedBox(height: 10),
 
-        // список с прокруткой
-        if (_error != null && _statistics.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Center(
-              child: Text(
-                _error!,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          )
-        else if (_statistics.isEmpty && !_loading)
-          const Padding(
-            padding: EdgeInsets.all(20.0),
-            child: Center(
-              child: Text(
-                'Нет данных за выбранный период',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-          )
-        else
-          Stack(
-            children: [
-              ListView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: _statistics.length + (_loadingMore ? 1 : 0),
-                itemBuilder: (context, i) {
-                  if (i == _statistics.length) {
-                    // Индикатор загрузки в конце списка
-                    return const Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Center(child: CupertinoActivityIndicator(radius: 10)),
-                    );
-                  }
-
-                  final m = _statistics[i];
-                  final isCurrentUser = m.isCurrentUser;
-                  return Column(
-                    children: [
-                      InkWell(
-                        onTap: m.userId != null
-                            ? () => _navigateToProfile(m.userId!)
-                            : null,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 0,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              SizedBox(
-                                width: 20,
-                                child: Text(
-                                  m.rank.toString(),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 14,
-                                    color: isCurrentUser
-                                        ? Colors.green
-                                        : AppColors.textPrimary,
-                                    fontWeight: isCurrentUser
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              ClipOval(
-                                child: CachedNetworkImage(
-                                  imageUrl: m.avatarUrl,
-                                  width: 36,
-                                  height: 36,
-                                  fit: BoxFit.cover,
-                                  placeholder: (context, url) => Container(
-                                    width: 36,
-                                    height: 36,
-                                    color: AppColors.border,
-                                    child: const Icon(
-                                      Icons.person,
-                                      size: 20,
-                                      color: AppColors.textSecondary,
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                        width: 36,
-                                        height: 36,
-                                        color: AppColors.border,
-                                        child: const Icon(
-                                          Icons.person,
-                                          size: 20,
-                                          color: AppColors.textSecondary,
-                                        ),
-                                      ),
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  m.name,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 13,
-                                    color: isCurrentUser
-                                        ? Colors.green
-                                        : AppColors.textPrimary,
-                                    fontWeight: isCurrentUser
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: _kmColW,
-                                child: Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    '${m.distance.toStringAsFixed(2).replaceAll('.', ',')} км',
-                                    softWrap: false,
-                                    overflow: TextOverflow.fade,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w400,
-                                      color: isCurrentUser
-                                          ? Colors.green
-                                          : AppColors.textPrimary,
-                                      // табличные цифры, чтобы разряды не «прыгали»
-                                      fontFeatures: [
-                                        const FontFeature.tabularFigures(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      if (i != _statistics.length - 1)
-                        const Divider(
-                          height: 1,
-                          thickness: 0.5,
-                          color: AppColors.border,
-                        ),
-                    ],
-                  );
-                },
-              ),
-              // Индикатор загрузки поверх списка при смене периода
-              if (_loading && _statistics.isNotEmpty)
-                Container(
-                  color: AppColors.surface.withValues(alpha: 0.8),
-                  child: const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: CupertinoActivityIndicator(radius: 10),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+        // ── Контент с анимацией fade-in ──
+        AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (child, animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: child,
+            );
+          },
+          child: _buildContent(),
+        ),
       ],
     );
   }

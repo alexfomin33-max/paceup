@@ -337,45 +337,35 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
   Widget build(BuildContext context) {
     // ───── Если не владелец и фото нет — показываем пустое состояние ─────
     if (!widget.canEdit && _photos.isEmpty) {
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          const columns = 3;
-          const spacing = 2.0;
-          final cellW =
-              (constraints.maxWidth - spacing * (columns - 1)) / columns;
-
-          // Минимальная высота: три строки фотографий
-          final minHeight = (3 * cellW) + (2 * spacing);
-
-          return ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minHeight),
-            child: Builder(
-              builder: (context) => Align(
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      CupertinoIcons.photo_on_rectangle,
-                      size: 32,
+      return ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 400),
+        child: Builder(
+          builder: (context) => Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    CupertinoIcons.photo_on_rectangle,
+                    size: 32,
+                    color: AppColors.getTextPlaceholderColor(context),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Фотографий пока нет',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
                       color: AppColors.getTextPlaceholderColor(context),
+                      fontWeight: FontWeight.w500,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Фотографий пока нет',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        color: AppColors.getTextPlaceholderColor(context),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       );
     }
 
@@ -390,8 +380,9 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
           final dpr = MediaQuery.of(context).devicePixelRatio;
           final cacheWidth = (cellW * dpr).round();
 
-          // Минимальная высота: три строки фотографий
-          final minHeight = (3 * cellW) + (2 * spacing);
+          // Минимальная высота: три строки фотографий, но не менее 400
+          final calculatedHeight = (3 * cellW) + (2 * spacing);
+          final minHeight = calculatedHeight < 400 ? 400.0 : calculatedHeight;
 
           // Количество элементов:
           // - Для владельца: плейсхолдер + фото
