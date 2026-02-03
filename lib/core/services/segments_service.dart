@@ -9,6 +9,38 @@ import 'api_service.dart';
 // 🔹 МОДЕЛИ ОТВЕТОВ API
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Элемент участка из API (список «Избранное — Участки»).
+/// Пока только название и расстояние; остальные параметры — позже.
+/// Для отображения расстояния всегда используйте [displayDistanceKm]
+/// (real_distance_km из БД, fallback на distance_km).
+class ActivitySegmentItem {
+  const ActivitySegmentItem({
+    required this.id,
+    required this.name,
+    required this.distanceKm,
+    this.realDistanceKm,
+  });
+
+  final int id;
+  final String name;
+  final double distanceKm;
+
+  /// Реальная дистанция участка по треку, км (из БД).
+  final double? realDistanceKm;
+
+  /// Дистанция для отображения: всегда из real_distance_km, иначе distance_km.
+  double get displayDistanceKm => realDistanceKm ?? distanceKm;
+
+  factory ActivitySegmentItem.fromJson(Map<String, dynamic> j) {
+    return ActivitySegmentItem(
+      id: (j['id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
+    );
+  }
+}
+
 /// Результат создания участка.
 class SegmentCreateResult {
   const SegmentCreateResult({
@@ -17,6 +49,7 @@ class SegmentCreateResult {
     required this.startIndex,
     required this.endIndex,
     required this.distanceKm,
+    this.realDistanceKm,
     this.name,
   });
 
@@ -35,6 +68,9 @@ class SegmentCreateResult {
   /// Длина участка в километрах.
   final double distanceKm;
 
+  /// Реальная дистанция участка по треку, км (из БД).
+  final double? realDistanceKm;
+
   /// Название участка (может отсутствовать).
   final String? name;
 
@@ -46,6 +82,7 @@ class SegmentCreateResult {
       startIndex: (j['start_index'] as num?)?.toInt() ?? 0,
       endIndex: (j['end_index'] as num?)?.toInt() ?? 0,
       distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
       name: j['name'] as String?,
     );
   }
@@ -97,5 +134,20 @@ class SegmentsService {
     return SegmentCreateResult.fromJson(
       Map<String, dynamic>.from(response as Map),
     );
+  }
+
+  /// Список участков пользователя (избранное — участки).
+  Future<List<ActivitySegmentItem>> getMySegments(int userId) async {
+    final response = await _api.get(
+      '/get_activity_segments.php',
+      queryParams: {'user_id': userId.toString()},
+    );
+    final list = response['segments'];
+    if (list is! List) return [];
+    return list
+        .map((e) => ActivitySegmentItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
   }
 }

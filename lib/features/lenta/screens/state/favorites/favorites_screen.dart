@@ -7,6 +7,7 @@ import '../../../../../providers/services/auth_provider.dart';
 import 'tabs/my_events_content.dart';
 import 'tabs/bookmarks_content.dart';
 import 'tabs/routes_content.dart';
+import 'tabs/segments_content.dart';
 
 /// Высота нижней панели навигации (совпадает с app_bottom_nav_shell).
 const double _kBottomNavHeight = 60;
@@ -22,7 +23,7 @@ class FavoritesScreen extends ConsumerStatefulWidget {
 
 class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     with SingleTickerProviderStateMixin {
-  late final TabController _tab = TabController(length: 3, vsync: this);
+  late final TabController _tab = TabController(length: 4, vsync: this);
 
   @override
   void initState() {
@@ -30,12 +31,12 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     _tab.addListener(_onTabChanged);
   }
 
-  /// При переключении на вкладку «Маршруты» — обновляем список маршрутов.
+  /// При переключении на вкладку «Маршруты» или «Участки» — обновляем список.
   void _onTabChanged() {
-    if (_tab.index == 2) {
-      final uid = ref.read(currentUserIdProvider).valueOrNull ?? 0;
-      if (uid > 0) ref.invalidate(myRoutesProvider(uid));
-    }
+    final uid = ref.read(currentUserIdProvider).valueOrNull ?? 0;
+    if (uid <= 0) return;
+    if (_tab.index == 2) ref.invalidate(myRoutesProvider(uid));
+    if (_tab.index == 3) ref.invalidate(mySegmentsProvider(uid));
   }
 
   @override
@@ -88,6 +89,12 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                 Tab(
                   child: _TabLabel(icon: CupertinoIcons.map, text: 'Маршруты'),
                 ),
+                Tab(
+                  child: _TabLabel(
+                    icon: CupertinoIcons.flag,
+                    text: 'Участки',
+                  ),
+                ),
               ],
             ),
           ),
@@ -106,6 +113,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   MyEventsContent(),
                   BookmarksContent(),
                   RoutesContent(),
+                  SegmentsContent(),
                 ],
               ),
             ),
