@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/chat_user.dart';
+import '../providers/chat_partner_ids_provider.dart';
 import '../providers/users_search_provider.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
@@ -62,6 +63,13 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
   @override
   Widget build(BuildContext context) {
     final searchState = ref.watch(usersSearchProvider);
+    // Исключаем пользователей, с которыми уже есть личный чат
+    // (клиентская фильтрация как запасной вариант к серверной)
+    final partnerIdsAsync = ref.watch(chatPartnerIdsProvider);
+    final partnerIds = partnerIdsAsync.valueOrNull ?? <int>{};
+    final usersFiltered = searchState.users
+        .where((u) => !partnerIds.contains(u.id))
+        .toList();
 
     return InteractiveBackSwipe(
       child: Scaffold(
@@ -81,7 +89,7 @@ class _StartChatScreenState extends ConsumerState<StartChatScreen> {
             // ─── Список людей ───
             Expanded(
               child: _PeopleList(
-                users: searchState.users,
+                users: usersFiltered,
                 isLoading: searchState.isLoading,
                 hasMore: searchState.hasMore,
                 error: searchState.error,
