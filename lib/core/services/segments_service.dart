@@ -9,6 +9,28 @@ import 'api_service.dart';
 // 🔹 МОДЕЛИ ОТВЕТОВ API
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Элемент участка из API (список «Избранное — Участки»).
+/// Пока только название и расстояние; остальные параметры — позже.
+class ActivitySegmentItem {
+  const ActivitySegmentItem({
+    required this.id,
+    required this.name,
+    required this.distanceKm,
+  });
+
+  final int id;
+  final String name;
+  final double distanceKm;
+
+  factory ActivitySegmentItem.fromJson(Map<String, dynamic> j) {
+    return ActivitySegmentItem(
+      id: (j['id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
 /// Результат создания участка.
 class SegmentCreateResult {
   const SegmentCreateResult({
@@ -97,5 +119,20 @@ class SegmentsService {
     return SegmentCreateResult.fromJson(
       Map<String, dynamic>.from(response as Map),
     );
+  }
+
+  /// Список участков пользователя (избранное — участки).
+  Future<List<ActivitySegmentItem>> getMySegments(int userId) async {
+    final response = await _api.get(
+      '/get_activity_segments.php',
+      queryParams: {'user_id': userId.toString()},
+    );
+    final list = response['segments'];
+    if (list is! List) return [];
+    return list
+        .map((e) => ActivitySegmentItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
   }
 }
