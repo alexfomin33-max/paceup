@@ -476,8 +476,8 @@ class _CandidateRowTile extends ConsumerWidget {
                             ),
                           ),
                           if (person.sameWorkout)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 2),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 2),
                               child: Text(
                                 'Та же тренировка',
                                 style: TextStyle(

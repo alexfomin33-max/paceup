@@ -7,7 +7,6 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/services/sync_provider_service.dart';
-import '../../../../../../providers/services/api_provider.dart';
 import 'trackers/health_connect_screen.dart';
 import 'trackers/garmin_screen.dart';
 

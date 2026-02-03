@@ -756,20 +756,33 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
       );
       return null;
     }
+    final repaintBoundary = renderObject;
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 РЕНДЕР В PNG С УЧЕТОМ PIXEL RATIO
     // ────────────────────────────────────────────────────────────────
     final pixelRatio = MediaQuery.of(context).devicePixelRatio;
     for (var attempt = 0; attempt < 3; attempt++) {
-      if (renderObject.debugNeedsPaint) {
+      // ────────────────────────────────────────────────────────────────
+      // 🔹 БЕЗОПАСНАЯ ПРОВЕРКА debugNeedsPaint (МОЖЕТ БЫТЬ НЕДОСТУПЕН)
+      // ────────────────────────────────────────────────────────────────
+      var needsPaint = false;
+      try {
+        needsPaint = repaintBoundary.debugNeedsPaint;
+      } catch (e) {
+        log(
+          'debugNeedsPaint недоступен, пропускаем проверку',
+          error: e,
+        );
+      }
+      if (needsPaint) {
         // ────────────────────────────────────────────────────────────────
         // 🔹 ЖДЕМ КАДР, ЧТОБЫ RENDEROBJECT УСПЕЛ ПРОРИСОВАТЬСЯ
         // ────────────────────────────────────────────────────────────────
         await WidgetsBinding.instance.endOfFrame;
       }
       try {
-        final image = await renderObject.toImage(pixelRatio: pixelRatio);
+        final image = await repaintBoundary.toImage(pixelRatio: pixelRatio);
         final byteData = await image.toByteData(
           format: ui.ImageByteFormat.png,
         );

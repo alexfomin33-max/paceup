@@ -1171,7 +1171,7 @@ class _MediaTile extends StatelessWidget {
               width: 0.7,
             ),
           ),
-          child: Center(
+          child: const Center(
             child: Icon(
               CupertinoIcons.camera_fill,
               size: 24,

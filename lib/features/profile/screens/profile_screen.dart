@@ -1024,7 +1024,7 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
               height: 40.5,
               child: AnimatedBuilder(
                 animation: pageController,
-                builder: (_, __) {
+                builder: (_, _) {
                   final page = pageController.hasClients
                       ? (pageController.page ?? tab.toDouble())
                       : tab.toDouble();

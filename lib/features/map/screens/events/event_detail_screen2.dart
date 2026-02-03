@@ -1383,7 +1383,7 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
 
                     // ── Добавляем нижний отступ для контента перед плавающей кнопкой
                     if (!_isParticipant)
-                      SliverToBoxAdapter(
+                      const SliverToBoxAdapter(
                         child: SizedBox(height: kToolbarHeight),
                       )
                     else

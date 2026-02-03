@@ -216,7 +216,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.edit_outlined,
                         size: 22,
                         color: AppColors.brandPrimary,
@@ -233,7 +233,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                     ],
                   ),
                 ),
-                PopupMenuItem<String>(
+                const PopupMenuItem<String>(
                   value: 'delete',
                   child: Row(
                     children: [
@@ -242,7 +242,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                         size: 22,
                         color: AppColors.error,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Text(
                         'Удалить',
                         style: TextStyle(
@@ -339,7 +339,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                                             width: 36,
                                             height: 36,
                                             fit: BoxFit.cover,
-                                            errorWidget: (_, __, ___) =>
+                                            errorWidget: (_, _, _) =>
                                                 _avatarPlaceholder(context),
                                           ),
                                         )
@@ -392,7 +392,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                               fit: BoxFit.contain,
                               // Добавляем cacheKey для принудительного обновления при изменении URL
                               cacheKey: '${_mapImageUrl}_v2',
-                              errorWidget: (_, __, ___) =>
+                              errorWidget: (_, _, _) =>
                                   _mapPlaceholder(context),
                             ),
                           )
@@ -402,7 +402,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                               _mapAsset,
                               width: double.infinity,
                               fit: BoxFit.contain,
-                              errorBuilder: (_, _, __) =>
+                              errorBuilder: (_, _, _) =>
                                   _mapPlaceholder(context),
                             ),
                           ),

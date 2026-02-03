@@ -154,7 +154,7 @@ class _ThingsContentState extends ConsumerState<ThingsContent> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               sliver: SliverList.separated(
                 itemCount: items.length + (thingsState.hasMore ? 1 : 0),
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                separatorBuilder: (_, _) => const SizedBox(height: 12),
                 itemBuilder: (_, index) {
                   // ── кнопка загрузки следующей страницы
                   if (index == items.length) {

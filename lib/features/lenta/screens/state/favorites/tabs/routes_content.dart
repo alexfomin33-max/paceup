@@ -377,7 +377,7 @@ class _SavedRouteRow extends StatelessWidget {
                           value: 'edit',
                           child: Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.edit_outlined,
                                 size: 22,
                                 color: AppColors.brandPrimary,
@@ -394,7 +394,7 @@ class _SavedRouteRow extends StatelessWidget {
                             ],
                           ),
                         ),
-                        PopupMenuItem<String>(
+                        const PopupMenuItem<String>(
                           value: 'delete',
                           child: Row(
                             children: [
@@ -403,7 +403,7 @@ class _SavedRouteRow extends StatelessWidget {
                                 size: 22,
                                 color: AppColors.error,
                               ),
-                              const SizedBox(width: 12),
+                              SizedBox(width: 12),
                               Text(
                                 'Удалить',
                                 style: TextStyle(

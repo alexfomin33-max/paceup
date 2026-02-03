@@ -1004,7 +1004,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
                     // ── Добавляем нижний отступ для контента перед плавающей кнопкой
                     if (!_isMember && !_isRequest)
-                      SliverToBoxAdapter(
+                      const SliverToBoxAdapter(
                         child: SizedBox(height: kToolbarHeight),
                       )
                     else
