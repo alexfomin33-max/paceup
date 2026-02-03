@@ -9,6 +9,14 @@ import '../edit_route_bottom_sheet.dart';
 import 'rout_description/rout_description_screen.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 
+// ────────────────────────────────────────────────────────────────
+// Дистанция без округления (отсечение до 2 знаков, как в тренировке)
+// ────────────────────────────────────────────────────────────────
+String _formatDistanceKm(double km) {
+  final truncated = (km * 100).truncateToDouble() / 100;
+  return truncated.toStringAsFixed(2);
+}
+
 /// Провайдер списка сохранённых маршрутов пользователя.
 final myRoutesProvider = FutureProvider.family<List<SavedRouteItem>, int>(
   (ref, userId) async {
@@ -449,7 +457,7 @@ class _SavedRouteRow extends StatelessWidget {
                       _RouteRow._metric(
                         context,
                         null,
-                        '${route.distanceKm.toStringAsFixed(2)} км',
+                        '${_formatDistanceKm(route.distanceKm)} км',
                         MainAxisAlignment.start,
                       ),
                       Expanded(
