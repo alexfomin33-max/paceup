@@ -48,6 +48,7 @@ import 'state/edit_profile/edit_profile_screen.dart';
 
 // экран подписок и подписчиков
 import 'state/subscribe/communication_screen.dart';
+import 'state/all_training_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   /// Опциональный userId. Если не передан, используется текущий пользователь из AuthService
@@ -788,6 +789,7 @@ class _ProfileInfoCard extends StatelessWidget {
 
     final followers = isValidProfile ? (profile.followers ?? 0) : 0;
     final following = isValidProfile ? (profile.following ?? 0) : 0;
+    final totalActivities = isValidProfile ? (profile.totalActivities ?? 0) : 0;
     final avatarUrl = isValidProfile ? profile.avatar : null;
     final city = isValidProfile ? profile.city : null;
 
@@ -862,7 +864,7 @@ class _ProfileInfoCard extends StatelessWidget {
                             color: AppColors.twinBg,
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                         
                           child: _CountPill(
                             label: 'Подписки',
                           value: following,
@@ -887,7 +889,7 @@ class _ProfileInfoCard extends StatelessWidget {
                             color: AppColors.twinBg,
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                         
                           child: _CountPill(
                             label: 'Подписчики',
                           value: followers,
@@ -912,18 +914,21 @@ class _ProfileInfoCard extends StatelessWidget {
                             color: AppColors.twinBg,
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
-                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: _SearchPill(
-                          onTap: () {
-                            Navigator.of(context, rootNavigator: true).push(
-                              CupertinoPageRoute(
-                                builder: (_) => const SearchPrefsPage(),
-                              ),
-                            );
-                          },
+                          child: _CountPill(
+                            label: 'Занятий',
+                            value: totalActivities,
+                            onTap: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                CupertinoPageRoute(
+                                  builder: (_) => AllTrainingScreen(
+                                    userId: userId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
-                    ),
                     ],
                   ),
                 ),
@@ -1054,46 +1059,6 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
     // Небольшое перекрытие, чтобы Tabs визуально "поджимались" к шапке
     // (как в club_detail_screen).
     return 2;
-  }
-}
-
-/// Блок «Поиск» с иконкой.
-class _SearchPill extends StatelessWidget {
-  final VoidCallback? onTap;
-
-  const _SearchPill({this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SizedBox(
-        width: double.infinity,
-        height: double.infinity,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Поиск',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: AppColors.getTextSecondaryColor(context),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Icon(
-              CupertinoIcons.search,
-              size: 16,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 

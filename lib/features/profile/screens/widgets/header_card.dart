@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../state/subscribe/communication_screen.dart';
-import '../state/search/search_screen.dart';
+import '../state/all_training_screen.dart';
 import '../../../../domain/models/user_profile_header.dart';
 import '../../../../core/widgets/avatar.dart';
 
@@ -249,15 +249,18 @@ class HeaderCard extends ConsumerWidget {
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           padding: const EdgeInsets.symmetric(horizontal: 4),
-                          child: _SearchPill(
-                          onTap: () {
-                            Navigator.of(context, rootNavigator: true).push(
-                              CupertinoPageRoute(
-                                builder: (_) => const SearchPrefsPage(),
-                              ),
-                            );
-                          },
-                        ),
+                          child: _ActivitiesPill(
+                            value: (p.totalActivities ?? 0).toString(),
+                            onTap: () {
+                              Navigator.of(context, rootNavigator: true).push(
+                                CupertinoPageRoute(
+                                  builder: (_) => AllTrainingScreen(
+                                    userId: userId,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
                         ),
                       ),
                     ],
@@ -296,11 +299,15 @@ class HeaderCard extends ConsumerWidget {
 }
 
 
-/// Блок «Поиск» с иконкой.
-class _SearchPill extends StatelessWidget {
+/// Блок «Занятий» с количеством тренировок.
+class _ActivitiesPill extends StatelessWidget {
+  final String value;
   final VoidCallback? onTap;
 
-  const _SearchPill({this.onTap});
+  const _ActivitiesPill({
+    required this.value,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -310,28 +317,32 @@ class _SearchPill extends StatelessWidget {
       child: SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              'Поиск',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? AppColors.darkTextSecondary
-                    : AppColors.textSecondary,
-              ),
+        child: Center(
+          child: RichText(
+            text: TextSpan(
+              style: const TextStyle(fontFamily: 'Inter', fontSize: 13),
+              children: [
+                TextSpan(
+                  text: 'Занятий: ',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? AppColors.darkTextSecondary
+                        : AppColors.textSecondary,
+                  ),
+                ),
+                const TextSpan(
+                  text: '\u200B',
+                ), // микропробел для ровного переноса
+                TextSpan(
+                  text: value,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Icon(
-              CupertinoIcons.search,
-              size: 16,
-              color: AppColors.getTextPrimaryColor(context),
-            ),
-          ],
+          ),
         ),
       ),
     );

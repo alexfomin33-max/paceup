@@ -65,6 +65,9 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
             followers: cached.followers,
             following: cached.following,
             status: null,
+            totalActivities: cached.totalActivities > 0
+                ? cached.totalActivities
+                : null,
           );
 
           state = state.copyWith(profile: cachedProfile, isLoading: false);

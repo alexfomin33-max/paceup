@@ -11,6 +11,8 @@ class UserProfileHeader {
   final String? status;
   /// Основной вид спорта: Бег, Велосипед, Плавание, Лыжи
   final String? sport;
+  /// Суммарное количество тренировок пользователя
+  final int? totalActivities;
 
   const UserProfileHeader({
     required this.id,
@@ -24,6 +26,7 @@ class UserProfileHeader {
     this.following,
     this.status,
     this.sport,
+    this.totalActivities,
   });
 
   factory UserProfileHeader.fromJson(Map<String, dynamic> j) {
@@ -57,6 +60,9 @@ class UserProfileHeader {
       following: toInt(stats['following']),
       status: (j['status'] ?? '').toString(),
       sport: toStr(j['sport']),
+      totalActivities: toInt(stats['total_activities']) ??
+          toInt(stats['activities']) ??
+          toInt(j['total_activities']),
     );
   }
 }
