@@ -96,10 +96,14 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
                 'Health Connect не был установлен. Установите его и вернитесь.';
           });
         } else {
-          setState(() => _status = 'Health Connect найден.');
+          if (mounted) {
+            setState(() => _status = 'Health Connect найден.');
+          }
         }
       } else {
-        setState(() => _status = 'Готово к синхронизации с Apple Здоровьем.');
+        if (mounted) {
+          setState(() => _status = 'Готово к синхронизации с Apple Здоровьем.');
+        }
       }
     } catch (e) {
       if (!mounted) return;
@@ -182,17 +186,21 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       if (!mounted) return;
 
       if (!granted) {
-        setState(() {
-          _status = 'Разрешения не выданы.';
-          _requestingPermissions = false;
-        });
+        if (mounted) {
+          setState(() {
+            _status = 'Разрешения не выданы.';
+            _requestingPermissions = false;
+          });
+        }
         return;
       }
 
       // ✅ Разрешения выданы — запускаем автоматическую синхронизацию
-      setState(() {
-        _status = 'Разрешения выданы. Проверяю новые тренировки…';
-      });
+      if (mounted) {
+        setState(() {
+          _status = 'Разрешения выданы. Проверяю новые тренировки…';
+        });
+      }
 
       final syncService = ref.read(healthSyncServiceProvider);
       final result = await syncService.syncNewWorkouts(ref);
@@ -247,11 +255,15 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       final ok = await _requestPermissions();
       if (!mounted) return;
       if (!ok) {
-        setState(() => _status = 'Доступ к данным не выдан.');
+        if (mounted) {
+          setState(() => _status = 'Доступ к данным не выдан.');
+        }
         return;
       }
 
-      setState(() => _status = 'Синхронизация за 7 дней…');
+      if (mounted) {
+        setState(() => _status = 'Синхронизация за 7 дней…');
+      }
       final now = DateTime.now();
       final weekAgo = now.subtract(const Duration(days: 7));
 
@@ -341,10 +353,12 @@ class _HealthConnectScreenState extends ConsumerState<HealthConnectScreen> {
       final ok = await _requestPermissions();
       if (!mounted) return;
       if (!ok) {
-        setState(() {
-          _status = 'Доступ к данным не выдан.';
-          _importing = false;
-        });
+        if (mounted) {
+          setState(() {
+            _status = 'Доступ к данным не выдан.';
+            _importing = false;
+          });
+        }
         return;
       }
 

@@ -918,6 +918,7 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
                   icon: Icon(
                     _isPinned ? CupertinoIcons.star_fill : CupertinoIcons.star,
                     size: 22,
+                    color: _isPinned ? AppColors.orange : null,
                   ),
                   onPressed: () async {
                     if (_chatData == null) return;
@@ -1222,7 +1223,7 @@ class _BubbleLeft extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               ClipOval(
                 child: GestureDetector(
@@ -1311,17 +1312,14 @@ class _BubbleLeft extends StatelessWidget {
                                 ),
                               );
                             },
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 4),
-                              child: Text(
-                                senderName,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: _isFemale
-                                      ? AppColors.nameFemale
-                                      : AppColors.nameMale,
-                                ),
+                            child: Text(
+                              senderName,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: _isFemale
+                                    ? AppColors.nameFemale
+                                    : AppColors.nameMale,
                               ),
                             ),
                           ),

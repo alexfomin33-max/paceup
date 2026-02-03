@@ -137,7 +137,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => logoFile = processed);
+    if (mounted) {
+      setState(() => logoFile = processed);
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -151,7 +153,9 @@ class _AddTaskScreenState extends ConsumerState<AddTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = processed);
+    if (mounted) {
+      setState(() => backgroundFile = processed);
+    }
   }
 
   Future<void> _submit() async {

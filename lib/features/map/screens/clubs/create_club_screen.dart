@@ -101,9 +101,11 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
 
       if (data['success'] == true && data['cities'] != null) {
         final cities = data['cities'] as List<dynamic>? ?? [];
-        setState(() {
-          _cities = cities.map((city) => city.toString()).toList();
-        });
+        if (mounted) {
+          setState(() {
+            _cities = cities.map((city) => city.toString()).toList();
+          });
+        }
       }
     } catch (e) {
       // В случае ошибки оставляем пустой список
@@ -164,7 +166,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => logoFile = processed);
+    if (mounted) {
+      setState(() => logoFile = processed);
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -178,7 +182,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = processed);
+    if (mounted) {
+      setState(() => backgroundFile = processed);
+    }
   }
 
   Future<void> _pickDateCupertino() async {
@@ -194,7 +200,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         foundationDate = temp;
         _clearFieldError('foundationDate');

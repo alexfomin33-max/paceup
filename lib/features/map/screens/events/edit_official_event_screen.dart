@@ -287,10 +287,12 @@ class _EditOfficialEventScreenState
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      logoFile = processed;
-      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        logoFile = processed;
+        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -304,10 +306,12 @@ class _EditOfficialEventScreenState
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      backgroundFile = processed;
-      backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        backgroundFile = processed;
+        backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   /// Открыть экран выбора места на карте
@@ -319,7 +323,7 @@ class _EditOfficialEventScreenState
       ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
         selectedLocation = result.coordinates;
         final address = result.address;
@@ -344,7 +348,7 @@ class _EditOfficialEventScreenState
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() => date = temp);
     }
   }

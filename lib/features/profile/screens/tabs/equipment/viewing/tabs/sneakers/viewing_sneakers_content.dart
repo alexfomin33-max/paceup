@@ -82,7 +82,8 @@ class _ViewingSneakersContentState
       if (data['success'] == true) {
         final bootsList = data['boots'] as List<dynamic>? ?? [];
 
-        setState(() {
+        if (mounted) {
+          setState(() {
           _sneakers = bootsList.map((item) {
             final brand = item['brand'] as String;
             final model = item['name'] as String;
@@ -120,18 +121,23 @@ class _ViewingSneakersContentState
           });
 
           _isLoading = false;
-        });
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _error = data['message'] ?? 'Ошибка при загрузке кроссовок';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = data['message'] ?? 'Ошибка при загрузке кроссовок';
+          _error = ErrorHandler.format(e);
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.format(e);
-        _isLoading = false;
-      });
     }
   }
 
@@ -389,6 +395,9 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
             ? CupertinoIcons
                   .star_fill // Залитая звезда для основных
             : CupertinoIcons.star, // Пустая звезда для неосновных
+        iconColor: widget.mainBadgeText != null
+            ? AppColors.orange
+            : null, // Оранжевый цвет для залитой звезды
         onTap: () => _setMain(context),
       ),
       MoreMenuItem(

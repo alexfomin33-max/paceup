@@ -117,7 +117,9 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => logoFile = processed);
+    if (mounted) {
+      setState(() => logoFile = processed);
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -131,7 +133,9 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() => backgroundFile = processed);
+    if (mounted) {
+      setState(() => backgroundFile = processed);
+    }
   }
 
   Future<void> _pickPhoto(int i) async {
@@ -142,7 +146,9 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
     if (compressed == null || !mounted) return;
 
-    setState(() => photos[i] = compressed);
+    if (mounted) {
+      setState(() => photos[i] = compressed);
+    }
   }
 
   /// Открыть экран выбора места на карте
@@ -154,7 +160,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
       ),
     );
 
-    if (result != null) {
+    if (result != null && mounted) {
       setState(() {
         selectedLocation = result.coordinates;
         // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
@@ -180,7 +186,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         date = temp;
       });
@@ -205,7 +211,7 @@ class _AddEventScreenState extends ConsumerState<AddEventScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         time = TimeOfDay(hour: temp.hour, minute: temp.minute);
       });

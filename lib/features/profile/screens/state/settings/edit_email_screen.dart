@@ -56,16 +56,20 @@ class _EditEmailScreenState extends ConsumerState<EditEmailScreen> {
     final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
     if (userId == null) {
-      setState(() {
-        _error = 'Пользователь не авторизован';
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Пользователь не авторизован';
+        });
+      }
       return;
     }
 
-    setState(() {
-      _isSubmitting = true;
-      _error = null;
-    });
+    if (mounted) {
+      setState(() {
+        _isSubmitting = true;
+        _error = null;
+      });
+    }
 
     try {
       final api = ref.read(apiServiceProvider);

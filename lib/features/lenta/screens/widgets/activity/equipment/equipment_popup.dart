@@ -343,21 +343,27 @@ class _PopupContentState extends ConsumerState<_PopupContent> {
         // Показываем весь эквип пользователя (включая текущий), чтобы пользователь
         // всегда видел список для выбора другой экипировки; при выборе текущей —
         // просто закрываем попап без вызова API
-        setState(() {
-          _allEquipment = allEquipment;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _allEquipment = allEquipment;
+            _isLoading = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _error = 'Не удалось загрузить эквип';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = 'Не удалось загрузить эквип';
+          _error = ErrorHandler.formatWithContext(e, context: 'загрузке эквипа');
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.formatWithContext(e, context: 'загрузке эквипа');
-        _isLoading = false;
-      });
     }
   }
 

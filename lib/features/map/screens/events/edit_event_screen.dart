@@ -131,9 +131,11 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
       final userId = await authService.getUserId();
 
       if (userId == null) {
-        setState(() {
-          clubs = [];
-        });
+        if (mounted) {
+          setState(() {
+            clubs = [];
+          });
+        }
         return;
       }
 
@@ -144,18 +146,24 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
 
       if (data['success'] == true && data['clubs'] != null) {
         final clubsList = data['clubs'] as List<dynamic>;
-        setState(() {
-          clubs = clubsList.map((c) => c.toString()).toList();
-        });
+        if (mounted) {
+          setState(() {
+            clubs = clubsList.map((c) => c.toString()).toList();
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            clubs = [];
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           clubs = [];
         });
       }
-    } catch (e) {
-      setState(() {
-        clubs = [];
-      });
     }
   }
 
@@ -378,10 +386,12 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      logoFile = processed;
-      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        logoFile = processed;
+        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -395,10 +405,12 @@ class _EditEventScreenState extends ConsumerState<EditEventScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      backgroundFile = processed;
-      backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        backgroundFile = processed;
+        backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickPhoto(int i) async {

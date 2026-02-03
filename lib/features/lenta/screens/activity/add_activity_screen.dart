@@ -1551,10 +1551,12 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
         );
 
         if (equipmentType.isEmpty) {
-          setState(() {
-            _availableEquipment = [];
-            _isLoadingEquipment = false;
-          });
+          if (mounted) {
+            setState(() {
+              _availableEquipment = [];
+              _isLoadingEquipment = false;
+            });
+          }
           return;
         }
 
@@ -1579,21 +1581,27 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
             )
             .toList();
 
-        setState(() {
-          _availableEquipment = allEquipment;
-          _isLoadingEquipment = false;
-        });
+        if (mounted) {
+          setState(() {
+            _availableEquipment = allEquipment;
+            _isLoadingEquipment = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _availableEquipment = [];
+            _isLoadingEquipment = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _availableEquipment = [];
           _isLoadingEquipment = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _availableEquipment = [];
-        _isLoadingEquipment = false;
-      });
     }
   }
 
@@ -1653,7 +1661,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         _activityDate = temp;
       });
@@ -1679,7 +1687,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         _startTime = TimeOfDay(hour: temp.hour, minute: temp.minute);
       });
@@ -1705,7 +1713,7 @@ class _AddActivityScreenState extends ConsumerState<AddActivityScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         _duration = Duration(
           hours: tempHours,

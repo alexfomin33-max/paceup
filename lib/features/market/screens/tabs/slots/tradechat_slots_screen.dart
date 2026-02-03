@@ -280,10 +280,12 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
       // Загружаем данные чата
       await _loadChatData(chatId, chatCreatedAtStr);
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -329,36 +331,40 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
         _lastMessageId = messages.last.id;
       }
 
-      setState(() {
-        _chatData = chatCreatedAt != null
-            ? chatData.copyWith(chatCreatedAt: chatCreatedAt)
-            : chatData;
-        _messages = messages;
-        _isLoading = false;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _chatData = chatCreatedAt != null
+              ? chatData.copyWith(chatCreatedAt: chatCreatedAt)
+              : chatData;
+          _messages = messages;
+          _isLoading = false;
+          _error = null;
+        });
 
-      // Отмечаем сообщения как прочитанные при открытии чата
-      _markMessagesAsRead(chatId, userId);
+        // Отмечаем сообщения как прочитанные при открытии чата
+        _markMessagesAsRead(chatId, userId);
 
-      // Запускаем периодический опрос новых сообщений
-      _startPolling(chatId);
+        // Запускаем периодический опрос новых сообщений
+        _startPolling(chatId);
 
-      // ─── Прокручиваем вниз после загрузки сообщений ───
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_scrollController.hasClients && _messages.isNotEmpty) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
-        }
-      });
+        // ─── Прокручиваем вниз после загрузки сообщений ───
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_scrollController.hasClients && _messages.isNotEmpty) {
+            _scrollController.animateTo(
+              _scrollController.position.maxScrollExtent,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut,
+            );
+          }
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -402,7 +408,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
               .map((m) => _ChatMessage.fromJson(m as Map<String, dynamic>))
               .toList();
 
-          if (newMessages.isNotEmpty) {
+          if (newMessages.isNotEmpty && mounted) {
             setState(() {
               _messages.addAll(newMessages);
               _lastMessageId = newMessages.last.id;

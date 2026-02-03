@@ -47,10 +47,12 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
     try {
       await saveNotificationSettings(ref, settings);
       // После успешного сохранения обновляем локальное состояние
-      setState(() {
-        _localSettings = settings;
-        _isSaving = false;
-      });
+      if (mounted) {
+        setState(() {
+          _localSettings = settings;
+          _isSaving = false;
+        });
+      }
     } catch (e) {
       // В случае ошибки показываем сообщение пользователю
       if (mounted) {

@@ -75,14 +75,18 @@ class _EnterCodeScreenState extends ConsumerState<EnterCodeScreen> {
 
       if (data['ok'] == true) {
         final firstName = data['first_name']?.toString() ?? '';
-        setState(() {
-          _userFirstName = firstName.trim();
-          _isLoadingUserName = false;
-        });
+        if (mounted) {
+          setState(() {
+            _userFirstName = firstName.trim();
+            _isLoadingUserName = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoadingUserName = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingUserName = false;
+          });
+        }
       }
     } catch (e) {
       // 🔹 В случае ошибки просто не показываем имя

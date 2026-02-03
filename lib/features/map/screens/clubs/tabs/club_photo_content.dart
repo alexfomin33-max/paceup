@@ -80,7 +80,9 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
     if (_isLoading || !widget.canEdit) return;
 
     try {
-      setState(() => _isLoading = true);
+      if (mounted) {
+        setState(() => _isLoading = true);
+      }
 
       // Выбираем и обрабатываем изображение
       final processed = await ImagePickerHelper.pickAndProcessImage(
@@ -91,7 +93,9 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
         cropTitle: 'Обрезка фото',
       );
       if (processed == null || !mounted) {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
         return;
       }
 
@@ -106,7 +110,9 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
       final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       if (userId == null || !mounted) {
-        setState(() => _isLoading = false);
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -136,19 +142,21 @@ class _ClubPhotoContentState extends ConsumerState<ClubPhotoContent> {
         // Обновляем список фотографий из ответа
         // Разворачиваем список, чтобы новые фото были в начале
         final photosList = response['photos'] as List<dynamic>? ?? [];
-        setState(() {
-          _photos = photosList
-              .map(
-                (p) => {
-                  'id': p['id'] as int? ?? 0,
-                  'url': p['url'] as String? ?? '',
-                },
-              )
-              .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
-              .toList()
-              .reversed
-              .toList();
-        });
+        if (mounted) {
+          setState(() {
+            _photos = photosList
+                .map(
+                  (p) => {
+                    'id': p['id'] as int? ?? 0,
+                    'url': p['url'] as String? ?? '',
+                  },
+                )
+                .where((p) => p['url'] != null && (p['url'] as String).isNotEmpty)
+                .toList()
+                .reversed
+                .toList();
+          });
+        }
 
         // Вызываем callback для обновления данных клуба
         widget.onPhotosUpdated?.call();

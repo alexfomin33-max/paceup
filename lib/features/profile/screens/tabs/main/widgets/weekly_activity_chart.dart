@@ -168,10 +168,12 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
     super.didUpdateWidget(oldWidget);
     // Перезагружаем данные, если userId изменился (например, открыли другой профиль)
     if (oldWidget.userId != widget.userId) {
-      setState(() {
-        _selectedWeekIndex = null;
-        _selectedWeekSports = null;
-      });
+      if (mounted) {
+        setState(() {
+          _selectedWeekIndex = null;
+          _selectedWeekSports = null;
+        });
+      }
       _loadData();
     }
   }
@@ -199,25 +201,31 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
         final weeksList = weeksJson
             .map((w) => WeekData.fromJson(w as Map<String, dynamic>))
             .toList();
-        setState(() {
-          _weeks = weeksList;
-          _isLoading = false;
-        });
-        // При открытии экрана сразу выбираем последнюю точку на графике
-        if (weeksList.isNotEmpty) {
-          _loadWeekDetails(weeksList.length - 1);
+        if (mounted) {
+          setState(() {
+            _weeks = weeksList;
+            _isLoading = false;
+          });
+          // При открытии экрана сразу выбираем последнюю точку на графике
+          if (weeksList.isNotEmpty) {
+            _loadWeekDetails(weeksList.length - 1);
+          }
         }
       } else {
+        if (mounted) {
+          setState(() {
+            _error = response['message']?.toString() ?? 'Ошибка загрузки данных';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = response['message']?.toString() ?? 'Ошибка загрузки данных';
+          _error = 'Ошибка: $e';
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = 'Ошибка: $e';
-        _isLoading = false;
-      });
     }
   }
 
@@ -228,16 +236,20 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
 
     // Если уже выбрана эта неделя, снимаем выделение
     if (_selectedWeekIndex == weekIndex) {
-      setState(() {
-        _selectedWeekIndex = null;
-        _selectedWeekSports = null;
-      });
+      if (mounted) {
+        setState(() {
+          _selectedWeekIndex = null;
+          _selectedWeekSports = null;
+        });
+      }
       return;
     }
 
-    setState(() {
-      _selectedWeekIndex = weekIndex;
-    });
+    if (mounted) {
+      setState(() {
+        _selectedWeekIndex = weekIndex;
+      });
+    }
 
     // Загружаем детали недели
     try {
@@ -253,9 +265,11 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
             .map((s) => WeekSportData.fromJson(s as Map<String, dynamic>))
             .toList();
 
-        setState(() {
-          _selectedWeekSports = sports;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedWeekSports = sports;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {

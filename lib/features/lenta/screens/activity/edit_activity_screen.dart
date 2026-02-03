@@ -1218,10 +1218,12 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
         );
 
         if (equipmentType.isEmpty) {
-          setState(() {
-            _availableEquipment = [];
-            _isLoadingEquipment = false;
-          });
+          if (mounted) {
+            setState(() {
+              _availableEquipment = [];
+              _isLoadingEquipment = false;
+            });
+          }
           return;
         }
 
@@ -1246,21 +1248,27 @@ class _EditActivityScreenState extends ConsumerState<EditActivityScreen> {
             )
             .toList();
 
-        setState(() {
-          _availableEquipment = allEquipment;
-          _isLoadingEquipment = false;
-        });
+        if (mounted) {
+          setState(() {
+            _availableEquipment = allEquipment;
+            _isLoadingEquipment = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _availableEquipment = [];
+            _isLoadingEquipment = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _availableEquipment = [];
           _isLoadingEquipment = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _availableEquipment = [];
-        _isLoadingEquipment = false;
-      });
     }
   }
 

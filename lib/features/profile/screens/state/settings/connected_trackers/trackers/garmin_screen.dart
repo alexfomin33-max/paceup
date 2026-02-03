@@ -60,10 +60,12 @@ class _GarminScreenState extends ConsumerState<GarminScreen> {
       final userId = await authService.getUserId();
 
       if (userId == null) {
-        setState(() {
-          _garminConnected = false;
-          _checkingGarmin = false;
-        });
+        if (mounted) {
+          setState(() {
+            _garminConnected = false;
+            _checkingGarmin = false;
+          });
+        }
         return;
       }
 

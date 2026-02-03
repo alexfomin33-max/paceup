@@ -140,29 +140,35 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
 
       if (data['ok'] == true || data['success'] == true) {
         final usersList = data['users'] as List<dynamic>? ?? [];
-        setState(() {
-          _likedUsers = usersList.map((item) {
-            return _LikeUser(
-              id: int.tryParse('${item['user_id']}') ?? 0,
-              name: item['name']?.toString() ?? 'Пользователь',
-              avatar: item['avatar']?.toString() ?? '',
-            );
-          }).toList();
-          _isLoadingLikes = false;
-        });
+        if (mounted) {
+          setState(() {
+            _likedUsers = usersList.map((item) {
+              return _LikeUser(
+                id: int.tryParse('${item['user_id']}') ?? 0,
+                name: item['name']?.toString() ?? 'Пользователь',
+                avatar: item['avatar']?.toString() ?? '',
+              );
+            }).toList();
+            _isLoadingLikes = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _likesError =
+                data['message']?.toString() ??
+                'Не удалось загрузить список лайков';
+            _isLoadingLikes = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _likesError =
-              data['message']?.toString() ??
-              'Не удалось загрузить список лайков';
+          _likesError = 'Ошибка загрузки: ${e.toString()}';
           _isLoadingLikes = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _likesError = 'Ошибка загрузки: ${e.toString()}';
-        _isLoadingLikes = false;
-      });
     }
   }
 
@@ -290,11 +296,13 @@ class _PostDescriptionScreenState extends ConsumerState<PostDescriptionScreen> {
       } else {
         // Если не получили новый комментарий, перезагружаем список
         await _loadComments(refresh: true);
-        setState(() {
-          _currentPost = _currentPost.copyWithComments(
-            _currentPost.comments + 1,
-          );
-        });
+        if (mounted) {
+          setState(() {
+            _currentPost = _currentPost.copyWithComments(
+              _currentPost.comments + 1,
+            );
+          });
+        }
       }
     } catch (e) {
       if (!mounted) return;

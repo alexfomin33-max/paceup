@@ -274,22 +274,26 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         final isBookmarked = data['is_bookmarked'] as bool? ?? false;
 
         // Обновляем состояние
-        setState(() {
-          _isBookmarked = isBookmarked;
-          _isTogglingBookmark = false;
-        });
-
-        // Обновляем данные события
-        if (_eventData != null) {
+        if (mounted) {
           setState(() {
-            _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
+            _isBookmarked = isBookmarked;
+            _isTogglingBookmark = false;
           });
+
+          // Обновляем данные события
+          if (_eventData != null) {
+            setState(() {
+              _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
+            });
+          }
         }
       } else {
         final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
-        setState(() {
-          _isTogglingBookmark = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isTogglingBookmark = false;
+          });
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
@@ -506,18 +510,22 @@ class _EventDetailScreen2State extends ConsumerState<EventDetailScreen2> {
         final isParticipant = data['is_participant'] as bool? ?? false;
 
         // Обновляем состояние
-        setState(() {
-          _isParticipant = isParticipant;
-          _isTogglingParticipation = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isParticipant = isParticipant;
+            _isTogglingParticipation = false;
+          });
+        }
 
         // Перезагружаем событие для обновления списка участников
         await _loadEvent();
       } else {
         final errorMessage = data['message'] as String? ?? 'Неизвестная ошибка';
-        setState(() {
-          _isTogglingParticipation = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isTogglingParticipation = false;
+          });
+        }
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),

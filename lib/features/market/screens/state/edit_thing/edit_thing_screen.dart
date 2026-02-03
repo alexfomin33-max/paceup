@@ -210,14 +210,18 @@ class _EditThingScreenState extends ConsumerState<EditThingScreen> {
       _existingImages.clear();
       _existingImages.addAll(images.map((img) => img.toString()));
 
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
     }
   }
 

@@ -136,15 +136,19 @@ class _SaleSlotsContentState extends ConsumerState<_SaleSlotsContent> {
             .map((d) => d['formatted'] as String)
             .toList();
 
-        setState(() {
-          _distances = distances;
-          _distanceIndex = 0;
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _distances = distances;
+            _distanceIndex = 0;
+            _isLoadingDistances = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingDistances = false;
+          });
+        }
       }
     } catch (e) {
       ErrorHandler.logError(e);

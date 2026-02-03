@@ -59,9 +59,11 @@ class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
   Future<void> _loadCurrentUserId() async {
     final authService = ref.read(authServiceProvider);
     final userId = await authService.getUserId();
-    setState(() {
-      _currentUserId = userId;
-    });
+    if (mounted) {
+      setState(() {
+        _currentUserId = userId;
+      });
+    }
   }
 
   @override
@@ -76,28 +78,34 @@ class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
     if (_isLoading) return;
 
     if (reset) {
-      setState(() {
-        _activities.clear();
-        _currentPage = 1;
-        _hasMore = true;
-        _error = null;
-      });
+      if (mounted) {
+        setState(() {
+          _activities.clear();
+          _currentPage = 1;
+          _hasMore = true;
+          _error = null;
+        });
+      }
     }
 
     if (!_hasMore && !reset) return;
 
     try {
-      setState(() => _isLoading = true);
+      if (mounted) {
+        setState(() => _isLoading = true);
+      }
 
       // Получаем user_id текущего пользователя
       final authService = ref.read(authServiceProvider);
       final userId = await authService.getUserId();
       
       if (userId == null) {
-        setState(() {
-          _error = 'Необходима авторизация';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Необходима авторизация';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -129,21 +137,25 @@ class ClubLentaContentState extends ConsumerState<ClubLentaContent> {
             .whereType<Activity>()
             .toList();
 
-        setState(() {
-          if (reset) {
-            _activities = activities;
-          } else {
-            _activities.addAll(activities);
-          }
-          _currentPage++;
-          _hasMore = hasMore;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            if (reset) {
+              _activities = activities;
+            } else {
+              _activities.addAll(activities);
+            }
+            _currentPage++;
+            _hasMore = hasMore;
+            _isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          _error = data['message'] as String? ?? 'Ошибка загрузки ленты';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = data['message'] as String? ?? 'Ошибка загрузки ленты';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (mounted) {

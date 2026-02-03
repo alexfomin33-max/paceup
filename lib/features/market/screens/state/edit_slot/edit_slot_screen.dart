@@ -99,15 +99,17 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
       final eventDate = slot['event_date'] ?? '';
 
       // Устанавливаем базовые данные формы
-      setState(() {
-        // ── форматируем цену с пробелами
-        final price = (slot['price'] ?? 0) as int;
-        priceCtrl.text = _formatPrice(price);
-        descCtrl.text = slot['description'] ?? '';
-        _gender = (slot['gender'] ?? 'male') == 'female'
-            ? Gender.female
-            : Gender.male;
-      });
+      if (mounted) {
+        setState(() {
+          // ── форматируем цену с пробелами
+          final price = (slot['price'] ?? 0) as int;
+          priceCtrl.text = _formatPrice(price);
+          descCtrl.text = slot['description'] ?? '';
+          _gender = (slot['gender'] ?? 'male') == 'female'
+              ? Gender.female
+              : Gender.male;
+        });
+      }
 
       // Если есть event_id и event_name, "выбираем" событие
       // Это нужно, чтобы все параметры были установлены правильно
@@ -128,11 +130,13 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         // Устанавливаем название события в контроллер напрямую
         nameCtrl.text = eventOption.name;
 
-        setState(() {
-          _selectedEventId = eventOption.id;
-          _selectedEventLogoUrl = eventOption.logoUrl;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedEventId = eventOption.id;
+            _selectedEventLogoUrl = eventOption.logoUrl;
+            _isLoading = false;
+          });
+        }
 
         // Загружаем дистанции для выбранного события
         await _loadEventDistances(eventOption.id);
@@ -140,7 +144,7 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         // Находим индекс текущей дистанции
         final currentDistance = slot['distance'] ?? '';
         final index = _distances.indexWhere((d) => d == currentDistance);
-        if (index >= 0) {
+        if (index >= 0 && mounted) {
           setState(() {
             _distanceIndex = index;
           });
@@ -149,14 +153,16 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
         // Если события нет, просто устанавливаем название слота
         nameCtrl.text = slot['title'] ?? '';
         final currentDistance = slot['distance'] ?? '';
-        setState(() {
-          _selectedEventId = null;
-          _selectedEventLogoUrl = null;
-          _currentDistance = currentDistance.isNotEmpty
-              ? currentDistance
-              : null;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _selectedEventId = null;
+            _selectedEventLogoUrl = null;
+            _currentDistance = currentDistance.isNotEmpty
+                ? currentDistance
+                : null;
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       ErrorHandler.logError(e);
@@ -188,14 +194,18 @@ class _EditSlotScreenState extends ConsumerState<EditSlotScreen> {
             .map((d) => d['formatted'] as String)
             .toList();
 
-        setState(() {
-          _distances = distances;
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _distances = distances;
+            _isLoadingDistances = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingDistances = false;
+          });
+        }
       }
     } catch (e) {
       ErrorHandler.logError(e);

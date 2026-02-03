@@ -66,12 +66,14 @@ class _OfficialEventDetailScreenState
         // Проверяем статус закладки
         final isBookmarked = event['is_bookmarked'] as bool? ?? false;
 
-        setState(() {
-          _eventData = event;
-          _canEdit = canEdit;
-          _isBookmarked = isBookmarked;
-          _loading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _eventData = event;
+            _canEdit = canEdit;
+            _isBookmarked = isBookmarked;
+            _loading = false;
+          });
+        }
 
         // ───── После успешной загрузки — лёгкий префетч логотипа и фото ─────
         if (mounted) {
@@ -209,16 +211,18 @@ class _OfficialEventDetailScreenState
         final isBookmarked = data['is_bookmarked'] as bool? ?? false;
 
         // Обновляем состояние
-        setState(() {
-          _isBookmarked = isBookmarked;
-          _isTogglingBookmark = false;
-        });
-
-        // Обновляем данные события
-        if (_eventData != null) {
+        if (mounted) {
           setState(() {
-            _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
+            _isBookmarked = isBookmarked;
+            _isTogglingBookmark = false;
           });
+
+          // Обновляем данные события
+          if (_eventData != null) {
+            setState(() {
+              _eventData = {..._eventData!, 'is_bookmarked': isBookmarked};
+            });
+          }
         }
 
         // Показываем SnackBar об успешном выполнении

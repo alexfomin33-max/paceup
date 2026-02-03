@@ -338,10 +338,12 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      logoFile = processed;
-      logoUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        logoFile = processed;
+        logoUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -355,10 +357,12 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      backgroundFile = processed;
-      backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
-    });
+    if (mounted) {
+      setState(() {
+        backgroundFile = processed;
+        backgroundUrl = null; // Сбрасываем URL, так как выбран новый файл
+      });
+    }
   }
 
   Future<void> _pickDateCupertino() async {

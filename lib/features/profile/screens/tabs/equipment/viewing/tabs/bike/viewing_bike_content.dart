@@ -81,51 +81,54 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
       if (data['success'] == true) {
         final bikesList = data['bikes'] as List<dynamic>? ?? [];
 
-        setState(() {
-          _bikes = bikesList.map((item) {
-            final brand = item['brand'] as String;
-            final model = item['name'] as String;
+        if (mounted) {
+          setState(() {
+            _bikes = bikesList.map((item) {
+              final brand = item['brand'] as String;
+              final model = item['name'] as String;
 
-            // Получаем данные из API
-            final workouts = item['workouts'] as int? ?? 0;
-            final hours = item['hours'] as int? ?? 0;
-            final speedStr = item['speed'] as String? ?? '0 км/ч';
-            
-            // Получаем дату из базы данных
-            final inUseSinceStr = item['in_use_since'] as String?;
-            final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
-                ? formatEquipmentDateWithPrefix(inUseSinceStr)
-                : 'Дата не указана';
+              // Получаем данные из API
+              final workouts = item['workouts'] as int? ?? 0;
+              final hours = item['hours'] as int? ?? 0;
+              final speedStr = item['speed'] as String? ?? '0 км/ч';
+              
+              // Получаем дату из базы данных
+              final inUseSinceStr = item['in_use_since'] as String?;
+              final sinceText = inUseSinceStr != null && inUseSinceStr.isNotEmpty
+                  ? formatEquipmentDateWithPrefix(inUseSinceStr)
+                  : 'Дата не указана';
 
-            return _BikeItem(
-              id: item['id'] as int,
-              equipUserId: item['equip_user_id'] as int,
-              brand: brand,
-              model: model,
-              km: item['dist'] as int,
-              workouts: workouts,
-              hours: hours,
-              speed: speedStr,
-              since: sinceText,
-              isMain: (item['main'] as int) == 1,
-              imageUrl: item['image'] as String?,
-            );
-          }).toList();
-          // Сортируем: основные элементы первыми
-          _bikes.sort((a, b) {
-            if (a.isMain && !b.isMain) return -1;
-            if (!a.isMain && b.isMain) return 1;
-            return 0;
+              return _BikeItem(
+                id: item['id'] as int,
+                equipUserId: item['equip_user_id'] as int,
+                brand: brand,
+                model: model,
+                km: item['dist'] as int,
+                workouts: workouts,
+                hours: hours,
+                speed: speedStr,
+                since: sinceText,
+                isMain: (item['main'] as int) == 1,
+                imageUrl: item['image'] as String?,
+              );
+            }).toList();
+            // Сортируем: основные элементы первыми
+            _bikes.sort((a, b) {
+              if (a.isMain && !b.isMain) return -1;
+              if (!a.isMain && b.isMain) return 1;
+              return 0;
+            });
+
+            _isLoading = false;
           });
-
-          _isLoading = false;
-        });
+        }
       } else {
-        if (!mounted) return;
-        setState(() {
-          _error = data['message'] ?? 'Ошибка при загрузке велосипедов';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = data['message'] ?? 'Ошибка при загрузке велосипедов';
+            _isLoading = false;
+          });
+        }
       }
     } catch (e) {
       if (!mounted) return;

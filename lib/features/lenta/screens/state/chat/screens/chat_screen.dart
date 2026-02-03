@@ -353,10 +353,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
       final api = ref.read(apiServiceProvider);
       final userId = await auth.getUserId();
       if (userId == null) {
-        setState(() {
-          _error = 'Пользователь не авторизован';
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = 'Пользователь не авторизован';
+            _isLoading = false;
+          });
+        }
         return;
       }
 
@@ -379,23 +381,29 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         final filteredChats = _filterEmptyChats(chats);
         final merged = await _mergeWithPinnedChats(filteredChats);
 
-        setState(() {
-          _chats = merged;
-          _hasMore = response['has_more'] as bool? ?? false;
-          _offset = filteredChats.length;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _chats = merged;
+            _hasMore = response['has_more'] as bool? ?? false;
+            _offset = filteredChats.length;
+            _isLoading = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _error = response['message'] as String? ?? 'Ошибка загрузки чатов';
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = response['message'] as String? ?? 'Ошибка загрузки чатов';
+          _error = ErrorHandler.format(e);
           _isLoading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.format(e);
-        _isLoading = false;
-      });
     }
   }
 
@@ -431,21 +439,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         // ─── Фильтруем пустые чаты (без сообщений) ───
         final filteredChats = _filterEmptyChats(newChats);
 
-        setState(() {
-          _chats.addAll(filteredChats);
-          _hasMore = response['has_more'] as bool? ?? false;
-          _offset += filteredChats.length;
-          _isLoadingMore = false;
-        });
+        if (mounted) {
+          setState(() {
+            _chats.addAll(filteredChats);
+            _hasMore = response['has_more'] as bool? ?? false;
+            _offset += filteredChats.length;
+            _isLoadingMore = false;
+          });
+        }
       } else {
+        if (mounted) {
+          setState(() {
+            _isLoadingMore = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
           _isLoadingMore = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _isLoadingMore = false;
-      });
     }
   }
 
@@ -647,70 +661,100 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                               chat.isThingChat ||
                               chat.isEventChat ||
                               chat.isClubChat)
-                          ? ClipRRect(
-                              borderRadius: BorderRadius.circular(26),
-                              child: Builder(
-                                builder: (context) {
-                                  final dpr = MediaQuery.of(
-                                    context,
-                                  ).devicePixelRatio;
-                                  final w = (52 * dpr).round();
-                                  if (imageUrl == null || imageUrl.isEmpty) {
-                                    return Container(
-                                      width: 52,
-                                      height: 52,
-                                      color: AppColors.surfaceMuted,
-                                      child: Icon(
-                                        chat.isClubChat
-                                            ? CupertinoIcons.person_2
-                                            : chat.isEventChat ||
-                                                    chat.isSlotChat
-                                                ? CupertinoIcons.calendar
-                                                : CupertinoIcons.bag,
-                                        size: 24,
-                                      ),
-                                    );
-                                  }
-                                  return CachedNetworkImage(
-                                    key: ValueKey(
-                                      '${chat.isClubChat ? 'club' : chat.isEventChat ? 'event' : chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
-                                    ),
-                                    imageUrl: imageUrl,
-                                    width: 52,
-                                    height: 52,
-                                    fit: BoxFit.cover,
-                                    // ── Встроенная анимация fade-in работает по умолчанию
-                                    memCacheWidth: w,
-                                    maxWidthDiskCache: w,
-                                    placeholder: (context, url) => Container(
-                                      width: 52,
-                                      height: 52,
-                                      color: AppColors.surfaceMuted,
-                                      child: const Center(
-                                        child: CupertinoActivityIndicator(
-                                          radius: 10,
+                          ? Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(26),
+                                  child: Builder(
+                                    builder: (context) {
+                                      final dpr = MediaQuery.of(
+                                        context,
+                                      ).devicePixelRatio;
+                                      final w = (52 * dpr).round();
+                                      if (imageUrl == null || imageUrl.isEmpty) {
+                                        return Container(
+                                          width: 52,
+                                          height: 52,
+                                          color: AppColors.surfaceMuted,
+                                          child: Icon(
+                                            chat.isClubChat
+                                                ? CupertinoIcons.person_2
+                                                : chat.isEventChat ||
+                                                        chat.isSlotChat
+                                                    ? CupertinoIcons.calendar
+                                                    : CupertinoIcons.bag,
+                                            size: 24,
+                                          ),
+                                        );
+                                      }
+                                      return CachedNetworkImage(
+                                        key: ValueKey(
+                                          '${chat.isClubChat ? 'club' : chat.isEventChat ? 'event' : chat.isSlotChat ? 'slot' : 'thing'}_logo_${chat.id}_$imageUrl',
                                         ),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) {
-                                      return Container(
+                                        imageUrl: imageUrl,
                                         width: 52,
                                         height: 52,
-                                        color: AppColors.surfaceMuted,
-                                        child: Icon(
-                                          chat.isClubChat
-                                              ? CupertinoIcons.person_2
-                                              : chat.isEventChat ||
-                                                      chat.isSlotChat
-                                                  ? CupertinoIcons.calendar
-                                                  : CupertinoIcons.bag,
-                                          size: 24,
+                                        fit: BoxFit.cover,
+                                        // ── Встроенная анимация fade-in работает по умолчанию
+                                        memCacheWidth: w,
+                                        maxWidthDiskCache: w,
+                                        placeholder: (context, url) => Container(
+                                          width: 52,
+                                          height: 52,
+                                          color: AppColors.surfaceMuted,
+                                          child: const Center(
+                                            child: CupertinoActivityIndicator(
+                                              radius: 10,
+                                            ),
+                                          ),
                                         ),
+                                        errorWidget: (context, url, error) {
+                                          return Container(
+                                            width: 52,
+                                            height: 52,
+                                            color: AppColors.surfaceMuted,
+                                            child: Icon(
+                                              chat.isClubChat
+                                                  ? CupertinoIcons.person_2
+                                                  : chat.isEventChat ||
+                                                          chat.isSlotChat
+                                                      ? CupertinoIcons.calendar
+                                                      : CupertinoIcons.bag,
+                                              size: 24,
+                                            ),
+                                          );
+                                        },
                                       );
                                     },
-                                  );
-                                },
-                              ),
+                                  ),
+                                ),
+                                // ─── Оранжевый кружок со звездой для чатов клубов ───
+                                if (chat.isClubChat)
+                                  Positioned(
+                                    right: -3,
+                                    top: -3,
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.orange,
+                                        border: Border.all(
+                                          color: AppColors.getSurfaceColor(
+                                            context,
+                                          ),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        CupertinoIcons.star,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             )
                           : ClipOval(
                               child: Builder(

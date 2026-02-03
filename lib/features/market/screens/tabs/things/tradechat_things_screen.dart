@@ -413,7 +413,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
               .map((m) => _ChatMessage.fromJson(m as Map<String, dynamic>))
               .toList();
 
-          if (newMessages.isNotEmpty) {
+          if (newMessages.isNotEmpty && mounted) {
             setState(() {
               _messages.addAll(newMessages);
               _lastMessageId = newMessages.last.id;

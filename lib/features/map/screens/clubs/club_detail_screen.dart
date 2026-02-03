@@ -99,16 +99,18 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
           isMember = members.any((m) => m['user_id'] == userId);
         }
 
-        setState(() {
-          _clubData = club;
-          _canEdit = canEdit;
-          _canManageMembers = canManageMembers || canEdit;
-          _canAssignAdmins = canAssignAdmins || canEdit;
-          _canManagePhotos = canManagePhotos || canEdit;
-          _isMember = isMember;
-          _isRequest = false; // Сбрасываем статус заявки при загрузке
-          _loading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _clubData = club;
+            _canEdit = canEdit;
+            _canManageMembers = canManageMembers || canEdit;
+            _canAssignAdmins = canAssignAdmins || canEdit;
+            _canManagePhotos = canManagePhotos || canEdit;
+            _isMember = isMember;
+            _isRequest = false; // Сбрасываем статус заявки при загрузке
+            _loading = false;
+          });
+        }
 
         // ───── После успешной загрузки — лёгкий префетч логотипа и фоновой картинки ─────
         if (mounted) {
@@ -117,16 +119,20 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
           });
         }
       } else {
+        if (mounted) {
+          setState(() {
+            _error = data['message'] as String? ?? 'Клуб не найден';
+            _loading = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         setState(() {
-          _error = data['message'] as String? ?? 'Клуб не найден';
+          _error = ErrorHandler.formatWithContext(e, context: 'загрузке клуба');
           _loading = false;
         });
       }
-    } catch (e) {
-      setState(() {
-        _error = ErrorHandler.formatWithContext(e, context: 'загрузке клуба');
-        _loading = false;
-      });
     }
   }
 
@@ -188,8 +194,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
               duration: Duration(seconds: 2),
             ),
           );
+          setState(() => _isJoining = false);
         }
-        setState(() => _isJoining = false);
         return;
       }
 
@@ -257,8 +263,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
+        setState(() => _isJoining = false);
       }
-      setState(() => _isJoining = false);
     }
   }
 
@@ -281,8 +287,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
               duration: Duration(seconds: 2),
             ),
           );
+          setState(() => _isJoining = false);
         }
-        setState(() => _isJoining = false);
         return;
       }
 
@@ -348,8 +354,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             duration: const Duration(seconds: 2),
           ),
         );
+        setState(() => _isJoining = false);
       }
-      setState(() => _isJoining = false);
     }
   }
 

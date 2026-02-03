@@ -913,6 +913,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                   icon: Icon(
                     _isPinned ? CupertinoIcons.star_fill : CupertinoIcons.star,
                     size: 22,
+                    color: _isPinned ? AppColors.orange : null,
                   ),
                   onPressed: () async {
                     if (_chatData == null) return;

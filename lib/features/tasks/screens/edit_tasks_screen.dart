@@ -224,10 +224,12 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      logoFile = processed;
-      _logoDeleted = false; // Сбрасываем флаг удаления при выборе нового файла
-    });
+    if (mounted) {
+      setState(() {
+        logoFile = processed;
+        _logoDeleted = false; // Сбрасываем флаг удаления при выборе нового файла
+      });
+    }
   }
 
   Future<void> _pickBackground() async {
@@ -241,11 +243,13 @@ class _EditTaskScreenState extends ConsumerState<EditTaskScreen> {
     );
     if (processed == null || !mounted) return;
 
-    setState(() {
-      backgroundFile = processed;
-      _backgroundDeleted =
-          false; // Сбрасываем флаг удаления при выборе нового файла
-    });
+    if (mounted) {
+      setState(() {
+        backgroundFile = processed;
+        _backgroundDeleted =
+            false; // Сбрасываем флаг удаления при выборе нового файла
+      });
+    }
   }
 
   /// ──────────────────────── Удаление задачи ────────────────────────

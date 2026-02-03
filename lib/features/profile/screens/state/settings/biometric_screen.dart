@@ -92,18 +92,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
       final errorMsg = ErrorHandler.format(error);
       if (errorMsg.contains('MissingPluginException') ||
           errorMsg.contains('No implementation found')) {
-        setState(() {
-          _error =
-              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
-          _isAvailable = false;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error =
+                'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+            _isAvailable = false;
+            _isLoading = false;
+          });
+        }
       } else {
-        setState(() {
-          _error = errorMsg;
-          _isAvailable = false;
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = errorMsg;
+            _isAvailable = false;
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -203,18 +207,22 @@ class _BiometricScreenState extends State<BiometricScreen> {
       final errorMsg = ErrorHandler.format(error);
       if (errorMsg.contains('MissingPluginException') ||
           errorMsg.contains('No implementation found')) {
-        setState(() {
-          _error =
-              'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
-          _isEnabled = false;
-          _isSubmitting = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error =
+                'Плагин биометрии недоступен. Перезапустите приложение после установки пакетов.';
+            _isEnabled = false;
+            _isSubmitting = false;
+          });
+        }
       } else {
-        setState(() {
-          _error = errorMsg;
-          _isEnabled = false;
-          _isSubmitting = false;
-        });
+        if (mounted) {
+          setState(() {
+            _error = errorMsg;
+            _isEnabled = false;
+            _isSubmitting = false;
+          });
+        }
       }
     }
   }

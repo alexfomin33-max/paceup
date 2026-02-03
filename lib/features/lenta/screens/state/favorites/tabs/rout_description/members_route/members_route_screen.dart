@@ -65,7 +65,7 @@ class _MembersRouteScreenState extends ConsumerState<MembersRouteScreen> {
     );
 
     final ok = await _showCupertinoSheet<bool>(child: picker) ?? false;
-    if (ok) {
+    if (ok && mounted) {
       setState(() {
         _date = temp;
         // Инвалидируем провайдер для обновления данных

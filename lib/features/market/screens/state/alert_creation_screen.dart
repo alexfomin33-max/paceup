@@ -163,14 +163,18 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
           );
         }).toList();
 
-        setState(() {
-          _alerts = alerts;
-          _isLoadingAlerts = false;
-        });
+        if (mounted) {
+          setState(() {
+            _alerts = alerts;
+            _isLoadingAlerts = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoadingAlerts = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingAlerts = false;
+          });
+        }
       }
     } catch (e) {
       ErrorHandler.logError(e);
@@ -203,15 +207,19 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
             .map((d) => d['formatted'] as String)
             .toList();
 
-        setState(() {
-          _distances = distances;
-          _distanceIndex = 0;
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _distances = distances;
+            _distanceIndex = 0;
+            _isLoadingDistances = false;
+          });
+        }
       } else {
-        setState(() {
-          _isLoadingDistances = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoadingDistances = false;
+          });
+        }
       }
     } catch (e) {
       ErrorHandler.logError(e);
