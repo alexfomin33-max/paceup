@@ -171,7 +171,7 @@ class _SegmentCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${_formatDistanceKm(segment.distanceKm)} км',
+            '${_formatDistanceKm(segment.displayDistanceKm)} км',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
