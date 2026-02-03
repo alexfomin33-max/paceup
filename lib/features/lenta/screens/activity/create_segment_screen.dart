@@ -497,7 +497,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       final name = await _showSaveDialog(distanceKm);
       if (name == null) return;
 
-      await _createSegment(name: name);
+      // Значение участка для имени (2 знака) — то же отправляем на бэкенд в real_distance_km.
+      final realDistanceKm =
+          double.parse(distanceKm.toStringAsFixed(2));
+      await _createSegment(name: name, realDistanceKm: realDistanceKm);
     }
   }
 
@@ -615,7 +618,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   // ────────────────────────────────────────────────────────────────
   // 🔹 СОХРАНЕНИЕ УЧАСТКА ЧЕРЕЗ API
   // ────────────────────────────────────────────────────────────────
-  Future<void> _createSegment({required String name}) async {
+  Future<void> _createSegment({
+    required String name,
+    required double realDistanceKm,
+  }) async {
     final selection = _normalizedSelection();
     if (selection == null) return;
 
@@ -635,6 +641,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         startFraction: selection.startFraction,
         endFraction: selection.endFraction,
         name: name,
+        realDistanceKm: realDistanceKm,
       );
 
       if (!mounted) return;

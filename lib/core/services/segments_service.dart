@@ -116,6 +116,7 @@ class SegmentsService {
     required double startFraction,
     required double endFraction,
     String? name,
+    double? realDistanceKm,
   }) async {
     final body = <String, dynamic>{
       'user_id': userId,
@@ -127,6 +128,9 @@ class SegmentsService {
     };
     if (name != null && name.trim().isNotEmpty) {
       body['name'] = name.trim();
+    }
+    if (realDistanceKm != null) {
+      body['real_distance_km'] = realDistanceKm;
     }
 
     final response = await _api.post('/create_segment.php', body: body);
