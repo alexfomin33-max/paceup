@@ -9,6 +9,7 @@ import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/services/sync_provider_service.dart';
 import 'trackers/health_connect_screen.dart';
 import 'trackers/garmin_screen.dart';
+import 'trackers/garmin_edit_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ЭКРАН «ПОДКЛЮЧЕННЫЕ ТРЕКЕРЫ»
@@ -73,6 +74,18 @@ class _ConnectedTrackersScreenState
       default:
         return null;
     }
+  }
+
+  /// 🔹 Обработчик нажатия на подключённый трекер — открывает экран настроек
+  void _onConnectedTrackerTap() {
+    if (_syncProvider == 'garmin') {
+      Navigator.of(context, rootNavigator: true).push(
+        MaterialPageRoute(
+          builder: (_) => const GarminEditScreen(),
+        ),
+      );
+    }
+    // TODO: другие трекеры (Health Connect, Coros и т.д.)
   }
 
   /// 🔹 Получение списка всех доступных трекеров
@@ -173,23 +186,10 @@ class _ConnectedTrackersScreenState
                   if (_syncProvider != null)
                     _ConnectedTrackerTile(
                       title: _getTrackerName(_syncProvider) ?? 'Трекер',
+                      onTap: _onConnectedTrackerTap,
                     )
                   else
-                    Container(
-                      padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
-                      decoration: BoxDecoration(
-                        color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color: AppColors.twinchip,
-                          width: 0.7,
-                        ),
-                      ),
-                      child: const Text(
-                        'Вы ещё не подключили ни один трекер',
-                        style: AppTextStyles.h13w4,
-                      ),
-                    ),
+                    _NoConnectedTrackersTile(),
 
                   const SizedBox(height: 24),
 
@@ -234,13 +234,9 @@ class _TrackerInfo {
   final VoidCallback onTap;
 }
 
-/// Карточка подключенного трекера
-class _ConnectedTrackerTile extends StatelessWidget {
-  const _ConnectedTrackerTile({
-    required this.title,
-  });
-
-  final String title;
+/// Карточка «Нет подключенных трекеров» (без галочки)
+class _NoConnectedTrackersTile extends StatelessWidget {
+  const _NoConnectedTrackersTile();
 
   @override
   Widget build(BuildContext context) {
@@ -254,21 +250,70 @@ class _ConnectedTrackerTile extends StatelessWidget {
           width: 0.7,
         ),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.h15w5,
+      child: const Text(
+        'Нет подключенных трекеров',
+        style: AppTextStyles.h15w5,
+      ),
+    );
+  }
+}
+
+/// Карточка подключенного трекера (кликабельна — открывает настройки)
+class _ConnectedTrackerTile extends StatelessWidget {
+  const _ConnectedTrackerTile({
+    required this.title,
+    VoidCallback? onTap,
+  }) : _onTap = onTap;
+
+  final String title;
+  final VoidCallback? _onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: AppTextStyles.h15w5,
+          ),
+        ),
+        const Icon(
+          CupertinoIcons.checkmark_circle_fill,
+          size: 20,
+          color: AppColors.brandPrimary,
+        ),
+      ],
+    );
+    if (_onTap != null) {
+      return InkWell(
+        onTap: _onTap,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            border: Border.all(
+              color: AppColors.twinchip,
+              width: 0.7,
             ),
           ),
-          const Icon(
-            CupertinoIcons.checkmark_circle_fill,
-            size: 20,
-            color: AppColors.brandPrimary,
-          ),
-        ],
+          child: content,
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 22, 16, 22),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 0.7,
+        ),
       ),
+      child: content,
     );
   }
 }

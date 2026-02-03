@@ -6,6 +6,8 @@ import '../../../../../../../../core/theme/app_theme.dart';
 import '../../../../../../../../core/services/routes_service.dart';
 import '../../../../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
 import '../../../../../../profile/screens/profile_screen.dart';
+import '../../../../../../profile/providers/training/training_provider.dart';
+import '../../../../activity/description_screen.dart';
 import 'my_results/my_results_screen.dart';
 import 'all_results/all_results_screen.dart';
 import 'members_route/members_route_screen.dart';
@@ -66,15 +68,28 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
   String get _mapAsset => 'assets/training_map.png';
   String? get _mapImageUrl =>
       _detail?.routeMapUrl ?? widget.initialRoute.routeMapUrl;
+  // ────────────────────────────────────────────────────────────────
+  // Данные маршрута по умолчанию (fallback, если нет личного рекорда)
+  // ────────────────────────────────────────────────────────────────
   double get _distanceKm =>
       _detail != null ? _detail!.distanceKm : widget.initialRoute.distanceKm;
-  /// Время: при загруженных деталях — лучшее время лидера маршрута (самого быстрого),
-  /// иначе личный рекорд или из списка.
+  // ────────────────────────────────────────────────────────────────
+  // Личный рекорд пользователя: id тренировки, дистанция и набор высоты
+  // ────────────────────────────────────────────────────────────────
+  int get _personalBestActivityId =>
+      _detail?.personalBestActivityId ?? 0;
+  double? get _personalBestDistanceKm {
+    final distanceM = _detail?.personalBestDistanceM;
+    if (distanceM == null || distanceM <= 0) return null;
+    return distanceM / 1000.0;
+  }
+  double? get _personalBestAscentM {
+    final ascentM = _detail?.personalBestAscentM;
+    if (ascentM == null || ascentM <= 0) return null;
+    return ascentM;
+  }
+  /// Время: личный рекорд пользователя (movingDuration), иначе fallback.
   String get _durationText {
-    final leaderTime = _detail?.leaderBestDurationText;
-    if (leaderTime != null && leaderTime.isNotEmpty && leaderTime != '—') {
-      return leaderTime;
-    }
     final pb = _detail?.personalBestText;
     if (pb != null && pb.isNotEmpty && pb != '—') return pb;
     return widget.initialRoute.durationText ?? '—';
@@ -109,6 +124,14 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     } catch (_) {
       return iso;
     }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Формат дистанции без округления (отсечение до 2 знаков)
+  // ────────────────────────────────────────────────────────────────
+  String _formatDistanceKm(double km) {
+    final truncated = (km * 100).truncateToDouble() / 100;
+    return truncated.toStringAsFixed(2);
   }
 
   /// Диалог подтверждения удаления; после удаления — pop на экран избранных.
@@ -165,15 +188,75 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     }
   }
 
+  // ────────────────────────────────────────────────────────────────
+  // Переход к лучшей тренировке пользователя по маршруту
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _openPersonalBestActivity(BuildContext context) async {
+    // ── Защита от пустого id
+    final activityId = _personalBestActivityId;
+    if (activityId <= 0) return;
+    try {
+      // ── Загружаем полную активность по id
+      final map = await RoutesService().getActivityById(
+        activityId: activityId,
+        userId: widget.userId,
+      );
+      if (map == null || !context.mounted) return;
+      // ── Конвертируем в модель для экрана описания
+      final ta = TrainingActivity.fromJson(map);
+      final activity = ta.toLentaActivity(
+        widget.userId,
+        'Пользователь',
+        'assets/avatar_2.png',
+      );
+      if (!context.mounted) return;
+      // ── Открываем экран описания тренировки
+      Navigator.of(context).push(
+        TransparentPageRoute(
+          builder: (_) => ActivityDescriptionPage(
+            activity: activity,
+            currentUserId: widget.userId,
+          ),
+        ),
+      );
+    } catch (e, st) {
+      debugPrint('Open personal best error: $e $st');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: SelectableText.rich(
+            TextSpan(
+              text: 'Ошибка: $e',
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final chip = _difficultyChip(_difficulty);
     final createdText = _loading && _detail == null
         ? '—'
         : _formatCreatedAt(_detail?.createdAt);
-    // Лидер — самый быстрый по маршруту; если нет результатов — не показываем блок
+    // ────────────────────────────────────────────────────────────────
+    // Данные личного рекорда для экрана маршрута
+    // ────────────────────────────────────────────────────────────────
+    final canOpenPersonalBest = _personalBestActivityId > 0;
+    // ── Единый обработчик тапа для времени и строки «Личный рекорд»
+    final VoidCallback? onPersonalBestTap = canOpenPersonalBest
+        ? () => _openPersonalBestActivity(context)
+        : null;
+    final distanceKm = _personalBestDistanceKm ?? _distanceKm;
+    final distanceText = '${_formatDistanceKm(distanceKm)} км';
+    final ascentValueM = _personalBestAscentM ?? _ascentM.toDouble();
+    final ascentText = '${ascentValueM.toStringAsFixed(0)} м';
+    // Лидер — самый быстрый по маршруту
+    // Если нет результатов — не показываем блок
     final leader = _detail?.leader;
-    final personalBestText = _detail?.personalBestText ?? '—';
+    final personalBestText = _durationText;
     final myWorkoutsCount = _detail?.myWorkoutsCount ?? 0;
     final participantsCount = _detail?.participantsCount ?? 0;
 
@@ -434,20 +517,23 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                           Expanded(
                             child: _MetricBlock(
                               label: 'Расстояние',
-                              value:
-                                  '${_distanceKm.toStringAsFixed(2)} км',
+                              value: distanceText,
                             ),
                           ),
                           Expanded(
-                            child: _MetricBlock(
-                              label: 'Время',
-                              value: _durationText,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: onPersonalBestTap,
+                              child: _MetricBlock(
+                                label: 'Время',
+                                value: _durationText,
+                              ),
                             ),
                           ),
                           Expanded(
                             child: _MetricBlock(
                               label: 'Набор высоты',
-                              value: '$_ascentM м',
+                              value: ascentText,
                             ),
                           ),
                         ],
@@ -485,7 +571,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                             title: 'Личный рекорд',
                             trailingText: personalBestText,
                             trailingChevron: false,
-                            onTap: null,
+                            onTap: onPersonalBestTap,
                           ),
                           const _DividerLine(),
                           _ActionRow(

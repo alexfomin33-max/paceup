@@ -74,7 +74,7 @@ class RouteAuthor {
 
 /// Детали маршрута из API (экран описания маршрута).
 /// [leader] — самый быстрый пользователь по этому маршруту (для блока «Лидер»).
-/// [leaderBestDurationText] — лучшее время лидера (для показателя «Время»).
+/// [leaderBestDurationText] — лучшее время лидера (для блока «Лидер»).
 class RouteDetail {
   const RouteDetail({
     required this.id,
@@ -90,6 +90,9 @@ class RouteDetail {
     this.leaderBestDurationText,
     this.personalBestSec,
     this.personalBestText,
+    this.personalBestActivityId,
+    this.personalBestDistanceM,
+    this.personalBestAscentM,
     this.myWorkoutsCount = 0,
     this.participantsCount = 0,
   });
@@ -108,6 +111,12 @@ class RouteDetail {
   final String? leaderBestDurationText;
   final int? personalBestSec;
   final String? personalBestText;
+  /// Лучшая тренировка пользователя: id активности для перехода.
+  final int? personalBestActivityId;
+  /// Дистанция личного рекорда (в метрах, как в params).
+  final double? personalBestDistanceM;
+  /// Набор высоты личного рекорда (в метрах, как в params).
+  final double? personalBestAscentM;
   final int myWorkoutsCount;
   final int participantsCount;
 
@@ -138,6 +147,12 @@ class RouteDetail {
       leaderBestDurationText: j['leader_best_duration_text'] as String?,
       personalBestSec: j['personal_best_sec'] as int?,
       personalBestText: j['personal_best_text'] as String?,
+      personalBestActivityId:
+          (j['personal_best_activity_id'] as num?)?.toInt(),
+      personalBestDistanceM:
+          (j['personal_best_distance_m'] as num?)?.toDouble(),
+      personalBestAscentM:
+          (j['personal_best_ascent_m'] as num?)?.toDouble(),
       myWorkoutsCount: (j['my_workouts_count'] as num?)?.toInt() ?? 0,
       participantsCount:
           (j['participants_count'] as num?)?.toInt() ?? 0,
