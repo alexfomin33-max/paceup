@@ -461,8 +461,22 @@ class _ActivityDescriptionPageState
       ]);
     } else {
       // ────────────────────────────────────────────────────────────────
-      // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: "Пожаловаться" и "Скрыть тренировки"
+      // 🔹 МЕНЮ ДЛЯ ДРУГИХ ПОЛЬЗОВАТЕЛЕЙ: "Сохранить маршрут" (если есть трек),
+      // "Пожаловаться" и "Скрыть тренировки"
       // ────────────────────────────────────────────────────────────────
+      if (a.points.isNotEmpty && _routeCheckDone && _savedRouteId == null) {
+        items.add(
+          MoreMenuItem(
+            text: 'Сохранить маршрут',
+            icon: CupertinoIcons.bookmark,
+            iconColor: AppColors.brandPrimary,
+            onTap: () {
+              MoreMenuHub.hide();
+              _showSaveRouteDialog(context, a);
+            },
+          ),
+        );
+      }
       items.addAll([
         MoreMenuItem(
           text: 'Пожаловаться',

@@ -15,6 +15,7 @@ import '../../../../core/utils/local_image_compressor.dart'
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
+import '../../../lenta/screens/state/chat/pinned_chats_api.dart';
 
 /// ─── Экран чата клуба ───
 class ClubChatScreen extends ConsumerStatefulWidget {
@@ -127,6 +128,8 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
   int _offset = 0;
   bool _isLoadingMore = false;
   bool _hasMore = true;
+  /// Закреплён ли чат клуба для отображения в списке «Чаты» (Лента).
+  bool _isPinned = false;
 
   @override
   void initState() {
@@ -262,6 +265,15 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
 
         _startPolling();
 
+        // ─── Закреплён ли чат (БД, тот же API что и для событий) ───
+        final pinned = await PinnedChatsApi.isPinned(
+          chatType: 'club',
+          referenceId: widget.clubId,
+        );
+        if (mounted) {
+          setState(() => _isPinned = pinned);
+        }
+
         // ─── Прокручиваем вниз после загрузки сообщений ───
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (_scrollController.hasClients && _messages.isNotEmpty) {
@@ -281,6 +293,30 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
         });
       }
     }
+  }
+
+  /// Результат для передачи при pop: обновление превью в списке «Чаты».
+  Map<String, dynamic>? _buildPopResult() {
+    final data = _chatData;
+    if (data == null) return null;
+    String lastMessage = '';
+    DateTime lastMessageAt = data.chatCreatedAt ?? DateTime.now();
+    if (_messages.isNotEmpty) {
+      final last = _messages.last;
+      lastMessage = last.messageType == 'image' &&
+              (last.text == null || last.text!.isEmpty)
+          ? 'Изображение'
+          : (last.text ?? '');
+      try {
+        lastMessageAt = DateTime.parse(last.createdAt);
+      } catch (_) {}
+    }
+    return {
+      'clubId': widget.clubId,
+      'lastMessage': lastMessage,
+      'lastMessageAt': lastMessageAt,
+      'unpinned': !_isPinned,
+    };
   }
 
   // ─── Загрузка дополнительных сообщений (пагинация) ───
@@ -782,7 +818,9 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
                     minHeight: 36,
                   ),
                   icon: const Icon(CupertinoIcons.back),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context, _buildPopResult());
+                  },
                   splashRadius: 18,
                 ),
               ),
@@ -874,11 +912,44 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
               actions: [
                 IconButton(
                   icon: Icon(
-                    CupertinoIcons.star,
+                    _isPinned ? CupertinoIcons.star_fill : CupertinoIcons.star,
                     size: 22,
                   ),
-                  onPressed: () {
-                    // ─── Функционал закрепления будет добавлен позже ───
+                  onPressed: () async {
+                    if (_chatData == null) return;
+                    if (_isPinned) {
+                      // Удаление из БД (user_pinned_chats)
+                      final ok = await PinnedChatsApi.removePinnedChat(
+                        chatType: 'club',
+                        referenceId: widget.clubId,
+                      );
+                      if (mounted && ok) setState(() => _isPinned = false);
+                    } else {
+                      String lastMessage = '';
+                      DateTime lastMessageAt =
+                          _chatData!.chatCreatedAt ?? DateTime.now();
+                      if (_messages.isNotEmpty) {
+                        final last = _messages.last;
+                        lastMessage = last.messageType == 'image' &&
+                                (last.text == null || last.text!.isEmpty)
+                            ? 'Изображение'
+                            : (last.text ?? '');
+                        try {
+                          lastMessageAt = DateTime.parse(last.createdAt);
+                        } catch (_) {}
+                      }
+                      // Добавление в БД (user_pinned_chats), тот же API что для событий
+                      final ok = await PinnedChatsApi.addPinnedChat(
+                        chatType: 'club',
+                        referenceId: widget.clubId,
+                        chatId: _chatData!.chatId,
+                        title: _chatData!.clubName,
+                        logoUrl: _chatData!.clubLogoUrl,
+                        lastMessage: lastMessage,
+                        lastMessageAt: lastMessageAt,
+                      );
+                      if (mounted && ok) setState(() => _isPinned = true);
+                    }
                   },
                   color: AppColors.getIconSecondaryColor(context),
                   splashRadius: 22,

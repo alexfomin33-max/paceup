@@ -73,6 +73,8 @@ class RouteAuthor {
 }
 
 /// Детали маршрута из API (экран описания маршрута).
+/// [leader] — самый быстрый пользователь по этому маршруту (для блока «Лидер»).
+/// [leaderBestDurationText] — лучшее время лидера (для показателя «Время»).
 class RouteDetail {
   const RouteDetail({
     required this.id,
@@ -83,6 +85,9 @@ class RouteDetail {
     this.routeMapUrl,
     this.createdAt,
     this.author,
+    this.leader,
+    this.leaderBestDurationSec,
+    this.leaderBestDurationText,
     this.personalBestSec,
     this.personalBestText,
     this.myWorkoutsCount = 0,
@@ -97,6 +102,10 @@ class RouteDetail {
   final String? routeMapUrl;
   final String? createdAt;
   final RouteAuthor? author;
+  /// Самый быстрый пользователь по маршруту (для отображения в блоке «Лидер»).
+  final RouteAuthor? leader;
+  final int? leaderBestDurationSec;
+  final String? leaderBestDurationText;
   final int? personalBestSec;
   final String? personalBestText;
   final int myWorkoutsCount;
@@ -109,6 +118,12 @@ class RouteDetail {
         Map<String, dynamic>.from(j['author'] as Map),
       );
     }
+    RouteAuthor? leader;
+    if (j['leader'] is Map<String, dynamic>) {
+      leader = RouteAuthor.fromJson(
+        Map<String, dynamic>.from(j['leader'] as Map),
+      );
+    }
     return RouteDetail(
       id: (j['id'] as num).toInt(),
       name: (j['name'] as String?) ?? '',
@@ -118,6 +133,9 @@ class RouteDetail {
       routeMapUrl: j['route_map_url'] as String?,
       createdAt: j['created_at'] as String?,
       author: author,
+      leader: leader,
+      leaderBestDurationSec: j['leader_best_duration_sec'] as int?,
+      leaderBestDurationText: j['leader_best_duration_text'] as String?,
       personalBestSec: j['personal_best_sec'] as int?,
       personalBestText: j['personal_best_text'] as String?,
       myWorkoutsCount: (j['my_workouts_count'] as num?)?.toInt() ?? 0,
