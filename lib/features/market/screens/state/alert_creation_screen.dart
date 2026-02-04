@@ -17,9 +17,11 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/services/api_service.dart';
 import '../../../../core/services/auth_service.dart';
 import '../../../../core/utils/error_handler.dart';
+import '../../../../providers/pacepro_provider.dart';
 import '../widgets/pills.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../map/screens/events/event_detail_screen2.dart';
+import '../../../profile/screens/state/settings/pacepro_screen.dart';
 
 /// Модель оповещения о слоте
 class AlertItem {
@@ -429,6 +431,9 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ─────────── PacePro: создание оповещений — платная функция ───────────
+    final isPaceProActive = ref.watch(paceProStatusProvider);
+
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.twinBg,
@@ -451,136 +456,159 @@ class _AlertCreationScreenState extends ConsumerState<AlertCreationScreen> {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ─── Контейнер формы с фоном surface ───
-              Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.twinBg,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ─── Информационное сообщение ───
-                      Padding(
-                        padding: EdgeInsets.zero,
-                        child: Text(
-                          'Вам придёт оповещение, если кто-то разместит слот, '
-                          'соответствующий указанным критериям',
-                          style: AppTextStyles.h14w4.copyWith(
-                            color: AppColors.getTextSecondaryColor(context),
-                          ),
-                          textAlign: TextAlign.center,
+              // ───────────────────────────────────────────────────────────────
+              // PACEPRO GATE
+              //
+              // В бесплатной версии создание оповещений недоступно.
+              // Показываем апселл‑карточку вместо формы.
+              // ───────────────────────────────────────────────────────────────
+              if (!isPaceProActive)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+                  child: _PaceProLockedCard(
+                    onOpenPacePro: () {
+                      Navigator.of(context, rootNavigator: true).push(
+                        TransparentPageRoute(
+                          builder: (_) => const PaceProScreen(),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ─── Форма создания оповещения ───
-                      _EventAutocompleteField(
-                        label: 'Название события',
-                        hint: 'Начните вводить название события',
-                        controller: nameCtrl,
-                        selectedLogoUrl: _selectedEventLogoUrl,
-                        onEventSelected: (event) {
-                          // Устанавливаем флаг, чтобы слушатель не сработал
-                          _isSettingEventFromDropdown = true;
-                          setState(() {
-                            _selectedEventId = event.id;
-                            _isEventSelectedFromDropdown = true;
-                            _selectedEventLogoUrl = event.logoUrl;
-                            // Устанавливаем текст события
-                            if (nameCtrl.text != event.name) {
-                              nameCtrl.text = event.name;
-                            }
-                          });
-                          // Сбрасываем флаг после небольшой задержки
-                          Future.microtask(() {
-                            _isSettingEventFromDropdown = false;
-                          });
-                          _loadEventDistances(event.id);
-                        },
-                        searchFunction: _searchEvents,
-                        onClear: () {
-                          setState(() {
-                            _isEventSelectedFromDropdown = false;
-                            _selectedEventId = null;
-                            _distances = [];
-                            _distanceIndex = 0;
-                            _isLoadingDistances = false;
-                            _selectedEventLogoUrl = null;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-
-                      // ─── Пол и дистанции показываем только после выбора события ───
-                      if (_selectedEventId != null) ...[
-                        const _SmallLabel('Пол'),
-                        const SizedBox(height: 8),
-                        _GenderRow(
-                          maleSelected: _gender == Gender.male,
-                          femaleSelected: _gender == Gender.female,
-                          onMaleTap: () => setState(() => _gender = Gender.male),
-                          onFemaleTap: () =>
-                              setState(() => _gender = Gender.female),
-                        ),
-                        const SizedBox(height: 20),
-
-                        // ─── Показываем список дистанций только если выбрано событие ───
-                        const _SmallLabel('Дистанция'),
-                        const SizedBox(height: 8),
-                        if (_isLoadingDistances)
-                          const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: CupertinoActivityIndicator(),
-                            ),
-                          )
-                        else if (_distances.isEmpty)
-                          Text(
-                            'У этого события нет доступных дистанций',
+                      );
+                    },
+                  ),
+                )
+              else
+                // ─── Контейнер формы с фоном surface ───
+                Container(
+                  decoration: const BoxDecoration(
+                    color: AppColors.twinBg,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ─── Информационное сообщение ───
+                        Padding(
+                          padding: EdgeInsets.zero,
+                          child: Text(
+                            'Вам придёт оповещение, если кто-то разместит слот, '
+                            'соответствующий указанным критериям',
                             style: AppTextStyles.h14w4.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
-                          )
-                        else
-                          _ChipsRow(
-                            items: _distances,
-                            selectedIndex: _distanceIndex,
-                            onSelected: (i) => setState(() => _distanceIndex = i),
+                            textAlign: TextAlign.center,
                           ),
-                        const SizedBox(height: 30),
-                      ],
+                        ),
+                        const SizedBox(height: 20),
 
-                      // ─── Отображение ошибки ───
-                      if (_errorMessage != null) ...[
-                        SelectableText.rich(
-                          TextSpan(
-                            text: _errorMessage,
-                            style: const TextStyle(
-                              color: AppColors.error,
-                              fontSize: 14,
-                              fontFamily: 'Inter',
-                              fontWeight: FontWeight.w400,
+                        // ─── Форма создания оповещения ───
+                        _EventAutocompleteField(
+                          label: 'Название события',
+                          hint: 'Начните вводить название события',
+                          controller: nameCtrl,
+                          selectedLogoUrl: _selectedEventLogoUrl,
+                          onEventSelected: (event) {
+                            // Устанавливаем флаг, чтобы слушатель не сработал
+                            _isSettingEventFromDropdown = true;
+                            setState(() {
+                              _selectedEventId = event.id;
+                              _isEventSelectedFromDropdown = true;
+                              _selectedEventLogoUrl = event.logoUrl;
+                              // Устанавливаем текст события
+                              if (nameCtrl.text != event.name) {
+                                nameCtrl.text = event.name;
+                              }
+                            });
+                            // Сбрасываем флаг после небольшой задержки
+                            Future.microtask(() {
+                              _isSettingEventFromDropdown = false;
+                            });
+                            _loadEventDistances(event.id);
+                          },
+                          searchFunction: _searchEvents,
+                          onClear: () {
+                            setState(() {
+                              _isEventSelectedFromDropdown = false;
+                              _selectedEventId = null;
+                              _distances = [];
+                              _distanceIndex = 0;
+                              _isLoadingDistances = false;
+                              _selectedEventLogoUrl = null;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 20),
+
+                        // ─── Пол и дистанции показываем только после выбора события ───
+                        if (_selectedEventId != null) ...[
+                          const _SmallLabel('Пол'),
+                          const SizedBox(height: 8),
+                          _GenderRow(
+                            maleSelected: _gender == Gender.male,
+                            femaleSelected: _gender == Gender.female,
+                            onMaleTap: () =>
+                                setState(() => _gender = Gender.male),
+                            onFemaleTap: () =>
+                                setState(() => _gender = Gender.female),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // ─── Показываем список дистанций только если выбрано событие ───
+                          const _SmallLabel('Дистанция'),
+                          const SizedBox(height: 8),
+                          if (_isLoadingDistances)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: CupertinoActivityIndicator(),
+                              ),
+                            )
+                          else if (_distances.isEmpty)
+                            Text(
+                              'У этого события нет доступных дистанций',
+                              style: AppTextStyles.h14w4.copyWith(
+                                color: AppColors.getTextSecondaryColor(context),
+                              ),
+                            )
+                          else
+                            _ChipsRow(
+                              items: _distances,
+                              selectedIndex: _distanceIndex,
+                              onSelected: (i) =>
+                                  setState(() => _distanceIndex = i),
                             ),
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                      ],
+                          const SizedBox(height: 30),
+                        ],
 
-                      Center(
-                        child: PrimaryButton(
-                          text: 'Создать оповещение',
-                          onPressed: _isSubmitting ? () {} : () => _createAlert(),
-                          width: 220,
-                          isLoading: _isSubmitting,
+                        // ─── Отображение ошибки ───
+                        if (_errorMessage != null) ...[
+                          SelectableText.rich(
+                            TextSpan(
+                              text: _errorMessage,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontSize: 14,
+                                fontFamily: 'Inter',
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        Center(
+                          child: PrimaryButton(
+                            text: 'Создать оповещение',
+                            onPressed:
+                                _isSubmitting ? () {} : () => _createAlert(),
+                            width: 220,
+                            isLoading: _isSubmitting,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
 
               // ─── Раздел «Текущие оповещения» ───
               // Показываем только если идет загрузка или есть оповещения
@@ -657,6 +685,75 @@ class _SmallLabel extends StatelessWidget {
         fontSize: 14,
         fontWeight: FontWeight.w500,
         fontFamily: 'Inter',
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//                        PACEPRO LOCKED CARD (UPSELL)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _PaceProLockedCard extends StatelessWidget {
+  final VoidCallback onOpenPacePro;
+
+  const _PaceProLockedCard({
+    required this.onOpenPacePro,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: AppColors.twinchip,
+          width: 1,
+        ),
+      ),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // ─────────── Заголовок ───────────
+          Row(
+            children: [
+              const Icon(
+                CupertinoIcons.star_fill,
+                size: 18,
+                color: AppColors.gold,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Создание оповещений доступно в PacePro',
+                  style: AppTextStyles.h14w6.copyWith(
+                    color: AppColors.getTextPrimaryColor(context),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+
+          // ─────────── Короткое объяснение ───────────
+          Text(
+            'Оформите подписку, чтобы создавать оповещения о слотах, '
+            'публиковать истории (Stories) и получать расширенную аналитику.',
+            style: AppTextStyles.h13w4.copyWith(
+              color: AppColors.getTextSecondaryColor(context),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ─────────── CTA ───────────
+          PrimaryButton(
+            text: 'Открыть PacePro',
+            expanded: true,
+            onPressed: onOpenPacePro,
+          ),
+        ],
       ),
     );
   }
