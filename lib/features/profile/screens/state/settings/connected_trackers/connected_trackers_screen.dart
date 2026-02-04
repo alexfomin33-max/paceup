@@ -6,10 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/app_bar.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../core/services/sync_provider_service.dart';
 import 'trackers/health_connect_screen.dart';
 import 'trackers/garmin_screen.dart';
 import 'trackers/garmin_edit_screen.dart';
+import 'trackers/coros_screen.dart';
+import 'trackers/suunto_screen.dart';
+import 'trackers/polar_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  ЭКРАН «ПОДКЛЮЧЕННЫЕ ТРЕКЕРЫ»
@@ -80,7 +84,7 @@ class _ConnectedTrackersScreenState
   void _onConnectedTrackerTap() {
     if (_syncProvider == 'garmin') {
       Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(
+        TransparentPageRoute(
           builder: (_) => const GarminEditScreen(),
         ),
       );
@@ -98,7 +102,7 @@ class _ConnectedTrackersScreenState
           title: 'Health Connect',
           onTap: () {
             Navigator.of(context, rootNavigator: true).push(
-              MaterialPageRoute(
+              TransparentPageRoute(
                 builder: (_) => const HealthConnectScreen(),
               ),
             );
@@ -128,21 +132,33 @@ class _ConnectedTrackersScreenState
         id: 'coros',
         title: 'Coros',
         onTap: () {
-          // TODO: Реализовать экран Coros
+          Navigator.of(context, rootNavigator: true).push(
+            TransparentPageRoute(
+              builder: (_) => const CorosScreen(),
+            ),
+          );
         },
       ),
       _TrackerInfo(
         id: 'suunto',
         title: 'SUUNTO',
         onTap: () {
-          // TODO: Реализовать экран SUUNTO
+          Navigator.of(context, rootNavigator: true).push(
+            TransparentPageRoute(
+              builder: (_) => const SuuntoScreen(),
+            ),
+          );
         },
       ),
       _TrackerInfo(
         id: 'polar',
         title: 'Polar',
         onTap: () {
-          // TODO: Реализовать экран Polar
+          Navigator.of(context, rootNavigator: true).push(
+            TransparentPageRoute(
+              builder: (_) => const PolarScreen(),
+            ),
+          );
         },
       ),
     ];

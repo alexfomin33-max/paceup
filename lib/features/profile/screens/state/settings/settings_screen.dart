@@ -18,6 +18,7 @@ import 'help_info_screen.dart';
 import 'feedback_screen.dart';
 import 'hidden_content_screen.dart';
 // import 'biometric_screen.dart'; // Закомментировано для macOS/web
+import 'pacepro_screen.dart';
 import 'user_settings_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -145,7 +146,12 @@ class SettingsScreen extends ConsumerWidget {
             // Карточка подписки PacePro
             _SubscriptionCard(
               onTap: () {
-                // Пока оставляем заглушку
+                // ─────────── Переход на экран PacePro ───────────
+                Navigator.of(context, rootNavigator: true).push(
+                  TransparentPageRoute(
+                    builder: (_) => const PaceProScreen(),
+                  ),
+                );
               },
             ),
 
