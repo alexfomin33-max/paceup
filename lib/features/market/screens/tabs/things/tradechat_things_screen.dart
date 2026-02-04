@@ -392,7 +392,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   void _startPolling(int chatId) {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (_lastMessageId == null) return;
+      if (!mounted || _lastMessageId == null) return;
 
       try {
         final userId = _currentUserId;

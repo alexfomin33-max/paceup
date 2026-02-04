@@ -217,6 +217,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
   /// ─── Создание нового чата ───
   Future<void> _createChat() async {
     if (_currentUserId == null) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;

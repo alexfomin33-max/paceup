@@ -184,6 +184,7 @@ class _WeeklyActivityChartState extends WeeklyActivityChartState {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _error = null;

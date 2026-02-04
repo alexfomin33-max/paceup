@@ -1290,15 +1290,6 @@ class _ActivityDescriptionPageState
                   ),
 
                 // ────────────────────────────────────────────────────────────────
-                // 🔹 УСЛОВНЫЙ ОТСТУП: если есть описание — больше, если только заголовок — меньше
-                // ────────────────────────────────────────────────────────────────
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    height: a.postContent.isNotEmpty ? 12 : 0,
-                  ),
-                ),
-
-                // ────────────────────────────────────────────────────────────────
                 // 🎯 ДЕЙСТВИЯ: лайк, комментарии, совместно
                 // ────────────────────────────────────────────────────────────────
                 SliverToBoxAdapter(
@@ -1331,7 +1322,15 @@ class _ActivityDescriptionPageState
                         // Пустой обработчик — поглощает клики, не давая им распространяться
                       },
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(13, 0, 16, 12),
+                        padding: EdgeInsets.fromLTRB(
+                          13,
+                          a.postContent.isNotEmpty ||
+                                  (a.postTitle.isEmpty && a.postContent.isEmpty)
+                              ? 12
+                              : 0,
+                          16,
+                          12,
+                        ),
                         child: ActivityActionsRow(
                       activityId: a.id,
                       activityUserId: a.userId,

@@ -317,16 +317,18 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             ? _scrollController.position.pixels
             : 0.0;
 
-        setState(() {
-          _chats = merged;
-          _hasMore = response['has_more'] as bool? ?? false;
-          _offset = filteredChats.length;
-        });
+        if (mounted) {
+          setState(() {
+            _chats = merged;
+            _hasMore = response['has_more'] as bool? ?? false;
+            _offset = filteredChats.length;
+          });
+        }
 
         // ─── Восстанавливаем позицию скролла после обновления ───
-        if (_scrollController.hasClients && currentScrollPosition > 0) {
+        if (mounted && _scrollController.hasClients && currentScrollPosition > 0) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
+            if (_scrollController.hasClients && mounted) {
               _scrollController.jumpTo(currentScrollPosition);
             }
           });
@@ -341,6 +343,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// ─── Загрузка начального списка чатов ───
   Future<void> _loadInitial() async {
     if (_isLoading) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoading = true;
@@ -410,6 +413,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   /// ─── Загрузка следующей страницы чатов ───
   Future<void> _loadMore() async {
     if (_isLoadingMore || !_hasMore) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoadingMore = true;

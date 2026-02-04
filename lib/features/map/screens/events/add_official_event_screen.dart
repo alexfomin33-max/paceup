@@ -121,9 +121,11 @@ class _AddOfficialEventScreenState
           .read(addOfficialEventFormProvider.notifier)
           .updateDistance(index, newController.text);
     });
-    setState(() {
-      _distanceControllers.add(newController);
-    });
+    if (mounted) {
+      setState(() {
+        _distanceControllers.add(newController);
+      });
+    }
     ref.read(addOfficialEventFormProvider.notifier).addDistanceField();
   }
 
@@ -167,6 +169,8 @@ class _AddOfficialEventScreenState
             LocationPickerScreen(initialPosition: formState.selectedLocation),
       ),
     );
+
+    if (!mounted) return;
 
     if (result != null) {
       // ⚡️ Автозаполнение поля "Место проведения" адресом из геокодинга
@@ -436,13 +440,15 @@ class _AddOfficialEventScreenState
           actions: [
             GestureDetector(
               onTap: () {
-                setState(() {
-                  _showTemplateBlock = !_showTemplateBlock;
-                  // Загружаем шаблоны при первом открытии
-                  if (_showTemplateBlock) {
-                    ref.read(templatesListProvider.notifier).reload();
-                  }
-                });
+                if (mounted) {
+                  setState(() {
+                    _showTemplateBlock = !_showTemplateBlock;
+                    // Загружаем шаблоны при первом открытии
+                    if (_showTemplateBlock) {
+                      ref.read(templatesListProvider.notifier).reload();
+                    }
+                  });
+                }
               },
               child: Padding(
                 padding: const EdgeInsets.all(8),

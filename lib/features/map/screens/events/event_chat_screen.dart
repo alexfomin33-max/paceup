@@ -321,6 +321,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   // ─── Загрузка дополнительных сообщений (пагинация) ───
   Future<void> _loadMoreMessages() async {
     if (_isLoadingMore || !_hasMore || _chatData == null) return;
+    if (!mounted) return;
 
     setState(() {
       _isLoadingMore = true;
@@ -389,7 +390,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (_lastMessageId == null || _chatData == null) return;
+      if (!mounted || _lastMessageId == null || _chatData == null) return;
 
       try {
         final userId = _currentUserId;
@@ -738,12 +739,14 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   }
 
   void _showFullscreenImage(String imageUrl) {
+    if (!mounted) return;
     setState(() {
       _fullscreenImageUrl = imageUrl;
     });
   }
 
   void _hideFullscreenImage() {
+    if (!mounted) return;
     setState(() {
       _fullscreenImageUrl = null;
     });
@@ -968,7 +971,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
               onTap: () {
                 FocusScope.of(context).unfocus();
                 // ─── Сбрасываем выбор сообщения для удаления ───
-                if (_selectedMessageIdForDelete != null) {
+                if (_selectedMessageIdForDelete != null && mounted) {
                   setState(() {
                     _selectedMessageIdForDelete = null;
                   });
@@ -1076,9 +1079,11 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                       isSelectedForDelete:
                                           _selectedMessageIdForDelete == msg.id,
                                       onLongPress: () {
-                                        setState(() {
-                                          _selectedMessageIdForDelete = msg.id;
-                                        });
+                                        if (mounted) {
+                                          setState(() {
+                                            _selectedMessageIdForDelete = msg.id;
+                                          });
+                                        }
                                       },
                                       onDelete: () => _showDeleteConfirmation(msg.id),
                                       topSpacing: topSpacing,

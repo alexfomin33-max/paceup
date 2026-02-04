@@ -244,6 +244,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
   // ─── Инициализация чата: резервирование слота и загрузка данных ───
   Future<void> _initializeChat() async {
     try {
+      if (!mounted) return;
       setState(() {
         _isLoading = true;
         _error = null;
@@ -387,7 +388,7 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
   void _startPolling(int chatId) {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
-      if (_lastMessageId == null) return;
+      if (!mounted || _lastMessageId == null) return;
 
       try {
         final userId = _currentUserId;

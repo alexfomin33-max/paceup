@@ -656,7 +656,7 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
         );
 
     // Прокрутка к началу
-    if (_scrollController.hasClients) {
+    if (mounted && _scrollController.hasClients) {
       _scrollController.animateTo(
         0,
         duration: const Duration(milliseconds: 250),

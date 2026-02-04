@@ -220,19 +220,19 @@ class _EquipmentChipState extends State<EquipmentChip> {
                           ),
                           TextSpan(
                             text: "Пробег: ",
-                            style: AppTextStyles.h11w4Sec.copyWith(
+                            style: AppTextStyles.h12w4Sec.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),
                           TextSpan(
                             text: "$mileage",
-                            style: AppTextStyles.h12w5.copyWith(
+                            style: AppTextStyles.h13w5.copyWith(
                               color: AppColors.getTextPrimaryColor(context),
                             ),
                           ),
                           TextSpan(
                             text: " км",
-                            style: AppTextStyles.h11w4Sec.copyWith(
+                            style: AppTextStyles.h12w4Sec.copyWith(
                               color: AppColors.getTextSecondaryColor(context),
                             ),
                           ),

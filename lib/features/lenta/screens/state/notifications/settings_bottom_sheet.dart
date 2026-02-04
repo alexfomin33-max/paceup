@@ -39,6 +39,7 @@ class _SettingsSheetState extends ConsumerState<SettingsSheet> {
   // Сохранение настроек на сервер
   Future<void> _saveSettings(NotificationSettings settings) async {
     if (_isSaving) return; // Предотвращаем множественные сохранения
+    if (!mounted) return;
 
     setState(() {
       _isSaving = true;
