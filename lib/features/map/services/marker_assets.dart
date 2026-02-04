@@ -54,5 +54,29 @@ class MarkerAssets {
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     return byteData!.buffer.asUint8List();
   }
+
+  /// Создаёт PNG стрелки (треугольник остриём вверх) для отображения
+  /// направления движения по маршруту. Поворот задаётся через iconRotate.
+  static Future<Uint8List> createArrowImage() async {
+    const size = 32.0;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint()
+      ..color = AppColors.brandPrimary
+      ..style = PaintingStyle.fill;
+
+    // Треугольник остриём вверх (середина верха, левый низ, правый низ)
+    final path = Path()
+      ..moveTo(size / 2, 2)
+      ..lineTo(size - 2, size - 2)
+      ..lineTo(2, size - 2)
+      ..close();
+    canvas.drawPath(path, paint);
+
+    final picture = recorder.endRecording();
+    final image = await picture.toImage(size.toInt(), size.toInt());
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
 }
 

@@ -4,6 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:flutter/cupertino.dart';
@@ -62,6 +63,9 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   PointAnnotationManager? _pointAnnotationManager;
   PointAnnotation? _startAnnotation;
   PointAnnotation? _endAnnotation;
+  /// Маркеры старта и финиша маршрута (всегда на карте).
+  PointAnnotation? _routeStartAnnotation;
+  PointAnnotation? _routeEndAnnotation;
   PolylineAnnotation? _segmentAnnotation;
 
   // ────────────────────────────────────────────────────────────────
@@ -79,6 +83,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   bool _isMapReady = false;
   bool _isSaving = false;
   String? _errorText;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДАННЫЕ ДЛЯ ПРОВЕРКИ ДУБЛЕЙ
+  // ────────────────────────────────────────────────────────────────
+  List<ActivitySegmentDuplicateItem> _existingSegments = [];
 
   int? _startIndex;
   int? _endIndex;
@@ -94,6 +102,12 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
 
   Uint8List? _startMarkerImage;
   Uint8List? _endMarkerImage;
+  /// Изображения маркеров «Старт» и «Финиш» маршрута.
+  Uint8List? _routeStartMarkerImage;
+  Uint8List? _routeEndMarkerImage;
+  /// Изображение стрелки направления и аннотации на Mapbox.
+  Uint8List? _arrowImage;
+  List<PointAnnotation> _arrowAnnotations = [];
 
   // ────────────────────────────────────────────────────────────────
   // 🔹 НАСТРОЙКИ ОГРАНИЧЕНИЙ
@@ -112,6 +126,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     super.initState();
     _buildPrefixDistances();
     _elevationValues = _parseElevationPerKm(widget.elevationPerKm);
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 ПРЕДЗАГРУЗКА УЖЕ СОЗДАННЫХ УЧАСТКОВ
+    // ──────────────────────────────────────────────────────────────
+    _loadExistingSegments();
   }
 
   @override
@@ -123,6 +141,25 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     }
     if (oldWidget.elevationPerKm != widget.elevationPerKm) {
       _elevationValues = _parseElevationPerKm(widget.elevationPerKm);
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПРЕДЗАГРУЗКА УЧАСТКОВ ДЛЯ ПРОВЕРКИ ДУБЛЕЙ
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _loadExistingSegments() async {
+    try {
+      final segments = await SegmentsService().getSegmentsForActivity(
+        userId: widget.userId,
+        activityId: widget.activityId,
+      );
+      if (!mounted) return;
+      setState(() {
+        _existingSegments = segments;
+      });
+    } catch (_) {
+      // Ошибки загрузки сегментов игнорируем: проверка дублей
+      // остаётся мягкой, а итоговое решение — на бэкенде.
     }
   }
 
@@ -151,20 +188,6 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         children: [
           _buildMap(center, bounds),
           const _MapBackButton(),
-          // ────────────────────────────────────────────────────────────────
-          // 🔹 ЛЕГЕНДА ВЫСОТЫ: подъём/спуск (если есть данные высоты)
-          // ────────────────────────────────────────────────────────────────
-          if (_canColorByElevation())
-            Positioned(
-              top: AppSpacing.md,
-              right: AppSpacing.md,
-              child: SafeArea(
-                child: _ElevationLegend(
-                  upColor: AppColors.error,
-                  downColor: AppColors.success,
-                ),
-              ),
-            ),
           _SegmentInfoPanel(
             instruction: instruction,
             distanceKm: _distanceKm,
@@ -205,6 +228,9 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
           ),
           flutter_map.PolylineLayer(
             polylines: _buildFlutterMapPolylines(),
+          ),
+          flutter_map.MarkerLayer(
+            markers: _buildFlutterMapArrowMarkers(),
           ),
           flutter_map.MarkerLayer(
             markers: _buildFlutterMapMarkers(),
@@ -292,6 +318,16 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     await _drawTrackPolyline();
 
     // ────────────────────────────────────────────────────────────────
+    // 🔹 МАРКЕРЫ СТАРТА И ФИНИША МАРШРУТА
+    // ────────────────────────────────────────────────────────────────
+    await _drawRouteStartEndMarkers();
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 СТРЕЛКИ НАПРАВЛЕНИЯ ВДОЛЬ МАРШРУТА
+    // ────────────────────────────────────────────────────────────────
+    await _drawArrowMarkers();
+
+    // ────────────────────────────────────────────────────────────────
     // 🔹 ПОДСТРАИВАЕМ КАМЕРУ ПОД ГРАНИЦЫ
     // ────────────────────────────────────────────────────────────────
     try {
@@ -354,38 +390,18 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       await _trackPolylineManager!.deleteAll();
 
       // ──────────────────────────────────────────────────────────────
-      // 🔹 ЕСЛИ НЕТ ДАННЫХ ВЫСОТЫ — РИСУЕМ ОДИН ЦВЕТ
+      // 🔹 ТРЕК ОДИН ЦВЕТ (СИНИЙ) — БЕЗ ОКРАСКИ ПО ВЫСОТЕ
       // ──────────────────────────────────────────────────────────────
-      if (!_canColorByElevation()) {
-        final coordinates = widget.points
-            .map((p) => Position(p.longitude, p.latitude))
-            .toList();
-        await _trackPolylineManager!.create(
-          PolylineAnnotationOptions(
-            geometry: LineString(coordinates: coordinates),
-            lineColor: AppColors.brandPrimary.toARGB32(),
-            lineWidth: 3.0,
-          ),
-        );
-        return;
-      }
-
-      // ──────────────────────────────────────────────────────────────
-      // 🔹 РИСУЕМ УЧАСТКИ С РАЗНЫМИ ЦВЕТАМИ
-      // ──────────────────────────────────────────────────────────────
-      final segments = _buildColoredSegments();
-      for (final segment in segments) {
-        final coordinates = segment.points
-            .map((p) => Position(p.longitude, p.latitude))
-            .toList();
-        await _trackPolylineManager!.create(
-          PolylineAnnotationOptions(
-            geometry: LineString(coordinates: coordinates),
-            lineColor: segment.color.toARGB32(),
-            lineWidth: 3.0,
-          ),
-        );
-      }
+      final coordinates = widget.points
+          .map((p) => Position(p.longitude, p.latitude))
+          .toList();
+      await _trackPolylineManager!.create(
+        PolylineAnnotationOptions(
+          geometry: LineString(coordinates: coordinates),
+          lineColor: AppColors.brandPrimary.toARGB32(),
+          lineWidth: 3.0,
+        ),
+      );
     } catch (_) {
       // Игнорируем ошибки отрисовки.
     }
@@ -492,6 +508,22 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
           });
         }
         return;
+      }
+
+      // ──────────────────────────────────────────────────────────────
+      // 🔹 ПРОВЕРКА ДУБЛЕЙ ПО СТАРТУ/ФИНИШУ
+      // ──────────────────────────────────────────────────────────────
+      final selection = _normalizedSelection();
+      if (selection != null) {
+        final duplicateError = _validateDuplicate(selection);
+        if (duplicateError != null) {
+          if (mounted) {
+            setState(() {
+              _errorText = duplicateError;
+            });
+          }
+          return;
+        }
       }
 
       final name = await _showSaveDialog(distanceKm);
@@ -745,6 +777,100 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   }
 
   // ────────────────────────────────────────────────────────────────
+  // 🔹 ПРОВЕРКА ДУБЛЕЙ ПО СТАРТУ И ФИНИШУ
+  // ────────────────────────────────────────────────────────────────
+  String? _validateDuplicate(_SegmentSelection selection) {
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 ОПРЕДЕЛЯЕМ ПОРОГИ ПО ТИПУ АКТИВНОСТИ
+    // ──────────────────────────────────────────────────────────────
+    final toleranceM = _duplicatePointToleranceM(widget.activityType);
+    if (toleranceM == null) return null;
+    if (_existingSegments.isEmpty) return null;
+
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 СУММАРНЫЙ ПОРОГ ДЛЯ ДВУХ ТОЧЕК
+    // ──────────────────────────────────────────────────────────────
+    final totalToleranceM = toleranceM * 2.0;
+
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 СРАВНИВАЕМ С КАЖДЫМ СУЩЕСТВУЮЩИМ УЧАСТКОМ
+    // ──────────────────────────────────────────────────────────────
+    for (final segment in _existingSegments) {
+      final startPoint = _safePointAtSegment(
+        segment.startIndex,
+        segment.startFraction,
+      );
+      final endPoint = _safePointAtSegment(
+        segment.endIndex,
+        segment.endFraction,
+      );
+      if (startPoint == null || endPoint == null) continue;
+
+      final startDeltaM = _distance(selection.startPoint, startPoint);
+      final endDeltaM = _distance(selection.endPoint, endPoint);
+      final totalDeltaM = startDeltaM + endDeltaM;
+
+      // ────────────────────────────────────────────────────────────
+      // 🔹 ДУБЛЬ: ОБЕ ТОЧКИ И СУММА В ДОПУСКЕ
+      // ────────────────────────────────────────────────────────────
+      if (startDeltaM <= toleranceM &&
+          endDeltaM <= toleranceM &&
+          totalDeltaM <= totalToleranceM) {
+        return 'Такой участок уже существует';
+      }
+    }
+
+    return null;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПОРОГ ПОГРЕШНОСТИ ДЛЯ ТОЧЕК СТАРТА/ФИНИША
+  // ────────────────────────────────────────────────────────────────
+  double? _duplicatePointToleranceM(String type) {
+    final normalized = type.trim().toLowerCase();
+    if ([
+      'run',
+      'indoor-running',
+      'ski',
+      'skiing',
+    ].contains(normalized)) {
+      return 100.0;
+    }
+    if ([
+      'bike',
+      'indoor-cycling',
+      'cycling',
+      'bicycle',
+    ].contains(normalized)) {
+      return 300.0;
+    }
+    if ([
+      'walking',
+      'walk',
+      'hiking',
+    ].contains(normalized)) {
+      return 50.0;
+    }
+    return null;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 БЕЗОПАСНАЯ ТОЧКА НА СЕГМЕНТЕ (С CLAMP FRACTION)
+  // ────────────────────────────────────────────────────────────────
+  ll.LatLng? _safePointAtSegment(int segmentIndex, double fraction) {
+    if (segmentIndex < 0 || segmentIndex >= widget.points.length - 1) {
+      return null;
+    }
+    final t = fraction.clamp(0.0, 1.0);
+    final a = widget.points[segmentIndex];
+    final b = widget.points[segmentIndex + 1];
+    return ll.LatLng(
+      a.latitude + (b.latitude - a.latitude) * t,
+      a.longitude + (b.longitude - a.longitude) * t,
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
   // 🔹 SNAP TO ROUTE: ПРИВЯЗКА ТОЧКИ К ТРЕКУ
   // ────────────────────────────────────────────────────────────────
   _SnapResult? _snapToRoute(ll.LatLng tapPoint) {
@@ -936,32 +1062,190 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     }
   }
 
+  /// Маркеры «Старт» (зелёный) и «Финиш» (красный) для начала и конца маршрута.
+  Future<void> _ensureRouteMarkerImages() async {
+    if (_routeStartMarkerImage == null) {
+      _routeStartMarkerImage = await MarkerAssets.createMarkerImage(
+        AppColors.success,
+        'С',
+      );
+    }
+    if (_routeEndMarkerImage == null) {
+      _routeEndMarkerImage = await MarkerAssets.createMarkerImage(
+        AppColors.error,
+        'Ф',
+      );
+    }
+  }
+
+  /// Отрисовка точек старта и финиша маршрута на Mapbox (всегда видны).
+  Future<void> _drawRouteStartEndMarkers() async {
+    if (_pointAnnotationManager == null || widget.points.length < 2) {
+      return;
+    }
+    await _ensureRouteMarkerImages();
+    if (_routeStartMarkerImage == null || _routeEndMarkerImage == null) return;
+
+    final first = widget.points.first;
+    final last = widget.points.last;
+
+    if (_routeStartAnnotation == null) {
+      _routeStartAnnotation = await _pointAnnotationManager!.create(
+        PointAnnotationOptions(
+          geometry: Point(
+            coordinates: Position(first.longitude, first.latitude),
+          ),
+          image: _routeStartMarkerImage!,
+          iconSize: 1.0,
+        ),
+      );
+    } else {
+      _routeStartAnnotation!.geometry = Point(
+        coordinates: Position(first.longitude, first.latitude),
+      );
+      await _pointAnnotationManager!.update(_routeStartAnnotation!);
+    }
+
+    if (_routeEndAnnotation == null) {
+      _routeEndAnnotation = await _pointAnnotationManager!.create(
+        PointAnnotationOptions(
+          geometry: Point(
+            coordinates: Position(last.longitude, last.latitude),
+          ),
+          image: _routeEndMarkerImage!,
+          iconSize: 1.0,
+        ),
+      );
+    } else {
+      _routeEndAnnotation!.geometry = Point(
+        coordinates: Position(last.longitude, last.latitude),
+      );
+      await _pointAnnotationManager!.update(_routeEndAnnotation!);
+    }
+  }
+
+  /// Позиции и азимуты для стрелок направления (каждые ~300 м по маршруту).
+  List<({ll.LatLng point, double bearingDeg})> _computeArrowPositions() {
+    if (widget.points.length < 2 || _prefixDistancesM.length != widget.points.length) {
+      return [];
+    }
+    const stepM = 300.0;
+    final totalM = _prefixDistancesM.last;
+    if (totalM < stepM) return [];
+    final out = <({ll.LatLng point, double bearingDeg})>[];
+    for (var d = stepM; d < totalM; d += stepM) {
+      final idx = _indexAtDistanceM(d);
+      if (idx == null || idx >= widget.points.length - 1) continue;
+      final p = widget.points[idx];
+      final next = widget.points[idx + 1];
+      final bearing = _bearingDegrees(p, next);
+      out.add((point: _pointAtDistanceM(d), bearingDeg: bearing));
+    }
+    return out;
+  }
+
+  int? _indexAtDistanceM(double distanceM) {
+    for (int i = 0; i < _prefixDistancesM.length - 1; i++) {
+      if (_prefixDistancesM[i] <= distanceM && distanceM < _prefixDistancesM[i + 1]) {
+        return i;
+      }
+    }
+    return null;
+  }
+
+  ll.LatLng _pointAtDistanceM(double distanceM) {
+    final idx = _indexAtDistanceM(distanceM);
+    if (idx == null || idx >= widget.points.length - 1) {
+      return widget.points.first;
+    }
+    final t = (distanceM - _prefixDistancesM[idx]) /
+        (_prefixDistancesM[idx + 1] - _prefixDistancesM[idx]);
+    final a = widget.points[idx];
+    final b = widget.points[idx + 1];
+    return ll.LatLng(
+      a.latitude + (b.latitude - a.latitude) * t,
+      a.longitude + (b.longitude - a.longitude) * t,
+    );
+  }
+
+  /// Азимут от [from] к [to] в градусах (0 = север, 90 = восток).
+  double _bearingDegrees(ll.LatLng from, ll.LatLng to) {
+    final dLon = (to.longitude - from.longitude) * math.pi / 180;
+    final lat1 = from.latitude * math.pi / 180;
+    final lat2 = to.latitude * math.pi / 180;
+    final y = math.sin(dLon) * math.cos(lat2);
+    final x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    var b = math.atan2(y, x) * 180 / math.pi;
+    return (b + 360) % 360;
+  }
+
+  /// Отрисовка стрелок направления на Mapbox.
+  Future<void> _drawArrowMarkers() async {
+    if (_pointAnnotationManager == null || widget.points.length < 2) return;
+    for (final a in _arrowAnnotations) {
+      await _pointAnnotationManager!.delete(a);
+    }
+    _arrowAnnotations = [];
+    _arrowImage ??= await MarkerAssets.createArrowImage();
+    if (_arrowImage == null) return;
+    final positions = _computeArrowPositions();
+    for (final pos in positions) {
+      final ann = await _pointAnnotationManager!.create(
+        PointAnnotationOptions(
+          geometry: Point(
+            coordinates: Position(
+              pos.point.longitude,
+              pos.point.latitude,
+            ),
+          ),
+          image: _arrowImage!,
+          iconSize: 0.8,
+          iconRotate: pos.bearingDeg,
+        ),
+      );
+      _arrowAnnotations.add(ann);
+    }
+  }
+
+  /// Стрелки направления для flutter_map (macOS).
+  List<flutter_map.Marker> _buildFlutterMapArrowMarkers() {
+    final positions = _computeArrowPositions();
+    return positions
+        .map(
+          (pos) => flutter_map.Marker(
+            point: pos.point,
+            width: 20,
+            height: 20,
+            child: Transform.rotate(
+              angle: (pos.bearingDeg - 90) * math.pi / 180,
+              child: const Icon(
+                CupertinoIcons.arrow_up,
+                color: AppColors.brandPrimary,
+                size: 20,
+              ),
+            ),
+          ),
+        )
+        .toList();
+  }
+
   // ────────────────────────────────────────────────────────────────
   // 🔹 FLUTTER_MAP: ПОЛИЛИНИИ И МАРКЕРЫ
   // ────────────────────────────────────────────────────────────────
   List<flutter_map.Polyline> _buildFlutterMapPolylines() {
     final polylines = <flutter_map.Polyline>[];
 
-    if (_canColorByElevation()) {
-      final segments = _buildColoredSegments();
-      polylines.addAll(
-        segments.map(
-          (segment) => flutter_map.Polyline(
-            points: segment.points,
-            strokeWidth: 3.0,
-            color: segment.color,
-          ),
-        ),
-      );
-    } else {
-      polylines.add(
-        flutter_map.Polyline(
-          points: widget.points,
-          strokeWidth: 3.0,
-          color: AppColors.brandPrimary,
-        ),
-      );
-    }
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 ТРЕК ОДИН ЦВЕТ (СИНИЙ) — БЕЗ ОКРАСКИ ПО ВЫСОТЕ
+    // ──────────────────────────────────────────────────────────────
+    polylines.add(
+      flutter_map.Polyline(
+        points: widget.points,
+        strokeWidth: 3.0,
+        color: AppColors.brandPrimary,
+      ),
+    );
 
     final selection = _normalizedSelection();
     if (selection != null) {
@@ -983,6 +1267,26 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   List<flutter_map.Marker> _buildFlutterMapMarkers() {
     final markers = <flutter_map.Marker>[];
 
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 СТАРТ И ФИНИШ МАРШРУТА (всегда: «С» зелёный, «Ф» красный)
+    // ──────────────────────────────────────────────────────────────
+    if (widget.points.length >= 2) {
+      markers.add(
+        _buildFlutterMapMarker(
+          point: widget.points.first,
+          label: 'С',
+          color: AppColors.success,
+        ),
+      );
+      markers.add(
+        _buildFlutterMapMarker(
+          point: widget.points.last,
+          label: 'Ф',
+          color: AppColors.error,
+        ),
+      );
+    }
+
     final startPoint = _startPoint ??
         (_startIndex != null ? widget.points[_startIndex!] : null);
     if (startPoint != null) {
@@ -990,6 +1294,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         _buildFlutterMapMarker(
           point: startPoint,
           label: '1',
+          color: AppColors.brandPrimary,
         ),
       );
     }
@@ -1001,6 +1306,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         _buildFlutterMapMarker(
           point: endPoint,
           label: '2',
+          color: AppColors.brandPrimary,
         ),
       );
     }
@@ -1011,6 +1317,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   flutter_map.Marker _buildFlutterMapMarker({
     required ll.LatLng point,
     required String label,
+    Color color = AppColors.brandPrimary,
   }) {
     return flutter_map.Marker(
       point: point,
@@ -1019,8 +1326,8 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       child: Container(
         width: AppSpacing.xl,
         height: AppSpacing.xl,
-        decoration: const BoxDecoration(
-          color: AppColors.brandPrimary,
+        decoration: BoxDecoration(
+          color: color,
           shape: BoxShape.circle,
         ),
         alignment: Alignment.center,
@@ -1148,6 +1455,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     return !isSwim && _elevationValues.length >= 2;
   }
 
+  // ignore: unused_element — оставлено на случай возврата окраски по высоте
   List<_ColoredSegment> _buildColoredSegments() {
     if (widget.points.length < 2) return [];
 
@@ -1338,88 +1646,6 @@ class _MapBackButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _ElevationLegend extends StatelessWidget {
-  const _ElevationLegend({
-    required this.upColor,
-    required this.downColor,
-  });
-
-  final Color upColor;
-  final Color downColor;
-
-  @override
-  Widget build(BuildContext context) {
-    // ──────────────────────────────────────────────────────────────
-    // 🔹 КОНТЕЙНЕР ЛЕГЕНДЫ: СТИЛЬ ПО ТЕМЕ
-    // ──────────────────────────────────────────────────────────────
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.getBorderColor(context),
-        ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _LegendItem(
-            color: upColor,
-            label: 'Подъём',
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          _LegendItem(
-            color: downColor,
-            label: 'Спуск',
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LegendItem extends StatelessWidget {
-  const _LegendItem({
-    required this.color,
-    required this.label,
-  });
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    // ──────────────────────────────────────────────────────────────
-    // 🔹 СТРОКА ЛЕГЕНДЫ: ЦВЕТ + ТЕКСТ
-    // ──────────────────────────────────────────────────────────────
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: AppSpacing.sm,
-          height: AppSpacing.sm,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.xs),
-        Text(
-          label,
-          style: AppTextStyles.h13w5.copyWith(
-            color: AppColors.getTextPrimaryColor(context),
-          ),
-        ),
-      ],
     );
   }
 }

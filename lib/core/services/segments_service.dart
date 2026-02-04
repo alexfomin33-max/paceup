@@ -41,6 +41,36 @@ class ActivitySegmentItem {
   }
 }
 
+/// Участок тренировки для проверки дублей.
+class ActivitySegmentDuplicateItem {
+  const ActivitySegmentDuplicateItem({
+    required this.id,
+    required this.activityId,
+    required this.startIndex,
+    required this.endIndex,
+    required this.startFraction,
+    required this.endFraction,
+  });
+
+  final int id;
+  final int activityId;
+  final int startIndex;
+  final int endIndex;
+  final double startFraction;
+  final double endFraction;
+
+  factory ActivitySegmentDuplicateItem.fromJson(Map<String, dynamic> j) {
+    return ActivitySegmentDuplicateItem(
+      id: (j['id'] as num?)?.toInt() ?? 0,
+      activityId: (j['activity_id'] as num?)?.toInt() ?? 0,
+      startIndex: (j['start_index'] as num?)?.toInt() ?? 0,
+      endIndex: (j['end_index'] as num?)?.toInt() ?? 0,
+      startFraction: (j['start_fraction'] as num?)?.toDouble() ?? 0,
+      endFraction: (j['end_fraction'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
 /// Результат создания участка.
 class SegmentCreateResult {
   const SegmentCreateResult({
@@ -138,6 +168,27 @@ class SegmentsService {
     return SegmentCreateResult.fromJson(
       Map<String, dynamic>.from(response as Map),
     );
+  }
+
+  /// Список участков конкретной тренировки (для проверки дублей).
+  Future<List<ActivitySegmentDuplicateItem>> getSegmentsForActivity({
+    required int userId,
+    required int activityId,
+  }) async {
+    final response = await _api.get(
+      '/get_activity_segments.php',
+      queryParams: {
+        'user_id': userId.toString(),
+        'activity_id': activityId.toString(),
+      },
+    );
+    final list = response['segments'];
+    if (list is! List) return [];
+    return list
+        .map((e) => ActivitySegmentDuplicateItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
   }
 
   /// Список участков пользователя (избранное — участки).
