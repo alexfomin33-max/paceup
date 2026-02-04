@@ -11,8 +11,10 @@ import '../../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../features/profile/screens/profile_screen.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем
@@ -1112,9 +1114,19 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
               titleSpacing: -8,
               title: Transform.translate(
                 offset: const Offset(8, 0),
-                child: Row(
-                  children: [
-                    // Аватар пользователя
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      TransparentPageRoute(
+                        builder: (_) =>
+                            ProfileScreen(userId: widget.userId),
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      // Аватар пользователя
                     ClipOval(
                       child: Builder(
                         builder: (context) {
@@ -1200,6 +1212,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                   ],
                 ),
               ),
+            ),
               // ─── Нижняя граница под AppBar ───
               bottom: PreferredSize(
                 preferredSize: const Size.fromHeight(0.5),
@@ -1405,6 +1418,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                         _selectedMessageIdForReply = null;
                                       });
                                     },
+                                    onAvatarTap: () {
+                                      Navigator.of(context).push(
+                                        TransparentPageRoute(
+                                          builder: (_) => ProfileScreen(
+                                            userId: widget.userId,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     topSpacing: topSpacing,
                                     bottomSpacing: bottomSpacing,
                                     onImageTap:
@@ -1491,6 +1513,8 @@ class _BubbleLeft extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onReply;
   final VoidCallback? onImageTap;
+  /// Клик по аватару — переход в профиль собеседника
+  final VoidCallback? onAvatarTap;
 
   const _BubbleLeft({
     required this.text,
@@ -1504,6 +1528,7 @@ class _BubbleLeft extends StatelessWidget {
     this.onLongPress,
     this.onReply,
     this.onImageTap,
+    this.onAvatarTap,
   });
 
   @override
@@ -1521,42 +1546,44 @@ class _BubbleLeft extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ClipOval(
-            child: Builder(
-              builder: (context) {
-                final dpr = MediaQuery.of(context).devicePixelRatio;
-                final w = (28 * dpr).round();
-                return CachedNetworkImage(
-                  imageUrl: avatarUrl,
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                  // ── Встроенная анимация fade-in работает по умолчанию
-                  memCacheWidth: w,
-                  maxWidthDiskCache: w,
-                  placeholder: (context, url) => Container(
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: ClipOval(
+              child: Builder(
+                builder: (context) {
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final w = (28 * dpr).round();
+                  return CachedNetworkImage(
+                    imageUrl: avatarUrl,
                     width: 28,
                     height: 28,
-                    color: AppColors.getSurfaceMutedColor(context),
-                    child: Center(
-                      child: CupertinoActivityIndicator(
-                        radius: 6,
+                    fit: BoxFit.cover,
+                    memCacheWidth: w,
+                    maxWidthDiskCache: w,
+                    placeholder: (context, url) => Container(
+                      width: 28,
+                      height: 28,
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 6,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 28,
+                      height: 28,
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Icon(
+                        CupertinoIcons.person,
+                        size: 16,
                         color: AppColors.getIconSecondaryColor(context),
                       ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 28,
-                    height: 28,
-                    color: AppColors.getSurfaceMutedColor(context),
-                    child: Icon(
-                      CupertinoIcons.person,
-                      size: 16,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 8),

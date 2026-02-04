@@ -16,6 +16,7 @@ import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
 import '../../../lenta/screens/state/chat/pinned_chats_api.dart';
+import 'event_detail_screen2.dart';
 
 /// ─── Экран чата события ───
 class EventChatScreen extends ConsumerStatefulWidget {
@@ -829,86 +830,99 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
               titleSpacing: -8,
               title: Transform.translate(
                 offset: const Offset(8, 0),
-                child: Row(
-                  children: [
-                    if (chatData.eventLogoUrl != null &&
-                        chatData.eventLogoUrl!.isNotEmpty) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final w = (36 * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: chatData.eventLogoUrl!,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.cover,
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      TransparentPageRoute(
+                        builder: (_) => EventDetailScreen2(
+                          eventId: widget.eventId,
+                        ),
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      if (chatData.eventLogoUrl != null &&
+                          chatData.eventLogoUrl!.isNotEmpty) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          child: Builder(
+                            builder: (context) {
+                              final dpr =
+                                  MediaQuery.of(context).devicePixelRatio;
+                              final w = (36 * dpr).round();
+                              return CachedNetworkImage(
+                                imageUrl: chatData.eventLogoUrl!,
                                 width: 36,
                                 height: 36,
-                                color: AppColors.getSurfaceMutedColor(
-                                  context,
-                                ),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 8,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, imageUrl, error) {
-                                return Container(
+                                fit: BoxFit.cover,
+                                memCacheWidth: w,
+                                maxWidthDiskCache: w,
+                                placeholder: (context, url) => Container(
                                   width: 36,
                                   height: 36,
                                   color: AppColors.getSurfaceMutedColor(
                                     context,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.calendar,
-                                    size: 20,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 8,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
+                                ),
+                                errorWidget: (context, imageUrl, error) {
+                                  return Container(
+                                    width: 36,
+                                    height: 36,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.calendar,
+                                      size: 20,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Чат события',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              chatData.eventName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
                     ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Чат события',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            chatData.eventName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               actions: [

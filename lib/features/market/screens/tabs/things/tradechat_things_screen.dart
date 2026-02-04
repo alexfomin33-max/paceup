@@ -1215,6 +1215,15 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                           _selectedMessageIdForReply = null;
                                         });
                                       },
+                                      onAvatarTap: () {
+                                        Navigator.of(context).push(
+                                          TransparentPageRoute(
+                                            builder: (_) => ProfileScreen(
+                                              userId: msg.senderId,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1566,6 +1575,8 @@ class _BubbleLeft extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onReply;
   final VoidCallback? onImageTap;
+  /// Клик по аватарке — переход в профиль отправителя
+  final VoidCallback? onAvatarTap;
   const _BubbleLeft({
     required this.text,
     this.image,
@@ -1578,6 +1589,7 @@ class _BubbleLeft extends StatelessWidget {
     this.onLongPress,
     this.onReply,
     this.onImageTap,
+    this.onAvatarTap,
   });
   @override
   Widget build(BuildContext context) {
@@ -1593,9 +1605,11 @@ class _BubbleLeft extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ClipOval(
-            child: Builder(
-              builder: (context) {
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: ClipOval(
+              child: Builder(
+                builder: (context) {
                 final dpr = MediaQuery.of(context).devicePixelRatio;
                 final w = (28 * dpr).round();
                 final url = avatarUrl ?? '';
@@ -1629,6 +1643,7 @@ class _BubbleLeft extends StatelessWidget {
                   ),
                 );
               },
+            ),
             ),
           ),
           const SizedBox(width: 8),

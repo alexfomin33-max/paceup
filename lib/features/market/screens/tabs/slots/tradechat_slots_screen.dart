@@ -1310,6 +1310,15 @@ class _TradeChatSlotsScreenState extends ConsumerState<TradeChatSlotsScreen>
                                           _selectedMessageIdForReply = null;
                                         });
                                       },
+                                      onAvatarTap: () {
+                                        Navigator.of(context).push(
+                                          TransparentPageRoute(
+                                            builder: (_) => ProfileScreen(
+                                              userId: msg.senderId,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1703,6 +1712,8 @@ class _BubbleLeft extends StatelessWidget {
   final VoidCallback? onLongPress;
   final VoidCallback? onReply;
   final VoidCallback? onImageTap;
+  /// Клик по аватарке — переход в профиль отправителя
+  final VoidCallback? onAvatarTap;
   const _BubbleLeft({
     required this.text,
     this.image,
@@ -1715,6 +1726,7 @@ class _BubbleLeft extends StatelessWidget {
     this.onLongPress,
     this.onReply,
     this.onImageTap,
+    this.onAvatarTap,
   });
   @override
   Widget build(BuildContext context) {
@@ -1730,42 +1742,47 @@ class _BubbleLeft extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          ClipOval(
-            child: Builder(
-              builder: (context) {
-                final dpr = MediaQuery.of(context).devicePixelRatio;
-                final w = (28 * dpr).round();
-                final url = avatarUrl ?? '';
-                return CachedNetworkImage(
-                  imageUrl: url.isNotEmpty ? url : 'https://uploads.paceup.ru/images/users/avatars/def.png',
-                  width: 28,
-                  height: 28,
-                  fit: BoxFit.cover,
-                  memCacheWidth: w,
-                  maxWidthDiskCache: w,
-                  placeholder: (context, url) => Container(
+          GestureDetector(
+            onTap: onAvatarTap,
+            child: ClipOval(
+              child: Builder(
+                builder: (context) {
+                  final dpr = MediaQuery.of(context).devicePixelRatio;
+                  final w = (28 * dpr).round();
+                  final url = avatarUrl ?? '';
+                  return CachedNetworkImage(
+                    imageUrl: url.isNotEmpty
+                        ? url
+                        : 'https://uploads.paceup.ru/images/users/avatars/def.png',
                     width: 28,
                     height: 28,
-                    color: AppColors.getSurfaceMutedColor(context),
-                    child: Center(
-                      child: CupertinoActivityIndicator(
-                        radius: 6,
+                    fit: BoxFit.cover,
+                    memCacheWidth: w,
+                    maxWidthDiskCache: w,
+                    placeholder: (context, url) => Container(
+                      width: 28,
+                      height: 28,
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Center(
+                        child: CupertinoActivityIndicator(
+                          radius: 6,
+                          color: AppColors.getIconSecondaryColor(context),
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      width: 28,
+                      height: 28,
+                      color: AppColors.getSurfaceMutedColor(context),
+                      child: Icon(
+                        CupertinoIcons.person,
+                        size: 16,
                         color: AppColors.getIconSecondaryColor(context),
                       ),
                     ),
-                  ),
-                  errorWidget: (context, url, error) => Container(
-                    width: 28,
-                    height: 28,
-                    color: AppColors.getSurfaceMutedColor(context),
-                    child: Icon(
-                      CupertinoIcons.person,
-                      size: 16,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(width: 8),

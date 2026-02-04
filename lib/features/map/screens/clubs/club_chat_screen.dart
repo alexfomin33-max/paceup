@@ -16,6 +16,7 @@ import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
 import '../../../lenta/screens/state/chat/pinned_chats_api.dart';
+import 'club_detail_screen.dart';
 
 /// ─── Экран чата клуба ───
 class ClubChatScreen extends ConsumerStatefulWidget {
@@ -834,86 +835,98 @@ class _ClubChatScreenState extends ConsumerState<ClubChatScreen>
               titleSpacing: -8,
               title: Transform.translate(
                 offset: const Offset(8, 0),
-                child: Row(
-                  children: [
-                    if (chatData.clubLogoUrl != null &&
-                        chatData.clubLogoUrl!.isNotEmpty) ...[
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(AppRadius.xs),
-                        child: Builder(
-                          builder: (context) {
-                            final dpr = MediaQuery.of(context).devicePixelRatio;
-                            final w = (36 * dpr).round();
-                            return CachedNetworkImage(
-                              imageUrl: chatData.clubLogoUrl!,
-                              width: 36,
-                              height: 36,
-                              fit: BoxFit.cover,
-                              memCacheWidth: w,
-                              maxWidthDiskCache: w,
-                              placeholder: (context, url) => Container(
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      TransparentPageRoute(
+                        builder: (_) =>
+                            ClubDetailScreen(clubId: widget.clubId),
+                      ),
+                    );
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: Row(
+                    children: [
+                      if (chatData.clubLogoUrl != null &&
+                          chatData.clubLogoUrl!.isNotEmpty) ...[
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppRadius.xs),
+                          child: Builder(
+                            builder: (context) {
+                              final dpr =
+                                  MediaQuery.of(context).devicePixelRatio;
+                              final w = (36 * dpr).round();
+                              return CachedNetworkImage(
+                                imageUrl: chatData.clubLogoUrl!,
                                 width: 36,
                                 height: 36,
-                                color: AppColors.getSurfaceMutedColor(
-                                  context,
-                                ),
-                                child: Center(
-                                  child: CupertinoActivityIndicator(
-                                    radius: 8,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              errorWidget: (context, imageUrl, error) {
-                                return Container(
+                                fit: BoxFit.cover,
+                                memCacheWidth: w,
+                                maxWidthDiskCache: w,
+                                placeholder: (context, url) => Container(
                                   width: 36,
                                   height: 36,
                                   color: AppColors.getSurfaceMutedColor(
                                     context,
                                   ),
-                                  child: Icon(
-                                    CupertinoIcons.group,
-                                    size: 20,
-                                    color: AppColors.getIconSecondaryColor(
-                                      context,
+                                  child: Center(
+                                    child: CupertinoActivityIndicator(
+                                      radius: 8,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
-                                );
-                              },
-                            );
-                          },
+                                ),
+                                errorWidget: (context, imageUrl, error) {
+                                  return Container(
+                                    width: 36,
+                                    height: 36,
+                                    color: AppColors.getSurfaceMutedColor(
+                                      context,
+                                    ),
+                                    child: Icon(
+                                      CupertinoIcons.group,
+                                      size: 20,
+                                      color: AppColors.getIconSecondaryColor(
+                                        context,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Чат клуба',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              chatData.clubName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.getTextPrimaryColor(context),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
                     ],
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Чат клуба',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            chatData.clubName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.getTextPrimaryColor(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
               actions: [
