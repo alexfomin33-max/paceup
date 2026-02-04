@@ -197,9 +197,7 @@ class _ViewingSneakersContentState
                           onPressed: () async {
                             await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
-                                builder: (_) => const AddingEquipmentScreen(
-                                  initialSegment: 0,
-                                ),
+                                builder: (_) => const AddingEquipmentScreen(),
                               ),
                             );
                             // Обновляем список после возврата
@@ -274,9 +272,7 @@ class _ViewingSneakersContentState
                           onPressed: () async {
                             await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
-                                builder: (_) => const AddingEquipmentScreen(
-                                  initialSegment: 0,
-                                ),
+                                builder: (_) => const AddingEquipmentScreen(),
                               ),
                             );
                             // Обновляем список после возврата

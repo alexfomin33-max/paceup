@@ -13,7 +13,6 @@ import '../../../../../../../../providers/services/api_provider.dart';
 import '../../../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../../../core/providers/form_state_provider.dart';
 import '../../../../../../../../core/widgets/form_error_display.dart';
-import '../../adding/widgets/autocomplete_text_field.dart';
 
 /// Контент для редактирования кроссовок
 class EditingSneakersContent extends ConsumerStatefulWidget {
@@ -48,8 +47,6 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
   late final Animation<Offset> _slideAnimation;
-
-  // Для автодополнения - используем провайдер
 
   @override
   void initState() {
@@ -158,63 +155,6 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
       );
       Navigator.of(context).pop();
     }
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
-  //                           ПОИСК БРЕНДОВ
-  // ─────────────────────────────────────────────────────────────────────
-  Future<List<String>> _searchBrands(String query) async {
-    if (query.isEmpty) {
-      return [];
-    }
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/search_equipment_brands.php',
-        body: {'query': query, 'type': 'boots'},
-      );
-
-      if (data['success'] == true) {
-        return (data['brands'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-      }
-    } catch (e) {
-      // Игнорируем ошибки при поиске
-    }
-
-    return [];
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
-  //                           ПОИСК МОДЕЛЕЙ
-  // ─────────────────────────────────────────────────────────────────────
-  Future<List<String>> _searchModels(String query) async {
-    final brand = _brandCtrl.text.trim();
-    if (brand.isEmpty || query.isEmpty) {
-      return [];
-    }
-
-    try {
-      final api = ref.read(apiServiceProvider);
-      final data = await api.post(
-        '/search_equipment_models.php',
-        body: {'brand': brand, 'query': query, 'type': 'boots'},
-      );
-
-      if (data['success'] == true) {
-        return (data['models'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            [];
-      }
-    } catch (e) {
-      // Игнорируем ошибки при поиске
-    }
-
-    return [];
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -585,10 +525,9 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
                   // строки полей
                   _FieldRow(
                     title: 'Бренд',
-                    child: AutocompleteTextField(
+                    child: _RightTextField(
                       controller: _brandCtrl,
                       hint: 'Введите бренд',
-                      onSearch: _searchBrands,
                       onChanged: () {
                         setState(() {
                           _modelCtrl.clear();
@@ -601,10 +540,9 @@ class _EditingSneakersContentState extends ConsumerState<EditingSneakersContent>
                     child: ValueListenableBuilder<TextEditingValue>(
                       valueListenable: _brandCtrl,
                       builder: (context, brandValue, child) {
-                        return AutocompleteTextField(
+                        return _RightTextField(
                           controller: _modelCtrl,
                           hint: 'Введите модель',
-                          onSearch: _searchModels,
                           enabled: brandValue.text.trim().isNotEmpty,
                         );
                       },
@@ -739,10 +677,14 @@ class _RightTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
   final TextInputType? keyboardType;
+  final bool enabled;
+  final VoidCallback? onChanged;
   const _RightTextField({
     required this.controller,
     required this.hint,
     this.keyboardType,
+    this.enabled = true,
+    this.onChanged,
   });
 
   @override
@@ -756,6 +698,8 @@ class _RightTextFieldState extends State<_RightTextField> {
       controller: widget.controller,
       textAlign: TextAlign.right,
       keyboardType: widget.keyboardType,
+      enabled: widget.enabled,
+      onChanged: widget.onChanged != null ? (_) => widget.onChanged!() : null,
       decoration: InputDecoration(
         isDense: true,
         hintText: widget.hint,

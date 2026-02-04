@@ -193,9 +193,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                           onPressed: () async {
                             await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
-                                builder: (_) => const AddingEquipmentScreen(
-                                  initialSegment: 1,
-                                ),
+                                builder: (_) => const AddingEquipmentScreen(),
                               ),
                             );
                             // Обновляем список после возврата
@@ -263,9 +261,7 @@ class _ViewingBikeContentState extends ConsumerState<ViewingBikeContent> {
                           onPressed: () async {
                             await Navigator.of(context, rootNavigator: true).push(
                               CupertinoPageRoute(
-                                builder: (_) => const AddingEquipmentScreen(
-                                  initialSegment: 1,
-                                ),
+                                builder: (_) => const AddingEquipmentScreen(),
                               ),
                             );
                             // Обновляем список после возврата
