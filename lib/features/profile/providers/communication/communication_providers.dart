@@ -225,6 +225,11 @@ class CommunicationRepository {
     if (userId != null) {
       params['user_id'] = '$userId';
     }
+    // Для экрана «Связи» — полный список подписок (без исключения по чатам).
+    // Без all=1 API исключает пользователей с существующим чатом (экран «Начать общение»).
+    if (tab == CommunicationTab.subscriptions) {
+      params['all'] = '1';
+    }
 
     final response = await _api.get(
       endpoint,
