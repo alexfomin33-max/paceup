@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import 'sneakers_step3_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Список популярных моделей кроссовок по брендам
@@ -246,7 +247,15 @@ class _SneakersStep2ScreenState extends ConsumerState<SneakersStep2Screen> {
                 child: ElevatedButton(
                   onPressed: isButtonEnabled
                       ? () {
-                          // TODO: Переход на следующую страницу с выбранным брендом и моделью
+                          // ── Переход на экран сохранения кроссовок
+                          Navigator.of(context, rootNavigator: true).push(
+                            CupertinoPageRoute(
+                              builder: (_) => SneakersStep3Screen(
+                                brand: widget.brand,
+                                model: _selectedModel!,
+                              ),
+                            ),
+                          );
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

@@ -34,6 +34,7 @@ class _ChatMessage {
   final int senderId;
   final String senderName;
   final String? senderAvatar;
+  final String? senderGender; // Пол отправителя
   final String messageType; // 'text' или 'image'
   final String? text;
   final String? imageUrl;
@@ -46,6 +47,7 @@ class _ChatMessage {
     required this.senderId,
     required this.senderName,
     this.senderAvatar,
+    this.senderGender,
     required this.messageType,
     this.text,
     this.imageUrl,
@@ -60,6 +62,7 @@ class _ChatMessage {
       senderId: json['sender_id'] ?? 0,
       senderName: json['sender_name'] ?? 'Пользователь',
       senderAvatar: json['sender_avatar'],
+      senderGender: json['sender_gender'],
       messageType: json['message_type'] ?? 'text',
       text: json['text'],
       imageUrl: json['image'],
@@ -537,6 +540,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
           id: response['message_id'] ?? 0,
           senderId: userId,
           senderName: 'Вы',
+          senderGender: null,
           messageType: 'text',
           text: text,
           createdAt: response['created_at'] ?? DateTime.now().toIso8601String(),
@@ -1119,6 +1123,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                       senderName: msg.senderName,
                                       senderId: msg.senderId,
                                       avatarUrl: msg.senderAvatar,
+                                      senderGender: msg.senderGender,
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1195,6 +1200,7 @@ class _BubbleLeft extends StatelessWidget {
   final String senderName;
   final int senderId;
   final String? avatarUrl;
+  final String? senderGender;
   final double topSpacing;
   final double bottomSpacing;
   final VoidCallback? onImageTap;
@@ -1205,10 +1211,21 @@ class _BubbleLeft extends StatelessWidget {
     required this.senderName,
     required this.senderId,
     this.avatarUrl,
+    this.senderGender,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
     this.onImageTap,
   });
+
+  // ─── Проверка, является ли пол женским ───
+  bool get _isFemale {
+    if (senderGender == null) return false;
+    final gender = senderGender!.toLowerCase();
+    return gender == 'женский' ||
+        gender == 'female' ||
+        gender == 'f' ||
+        gender.contains('жен');
+  }
   @override
   Widget build(BuildContext context) {
     final screenW = MediaQuery.of(context).size.width;
@@ -1223,29 +1240,8 @@ class _BubbleLeft extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── Имя пользователя (кликабельное) ───
-          GestureDetector(
-            onTap: () {
-              Navigator.of(context).push(
-                TransparentPageRoute(
-                  builder: (_) => ProfileScreen(userId: senderId),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.only(left: 36, bottom: 4),
-              child: Text(
-                senderName,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.getTextSecondaryColor(context),
-                ),
-              ),
-            ),
-          ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               ClipOval(
                 child: GestureDetector(
@@ -1323,6 +1319,28 @@ class _BubbleLeft extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // ─── Имя пользователя внутри пузыря ───
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).push(
+                                TransparentPageRoute(
+                                  builder: (_) => ProfileScreen(
+                                    userId: senderId,
+                                  ),
+                                ),
+                              );
+                            },
+                            child: Text(
+                              senderName,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: _isFemale
+                                    ? AppColors.nameFemale
+                                    : AppColors.nameMale,
+                              ),
+                            ),
+                          ),
                           // ─── Изображение (если есть) ───
                           if ((image?.isNotEmpty ?? false)) ...[
                             GestureDetector(

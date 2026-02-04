@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import 'bike_step3_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Список популярных моделей велосипедов по брендам
@@ -245,7 +246,15 @@ class _BikeStep2ScreenState extends ConsumerState<BikeStep2Screen> {
                 child: ElevatedButton(
                   onPressed: isButtonEnabled
                       ? () {
-                          // TODO: Переход на следующую страницу с выбранным брендом и моделью
+                          // ── Переход на экран сохранения велосипеда
+                          Navigator.of(context, rootNavigator: true).push(
+                            CupertinoPageRoute(
+                              builder: (_) => BikeStep3Screen(
+                                brand: widget.brand,
+                                model: _selectedModel!,
+                              ),
+                            ),
+                          );
                         }
                       : null,
                   style: ElevatedButton.styleFrom(

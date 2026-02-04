@@ -86,6 +86,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   int? _cachedUserId;
   DateTime? _lastProfileRefresh;
   static const _profileRefreshDebounce = Duration(seconds: 4);
+  // ────────────────────────────────────────────────────────────────────────
+  // Отслеживание открытых вкладок для предотвращения повторной загрузки
+  // данных при переключении между уже открытыми вкладками
+  // ────────────────────────────────────────────────────────────────────────
+  final Set<int> _openedTabs = <int>{};
 
   int _tab = 0;
   bool _wasRouteActive =
@@ -185,6 +190,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     _cachedUserId = userId;
     _tabCache = List<Widget?>.filled(_tabTitles.length, null, growable: false);
     _tabCache[0] = MainTab(key: _mainTabKey, userId: userId);
+    // ────────────────────────────────────────────────────────────────────────
+    // Сбрасываем отслеживание открытых вкладок при смене пользователя
+    // ────────────────────────────────────────────────────────────────────────
+    _openedTabs.clear();
+    // Первая вкладка считается открытой при инициализации
+    // и загружается автоматически при создании виджета MainTab
+    _openedTabs.add(0);
+    // Инициализируем кэш для первой вкладки при первом открытии
+    MainTab.checkCache(_mainTabKey);
   }
 
   /// Возвращает вкладку из кэша или создаёт новую с сохранением.
@@ -235,43 +249,50 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _tab = i);
 
     // ────────────────────────────────────────────────────────────────────────
-    // Обновление данных конкретной вкладки при переключении
+    // Обновление данных конкретной вкладки только при первом открытии
+    // Предотвращаем повторную загрузку данных при переключении между
+    // уже открытыми вкладками для улучшения производительности
     // ────────────────────────────────────────────────────────────────────────
     final userId = widget.userId ?? ref.read(currentUserIdProvider).value;
     if (userId == null) return;
 
-    switch (i) {
-      case 0: // Основное
-        MainTab.checkCache(_mainTabKey);
-        break;
-      case 1: // Фото
-        ref.read(userPhotosProvider(userId).notifier).refresh();
-        break;
-      case 2: // Статистика
-        _statsTabKey.currentState?.refresh();
-        break;
-      case 3: // Тренировки
-        _trainingTabKey.currentState?.refresh();
-        break;
-      case 4: // Соревнования - статические данные, не обновляем
-        break;
-      case 5: // Снаряжение
-        _gearTabKey.currentState?.refresh();
-        break;
-      case 6: // Клубы
-        ref.invalidate(userClubsProvider(userId));
-        break;
-      case 7: // Награды - статические данные, не обновляем
-        break;
-      case 8: // Навыки - статические данные, не обновляем
-        break;
-    }
+    // Проверяем, была ли вкладка уже открыта
+    final isFirstOpen = !_openedTabs.contains(i);
+    if (isFirstOpen) {
+      _openedTabs.add(i);
 
+      switch (i) {
+        case 0: // Основное
+          MainTab.checkCache(_mainTabKey);
+          break;
+        case 1: // Фото
+          ref.read(userPhotosProvider(userId).notifier).refresh();
+          break;
+        case 2: // Статистика
+          _statsTabKey.currentState?.refresh();
+          break;
+        case 3: // Тренировки
+          _trainingTabKey.currentState?.refresh();
+          break;
+        case 4: // Соревнования - статические данные, не обновляем
+          break;
+        case 5: // Снаряжение
+          _gearTabKey.currentState?.refresh();
+          break;
+        case 6: // Клубы
+          ref.invalidate(userClubsProvider(userId));
+          break;
+        case 7: // Награды - статические данные, не обновляем
+          break;
+        case 8: // Навыки - статические данные, не обновляем
+          break;
+      }
+    }
     // ────────────────────────────────────────────────────────────────────────
-    // Обновление данных профиля при переключении вкладок
-    // Обновляем количество подписок и подписчиков при каждом переключении
+    // Убрано автоматическое обновление профиля при переключении вкладок
+    // Профиль обновляется только при открытии экрана (в _checkRouteVisibility)
+    // и при явных действиях пользователя (подписка, редактирование и т.д.)
     // ────────────────────────────────────────────────────────────────────────
-    _refreshProfileDebounced(userId);
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -1022,7 +1043,12 @@ class _TabsHeaderDelegate extends SliverPersistentHeaderDelegate {
             topRight: Radius.circular(AppRadius.md),
           ),
         ),
-        padding: EdgeInsets.only(top: _overlap() + 4, bottom: 4),
+        padding: EdgeInsets.only(
+          top: _overlap() + 4,
+          bottom: 4,
+          left: 8,
+          right: 8,
+        ),
         child: Column(
           children: [
             SizedBox(

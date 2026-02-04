@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import 'bike_step2_screen.dart';
+import 'own_bike_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Список популярных брендов велосипедов в алфавитном порядке
@@ -36,6 +37,8 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
   final TextEditingController _searchController = TextEditingController();
   // ── Выбранный бренд (null = не выбран)
   String? _selectedBrand;
+  // ── Флаг выбора специального пункта "Добавить свой велосипед"
+  bool _isOwnBikeSelected = false;
   // ── Отфильтрованный список брендов на основе поиска
   List<String> _filteredBrands = _bikeBrands;
 
@@ -68,13 +71,17 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
           !_filteredBrands.contains(_selectedBrand)) {
         _selectedBrand = null;
       }
+      // ── Сбрасываем выбор специального пункта при поиске
+      if (query.isNotEmpty) {
+        _isOwnBikeSelected = false;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final textColor = AppColors.getSurfaceColor(context);
-    final isButtonEnabled = _selectedBrand != null;
+    final isButtonEnabled = _selectedBrand != null || _isOwnBikeSelected;
 
     return Scaffold(
       backgroundColor: AppColors.getSurfaceColor(context),
@@ -115,7 +122,8 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
 
             // ── Вертикальный список брендов
             Expanded(
-              child: _filteredBrands.isEmpty
+              child: _filteredBrands.isEmpty && 
+                     _searchController.text.trim().isNotEmpty
                   ? Center(
                       child: Text(
                         'Бренды не найдены',
@@ -126,8 +134,24 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredBrands.length,
+                      itemCount: _filteredBrands.length + 1,
                       itemBuilder: (context, index) {
+                        // ── Последний элемент — специальный пункт "Добавить свой велосипед"
+                        if (index == _filteredBrands.length) {
+                          return _OwnBikeListItem(
+                            isSelected: _isOwnBikeSelected,
+                            onTap: () {
+                              setState(() {
+                                _isOwnBikeSelected = 
+                                    !_isOwnBikeSelected;
+                                // ── Сбрасываем выбор бренда при выборе специального пункта
+                                if (_isOwnBikeSelected) {
+                                  _selectedBrand = null;
+                                }
+                              });
+                            },
+                          );
+                        }
                         final brand = _filteredBrands[index];
                         final isSelected = _selectedBrand == brand;
                         return _BrandListItem(
@@ -136,6 +160,10 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
                           onTap: () {
                             setState(() {
                               _selectedBrand = isSelected ? null : brand;
+                              // ── Сбрасываем выбор специального пункта при выборе бренда
+                              if (_selectedBrand != null) {
+                                _isOwnBikeSelected = false;
+                              }
                             });
                           },
                         );
@@ -145,20 +173,29 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
 
             // ── Кнопка "Продолжить" внизу
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Opacity(
                 opacity: isButtonEnabled ? 1.0 : 0.4,
                 child: ElevatedButton(
                   onPressed: isButtonEnabled
                       ? () {
-                          // ── Переход на экран выбора модели велосипеда
-                          Navigator.of(context, rootNavigator: true).push(
-                            CupertinoPageRoute(
-                              builder: (_) => BikeStep2Screen(
-                                brand: _selectedBrand!,
+                          if (_isOwnBikeSelected) {
+                            // ── Переход на экран добавления своего велосипеда
+                            Navigator.of(context, rootNavigator: true).push(
+                              CupertinoPageRoute(
+                                builder: (_) => const OwnBikeScreen(),
                               ),
-                            ),
-                          );
+                            );
+                          } else if (_selectedBrand != null) {
+                            // ── Переход на экран выбора модели велосипеда
+                            Navigator.of(context, rootNavigator: true).push(
+                              CupertinoPageRoute(
+                                builder: (_) => BikeStep2Screen(
+                                  brand: _selectedBrand!,
+                                ),
+                              ),
+                            );
+                          }
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -281,6 +318,61 @@ class _BrandListItem extends StatelessWidget {
             Expanded(
               child: Text(
                 brand,
+                style: AppTextStyles.h14w5.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: isSelected
+                  ? Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        color: AppColors.button,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.check_mark,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// Элемент списка "Добавить свой велосипед"
+/// ─────────────────────────────────────────────────────────────────────────────
+class _OwnBikeListItem extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _OwnBikeListItem({
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Добавить свой велосипед',
                 style: AppTextStyles.h14w5.copyWith(
                   color: AppColors.getTextPrimaryColor(context),
                 ),

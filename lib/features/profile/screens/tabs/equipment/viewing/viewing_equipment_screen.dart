@@ -5,8 +5,8 @@ import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/widgets/segmented_pill.dart'; // ← глобальная пилюля
 import '../../../../../../core/widgets/more_menu_hub.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
-import 'tabs/sneakers/viewing_sneakers_content.dart';
-import 'tabs/bike/viewing_bike_content.dart';
+import 'tabs/viewing_sneakers_content.dart';
+import 'tabs/viewing_bike_content.dart';
 
 /// Экран «Просмотр снаряжения»
 class ViewingEquipmentScreen extends ConsumerStatefulWidget {

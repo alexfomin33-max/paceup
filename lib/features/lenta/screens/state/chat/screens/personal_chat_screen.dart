@@ -1544,7 +1544,7 @@ class _BubbleLeft extends StatelessWidget {
         bottom: bottomSpacing,
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           GestureDetector(
             onTap: onAvatarTap,

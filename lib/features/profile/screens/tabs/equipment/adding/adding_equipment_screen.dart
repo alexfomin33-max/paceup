@@ -60,7 +60,7 @@ class _AddingEquipmentScreenState
           children: [
             // ── Описание под AppBar
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               child: Text(
                 'Выберите тип снаряжения, которое хотите\n добавить',
                 style: AppTextStyles.h14w4.copyWith(

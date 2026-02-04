@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
 import 'sneakers_step2_screen.dart';
+import 'own_sneakers_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
 /// Список популярных брендов кроссовок в алфавитном порядке
@@ -37,6 +38,8 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
   final TextEditingController _searchController = TextEditingController();
   // ── Выбранный бренд (null = не выбран)
   String? _selectedBrand;
+  // ── Флаг выбора специального пункта "Добавить свои кроссовки"
+  bool _isOwnSneakersSelected = false;
   // ── Отфильтрованный список брендов на основе поиска
   List<String> _filteredBrands = _sneakerBrands;
 
@@ -70,13 +73,17 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
           !_filteredBrands.contains(_selectedBrand)) {
         _selectedBrand = null;
       }
+      // ── Сбрасываем выбор специального пункта при поиске
+      if (query.isNotEmpty) {
+        _isOwnSneakersSelected = false;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final textColor = AppColors.getSurfaceColor(context);
-    final isButtonEnabled = _selectedBrand != null;
+    final isButtonEnabled = _selectedBrand != null || _isOwnSneakersSelected;
 
     return Scaffold(
       backgroundColor: AppColors.getSurfaceColor(context),
@@ -117,7 +124,8 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
 
             // ── Вертикальный список брендов
             Expanded(
-              child: _filteredBrands.isEmpty
+              child: _filteredBrands.isEmpty && 
+                     _searchController.text.trim().isNotEmpty
                   ? Center(
                       child: Text(
                         'Бренды не найдены',
@@ -128,8 +136,24 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
                     )
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredBrands.length,
+                      itemCount: _filteredBrands.length + 1,
                       itemBuilder: (context, index) {
+                        // ── Последний элемент — специальный пункт "Добавить свои кроссовки"
+                        if (index == _filteredBrands.length) {
+                          return _OwnSneakersListItem(
+                            isSelected: _isOwnSneakersSelected,
+                            onTap: () {
+                              setState(() {
+                                _isOwnSneakersSelected = 
+                                    !_isOwnSneakersSelected;
+                                // ── Сбрасываем выбор бренда при выборе специального пункта
+                                if (_isOwnSneakersSelected) {
+                                  _selectedBrand = null;
+                                }
+                              });
+                            },
+                          );
+                        }
                         final brand = _filteredBrands[index];
                         final isSelected = _selectedBrand == brand;
                         return _BrandListItem(
@@ -139,6 +163,10 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
                             setState(() {
                               _selectedBrand =
                                   isSelected ? null : brand;
+                              // ── Сбрасываем выбор специального пункта при выборе бренда
+                              if (_selectedBrand != null) {
+                                _isOwnSneakersSelected = false;
+                              }
                             });
                           },
                         );
@@ -148,20 +176,29 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
 
             // ── Кнопка "Продолжить" внизу
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               child: Opacity(
                 opacity: isButtonEnabled ? 1.0 : 0.4,
                 child: ElevatedButton(
                   onPressed: isButtonEnabled
                       ? () {
-                          // ── Переход на экран выбора модели кроссовок
-                          Navigator.of(context, rootNavigator: true).push(
-                            CupertinoPageRoute(
-                              builder: (_) => SneakersStep2Screen(
-                                brand: _selectedBrand!,
+                          if (_isOwnSneakersSelected) {
+                            // ── Переход на экран добавления своих кроссовок
+                            Navigator.of(context, rootNavigator: true).push(
+                              CupertinoPageRoute(
+                                builder: (_) => const OwnSneakersScreen(),
                               ),
-                            ),
-                          );
+                            );
+                          } else if (_selectedBrand != null) {
+                            // ── Переход на экран выбора модели кроссовок
+                            Navigator.of(context, rootNavigator: true).push(
+                              CupertinoPageRoute(
+                                builder: (_) => SneakersStep2Screen(
+                                  brand: _selectedBrand!,
+                                ),
+                              ),
+                            );
+                          }
                         }
                       : null,
                   style: ElevatedButton.styleFrom(
@@ -291,6 +328,61 @@ class _BrandListItem extends StatelessWidget {
             Expanded(
               child: Text(
                 brand,
+                style: AppTextStyles.h14w5.copyWith(
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 22,
+              height: 22,
+              child: isSelected
+                  ? Container(
+                      width: 22,
+                      height: 22,
+                      decoration: const BoxDecoration(
+                        color: AppColors.button,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        CupertinoIcons.check_mark,
+                        size: 14,
+                        color: Colors.white,
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// ─────────────────────────────────────────────────────────────────────────────
+/// Элемент списка "Добавить свои кроссовки"
+/// ─────────────────────────────────────────────────────────────────────────────
+class _OwnSneakersListItem extends StatelessWidget {
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _OwnSneakersListItem({
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.sm),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Добавить свои кроссовки',
                 style: AppTextStyles.h14w5.copyWith(
                   color: AppColors.getTextPrimaryColor(context),
                 ),

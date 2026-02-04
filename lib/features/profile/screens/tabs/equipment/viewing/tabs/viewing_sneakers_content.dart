@@ -2,17 +2,18 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../../../../../../core/theme/app_theme.dart';
-import '../../../../../../../../core/utils/error_handler.dart';
-import '../../../../../../../../core/widgets/more_menu_overlay.dart';
-import '../../../../../../../../core/widgets/transparent_route.dart';
-import '../../../../../../../../core/widgets/primary_button.dart';
-import '../../../../../../../../providers/services/api_provider.dart';
-import '../../../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/utils/error_handler.dart';
+import '../../../../../../../core/widgets/more_menu_overlay.dart';
+import '../../../../../../../core/widgets/transparent_route.dart';
+import '../../../../../../../core/widgets/primary_button.dart';
+import '../../../../../../../providers/services/api_provider.dart';
+import '../../../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../../../../core/utils/equipment_date_format.dart';
-import '../../../editing/editing_equipment_screen.dart';
-import '../../../adding/adding_equipment_screen.dart';
+import '../../../../../../../core/utils/equipment_date_format.dart';
+import '../../editing/tabs/editing_sneakers_content.dart';
+import '../../editing/tabs/editing_bike_content.dart';
+import '../../adding/adding_equipment_screen.dart';
 
 /// Модель элемента снаряжения для просмотра
 class _SneakerItem {
@@ -464,13 +465,12 @@ class _GearViewCardState extends ConsumerState<GearViewCard> {
   Future<void> _editEquipment(BuildContext context) async {
     if (widget.equipUserId == null) return;
 
-    // Открываем экран редактирования
+    // Открываем экран редактирования в зависимости от типа снаряжения
     final result = await Navigator.of(context).push(
       TransparentPageRoute(
-        builder: (_) => EditingEquipmentScreen(
-          equipUserId: widget.equipUserId!,
-          type: widget.equipmentType, // Используем тип из конструктора
-        ),
+        builder: (_) => widget.equipmentType == 'boots'
+            ? EditingSneakersContent(equipUserId: widget.equipUserId!)
+            : EditingBikeContent(equipUserId: widget.equipUserId!),
       ),
     );
 

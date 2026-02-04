@@ -1,14 +1,14 @@
 import 'package:flutter/cupertino.dart';
-import '../../../../../../../../core/theme/app_theme.dart';
-import '../../../../../../../../core/utils/error_handler.dart';
-import '../../../../../../../../core/widgets/primary_button.dart';
-import '../sneakers/viewing_sneakers_content.dart'
+import '../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../core/utils/error_handler.dart';
+import '../../../../../../../core/widgets/primary_button.dart';
+import 'viewing_sneakers_content.dart'
     show GearViewCard; // теперь публичный класс
-import '../../../../../../../../providers/services/api_provider.dart';
-import '../../../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../../providers/services/api_provider.dart';
+import '../../../../../../../providers/services/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../../../../../core/utils/equipment_date_format.dart';
-import '../../../adding/adding_equipment_screen.dart';
+import '../../../../../../../core/utils/equipment_date_format.dart';
+import '../../adding/adding_equipment_screen.dart';
 
 /// Модель элемента велосипеда для просмотра
 class _BikeItem {
