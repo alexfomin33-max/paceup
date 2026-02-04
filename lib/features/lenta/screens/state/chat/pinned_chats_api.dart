@@ -15,6 +15,7 @@ class PinnedChatEntry {
   final String? logoUrl;
   final String lastMessage;
   final DateTime? lastMessageAt;
+  final bool lastMessageHasImage;
 
   const PinnedChatEntry({
     required this.chatType,
@@ -24,6 +25,7 @@ class PinnedChatEntry {
     this.logoUrl,
     required this.lastMessage,
     this.lastMessageAt,
+    this.lastMessageHasImage = false,
   });
 
   factory PinnedChatEntry.fromJson(Map<String, dynamic> json) {
@@ -42,6 +44,7 @@ class PinnedChatEntry {
       logoUrl: json['logo_url'] as String?,
       lastMessage: json['last_message'] as String? ?? '',
       lastMessageAt: lastMessageAt,
+      lastMessageHasImage: json['last_message_has_image'] as bool? ?? false,
     );
   }
 

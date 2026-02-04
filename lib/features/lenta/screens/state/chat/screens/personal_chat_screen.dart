@@ -552,6 +552,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             );
           }
           _lastMessageId = messageId;
+          // Дедупликация по id: polling мог уже добавить это сообщение
+          final seen = <int>{};
+          _messages.removeWhere((m) => !seen.add(m.id));
         });
         } else {
           // Удаляем временное сообщение при ошибке
@@ -710,6 +713,10 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             );
           }
           _lastMessageId = messageId;
+          // Дедупликация по id: polling мог уже добавить это сообщение,
+          // оставляем первое вхождение по id
+          final seen = <int>{};
+          _messages.removeWhere((m) => !seen.add(m.id));
         });
       } else {
         // Удаляем временное сообщение при ошибке
