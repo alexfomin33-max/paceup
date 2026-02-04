@@ -96,14 +96,14 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
         Map<String, dynamic>.from(raw),
       );
 
-      // Сохраняем в кэш (включая город, возраст и подписки)
+      // Сохраняем в кэш (включая город, возраст, подписки и число занятий)
       await _cache.cacheProfile(
         userId: profile.id,
         name: '${profile.firstName} ${profile.lastName}',
         avatar: profile.avatar ?? '',
         userGroup: 0,
         totalDistance: 0,
-        totalActivities: 0,
+        totalActivities: profile.totalActivities ?? 0,
         totalTime: 0,
         city: profile.city,
         age: profile.age,
@@ -164,14 +164,14 @@ class ProfileHeaderNotifier extends StateNotifier<ProfileHeaderState> {
 
     final profile = UserProfileHeader.fromJson(Map<String, dynamic>.from(raw));
 
-    // Сохраняем в кэш
+    // Сохраняем в кэш (включая число занятий для офлайн)
     await _cache.cacheProfile(
       userId: profile.id,
       name: '${profile.firstName} ${profile.lastName}',
       avatar: profile.avatar ?? '',
       userGroup: 0,
       totalDistance: 0,
-      totalActivities: 0,
+      totalActivities: profile.totalActivities ?? 0,
       totalTime: 0,
       city: profile.city,
       age: profile.age,

@@ -20,6 +20,7 @@ import '../../../../../core/widgets/transparent_route.dart';
 import '../../../../profile/screens/profile_screen.dart';
 import '../../../../../features/complaint.dart';
 import '../../../../../features/lenta/providers/lenta_provider.dart';
+import '../../state/notifications/notifications_provider.dart';
 import 'description_post_card.dart';
 import '../../../../map/screens/clubs/club_detail_screen.dart';
 
@@ -158,6 +159,7 @@ class _PostCardState extends ConsumerState<PostCard>
 
       // 2) Сообщим наружу (если кто-то подписан на onDelete)
       widget.onDelete?.call(); // ✅ Раскомментировал!
+      ref.read(notificationsProvider.notifier).updateUnreadCount();
     }
 
     // Возвращаем флаг — кнопка снова доступна (если карточка не скрыта)

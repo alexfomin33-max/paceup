@@ -13,6 +13,9 @@ import 'tabs/segments_content.dart';
 const double _kBottomNavHeight = 60;
 /// Небольшой запас, чтобы контент не обрезался под плашкой.
 const double _kBottomNavExtra = 12;
+/// При ширине экрана меньше этой величины иконки во вкладках скрываются,
+/// чтобы влезли подписи (узкие устройства, например iPhone 15).
+const double _kTabBarMinWidthForIcons = 400;
 
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
@@ -57,45 +60,55 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
 
       body: Column(
         children: [
-          // ── Вкладки: иконка + текст (наш дефолтный паттерн TabBar + TabBarView)
+          // ── Вкладки: иконка + текст; на узком экране — только текст
           Container(
-            // ── Цвет контейнера вкладок из темы
             color: AppColors.getSurfaceColor(context),
-            child: TabBar(
-              controller: _tab,
-              isScrollable: false,
-              // ── Активная вкладка: всегда brandPrimary (одинаковый в светлой/темной)
-              labelColor: AppColors.brandPrimary,
-              // ── Неактивные вкладки: вторичный текст из темы
-              unselectedLabelColor: AppColors.getTextSecondaryColor(context),
-              indicatorColor: AppColors.brandPrimary,
-              indicatorWeight: 1,
-              // ── Разделитель под TabBar: менее заметный (30% прозрачности)
-              dividerColor: AppColors.twinchip,
-              labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-              tabs: const [
-                Tab(
-                  child: _TabLabel(
-                    icon: CupertinoIcons.calendar,
-                    text: 'События',
-                  ),
-                ),
-                Tab(
-                  child: _TabLabel(
-                    icon: CupertinoIcons.bookmark,
-                    text: 'Закладки',
-                  ),
-                ),
-                Tab(
-                  child: _TabLabel(icon: CupertinoIcons.map, text: 'Маршруты'),
-                ),
-                Tab(
-                  child: _TabLabel(
-                    icon: CupertinoIcons.flag,
-                    text: 'Участки',
-                  ),
-                ),
-              ],
+            child: Builder(
+              builder: (context) {
+                final width = MediaQuery.sizeOf(context).width;
+                final showIcons = width >= _kTabBarMinWidthForIcons;
+                return TabBar(
+                  controller: _tab,
+                  isScrollable: false,
+                  labelColor: AppColors.brandPrimary,
+                  unselectedLabelColor:
+                      AppColors.getTextSecondaryColor(context),
+                  indicatorColor: AppColors.brandPrimary,
+                  indicatorWeight: 1,
+                  dividerColor: AppColors.twinchip,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  tabs: [
+                    Tab(
+                      child: _TabLabel(
+                        icon: CupertinoIcons.calendar,
+                        text: 'События',
+                        showIcon: showIcons,
+                      ),
+                    ),
+                    Tab(
+                      child: _TabLabel(
+                        icon: CupertinoIcons.bookmark,
+                        text: 'Закладки',
+                        showIcon: showIcons,
+                      ),
+                    ),
+                    Tab(
+                      child: _TabLabel(
+                        icon: CupertinoIcons.map,
+                        text: 'Маршруты',
+                        showIcon: showIcons,
+                      ),
+                    ),
+                    Tab(
+                      child: _TabLabel(
+                        icon: CupertinoIcons.flag,
+                        text: 'Участки',
+                        showIcon: showIcons,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
           Expanded(
@@ -127,23 +140,29 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
 class _TabLabel extends StatelessWidget {
   final IconData icon;
   final String text;
-  const _TabLabel({required this.icon, required this.text});
+  final bool showIcon;
+
+  const _TabLabel({
+    required this.icon,
+    required this.text,
+    this.showIcon = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // ── TabBar автоматически применяет labelColor/unselectedLabelColor
-    // ── через DefaultTextStyle, получаем цвет для иконки и текста
     final textStyle = DefaultTextStyle.of(context).style;
     final iconColor = textStyle.color;
+
+    if (!showIcon) {
+      return Text(text, overflow: TextOverflow.ellipsis);
+    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // ── Иконка использует тот же цвет, что и текст (из DefaultTextStyle TabBar)
         Icon(icon, size: 16, color: iconColor),
         const SizedBox(width: 6),
-        // ── Текст наследует цвет из DefaultTextStyle
         Text(text, overflow: TextOverflow.ellipsis),
       ],
     );

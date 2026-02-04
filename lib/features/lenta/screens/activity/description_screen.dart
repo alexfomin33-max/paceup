@@ -52,6 +52,7 @@ import '../../../../core/utils/image_picker_helper.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
 import '../../providers/lenta_provider.dart';
+import '../state/notifications/notifications_provider.dart';
 import 'together/together_providers.dart';
 import '../../../../core/services/route_map_service.dart';
 import '../../../../core/services/routes_service.dart';
@@ -1934,6 +1935,7 @@ class _ActivityDescriptionPageState
       await ref
           .read(lentaProvider(widget.currentUserId).notifier)
           .removeItem(activity.lentaId);
+      ref.read(notificationsProvider.notifier).updateUnreadCount();
       // Закрываем экран описания
       if (context.mounted) {
         Navigator.of(context).pop();

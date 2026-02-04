@@ -8,6 +8,7 @@ import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../features/complaint.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
+import '../state/notifications/notifications_provider.dart';
 
 // ——— Аккуратный показ SnackBar (чтобы не падать без ScaffoldMessenger) ———
 void showSnack(BuildContext context, String message) {
@@ -367,6 +368,7 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: вызываем callback после удаления
       // ────────────────────────────────────────────────────────────────
       widget.onCommentDeleted?.call();
+      ref.read(notificationsProvider.notifier).updateUnreadCount();
 
       if (mounted) {
         final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);

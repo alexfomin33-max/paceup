@@ -28,6 +28,7 @@ import '../../activity/edit_activity_screen.dart';
 
 // Провайдеры
 import '../../../../../features/lenta/providers/lenta_provider.dart';
+import '../../state/notifications/notifications_provider.dart';
 import '../../../../../providers/services/api_provider.dart';
 import '../../../../../providers/services/auth_provider.dart';
 import '../../../../../core/services/api_service.dart'; // для ApiException
@@ -1155,6 +1156,7 @@ Future<void> _handleDeleteActivity({
     await ref
         .read(lentaProvider(currentUserId).notifier)
         .removeItem(activity.lentaId);
+    ref.read(notificationsProvider.notifier).updateUnreadCount();
   } else {
     await _showErrorDialog(
       context: context,
