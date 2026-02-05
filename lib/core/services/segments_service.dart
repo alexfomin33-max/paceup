@@ -11,6 +11,89 @@ import 'api_service.dart';
 // 🔹 МОДЕЛИ ОТВЕТОВ API
 // ─────────────────────────────────────────────────────────────────────────────
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Участок с результатами текущего пользователя (Лента — Избранное — Участки).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Лучшая попытка пользователя по участку (одна запись из user_segment_attempts).
+class SegmentBestResult {
+  const SegmentBestResult({
+    required this.durationSec,
+    required this.distanceKm,
+    this.paceMinPerKm,
+    this.avgHeartRate,
+    this.avgCadence,
+  });
+
+  final int durationSec;
+  final double distanceKm;
+  final double? paceMinPerKm;
+  final double? avgHeartRate;
+  final double? avgCadence;
+
+  static SegmentBestResult? fromJson(Map<String, dynamic>? j) {
+    if (j == null) return null;
+    return SegmentBestResult(
+      durationSec: (j['duration_sec'] as num?)?.toInt() ?? 0,
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      paceMinPerKm: (j['pace_min_per_km'] as num?)?.toDouble(),
+      avgHeartRate: (j['avg_heart_rate'] as num?)?.toDouble(),
+      avgCadence: (j['avg_cadence'] as num?)?.toDouble(),
+    );
+  }
+}
+
+/// Участок с лучшим результатом текущего пользователя и позицией в таблице.
+class SegmentWithMyResult {
+  const SegmentWithMyResult({
+    required this.id,
+    required this.name,
+    required this.distanceKm,
+    this.realDistanceKm,
+    this.bestResult,
+    this.position = 0,
+    this.totalParticipants = 0,
+  });
+
+  final int id;
+  final String name;
+  final double distanceKm;
+  final double? realDistanceKm;
+  final SegmentBestResult? bestResult;
+  final int position;
+  final int totalParticipants;
+
+  double get displayDistanceKm => realDistanceKm ?? distanceKm;
+
+  static SegmentWithMyResult fromJson(Map<String, dynamic> j) {
+    final best = j['best_result'];
+    return SegmentWithMyResult(
+      id: (j['id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
+      bestResult: best is Map
+          ? SegmentBestResult.fromJson(
+              Map<String, dynamic>.from(best as Map),
+            )
+          : null,
+      position: (j['position'] as num?)?.toInt() ?? 0,
+      totalParticipants: (j['total_participants'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// Два блока участков: мои и все (с результатами текущего пользователя).
+class SegmentsWithMyResults {
+  const SegmentsWithMyResults({
+    required this.mySegments,
+    required this.otherSegments,
+  });
+
+  final List<SegmentWithMyResult> mySegments;
+  final List<SegmentWithMyResult> otherSegments;
+}
+
 /// Элемент участка из API (список «Избранное — Участки»).
 /// Пока только название и расстояние; остальные параметры — позже.
 /// Для отображения расстояния всегда используйте [displayDistanceKm]
@@ -249,6 +332,33 @@ class SegmentsService {
     if (list is! List) return [];
     return list
         .map((e) => ActivitySegmentItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  /// Участки с результатами текущего пользователя: «Мои участки» и «Все участки».
+  /// my_segments — созданные текущим пользователем; other_segments — чужие,
+  /// по которым у текущего есть попытки в user_segment_attempts.
+  Future<SegmentsWithMyResults> getSegmentsWithMyResults(int userId) async {
+    final response = await _api.get(
+      '/get_segments_with_my_results.php',
+      queryParams: {'user_id': userId.toString()},
+    );
+    final myList = response['my_segments'];
+    final otherList = response['other_segments'];
+    return SegmentsWithMyResults(
+      mySegments: _parseSegmentWithMyResultList(myList),
+      otherSegments: _parseSegmentWithMyResultList(otherList),
+    );
+  }
+
+  static List<SegmentWithMyResult> _parseSegmentWithMyResultList(
+    dynamic list,
+  ) {
+    if (list is! List) return [];
+    return list
+        .map((e) => SegmentWithMyResult.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
         .toList();
