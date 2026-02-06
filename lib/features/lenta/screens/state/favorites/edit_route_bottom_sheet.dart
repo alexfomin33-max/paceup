@@ -26,7 +26,7 @@ void showEditRouteBottomSheet(
   BuildContext context, {
   required SavedRouteItem route,
   required int userId,
-  required VoidCallback onSaved,
+  required void Function(String name, String difficulty) onSaved,
 }) {
   showModalBottomSheet<void>(
     context: context,
@@ -49,7 +49,9 @@ void showEditRouteBottomSheet(
               name: name,
               difficulty: difficulty,
             );
-            if (context.mounted) onSaved();
+            if (context.mounted) {
+              onSaved(name, difficulty);
+            }
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

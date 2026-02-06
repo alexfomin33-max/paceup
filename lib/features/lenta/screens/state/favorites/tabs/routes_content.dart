@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,11 +21,27 @@ String _formatDistanceKm(double km) {
   return truncated.toStringAsFixed(2);
 }
 
+// ────────────────────────────────────────────────────────────────
+// Параметры постраничной загрузки (15 элементов за шаг).
+// ────────────────────────────────────────────────────────────────
+const int _kRoutesPageSize = 15;
+const Duration _kRoutesLoadDebounceDelay = Duration(milliseconds: 200);
+
 /// Провайдер списка сохранённых маршрутов пользователя.
-final myRoutesProvider = FutureProvider.family<List<SavedRouteItem>, int>(
+final myRoutesProvider = FutureProvider.family<RoutesPage, int>(
   (ref, userId) async {
-    if (userId <= 0) return [];
-    return RoutesService().getMyRoutes(userId);
+    if (userId <= 0) {
+      return const RoutesPage(
+        routes: [],
+        hasMore: false,
+        nextOffset: 0,
+      );
+    }
+    return RoutesService().getMyRoutesPage(
+      userId: userId,
+      limit: _kRoutesPageSize,
+      offset: 0,
+    );
   },
 );
 
@@ -37,6 +56,24 @@ class RoutesContent extends ConsumerStatefulWidget {
 
 class _RoutesContentState extends ConsumerState<RoutesContent> {
   bool _didRequestRefresh = false;
+  // ────────────────────────────────────────────────────────────────
+  // Локальные данные для пагинации и оптимистических правок.
+  // ────────────────────────────────────────────────────────────────
+  bool _needsProviderSeed = true;
+  List<SavedRouteItem> _localRoutes = const [];
+  int _localUserId = 0;
+  bool _hasMore = false;
+  int _nextOffset = 0;
+  bool _isLoadingMore = false;
+  final Set<int> _seenRouteIds = <int>{};
+  Timer? _loadDebounceTimer;
+
+  @override
+  void dispose() {
+    // ── Отменяем таймер подгрузки, чтобы не вызвать setState после dispose
+    _loadDebounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,9 +90,18 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
       data: (userId) {
         final uid = userId ?? 0;
         final routesAsync = ref.watch(myRoutesProvider(uid));
+        if (routesAsync.isLoading) {
+          _needsProviderSeed = true;
+        }
         return routesAsync.when(
-          data: (routes) {
-            if (routes.isEmpty) {
+          data: (page) {
+            final viewRoutes = _resolveRoutesData(
+              userId: uid,
+              page: page,
+              shouldSeed: _needsProviderSeed,
+            );
+            _needsProviderSeed = false;
+            if (viewRoutes.isEmpty) {
               // До плашки меню: навбар 60 + запас 12 + viewPadding
               final bottomPadding =
                   MediaQuery.of(context).viewPadding.bottom + 60 + 12;
@@ -82,6 +128,7 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
             // До плашки меню: навбар 60 + запас 12 + viewPadding
             final bottomPadding =
                 MediaQuery.of(context).viewPadding.bottom + 60 + 12;
+            final totalCount = viewRoutes.length;
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
@@ -130,23 +177,37 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, i) {
-                        final r = routes[i];
-                        final userId =
-                            ref.read(currentUserIdProvider).valueOrNull ?? 0;
+                        // ── Подгружаем следующую страницу при скролле вниз
+                        _maybeLoadMore(
+                          index: i,
+                          totalCount: totalCount,
+                          userId: uid,
+                        );
+                        final r = viewRoutes[i];
                         return Padding(
                           padding: EdgeInsets.only(
-                            bottom: i < routes.length - 1 ? 6 : 0,
+                            bottom: i < totalCount - 1 ? 6 : 0,
                           ),
                           child: _SavedRouteCard(
                             route: r,
-                            userId: userId,
+                            userId: uid,
+                            onRouteUpdated: (name, difficulty) {
+                              _applyOptimisticUpdate(
+                                routeId: r.id,
+                                name: name,
+                                difficulty: difficulty,
+                              );
+                            },
                             onRouteDeleted: () {
-                              if (uid > 0) ref.invalidate(myRoutesProvider(uid));
+                              _applyOptimisticDelete(routeId: r.id);
+                              if (uid > 0) {
+                                ref.invalidate(myRoutesProvider(uid));
+                              }
                             },
                           ),
                         );
                       },
-                      childCount: routes.length,
+                      childCount: totalCount,
                     ),
                   ),
                 ),
@@ -192,6 +253,192 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
       ),
     );
   }
+
+  // ────────────────────────────────────────────────────────────────
+  // Синхронизация данных: берём свежую страницу от провайдера.
+  // ────────────────────────────────────────────────────────────────
+  List<SavedRouteItem> _resolveRoutesData({
+    required int userId,
+    required RoutesPage page,
+    required bool shouldSeed,
+  }) {
+    final needsUserReset = _localUserId != userId;
+    if (needsUserReset) {
+      _resetLocalState(userId: userId);
+    }
+    if (shouldSeed || needsUserReset) {
+      _seedFromProvider(page: page);
+    }
+    return _localRoutes;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Сброс локального состояния (используем при смене пользователя).
+  // ────────────────────────────────────────────────────────────────
+  void _resetLocalState({required int userId}) {
+    _localUserId = userId;
+    _localRoutes = const [];
+    _seenRouteIds.clear();
+    _hasMore = false;
+    _nextOffset = 0;
+    _isLoadingMore = false;
+    _loadDebounceTimer?.cancel();
+    _loadDebounceTimer = null;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Инициализация локальных данных из первой страницы провайдера.
+  // ────────────────────────────────────────────────────────────────
+  void _seedFromProvider({required RoutesPage page}) {
+    _localRoutes = page.routes;
+    _seenRouteIds
+      ..clear()
+      ..addAll(page.routes.map((r) => r.id));
+    _hasMore = page.hasMore;
+    _nextOffset = page.nextOffset;
+    _isLoadingMore = false;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Постраничная подгрузка при достижении конца списка.
+  // ────────────────────────────────────────────────────────────────
+  void _maybeLoadMore({
+    required int index,
+    required int totalCount,
+    required int userId,
+  }) {
+    if (userId <= 0) return;
+    if (totalCount == 0) return;
+    if (index != totalCount - 1) return;
+    if (!_hasMore) return;
+    if (_isLoadingMore) return;
+    if (_loadDebounceTimer?.isActive ?? false) return;
+    _isLoadingMore = true;
+    // ── Debounce: защищаемся от частых вызовов на быстром скролле
+    _loadDebounceTimer = Timer(_kRoutesLoadDebounceDelay, () {
+      _loadDebounceTimer = null;
+      if (!mounted) return;
+      _loadNextPage(userId: userId);
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Загрузка следующей страницы с сервера.
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _loadNextPage({required int userId}) async {
+    try {
+      final page = await RoutesService().getMyRoutesPage(
+        userId: userId,
+        limit: _kRoutesPageSize,
+        offset: _nextOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        final newItems = page.routes
+            .where((item) => _seenRouteIds.add(item.id))
+            .toList();
+        _localRoutes = [
+          ..._localRoutes,
+          ...newItems,
+        ];
+        _hasMore = page.hasMore;
+        _nextOffset = page.nextOffset;
+        _isLoadingMore = false;
+      });
+    } catch (e, st) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMore = false;
+      });
+      log(
+        'Routes pagination load error: $e',
+        stackTrace: st,
+      );
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Проверка: данные маршрута уже совпадают, обновление не нужно.
+  // ────────────────────────────────────────────────────────────────
+  bool _hasSameData({
+    required int routeId,
+    required String name,
+    required String difficulty,
+  }) {
+    for (final item in _localRoutes) {
+      if (item.id == routeId) {
+        return item.name == name && item.difficulty == difficulty;
+      }
+    }
+    return false;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Оптимистическое обновление имени и сложности маршрута.
+  // ────────────────────────────────────────────────────────────────
+  void _applyOptimisticUpdate({
+    required int routeId,
+    required String name,
+    required String difficulty,
+  }) {
+    if (_localRoutes.isEmpty) return;
+    // ── Ранний выход: данные не изменились, setState не нужен
+    if (_hasSameData(
+      routeId: routeId,
+      name: name,
+      difficulty: difficulty,
+    )) {
+      return;
+    }
+    final updated = _updateRouteInList(
+      routeId: routeId,
+      name: name,
+      difficulty: difficulty,
+    );
+    setState(() {
+      _localRoutes = updated;
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Оптимистическое удаление маршрута из локального списка.
+  // ────────────────────────────────────────────────────────────────
+  void _applyOptimisticDelete({required int routeId}) {
+    if (_localRoutes.isEmpty) return;
+    final updated = _localRoutes
+        .where((item) => item.id != routeId)
+        .toList();
+    if (updated.length == _localRoutes.length) return;
+    setState(() {
+      _localRoutes = updated;
+    });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Обновление данных маршрута в списке (иммутабельное копирование).
+  // ────────────────────────────────────────────────────────────────
+  List<SavedRouteItem> _updateRouteInList({
+    required int routeId,
+    required String name,
+    required String difficulty,
+  }) {
+    return _localRoutes.map((item) {
+      if (item.id != routeId) {
+        return item;
+      }
+      return SavedRouteItem(
+        id: item.id,
+        name: name,
+        difficulty: difficulty,
+        distanceKm: item.distanceKm,
+        ascentM: item.ascentM,
+        routeMapUrl: item.routeMapUrl,
+        bestDurationSec: item.bestDurationSec,
+        lastDurationSec: item.lastDurationSec,
+        durationText: item.durationText,
+      );
+    }).toList();
+  }
 }
 
 /// Карточка сохранённого маршрута из API (карта по URL, метрики, сложность).
@@ -199,11 +446,13 @@ class _SavedRouteCard extends StatelessWidget {
   const _SavedRouteCard({
     required this.route,
     required this.userId,
+    required this.onRouteUpdated,
     required this.onRouteDeleted,
   });
 
   final SavedRouteItem route;
   final int userId;
+  final void Function(String name, String difficulty) onRouteUpdated;
   final VoidCallback onRouteDeleted;
 
   @override
@@ -220,6 +469,7 @@ class _SavedRouteCard extends StatelessWidget {
               userId: userId,
               initialRoute: route,
               onRouteDeleted: onRouteDeleted,
+              onRouteUpdated: onRouteUpdated,
             ),
           ),
         );
@@ -242,7 +492,9 @@ class _SavedRouteCard extends StatelessWidget {
               context,
               route: route,
               userId: userId,
-              onSaved: onRouteDeleted,
+              onSaved: (name, difficulty) {
+                onRouteUpdated(name, difficulty);
+              },
             );
           },
           onDelete: () async {
@@ -363,6 +615,11 @@ class _SavedRouteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // ── Размеры кэша для карты в пикселях
+    // ── (с учётом DPR)
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final cacheWidth = (80 * dpr).round();
+    final cacheHeight = (76 * dpr).round();
     // Внутренний отступ карточки — как в training_tab _WorkoutCard
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
@@ -377,6 +634,8 @@ class _SavedRouteRow extends StatelessWidget {
                     width: 80,
                     height: 76,
                     fit: BoxFit.cover,
+                    memCacheWidth: cacheWidth,
+                    memCacheHeight: cacheHeight,
                     // Добавляем cacheKey для принудительного обновления при изменении URL
                     cacheKey: '${route.routeMapUrl}_v2',
                     errorWidget: (_, __, ___) => _mapPlaceholder(context),

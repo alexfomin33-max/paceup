@@ -97,6 +97,27 @@ class SegmentsWithMyResults {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Пакет участков с пагинацией (мои + все).
+// ─────────────────────────────────────────────────────────────────────────────
+class SegmentsWithMyResultsPage {
+  const SegmentsWithMyResultsPage({
+    required this.mySegments,
+    required this.otherSegments,
+    required this.myHasMore,
+    required this.myNextOffset,
+    required this.otherHasMore,
+    required this.otherNextOffset,
+  });
+
+  final List<SegmentWithMyResult> mySegments;
+  final List<SegmentWithMyResult> otherSegments;
+  final bool myHasMore;
+  final int myNextOffset;
+  final bool otherHasMore;
+  final int otherNextOffset;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Детали участка (экран описания участка).
 // ─────────────────────────────────────────────────────────────────────────────
 class SegmentDetail {
@@ -536,15 +557,96 @@ class SegmentsService {
   /// my_segments — созданные текущим пользователем; other_segments — чужие,
   /// по которым у текущего есть попытки в user_segment_attempts.
   Future<SegmentsWithMyResults> getSegmentsWithMyResults(int userId) async {
+    // ── Сохраняем старое поведение: собираем все страницы
+    // ── для «Мои» и «Все» в один список
+    const pageLimit = 100;
+    var myOffset = 0;
+    var otherOffset = 0;
+    var myHasMore = true;
+    var otherHasMore = true;
+    final myOut = <SegmentWithMyResult>[];
+    final otherOut = <SegmentWithMyResult>[];
+
+    while (myHasMore || otherHasMore) {
+      // ── Загружаем следующую страницу для каждой секции
+      final page = await getSegmentsWithMyResultsPage(
+        userId: userId,
+        myLimit: myHasMore ? pageLimit : 0,
+        myOffset: myOffset,
+        otherLimit: otherHasMore ? pageLimit : 0,
+        otherOffset: otherOffset,
+      );
+      // ── Обновляем список «Мои»
+      if (myHasMore) {
+        myOut.addAll(page.mySegments);
+        myHasMore = page.myHasMore;
+        myOffset = page.myNextOffset;
+      }
+      // ── Обновляем список «Все»
+      if (otherHasMore) {
+        otherOut.addAll(page.otherSegments);
+        otherHasMore = page.otherHasMore;
+        otherOffset = page.otherNextOffset;
+      }
+      // ── Защита от бесконечного цикла при пустом ответе
+      if (page.mySegments.isEmpty &&
+          page.otherSegments.isEmpty) {
+        break;
+      }
+    }
+
+    return SegmentsWithMyResults(
+      mySegments: myOut,
+      otherSegments: otherOut,
+    );
+  }
+
+  /// Пакет участков пользователя
+  /// (постранично для «Мои» и «Все»).
+  Future<SegmentsWithMyResultsPage> getSegmentsWithMyResultsPage({
+    required int userId,
+    required int myLimit,
+    required int myOffset,
+    required int otherLimit,
+    required int otherOffset,
+  }) async {
+    // ── Запрашиваем серверную страницу для «Мои» и «Все»
     final response = await _api.get(
       '/get_segments_with_my_results.php',
-      queryParams: {'user_id': userId.toString()},
+      queryParams: {
+        'user_id': userId.toString(),
+        'my_limit': myLimit.toString(),
+        'my_offset': myOffset.toString(),
+        'other_limit': otherLimit.toString(),
+        'other_offset': otherOffset.toString(),
+      },
     );
+    // ── Парсим списки сегментов
     final myList = response['my_segments'];
     final otherList = response['other_segments'];
-    return SegmentsWithMyResults(
-      mySegments: _parseSegmentWithMyResultList(myList),
-      otherSegments: _parseSegmentWithMyResultList(otherList),
+    final parsedMy = _parseSegmentWithMyResultList(myList);
+    final parsedOther = _parseSegmentWithMyResultList(otherList);
+    // ── Парсим флаги пагинации
+    final myHasMore = response['my_has_more'] == true ||
+        response['my_has_more'] == 1;
+    final otherHasMore = response['other_has_more'] == true ||
+        response['other_has_more'] == 1;
+    // ── Смещение следующей страницы (fallback на длину ответа)
+    final rawMyNextOffset = response['my_next_offset'];
+    final rawOtherNextOffset = response['other_next_offset'];
+    final myNextOffset = rawMyNextOffset is num
+        ? rawMyNextOffset.toInt()
+        : (myOffset + parsedMy.length);
+    final otherNextOffset = rawOtherNextOffset is num
+        ? rawOtherNextOffset.toInt()
+        : (otherOffset + parsedOther.length);
+    return SegmentsWithMyResultsPage(
+      mySegments: parsedMy,
+      otherSegments: parsedOther,
+      myHasMore: myHasMore,
+      myNextOffset: myNextOffset,
+      otherHasMore: otherHasMore,
+      otherNextOffset: otherNextOffset,
     );
   }
 

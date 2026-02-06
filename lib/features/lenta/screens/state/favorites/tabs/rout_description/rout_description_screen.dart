@@ -26,6 +26,7 @@ class RouteDescriptionScreen extends StatefulWidget {
     required this.userId,
     required this.initialRoute,
     this.onRouteDeleted,
+    this.onRouteUpdated,
   });
 
   final int routeId;
@@ -33,6 +34,8 @@ class RouteDescriptionScreen extends StatefulWidget {
   final SavedRouteItem initialRoute;
   /// Вызывается после удаления маршрута; затем выполняется pop на экран избранных.
   final VoidCallback? onRouteDeleted;
+  /// Вызывается после редактирования маршрута (имя/сложность).
+  final void Function(String name, String difficulty)? onRouteUpdated;
 
   @override
   State<RouteDescriptionScreen> createState() => _RouteDescriptionScreenState();
@@ -253,7 +256,8 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
           context,
           route: widget.initialRoute,
           userId: widget.userId,
-          onSaved: () {
+          onSaved: (name, difficulty) {
+            widget.onRouteUpdated?.call(name, difficulty);
             _loadDetail();
           },
         );
