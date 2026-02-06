@@ -68,7 +68,6 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
   late final PageController _pageController;
   int _currentIndex = 0;
   String? _savedRouteMapUrl;
-  bool _isLoadingRouteMap = false;
   final RouteMapService _routeMapService = RouteMapService();
 
   static const _dotsBottom = 10.0;
@@ -312,25 +311,29 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
           // Если URL еще не сгенерирован - генерируем и кэшируем
           // При последующих rebuild используем кэшированный URL
           if (_cachedMapUrl == null) {
-            // Используем фиксированный DPR = 2.0 для оптимизации
-            const double fixedDpr = 2.0;
+            // Используем реальный DPR устройства с ограничением для адаптивности
+            // Clamp 2.0-3.5 обеспечивает оптимальное качество на всех устройствах
+            final deviceDpr = MediaQuery.of(context).devicePixelRatio.clamp(2.0, 3.5);
 
             final screenW = constraints.maxWidth;
             final screenH = widget.height;
 
-            // Генерируем размеры с учетом фиксированного DPR
-            final widthPx = (screenW * fixedDpr).round();
-            final heightPx = (screenH * fixedDpr).round();
+            // Генерируем размеры с учетом реального DPR устройства
+            final widthPx = (screenW * deviceDpr).round();
+            final heightPx = (screenH * deviceDpr).round();
 
             // Проверяем, что размеры валидны
             if (widthPx > 0 && heightPx > 0) {
               // Генерируем URL статичной карты один раз и кэшируем
+              // Передаем maxWidth и maxHeight для ограничения размера карты
               _cachedMapUrl = StaticMapUrlBuilder.fromPoints(
                 points: widget.points,
                 widthPx: widthPx.toDouble(),
                 heightPx: heightPx.toDouble(),
                 strokeWidth: 3.0,
                 padding: 12.0,
+                maxWidth: 1200.0,
+                maxHeight: 900.0,
               );
 
               _cachedWidthPx = widthPx;
@@ -398,7 +401,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
                 fit: BoxFit.cover,
                 width: double.infinity,
                 height: double.infinity,
-                filterQuality: FilterQuality.medium,
+                filterQuality: FilterQuality.high,
                 memCacheWidth: _cachedWidthPx!,
                 maxWidthDiskCache: _cachedWidthPx!,
                 placeholder: (context, url) => Container(
@@ -501,14 +504,15 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
     return LayoutBuilder(
       builder: (context, constraints) {
         // ────────────────────────────────────────────────────────────────
-        // ⚡ ОПТИМИЗАЦИЯ: используем фиксированный DPR = 2.0 вместо MediaQuery
+        // ⚡ ОПТИМИЗАЦИЯ: используем реальный DPR устройства для адаптивного качества
         // ────────────────────────────────────────────────────────────────
-        // Для фотографий в ленте фиксированный DPR 2.0 обеспечивает хорошее качество
-        // на всех устройствах без запросов MediaQuery при каждом rebuild
-        // Это снижает CPU usage и устраняет джанк при скролле
-        const double fixedDpr = 2.0;
+        // Clamp 2.0-3.5 обеспечивает оптимальное качество на всех устройствах:
+        // - DPR 2.0-2.5: хорошее качество без избыточного трафика
+        // - DPR 3.0: отличное качество на Retina-дисплеях
+        // - DPR > 3.0: ограничиваем до 3.5 для предотвращения избыточного размера
+        final deviceDpr = MediaQuery.of(context).devicePixelRatio.clamp(2.0, 3.5);
         final screenW = constraints.maxWidth;
-        final targetW = (screenW * fixedDpr).round();
+        final targetW = (screenW * deviceDpr).round();
 
         return Stack(
           fit: StackFit.expand,
@@ -518,7 +522,7 @@ class _ActivityRouteCarouselState extends State<ActivityRouteCarousel> {
               fit: BoxFit.cover,
               width: double.infinity,
               height: double.infinity,
-              filterQuality: FilterQuality.low,
+              filterQuality: FilterQuality.high,
               memCacheWidth: targetW,
               maxWidthDiskCache: targetW,
               placeholder: (context, url) => Container(

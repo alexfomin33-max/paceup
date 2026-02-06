@@ -42,7 +42,7 @@ class ImageCompressionPreset {
   /// Фото активности (полная ширина ~428px)
   /// Расчет: 428px × 3x DPR = 1284px → округляем до 1300px
   /// Используется для: фото в активностях
-  static const activity = (maxSide: 1300, quality: 80);
+  static const activity = (maxSide: 1300, quality: 90);
 
   /// Оборудование в списке (63px на экране)
   /// Расчет: 63px × 3x DPR = 189px → округляем до 190px
