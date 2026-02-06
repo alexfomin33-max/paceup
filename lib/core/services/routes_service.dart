@@ -48,6 +48,24 @@ class SavedRouteItem {
   }
 }
 
+// ────────────────────────────────────────────────────────────────
+// Пакет маршрутов с пагинацией (список + флаг следующей страницы).
+// ────────────────────────────────────────────────────────────────
+class RoutesPage {
+  const RoutesPage({
+    required this.routes,
+    required this.hasMore,
+    required this.nextOffset,
+  });
+
+  /// Список маршрутов на текущей странице.
+  final List<SavedRouteItem> routes;
+  /// Есть ли следующая страница на сервере.
+  final bool hasMore;
+  /// Смещение для следующей страницы (offset).
+  final int nextOffset;
+}
+
 /// Автор маршрута (из API деталей маршрута).
 class RouteAuthor {
   const RouteAuthor({
@@ -423,17 +441,61 @@ class RoutesService {
 
   /// Список маршрутов пользователя (избранное — маршруты).
   Future<List<SavedRouteItem>> getMyRoutes(int userId) async {
+    // ── Загружаем все страницы пакетами, чтобы сохранить старое поведение
+    const pageLimit = 100;
+    var offset = 0;
+    var hasMore = true;
+    final out = <SavedRouteItem>[];
+    while (hasMore) {
+      final page = await getMyRoutesPage(
+        userId: userId,
+        limit: pageLimit,
+        offset: offset,
+      );
+      out.addAll(page.routes);
+      hasMore = page.hasMore;
+      offset = page.nextOffset;
+      if (page.routes.isEmpty) {
+        break;
+      }
+    }
+    return out;
+  }
+
+  /// Пакет маршрутов пользователя (избранное — маршруты).
+  /// [limit] и [offset] используются для постраничной загрузки.
+  Future<RoutesPage> getMyRoutesPage({
+    required int userId,
+    required int limit,
+    required int offset,
+  }) async {
     final response = await _api.get(
       '/get_my_routes.php',
-      queryParams: {'user_id': userId.toString()},
+      queryParams: {
+        'user_id': userId.toString(),
+        'limit': limit.toString(),
+        'offset': offset.toString(),
+      },
     );
     final list = response['routes'];
-    if (list is! List) return [];
-    return list
-        .map((e) => SavedRouteItem.fromJson(
-              Map<String, dynamic>.from(e as Map),
-            ))
-        .toList();
+    final routes = list is List
+        ? list
+            .map((e) => SavedRouteItem.fromJson(
+                  Map<String, dynamic>.from(e as Map),
+                ))
+            .toList()
+        : <SavedRouteItem>[];
+    final rawHasMore = response['has_more'];
+    final hasMore = rawHasMore == true || rawHasMore == 1;
+    final rawNextOffset = response['next_offset'];
+    final nextOffset = rawNextOffset is num
+        ? rawNextOffset.toInt()
+        : (offset + routes.length);
+    return RoutesPage(
+      routes: routes,
+      hasMore: hasMore,
+      nextOffset: nextOffset,
+    );
   }
 
   /// Обновление маршрута (название и сложность). Маршрут должен быть в избранном.

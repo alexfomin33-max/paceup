@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,17 +22,33 @@ String _formatDistanceKm(double km) {
   return truncated.toStringAsFixed(2);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Параметры постраничной загрузки (15 элементов за шаг).
+// ─────────────────────────────────────────────────────────────────────────────
+const int _kSegmentsPageSize = 15;
+const Duration _kSegmentsLoadDebounceDelay = Duration(milliseconds: 200);
+
 /// Провайдер: участки с результатами текущего пользователя (Мои + Все).
 final segmentsWithMyResultsProvider =
-    FutureProvider.family<SegmentsWithMyResults, int>(
+    FutureProvider.family<SegmentsWithMyResultsPage, int>(
   (ref, userId) async {
     if (userId <= 0) {
-      return const SegmentsWithMyResults(
+      return const SegmentsWithMyResultsPage(
         mySegments: [],
         otherSegments: [],
+        myHasMore: false,
+        myNextOffset: 0,
+        otherHasMore: false,
+        otherNextOffset: 0,
       );
     }
-    return SegmentsService().getSegmentsWithMyResults(userId);
+    return SegmentsService().getSegmentsWithMyResultsPage(
+      userId: userId,
+      myLimit: _kSegmentsPageSize,
+      myOffset: 0,
+      otherLimit: _kSegmentsPageSize,
+      otherOffset: 0,
+    );
   },
 );
 
@@ -46,14 +63,17 @@ class SegmentsContent extends ConsumerStatefulWidget {
 class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   bool _didRequestRefresh = false;
   // ───────────────────────────────────────────────────────────────────────────
-  // Параметры постраничной подгрузки (15 элементов за шаг).
+  // Параметры серверной пагинации для «Мои» и «Все».
   // ───────────────────────────────────────────────────────────────────────────
-  static const int _pageSize = 15;
-  static const Duration _loadDebounceDelay = Duration(milliseconds: 200);
-  int _myPage = 1;
-  int _otherPage = 1;
+  bool _needsProviderSeed = true;
+  bool _myHasMore = false;
+  bool _otherHasMore = false;
+  int _myNextOffset = 0;
+  int _otherNextOffset = 0;
   bool _isLoadingMoreMy = false;
   bool _isLoadingMoreOther = false;
+  final Set<int> _seenMyIds = <int>{};
+  final Set<int> _seenOtherIds = <int>{};
   Timer? _myLoadDebounceTimer;
   Timer? _otherLoadDebounceTimer;
   // ───────────────────────────────────────────────────────────────────────────
@@ -61,7 +81,6 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   // ───────────────────────────────────────────────────────────────────────────
   SegmentsWithMyResults? _localSegments;
   int _localUserId = 0;
-  bool _hasLocalEdits = false;
 
   @override
   void dispose() {
@@ -85,15 +104,21 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
       data: (userId) {
         final uid = userId ?? 0;
         final dataAsync = ref.watch(segmentsWithMyResultsProvider(uid));
+        if (dataAsync.isLoading) {
+          _needsProviderSeed = true;
+        }
         return dataAsync.when(
-          data: (data) {
+          data: (page) {
             // ── Берём локальные данные (если есть оптимистические правки)
-            final viewData = _resolveSegmentsData(uid, data);
-            // ── Размеры списков и видимые элементы (постранично)
+            final viewData = _resolveSegmentsData(
+              userId: uid,
+              page: page,
+              shouldSeed: _needsProviderSeed,
+            );
+            _needsProviderSeed = false;
+            // ── Размеры списков (уже загруженные элементы)
             final myTotal = viewData.mySegments.length;
             final otherTotal = viewData.otherSegments.length;
-            final myVisible = _visibleMyCount(myTotal);
-            final otherVisible = _visibleOtherCount(otherTotal);
             final bottomPadding =
                 MediaQuery.of(context).viewPadding.bottom + 60 + 12;
             final hasMy = myTotal > 0;
@@ -143,13 +168,14 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                           _maybeLoadMoreMy(
                             index: index,
                             totalCount: myTotal,
+                            userId: uid,
                           );
                           final segment = viewData.mySegments[index];
                           final bottom = _myItemBottomPadding(
                             index: index,
-                            visibleCount: myVisible,
                             totalCount: myTotal,
                             hasOther: hasOther,
+                            hasMore: _myHasMore,
                           );
                           return Padding(
                             padding: EdgeInsets.only(bottom: bottom),
@@ -166,7 +192,7 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                             ),
                           );
                         },
-                        childCount: myVisible,
+                        childCount: myTotal,
                       ),
                     ),
                   ),
@@ -191,12 +217,13 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                           _maybeLoadMoreOther(
                             index: index,
                             totalCount: otherTotal,
+                            userId: uid,
                           );
                           final segment = viewData.otherSegments[index];
                           final bottom = _otherItemBottomPadding(
                             index: index,
-                            visibleCount: otherVisible,
                             totalCount: otherTotal,
+                            hasMore: _otherHasMore,
                           );
                           return Padding(
                             padding: EdgeInsets.only(bottom: bottom),
@@ -213,7 +240,7 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                             ),
                           );
                         },
-                        childCount: otherVisible,
+                        childCount: otherTotal,
                       ),
                     ),
                   ),
@@ -262,33 +289,51 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Синхронизация данных: берём локальные при наличии правок.
+  // Синхронизация данных: берём страницу провайдера и локальные правки.
   // ───────────────────────────────────────────────────────────────────────────
-  SegmentsWithMyResults _resolveSegmentsData(
-    int userId,
-    SegmentsWithMyResults fresh,
-  ) {
+  SegmentsWithMyResults _resolveSegmentsData({
+    required int userId,
+    required SegmentsWithMyResultsPage page,
+    required bool shouldSeed,
+  }) {
     // ── При смене пользователя сбрасываем локальное состояние
-    if (_localUserId != userId) {
-      _localUserId = userId;
-      _localSegments = fresh;
-      _hasLocalEdits = false;
-      // ── Сбрасываем параметры пагинации для нового пользователя
-      _resetPagination();
+    final needsUserReset = _localUserId != userId;
+    if (needsUserReset) {
+      _resetLocalState(userId: userId);
     }
-    // ── Если правок не было — используем свежие данные провайдера
-    if (!_hasLocalEdits) {
-      _localSegments = fresh;
+    // ── При первом заходе или обновлении — сеем данные из провайдера
+    if (shouldSeed || needsUserReset) {
+      _seedFromProvider(page: page);
     }
-    return _localSegments ?? fresh;
+    return _localSegments ??
+        const SegmentsWithMyResults(
+          mySegments: [],
+          otherSegments: [],
+        );
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Сброс локального состояния (используем при смене пользователя).
+  // ───────────────────────────────────────────────────────────────────────────
+  void _resetLocalState({required int userId}) {
+    _localUserId = userId;
+    _localSegments = const SegmentsWithMyResults(
+      mySegments: [],
+      otherSegments: [],
+    );
+    _seenMyIds.clear();
+    _seenOtherIds.clear();
+    _resetPagination();
   }
 
   // ───────────────────────────────────────────────────────────────────────────
   // Сброс параметров пагинации (используем при смене пользователя).
   // ───────────────────────────────────────────────────────────────────────────
   void _resetPagination() {
-    _myPage = 1;
-    _otherPage = 1;
+    _myHasMore = false;
+    _otherHasMore = false;
+    _myNextOffset = 0;
+    _otherNextOffset = 0;
     _isLoadingMoreMy = false;
     _isLoadingMoreOther = false;
     _myLoadDebounceTimer?.cancel();
@@ -298,19 +343,25 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   }
 
   // ───────────────────────────────────────────────────────────────────────────
-  // Количество видимых элементов для секции «Мои участки».
+  // Инициализация локальных данных из первой страницы.
   // ───────────────────────────────────────────────────────────────────────────
-  int _visibleMyCount(int totalCount) {
-    final maxVisible = _myPage * _pageSize;
-    return totalCount < maxVisible ? totalCount : maxVisible;
-  }
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // Количество видимых элементов для секции «Все участки».
-  // ───────────────────────────────────────────────────────────────────────────
-  int _visibleOtherCount(int totalCount) {
-    final maxVisible = _otherPage * _pageSize;
-    return totalCount < maxVisible ? totalCount : maxVisible;
+  void _seedFromProvider({required SegmentsWithMyResultsPage page}) {
+    _localSegments = SegmentsWithMyResults(
+      mySegments: page.mySegments,
+      otherSegments: page.otherSegments,
+    );
+    _seenMyIds
+      ..clear()
+      ..addAll(page.mySegments.map((e) => e.id));
+    _seenOtherIds
+      ..clear()
+      ..addAll(page.otherSegments.map((e) => e.id));
+    _myHasMore = page.myHasMore;
+    _otherHasMore = page.otherHasMore;
+    _myNextOffset = page.myNextOffset;
+    _otherNextOffset = page.otherNextOffset;
+    _isLoadingMoreMy = false;
+    _isLoadingMoreOther = false;
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -319,27 +370,50 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   void _maybeLoadMoreMy({
     required int index,
     required int totalCount,
+    required int userId,
   }) {
-    final visibleCount = _visibleMyCount(totalCount);
-    if (visibleCount == 0) return;
-    if (index != visibleCount - 1) return;
-    if (visibleCount >= totalCount) return;
+    if (userId <= 0) return;
+    if (totalCount == 0) return;
+    if (index != totalCount - 1) return;
+    if (!_myHasMore) return;
     if (_isLoadingMoreMy) return;
     if (_myLoadDebounceTimer?.isActive ?? false) return;
     _isLoadingMoreMy = true;
     // ── Debounce: защищаемся от частых вызовов на быстром скролле
-    _myLoadDebounceTimer = Timer(_loadDebounceDelay, () {
+    _myLoadDebounceTimer = Timer(_kSegmentsLoadDebounceDelay, () {
       _myLoadDebounceTimer = null;
       if (!mounted) return;
-      // ── Увеличиваем страницу после завершения текущего кадра
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _myPage += 1;
-          _isLoadingMoreMy = false;
-        });
-      });
+      _loadNextMyPage(userId: userId);
     });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Загрузка следующей страницы «Мои участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  Future<void> _loadNextMyPage({required int userId}) async {
+    try {
+      final page = await SegmentsService().getSegmentsWithMyResultsPage(
+        userId: userId,
+        myLimit: _kSegmentsPageSize,
+        myOffset: _myNextOffset,
+        otherLimit: 0,
+        otherOffset: _otherNextOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        _appendMyPage(page);
+        _isLoadingMoreMy = false;
+      });
+    } catch (e, st) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMoreMy = false;
+      });
+      log(
+        'Segments my pagination load error: $e',
+        stackTrace: st,
+      );
+    }
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -348,27 +422,96 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   void _maybeLoadMoreOther({
     required int index,
     required int totalCount,
+    required int userId,
   }) {
-    final visibleCount = _visibleOtherCount(totalCount);
-    if (visibleCount == 0) return;
-    if (index != visibleCount - 1) return;
-    if (visibleCount >= totalCount) return;
+    if (userId <= 0) return;
+    if (totalCount == 0) return;
+    if (index != totalCount - 1) return;
+    if (!_otherHasMore) return;
     if (_isLoadingMoreOther) return;
     if (_otherLoadDebounceTimer?.isActive ?? false) return;
     _isLoadingMoreOther = true;
     // ── Debounce: защищаемся от частых вызовов на быстром скролле
-    _otherLoadDebounceTimer = Timer(_loadDebounceDelay, () {
+    _otherLoadDebounceTimer = Timer(_kSegmentsLoadDebounceDelay, () {
       _otherLoadDebounceTimer = null;
       if (!mounted) return;
-      // ── Увеличиваем страницу после завершения текущего кадра
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        setState(() {
-          _otherPage += 1;
-          _isLoadingMoreOther = false;
-        });
-      });
+      _loadNextOtherPage(userId: userId);
     });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Загрузка следующей страницы «Все участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  Future<void> _loadNextOtherPage({required int userId}) async {
+    try {
+      final page = await SegmentsService().getSegmentsWithMyResultsPage(
+        userId: userId,
+        myLimit: 0,
+        myOffset: _myNextOffset,
+        otherLimit: _kSegmentsPageSize,
+        otherOffset: _otherNextOffset,
+      );
+      if (!mounted) return;
+      setState(() {
+        _appendOtherPage(page);
+        _isLoadingMoreOther = false;
+      });
+    } catch (e, st) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingMoreOther = false;
+      });
+      log(
+        'Segments other pagination load error: $e',
+        stackTrace: st,
+      );
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Добавление страницы «Мои участки» в локальные данные.
+  // ───────────────────────────────────────────────────────────────────────────
+  void _appendMyPage(SegmentsWithMyResultsPage page) {
+    final current = _localSegments ??
+        const SegmentsWithMyResults(
+          mySegments: [],
+          otherSegments: [],
+        );
+    final newItems = page.mySegments
+        .where((item) => _seenMyIds.add(item.id))
+        .toList();
+    _localSegments = SegmentsWithMyResults(
+      mySegments: [
+        ...current.mySegments,
+        ...newItems,
+      ],
+      otherSegments: current.otherSegments,
+    );
+    _myHasMore = page.myHasMore;
+    _myNextOffset = page.myNextOffset;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Добавление страницы «Все участки» в локальные данные.
+  // ───────────────────────────────────────────────────────────────────────────
+  void _appendOtherPage(SegmentsWithMyResultsPage page) {
+    final current = _localSegments ??
+        const SegmentsWithMyResults(
+          mySegments: [],
+          otherSegments: [],
+        );
+    final newItems = page.otherSegments
+        .where((item) => _seenOtherIds.add(item.id))
+        .toList();
+    _localSegments = SegmentsWithMyResults(
+      mySegments: current.mySegments,
+      otherSegments: [
+        ...current.otherSegments,
+        ...newItems,
+      ],
+    );
+    _otherHasMore = page.otherHasMore;
+    _otherNextOffset = page.otherNextOffset;
   }
 
   // ───────────────────────────────────────────────────────────────────────────
@@ -376,15 +519,14 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   // ───────────────────────────────────────────────────────────────────────────
   double _myItemBottomPadding({
     required int index,
-    required int visibleCount,
     required int totalCount,
     required bool hasOther,
+    required bool hasMore,
   }) {
     final itemGap = AppSpacing.sm - (AppSpacing.xs / 2);
     final sectionGap = AppSpacing.md;
-    final isLastVisible = index == visibleCount - 1;
-    if (!isLastVisible) return itemGap;
-    final hasMore = visibleCount < totalCount;
+    final isLast = index == totalCount - 1;
+    if (!isLast) return itemGap;
     if (hasMore) return itemGap;
     return hasOther ? sectionGap : 0;
   }
@@ -394,13 +536,12 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   // ───────────────────────────────────────────────────────────────────────────
   double _otherItemBottomPadding({
     required int index,
-    required int visibleCount,
     required int totalCount,
+    required bool hasMore,
   }) {
     final itemGap = AppSpacing.sm - (AppSpacing.xs / 2);
-    final isLastVisible = index == visibleCount - 1;
-    if (!isLastVisible) return itemGap;
-    final hasMore = visibleCount < totalCount;
+    final isLast = index == totalCount - 1;
+    if (!isLast) return itemGap;
     if (hasMore) return itemGap;
     return 0;
   }
@@ -457,7 +598,6 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
     );
     setState(() {
       _localSegments = updated;
-      _hasLocalEdits = true;
     });
   }
 
