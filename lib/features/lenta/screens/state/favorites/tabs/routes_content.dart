@@ -2,12 +2,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/services/routes_service.dart';
 import '../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
 import '../edit_route_bottom_sheet.dart';
 import 'rout_description/rout_description_screen.dart';
-import '../../../../../../core/widgets/transparent_route.dart';
 
 // ────────────────────────────────────────────────────────────────
 // Дистанция без округления (отсечение до 2 знаков, как в тренировке)
@@ -84,7 +85,46 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
             return CustomScrollView(
               physics: const BouncingScrollPhysics(),
               slivers: [
-                const SliverToBoxAdapter(child: SizedBox(height: 10)),
+               
+                // ── Краткое описание вкладки (иконка + текст, без фона)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20,20,12,20 ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Сохранённые маршруты',
+                                style: AppTextStyles.h14w5.copyWith(
+                                  color: AppColors.getTextPrimaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Нажмите на карточку, чтобы открыть '
+                                'детали, статистику и результаты.',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverList(
@@ -170,7 +210,9 @@ class _SavedRouteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
-        Navigator.push(
+        // ── Открываем экран описания маршрута без нижнего навигационного меню
+        // ── Используем TransparentPageRoute для отображения предыдущей страницы при свайпе назад
+        pushWithoutNavBar(
           context,
           TransparentPageRoute(
             builder: (_) => RouteDescriptionScreen(
@@ -191,6 +233,7 @@ class _SavedRouteCard extends StatelessWidget {
             width: 1.0,
           ),
         ),
+        // Отступы как в карточках training_tab: all(6) + fromLTRB(2,2,12,2)
         padding: const EdgeInsets.all(6),
         child: _SavedRouteRow(
           route: route,
@@ -275,7 +318,9 @@ class _RouteCard extends StatelessWidget {
             ascentM: e.ascentM,
             durationText: e.durationText,
           );
-          Navigator.push(
+          // ── Открываем экран описания маршрута без нижнего навигационного меню
+          // ── Используем TransparentPageRoute для отображения предыдущей страницы при свайпе назад
+          pushWithoutNavBar(
             context,
             TransparentPageRoute(
               builder: (_) => RouteDescriptionScreen(
@@ -296,6 +341,7 @@ class _RouteCard extends StatelessWidget {
             width: 1.0,
           ),
         ),
+        // Отступы как в карточках training_tab
         padding: const EdgeInsets.all(6),
         child: _RouteRow(e: e),
       ),
@@ -317,10 +363,11 @@ class _SavedRouteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Внутренний отступ карточки — как в training_tab _WorkoutCard
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -358,21 +405,26 @@ class _SavedRouteRow extends StatelessWidget {
                     const SizedBox(width: 4),
                     _difficultyChipFromString(route.difficulty),
                     const SizedBox(width: 4),
-                    // Иконка «три точки» — меню Изменить / Удалить
-                    PopupMenuButton<String>(
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 1),
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.xll),
-                      ),
-                      color: AppColors.surface,
-                      elevation: 8,
-                      icon: Icon(
-                        Icons.more_horiz,
-                        size: 20,
-                        color: AppColors.getIconSecondaryColor(context),
-                      ),
+                    // Иконка «три точки» — меню; фиксированная ширина, прижата к правому краю
+                    SizedBox(
+                      width: 16,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(minWidth: 1),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.xll),
+                          ),
+                          color: AppColors.surface,
+                          elevation: 8,
+                          icon: Icon(
+                            Icons.more_vert,
+                            size: 20,
+                            color:
+                                AppColors.getIconSecondaryColor(context),
+                          ),
                       onSelected: (value) {
                         if (value == 'edit') {
                           onEdit();
@@ -424,10 +476,12 @@ class _SavedRouteRow extends StatelessWidget {
                           ),
                         ),
                       ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 6),
                 IntrinsicHeight(
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -499,40 +553,36 @@ class _SavedRouteRow extends StatelessWidget {
     );
   }
 
+  /// Сложность маршрута — иконка огня (Cupertino) с цветом по уровню.
   Widget _difficultyChipFromString(String d) {
     late final Color c;
-    late final String t;
     switch (d) {
       case 'easy':
         c = AppColors.success;
-        t = 'Лёгкий';
         break;
       case 'hard':
         c = AppColors.error;
-        t = 'Сложный';
         break;
       default:
         c = AppColors.warning;
-        t = 'Средний';
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
-      child: Text(
-        t,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w400,
-          color: c,
-        ),
+      child: Icon(
+        CupertinoIcons.flame_fill,
+        size: 14,
+        color: c,
       ),
     );
   }
 }
 
+/// Строка карточки для мока (_RouteCard). Список маршрутов использует
+/// _SavedRouteCard → _SavedRouteRow — отступы менять там (стр. ~329).
 class _RouteRow extends StatelessWidget {
   final _RouteItem e;
   const _RouteRow({required this.e});
@@ -542,7 +592,7 @@ class _RouteRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -569,9 +619,10 @@ class _RouteRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Огонёк (сложность) сразу после названия маршрута
                 Row(
                   children: [
-                    Expanded(
+                    Flexible(
                       child: Text(
                         e.title,
                         maxLines: 1,
@@ -703,35 +754,29 @@ class _RouteRow extends StatelessWidget {
     );
   }
 
+  /// Сложность маршрута — иконка огня (Cupertino) с цветом по уровню.
   Widget _difficultyChip(_Difficulty d) {
     late final Color c;
-    late final String t;
     switch (d) {
       case _Difficulty.easy:
         c = AppColors.success;
-        t = 'Лёгкий';
         break;
       case _Difficulty.medium:
         c = AppColors.warning;
-        t = 'Средний';
         break;
       case _Difficulty.hard:
         c = AppColors.error;
-        t = 'Сложный';
     }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AppRadius.xl),
       ),
-      child: Text(
-        t,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w400,
-          color: c,
-        ),
+      child: Icon(
+        CupertinoIcons.flame_fill,
+        size: 14,
+        color: c,
       ),
     );
   }

@@ -13,9 +13,6 @@ import 'tabs/segments_content.dart';
 const double _kBottomNavHeight = 60;
 /// Небольшой запас, чтобы контент не обрезался под плашкой.
 const double _kBottomNavExtra = 12;
-/// При ширине экрана меньше этой величины иконки во вкладках скрываются,
-/// чтобы влезли подписи (узкие устройства, например iPhone 15).
-const double _kTabBarMinWidthForIcons = 400;
 
 class FavoritesScreen extends ConsumerStatefulWidget {
   const FavoritesScreen({super.key});
@@ -63,11 +60,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
           // ── Вкладки: иконка + текст; на узком экране — только текст
           Container(
             color: AppColors.getSurfaceColor(context),
-            child: Builder(
-              builder: (context) {
-                final width = MediaQuery.sizeOf(context).width;
-                final showIcons = width >= _kTabBarMinWidthForIcons;
-                return TabBar(
+            child: TabBar(
                   controller: _tab,
                   isScrollable: false,
                   labelColor: AppColors.brandPrimary,
@@ -78,38 +71,36 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
                   dividerColor: AppColors.twinchip,
                   labelPadding: const EdgeInsets.symmetric(horizontal: 8),
                   tabs: [
-                    Tab(
+                    const Tab(
                       child: _TabLabel(
                         icon: CupertinoIcons.calendar,
                         text: 'События',
-                        showIcon: showIcons,
+                        showIcon: false, // иконки в табах отключены
                       ),
                     ),
-                    Tab(
+                    const Tab(
                       child: _TabLabel(
                         icon: CupertinoIcons.bookmark,
                         text: 'Закладки',
-                        showIcon: showIcons,
+                        showIcon: false,
                       ),
                     ),
-                    Tab(
+                    const Tab(
                       child: _TabLabel(
                         icon: CupertinoIcons.map,
                         text: 'Маршруты',
-                        showIcon: showIcons,
+                        showIcon: false,
                       ),
                     ),
-                    Tab(
+                    const Tab(
                       child: _TabLabel(
                         icon: CupertinoIcons.flag,
                         text: 'Участки',
-                        showIcon: showIcons,
+                        showIcon: false,
                       ),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
           ),
           Expanded(
             child: Padding(

@@ -3,6 +3,8 @@
 // Сервис для сохранённых маршрутов: сохранение из тренировки, список избранного.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:convert';
+
 import 'package:latlong2/latlong.dart';
 import 'api_service.dart';
 import '../utils/static_map_url_builder.dart';
@@ -82,6 +84,8 @@ class RouteDetail {
     required this.difficulty,
     required this.distanceKm,
     required this.ascentM,
+    this.points = const [],
+    this.sourceActivityId,
     this.routeMapUrl,
     this.createdAt,
     this.author,
@@ -102,6 +106,10 @@ class RouteDetail {
   final String difficulty;
   final double distanceKm;
   final int ascentM;
+  /// Точки маршрута (для интерактивной карты).
+  final List<LatLng> points;
+  /// ID исходной тренировки, из которой сохранён маршрут.
+  final int? sourceActivityId;
   final String? routeMapUrl;
   final String? createdAt;
   final RouteAuthor? author;
@@ -139,6 +147,11 @@ class RouteDetail {
       difficulty: (j['difficulty'] as String?) ?? 'medium',
       distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
       ascentM: (j['ascent_m'] as num?)?.toInt() ?? 0,
+      points: _parseRoutePoints(
+        j['points'] ?? j['route_points'],
+      ),
+      sourceActivityId: (j['source_activity_id'] as num?)?.toInt() ??
+          (j['activity_id'] as num?)?.toInt(),
       routeMapUrl: j['route_map_url'] as String?,
       createdAt: j['created_at'] as String?,
       author: author,
@@ -158,6 +171,57 @@ class RouteDetail {
           (j['participants_count'] as num?)?.toInt() ?? 0,
     );
   }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Парсер точек маршрута (поддержка разных форматов API)
+// ────────────────────────────────────────────────────────────────
+List<LatLng> _parseRoutePoints(dynamic v) {
+  final out = <LatLng>[];
+  // ────────────────────────────────────────────────────────────────
+  // Сервер может вернуть points строкой (JSON); пробуем распарсить
+  // ────────────────────────────────────────────────────────────────
+  if (v is String) {
+    try {
+      final decoded = jsonDecode(v);
+      return _parseRoutePoints(decoded);
+    } catch (_) {
+      return out;
+    }
+  }
+  if (v is List) {
+    final regex = RegExp(
+      r'LatLng\(\s*([\-0-9\.]+)\s*,\s*([\-0-9\.]+)\s*\)',
+    );
+    for (final e in v) {
+      if (e is String) {
+        final m = regex.firstMatch(e);
+        if (m != null) {
+          out.add(
+            LatLng(
+              double.tryParse(m.group(1)!) ?? 0,
+              double.tryParse(m.group(2)!) ?? 0,
+            ),
+          );
+        }
+      } else if (e is Map<String, dynamic>) {
+        out.add(
+          LatLng(
+            (e['lat'] as num?)?.toDouble() ?? 0,
+            (e['lng'] as num?)?.toDouble() ?? 0,
+          ),
+        );
+      } else if (e is List && e.length >= 2) {
+        out.add(
+          LatLng(
+            (e[0] as num?)?.toDouble() ?? 0,
+            (e[1] as num?)?.toDouble() ?? 0,
+          ),
+        );
+      }
+    }
+  }
+  return out;
 }
 
 /// Элемент списка «Мои результаты» по маршруту (тренировка).

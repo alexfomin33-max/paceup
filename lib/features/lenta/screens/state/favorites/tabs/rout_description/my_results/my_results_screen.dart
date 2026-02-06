@@ -167,11 +167,11 @@ class _MyResultsScreenState extends State<MyResultsScreen> {
                       )
                     else
                       SliverPadding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverList.separated(
                           itemCount: _workouts!.length,
                           separatorBuilder: (_, __) =>
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 6),
                           itemBuilder: (context, i) => _ResultCard(
                             item: _workouts![i],
                             userId: widget.userId,
@@ -234,24 +234,15 @@ class _ResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => _openActivityDescription(context),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(0),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
-            color: AppColors.getBorderColor(context),
-            width: 0.5,
+            color: AppColors.twinchip,
+            width: 1.0,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? AppColors.darkShadowSoft
-                  : AppColors.shadowSoft,
-              offset: const Offset(0, 1),
-              blurRadius: 1,
-              spreadRadius: 0,
-            ),
-          ],
         ),
         child: _ResultRow(item: item, userId: userId),
       ),
@@ -348,94 +339,96 @@ class _ResultRowState extends State<_ResultRow> {
     final title = _formatWhen(widget.item.when);
     final hrText = widget.item.heartRate != null ? '${widget.item.heartRate}' : '—';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Превью карты конкретной тренировки (80x74, как на экране Профиль-Тренировки)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: _loadingMap
-                ? SizedBox(
-                    width: 80,
-                    height: 74,
-                    child: _mapPlaceholder(context),
-                  )
-                : _points != null && _points!.isNotEmpty
-                    ? SizedBox(
-                        width: 80,
-                        height: 74,
-                        child: _buildStaticMiniMap(
-                          context,
-                          _points!,
-                          activityId: widget.item.activityId,
-                          userId: widget.userId,
+      padding: const EdgeInsets.all(6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(2, 2, 12, 2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Превью карты (80x76, как в Профиль-Тренировки)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: _loadingMap
+                  ? SizedBox(
+                      width: 80,
+                      height: 76,
+                      child: _mapPlaceholder(context),
+                    )
+                  : _points != null && _points!.isNotEmpty
+                      ? SizedBox(
+                          width: 80,
+                          height: 76,
+                          child: _buildStaticMiniMap(
+                            context,
+                            _points!,
+                            activityId: widget.item.activityId,
+                            userId: widget.userId,
+                          ),
+                        )
+                      : SizedBox(
+                          width: 80,
+                          height: 76,
+                          child: _mapPlaceholder(context),
                         ),
-                      )
-                    : SizedBox(
-                        width: 80,
-                        height: 74,
-                        child: _mapPlaceholder(context),
-                      ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.getTextSecondaryColor(context),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _MetricAligned(
-                        cupertinoIcon: CupertinoIcons.time,
-                        text: widget.item.durationText,
-                        align: MainAxisAlignment.start,
-                        textAlign: TextAlign.left,
-                        iconColor: AppColors.brandPrimary,
-                      ),
-                    ),
-                    Expanded(
-                      child: _MetricAligned(
-                        materialIcon: Icons.speed,
-                        text: widget.item.paceText,
-                        align: MainAxisAlignment.center,
-                        textAlign: TextAlign.center,
-                        iconColor: AppColors.brandPrimary,
-                      ),
-                    ),
-                    Expanded(
-                      child: _MetricAligned(
-                        cupertinoIcon: CupertinoIcons.heart,
-                        text: hrText,
-                        align: MainAxisAlignment.center,
-                        textAlign: TextAlign.center,
-                        iconColor: AppColors.error,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.getTextPrimaryColor(context),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _MetricAligned(
+                          cupertinoIcon: CupertinoIcons.time,
+                          text: widget.item.durationText,
+                          align: MainAxisAlignment.start,
+                          textAlign: TextAlign.left,
+                          iconColor: AppColors.brandPrimary,
+                        ),
+                      ),
+                      Expanded(
+                        child: _MetricAligned(
+                          materialIcon: Icons.speed,
+                          text: widget.item.paceText,
+                          align: MainAxisAlignment.center,
+                          textAlign: TextAlign.center,
+                          iconColor: AppColors.brandPrimary,
+                        ),
+                      ),
+                      Expanded(
+                        child: _MetricAligned(
+                          cupertinoIcon: CupertinoIcons.heart,
+                          text: hrText,
+                          align: MainAxisAlignment.center,
+                          textAlign: TextAlign.center,
+                          iconColor: AppColors.error,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  /// Строит статичную мини-карту маршрута (80x74px).
-  /// Использует ту же логику, что и экран "Профиль-Тренировки".
+  /// Строит статичную мини-карту маршрута (80x76px, как в Профиль-Тренировки).
   /// 
   /// ⚡ PERFORMANCE OPTIMIZATION для маленьких карт:
   /// - Использует DPR 1.5 (вместо полного devicePixelRatio) для уменьшения веса файла
@@ -450,7 +443,7 @@ class _ResultRowState extends State<_ResultRow> {
     int? userId,
   }) {
     const widthDp = 80.0;
-    const heightDp = 74.0;
+    const heightDp = 76.0;
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 ПРОРЕЖИВАНИЕ ТОЧЕК: для треков с большим количеством точек
@@ -650,7 +643,7 @@ class _ResultRowState extends State<_ResultRow> {
   static Widget _mapPlaceholder(BuildContext context) {
     return Container(
       width: 80,
-      height: 74,
+      height: 76,
       color: Theme.of(context).brightness == Brightness.dark
           ? AppColors.darkSurfaceMuted
           : AppColors.skeletonBase,
@@ -690,10 +683,10 @@ class _MetricAligned extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 14,
+          size: 16,
           color: iconColor ?? AppColors.getTextSecondaryColor(context),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 6),
         Flexible(
           child: Text(
             text,
@@ -702,7 +695,8 @@ class _MetricAligned extends StatelessWidget {
             textAlign: textAlign,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 12,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
               color: AppColors.getTextPrimaryColor(context),
             ),
           ),

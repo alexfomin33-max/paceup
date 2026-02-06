@@ -1,19 +1,22 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart' as ll;
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart' as flutter_map;
 import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../core/config/app_config.dart';
 import '../../../../../../../../core/services/routes_service.dart';
-import '../../../../../../../../core/widgets/app_bar.dart'; // ← глобальный AppBar
-import '../../../../../../profile/screens/profile_screen.dart';
 import '../../../../../../profile/providers/training/training_provider.dart';
 import '../../../../activity/description_screen.dart';
-import 'my_results/my_results_screen.dart';
-import 'all_results/all_results_screen.dart';
-import 'members_route/members_route_screen.dart';
 import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
 import '../../edit_route_bottom_sheet.dart';
+import 'rout_description_bottom_sheet.dart';
+import '../../../../../../map/services/marker_assets.dart';
 
 /// Экран описания маршрута. Загружает детали из API (дата, автор, рекорды).
 class RouteDescriptionScreen extends StatefulWidget {
@@ -36,14 +39,30 @@ class RouteDescriptionScreen extends StatefulWidget {
 }
 
 class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
+  /// Фиксированная высота свёрнутого нижнего листа (логические пиксели).
+  static const double _sheetCollapsedHeightPx = 100.0;
+
   RouteDetail? _detail;
   bool _loading = true;
   Object? _error;
+  // ────────────────────────────────────────────────────────────────
+  // Точки маршрута для интерактивной карты
+  // ────────────────────────────────────────────────────────────────
+  List<ll.LatLng> _routePoints = const [];
+
+  late final DraggableScrollableController _sheetController;
 
   @override
   void initState() {
     super.initState();
+    _sheetController = DraggableScrollableController();
     _loadDetail();
+  }
+
+  @override
+  void dispose() {
+    _sheetController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadDetail() async {
@@ -57,6 +76,7 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
         userId: widget.userId,
       );
       if (mounted) setState(() { _detail = d; _loading = false; });
+      await _loadRoutePoints(d);
     } catch (e, st) {
       if (mounted) setState(() { _error = e; _loading = false; });
       debugPrint('RouteDetail load error: $e $st');
@@ -65,9 +85,45 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
 
   String get _title =>
       _detail?.name ?? widget.initialRoute.name;
-  String get _mapAsset => 'assets/training_map.png';
-  String? get _mapImageUrl =>
-      _detail?.routeMapUrl ?? widget.initialRoute.routeMapUrl;
+  // ────────────────────────────────────────────────────────────────
+  // Точки маршрута для интерактивной карты
+  // ────────────────────────────────────────────────────────────────
+  List<ll.LatLng> get _routePointsSafe => _routePoints;
+
+  // ────────────────────────────────────────────────────────────────
+  // Загружаем точки маршрута: из detail, иначе из активности
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _loadRoutePoints(RouteDetail d) async {
+    if (d.points.isNotEmpty) {
+      if (!mounted) return;
+      setState(() => _routePoints = d.points);
+      return;
+    }
+    final activityId =
+        d.sourceActivityId ?? d.personalBestActivityId ?? 0;
+    if (activityId <= 0) {
+      if (!mounted) return;
+      setState(() => _routePoints = const []);
+      return;
+    }
+    try {
+      final map = await RoutesService().getActivityById(
+        activityId: activityId,
+        userId: widget.userId,
+      );
+      if (map == null) return;
+      final ta = TrainingActivity.fromJson(map);
+      final points = ta.points
+          .map((c) => ll.LatLng(c.lat, c.lng))
+          .toList();
+      if (!mounted) return;
+      setState(() => _routePoints = points);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _routePoints = const []);
+    }
+  }
+
   // ────────────────────────────────────────────────────────────────
   // Данные маршрута по умолчанию (fallback, если нет личного рекорда)
   // ────────────────────────────────────────────────────────────────
@@ -99,19 +155,15 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
   String get _difficulty =>
       _detail?.difficulty ?? widget.initialRoute.difficulty;
 
-  static Widget _mapPlaceholder(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
+  // ────────────────────────────────────────────────────────────────
+  // Пустой фон карты (когда нет точек маршрута): без плейсхолдера и иконки
+  // ────────────────────────────────────────────────────────────────
+  static Widget _mapPlaceholder(BuildContext context, double height) {
+    return SizedBox(
+      height: height,
+      width: double.infinity,
       child: Container(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.darkSurfaceMuted
-            : AppColors.skeletonBase,
-        alignment: Alignment.center,
-        child: Icon(
-          CupertinoIcons.map,
-          size: 28,
-          color: AppColors.getTextSecondaryColor(context),
-        ),
+        color: AppColors.getBackgroundColor(context),
       ),
     );
   }
@@ -132,6 +184,83 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
   String _formatDistanceKm(double km) {
     final truncated = (km * 100).truncateToDouble() / 100;
     return truncated.toStringAsFixed(2);
+  }
+
+  /// Показать меню маршрута (Изменить / Удалить) — вызывается с кнопки на карте.
+  void _showRouteMenu(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final position = RelativeRect.fromLTRB(
+      size.width - 220,
+      80,
+      16,
+      0,
+    );
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+      ),
+      color: AppColors.surface,
+      elevation: 8,
+      items: [
+        PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              const Icon(
+                Icons.edit_outlined,
+                size: 22,
+                color: AppColors.brandPrimary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Изменить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline,
+                size: 22,
+                color: AppColors.error,
+              ),
+              SizedBox(width: 12),
+              Text(
+                'Удалить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (value == 'edit') {
+        showEditRouteBottomSheet(
+          context,
+          route: widget.initialRoute,
+          userId: widget.userId,
+          onSaved: () {
+            _loadDetail();
+          },
+        );
+      } else if (value == 'delete') {
+        _confirmAndDeleteRoute(context);
+      }
+    });
   }
 
   /// Диалог подтверждения удаления; после удаления — pop на экран избранных.
@@ -237,7 +366,6 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final chip = _difficultyChip(_difficulty);
     final createdText = _loading && _detail == null
         ? '—'
         : _formatCreatedAt(_detail?.createdAt);
@@ -263,84 +391,6 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
     return InteractiveBackSwipe(
       child: Scaffold(
         backgroundColor: AppColors.getBackgroundColor(context),
-        appBar: PaceAppBar(
-          title: 'Маршрут',
-          showBottomDivider: false, // ← без нижней линии
-          actions: [
-            PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(minWidth: 1),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.xll),
-              ),
-              color: AppColors.surface,
-              elevation: 8,
-              icon: Icon(
-                Icons.more_horiz,
-                size: 20,
-                color: AppColors.getIconSecondaryColor(context),
-              ),
-              onSelected: (value) {
-                if (value == 'edit') {
-                  showEditRouteBottomSheet(
-                    context,
-                    route: widget.initialRoute,
-                    userId: widget.userId,
-                    onSaved: () {
-                      _loadDetail();
-                    },
-                  );
-                } else if (value == 'delete') {
-                  _confirmAndDeleteRoute(context);
-                }
-              },
-              itemBuilder: (ctx) => [
-                PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.edit_outlined,
-                        size: 22,
-                        color: AppColors.brandPrimary,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        'Изменить',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          color: AppColors.getTextPrimaryColor(ctx),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.delete_outline,
-                        size: 22,
-                        color: AppColors.error,
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'Удалить',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 16,
-                          color: AppColors.error,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
         body: _error != null
             ? Center(
                 child: Padding(
@@ -357,493 +407,555 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
                 onRefresh: () async {
                   await _loadDetail();
                 },
-                child: CustomScrollView(
-                  physics: const BouncingScrollPhysics(
-                    parent: AlwaysScrollableScrollPhysics(),
-                  ),
-                  slivers: [
-                  // ── Заголовок + чип — по центру
-                  SliverToBoxAdapter(
-                    child: Container(
-                      color: AppColors.getSurfaceColor(context),
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Center(
-                            child: Text(
-                              _title,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.getTextPrimaryColor(context),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Center(child: chip),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Создан: $createdText',
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 13,
-                              color: AppColors.getTextSecondaryColor(context),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // Лидер: самый быстрый по маршруту (аватар и имя), кликабельно — переход в профиль
-                          if (leader != null)
-                            InkWell(
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  TransparentPageRoute(
-                                    builder: (_) => ProfileScreen(
-                                      userId: leader.id,
-                                    ),
-                                  ),
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.emoji_events_outlined,
-                                    size: 22,
-                                    color: AppColors.gold,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  leader.avatar.isNotEmpty
-                                      ? ClipOval(
-                                          child: CachedNetworkImage(
-                                            imageUrl: leader.avatar,
-                                            width: 36,
-                                            height: 36,
-                                            fit: BoxFit.cover,
-                                            errorWidget: (_, _, _) =>
-                                                _avatarPlaceholder(context),
-                                          ),
-                                        )
-                                      : CircleAvatar(
-                                          radius: 18,
-                                          backgroundColor:
-                                              Theme.of(context).brightness ==
-                                                      Brightness.dark
-                                                  ? AppColors.darkSurfaceMuted
-                                                  : AppColors.skeletonBase,
-                                          child:
-                                              _avatarPlaceholder(context),
-                                        ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      leader.fullName.isNotEmpty
-                                          ? leader.fullName
-                                          : '—',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.getTextPrimaryColor(
-                                          context,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
+                child: Stack(
+                  children: [
+                    // ─────────────────────────────────────────────────────────
+                    // Карта на весь экран (нижний слой, фон)
+                    // ─────────────────────────────────────────────────────────
+                    Positioned.fill(
+                      child: _RouteMapTopBlock(
+                        points: _routePointsSafe,
+                        placeholderBuilder: (height) =>
+                            _mapPlaceholder(context, height),
+                        isInteractive: true,
+                        onBack: () => Navigator.of(context).maybePop(),
+                        onMenu: () => _showRouteMenu(context),
                       ),
                     ),
-                  ),
-
-                  // ── Карта-превью
-                  // Используем AspectRatio для сохранения пропорций и BoxFit.contain
-                  // для полного отображения карты без обрезки
-                  SliverToBoxAdapter(
-                    child: _mapImageUrl != null && _mapImageUrl!.isNotEmpty
-                        ? AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: CachedNetworkImage(
-                              imageUrl: _mapImageUrl!,
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              // Добавляем cacheKey для принудительного обновления при изменении URL
-                              cacheKey: '${_mapImageUrl}_v2',
-                              errorWidget: (_, _, _) =>
-                                  _mapPlaceholder(context),
-                            ),
-                          )
-                        : AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: Image.asset(
-                              _mapAsset,
-                              width: double.infinity,
-                              fit: BoxFit.contain,
-                              errorBuilder: (_, _, _) =>
-                                  _mapPlaceholder(context),
-                            ),
+                    // ── Нижний лист: при открытии развёрнут на 55%, можно свернуть/развернуть
+                    DraggableScrollableSheet(
+                      controller: _sheetController,
+                      initialChildSize: 0.5,
+                      minChildSize: (_sheetCollapsedHeightPx /
+                              MediaQuery.sizeOf(context).height)
+                          .clamp(0.0, 1.0),
+                      maxChildSize: 0.5,
+                      builder: (context, scrollController) {
+                        return RouteDescriptionBottomSheetContent(
+                          scrollController: scrollController,
+                          dragController: _sheetController,
+                          data: RouteDescriptionSheetData(
+                            title: _title,
+                            difficulty: _difficulty,
+                            createdText: createdText,
+                            leader: leader,
+                            routeId: widget.routeId,
+                            userId: widget.userId,
+                            distanceText: distanceText,
+                            durationText: _durationText,
+                            ascentText: ascentText,
+                            personalBestText: personalBestText,
+                            myWorkoutsCount: myWorkoutsCount,
+                            participantsCount: participantsCount,
+                            onPersonalBestTap: onPersonalBestTap,
                           ),
-                  ),
-
-                  // ── Три метрики
-                  SliverToBoxAdapter(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 0.5,
+                        );
+                      },
+                    ),
+                    // ── Индикатор загрузки поверх контента, пока загружаются детали маршрута
+                    if (_loading)
+                      Positioned.fill(
+                        child: Center(
+                          child: CupertinoActivityIndicator(
+                            color: AppColors.getTextSecondaryColor(context),
+                          ),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context).brightness ==
-                                    Brightness.dark
-                                ? AppColors.darkShadowSoft
-                                : AppColors.shadowSoft,
-                            offset: const Offset(0, 1),
-                            blurRadius: 1,
-                            spreadRadius: 0,
-                          ),
-                        ],
                       ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: _MetricBlock(
-                              label: 'Расстояние',
-                              value: distanceText,
-                            ),
-                          ),
-                          Expanded(
-                            child: GestureDetector(
-                              behavior: HitTestBehavior.opaque,
-                              onTap: onPersonalBestTap,
-                              child: _MetricBlock(
-                                label: 'Время',
-                                value: _durationText,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: _MetricBlock(
-                              label: 'Набор высоты',
-                              value: ascentText,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 12)),
-
-                  // ── Нижняя карточка: личный рекорд, мои результаты, участники
-                  SliverToBoxAdapter(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.getSurfaceColor(context),
-                        border: Border.all(
-                          color: AppColors.getBorderColor(context),
-                          width: 0.5,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Theme.of(context).brightness ==
-                                    Brightness.dark
-                                ? AppColors.darkShadowSoft
-                                : AppColors.shadowSoft,
-                            offset: const Offset(0, 1),
-                            blurRadius: 1,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        children: [
-                          _ActionRow(
-                            icon: CupertinoIcons.rosette,
-                            title: 'Личный рекорд',
-                            trailingText: personalBestText,
-                            trailingChevron: false,
-                            onTap: onPersonalBestTap,
-                          ),
-                          const _DividerLine(),
-                          _ActionRow(
-                            icon: CupertinoIcons.timer,
-                            title: 'Мои результаты',
-                            trailingText:
-                                'Забегов: $myWorkoutsCount',
-                            trailingChevron: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (_) => MyResultsScreen(
-                                    routeId: widget.routeId,
-                                    routeTitle: _title,
-                                    userId: widget.userId,
-                                    difficultyText:
-                                        _difficultyText(_difficulty),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const _DividerLine(),
-                          _ActionRow(
-                            icon: CupertinoIcons.chart_bar_alt_fill,
-                            title: 'Общие результаты',
-                            trailingChevron: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (_) => AllResultsScreen(
-                                    routeId: widget.routeId,
-                                    routeTitle: _title,
-                                    difficultyText:
-                                        _difficultyText(_difficulty),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                          const _DividerLine(),
-                          _ActionRow(
-                            icon: CupertinoIcons.person_2_fill,
-                            title: 'Все участники маршрута',
-                            trailingText: '$participantsCount',
-                            trailingChevron: true,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                TransparentPageRoute(
-                                  builder: (_) => MembersRouteScreen(
-                                    routeId: widget.routeId,
-                                    routeTitle: _title,
-                                    difficultyText:
-                                        _difficultyText(_difficulty),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
-                ],
-              ),
-            ),
+                  ],
+        ),
+        ),
         ),
     );
   }
 
-  static Widget _avatarPlaceholder(BuildContext context) {
-    return Icon(
-      CupertinoIcons.person_fill,
-      size: 24,
-      color: AppColors.getTextSecondaryColor(context),
-    );
-  }
-
-  Widget _difficultyChip(String d) {
-    late final Color c;
-    late final String t;
-    switch (d) {
-      case 'easy':
-        c = AppColors.success;
-        t = 'Лёгкий маршрут';
-        break;
-      case 'medium':
-        c = AppColors.warning;
-        t = 'Средний маршрут';
-        break;
-      default:
-        c = AppColors.error;
-        t = 'Сложный маршрут';
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: c.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-      ),
-      child: Text(
-        t,
-        style: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
-          color: c,
-        ),
-      ),
-    );
-  }
-
-  String _difficultyText(String d) {
-    switch (d) {
-      case 'easy':
-        return 'Лёгкий маршрут';
-      case 'medium':
-        return 'Средний маршрут';
-      default:
-        return 'Сложный маршрут';
-    }
-  }
 }
 
-// ── блок метрики (без внешних паддингов у карточки)
-class _MetricBlock extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MetricBlock({required this.label, required this.value});
+// ────────────────────────────────────────────────────────────────────
+// Блок карты вверху экрана с кнопками в тёмных кружках (как в
+// description_screen): слева «назад», справа «меню».
+// ────────────────────────────────────────────────────────────────────
+class _RouteMapTopBlock extends StatelessWidget {
+  const _RouteMapTopBlock({
+    required this.points,
+    required this.placeholderBuilder,
+    required this.isInteractive,
+    required this.onBack,
+    required this.onMenu,
+  });
+
+  final List<ll.LatLng> points;
+  final Widget Function(double height) placeholderBuilder;
+  final bool isInteractive;
+  final VoidCallback onBack;
+  final VoidCallback onMenu;
 
   @override
   Widget build(BuildContext context) {
-    // внутренний минимальный отступ, чтобы текст не прилипал к границам между колонками
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 11,
-              color: AppColors.getTextSecondaryColor(context),
+    final mediaQuery = MediaQuery.of(context);
+    final safeTop = mediaQuery.padding.top;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Высота карты: на весь доступный экран (когда блок в Positioned.fill)
+        final mapHeight = constraints.maxHeight;
+
+        return SizedBox(
+          height: mapHeight,
+          width: double.infinity,
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              // ────────────────────────────────────────────────────────────
+              // Интерактивная карта на весь блок (весь экран)
+              // ────────────────────────────────────────────────────────────
+              Positioned.fill(
+                child: points.isNotEmpty
+                    ? _InlineRouteMap(
+                        points: points,
+                        isInteractive: isInteractive,
+                      )
+                    : placeholderBuilder(mapHeight),
+              ),
+              // Кнопки поверх карты: слева «назад», справа «меню»
+          Positioned(
+            top: safeTop + 8,
+            left: 8,
+            child: _CircleAppIcon(
+              icon: CupertinoIcons.back,
+              onPressed: onBack,
             ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.getTextPrimaryColor(context),
+          Positioned(
+            top: safeTop + 8,
+            right: 8,
+            child: _CircleAppIcon(
+              icon: CupertinoIcons.ellipsis_vertical,
+              onPressed: onMenu,
             ),
           ),
         ],
       ),
     );
+      },
+    );
   }
 }
 
-// ── строка действий: 3 колонки
-class _ActionRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? trailingText;
-  final bool trailingChevron;
-  final VoidCallback? onTap;
-
-  const _ActionRow({
-    required this.icon,
-    required this.title,
-    this.trailingText,
-    this.trailingChevron = false,
-    this.onTap,
+// ────────────────────────────────────────────────────────────────────
+// Интерактивная карта маршрута (уменьшенная версия, как во fullscreen).
+// Поддерживает flutter_map (macOS) и Mapbox (Android/iOS).
+// ────────────────────────────────────────────────────────────────────
+class _InlineRouteMap extends StatefulWidget {
+  const _InlineRouteMap({
+    required this.points,
+    required this.isInteractive,
   });
+
+  final List<ll.LatLng> points;
+  final bool isInteractive;
+
+  @override
+  State<_InlineRouteMap> createState() => _InlineRouteMapState();
+}
+
+class _InlineRouteMapState extends State<_InlineRouteMap> {
+  // ────────────────────────────────────────────────────────────────
+  // Контроллеры и менеджеры Mapbox
+  // ────────────────────────────────────────────────────────────────
+  PolylineAnnotationManager? _polylineAnnotationManager;
+  PointAnnotationManager? _pointAnnotationManager;
+  Uint8List? _routeStartMarkerImage;
+  Uint8List? _routeEndMarkerImage;
+
+  // ────────────────────────────────────────────────────────────────
+  // Контроллер flutter_map (macOS)
+  // ────────────────────────────────────────────────────────────────
+  final flutter_map.MapController _flutterMapController =
+      flutter_map.MapController();
+
+  // ────────────────────────────────────────────────────────────────
+  // Флаги готовности и позиционирования
+  // ────────────────────────────────────────────────────────────────
+  bool _isMapReady = false;
+  bool _isBoundsFitted = false;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          children: [
-            // 1-я колонка: иконка + тайтл (лево)
-            Expanded(
-              flex: 6,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Row(
-                  children: [
-                    Icon(icon, size: 16, color: AppColors.brandPrimary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.getTextPrimaryColor(context),
+    if (widget.points.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final center = _centerFromPoints(widget.points);
+    final bounds = _boundsFromPoints(widget.points);
+
+    return IgnorePointer(
+      ignoring: !widget.isInteractive,
+      child: RepaintBoundary(
+        child: _buildMap(center, bounds),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Построение карты с учётом платформы
+  // ────────────────────────────────────────────────────────────────
+  Widget _buildMap(ll.LatLng center, _RouteLatLngBounds bounds) {
+    // Нижний отступ ~50% высоты экрана — маршрут в верхней половине
+    final bottomPadding =
+        MediaQuery.sizeOf(context).height * 0.5;
+
+    // ── macOS: flutter_map
+    if (Platform.isMacOS) {
+      return flutter_map.FlutterMap(
+        mapController: _flutterMapController,
+        options: flutter_map.MapOptions(
+          initialCenter: center,
+          initialZoom: 12.0,
+          minZoom: 3.0,
+          maxZoom: 18.0,
+          onMapReady: () {
+            // ── Фитим границы один раз после готовности карты
+            if (_isBoundsFitted) return;
+            _isBoundsFitted = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (widget.points.length > 1) {
+                _flutterMapController.fitCamera(
+                  flutter_map.CameraFit.bounds(
+                    bounds: flutter_map.LatLngBounds(
+                      bounds.southwest,
+                      bounds.northeast,
+                    ),
+                    padding: EdgeInsets.only(
+                      top: 48,
+                      left: 12,
+                      right: 12,
+                      bottom: bottomPadding,
+                    ),
+                  ),
+                );
+              } else {
+                _flutterMapController.move(center, 12.0);
+              }
+            });
+          },
+        ),
+        children: [
+          flutter_map.TileLayer(
+            urlTemplate: AppConfig.mapTilesUrl.replaceAll(
+              '{apiKey}',
+              AppConfig.mapTilerApiKey,
+            ),
+            userAgentPackageName: 'com.example.paceup',
+          ),
+          flutter_map.PolylineLayer(
+            polylines: _buildFlutterMapPolylines(),
+          ),
+          flutter_map.MarkerLayer(
+            markers: _buildFlutterMapRouteMarkers(),
+          ),
+        ],
+      );
+    }
+
+    // ── Android/iOS: Mapbox
+    return Stack(
+      children: [
+        // Фон до готовности карты
+        Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: AppColors.getBackgroundColor(context),
+        ),
+        // Карта с fade-эффектом после инициализации
+        AnimatedOpacity(
+          opacity: _isMapReady ? 1.0 : 0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+          child: MapWidget(
+            key: ValueKey('route_map_${widget.points.length}'),
+            onMapCreated: (MapboxMap mapboxMap) async {
+              // ── Отключаем масштабную линейку
+              try {
+                await mapboxMap.scaleBar.updateSettings(
+                  ScaleBarSettings(enabled: false),
+                );
+              } catch (_) {}
+
+              // ── Ждём инициализации каналов Mapbox
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              // ── Полилиния маршрута
+              try {
+                _polylineAnnotationManager = await mapboxMap.annotations
+                    .createPolylineAnnotationManager();
+                await _drawTrackPolyline();
+              } catch (_) {}
+
+              // ── Маркеры старта и финиша
+              try {
+                _pointAnnotationManager = await mapboxMap.annotations
+                    .createPointAnnotationManager();
+                await _drawRouteStartEndMarkers();
+              } catch (_) {}
+
+              // ── Фит камеры по границам
+              try {
+                if (widget.points.length > 1) {
+                  final camera = await mapboxMap.cameraForCoordinateBounds(
+                    CoordinateBounds(
+                      southwest: Point(
+                        coordinates: Position(
+                          bounds.southwest.longitude,
+                          bounds.southwest.latitude,
                         ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // 2-я колонка: trailingText (правое выравнивание)
-            Expanded(
-              flex: 3,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: trailingText == null
-                      ? const SizedBox.shrink()
-                      : Text(
-                          trailingText!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.getTextPrimaryColor(context),
-                          ),
+                      northeast: Point(
+                        coordinates: Position(
+                          bounds.northeast.longitude,
+                          bounds.northeast.latitude,
                         ),
-                ),
-              ),
-            ),
+                      ),
+                      infiniteBounds: false,
+                    ),
+                    MbxEdgeInsets(
+                      top: 48,
+                      left: 12,
+                      bottom: bottomPadding,
+                      right: 12,
+                    ),
+                    null,
+                    null,
+                    null,
+                    null,
+                  );
+                  await mapboxMap.setCamera(camera);
+                } else {
+                  await mapboxMap.setCamera(
+                    CameraOptions(
+                      center: Point(
+                        coordinates: Position(
+                          center.longitude,
+                          center.latitude,
+                        ),
+                      ),
+                      zoom: 12,
+                    ),
+                  );
+                }
+              } catch (_) {}
 
-            // 3-я колонка: chevron (правый край)
-            SizedBox(
-              width: 28,
-              child: trailingChevron
-                  ? const Icon(
-                      CupertinoIcons.chevron_forward,
-                      size: 16,
-                      color: AppColors.brandPrimary,
-                    )
-                  : const SizedBox.shrink(),
+              // ── Показываем карту после полной инициализации
+              if (!mounted) return;
+              setState(() {
+                _isMapReady = true;
+              });
+            },
+            cameraOptions: CameraOptions(
+              center: Point(
+                coordinates: Position(center.longitude, center.latitude),
+              ),
+              zoom: 12,
             ),
-          ],
+            styleUri: MapboxStyles.MAPBOX_STREETS,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Полилиния маршрута (Mapbox)
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _drawTrackPolyline() async {
+    if (_polylineAnnotationManager == null || widget.points.length < 2) {
+      return;
+    }
+    await _polylineAnnotationManager!.deleteAll();
+    final coordinates = widget.points
+        .map((p) => Position(p.longitude, p.latitude))
+        .toList();
+    await _polylineAnnotationManager!.create(
+      PolylineAnnotationOptions(
+        geometry: LineString(coordinates: coordinates),
+        lineColor: AppColors.brandPrimary.toARGB32(),
+        lineWidth: 3.0,
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Маркеры старта и финиша (Mapbox)
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _drawRouteStartEndMarkers() async {
+    if (_pointAnnotationManager == null || widget.points.length < 2) {
+      return;
+    }
+    await _ensureRouteMarkerImages();
+    if (_routeStartMarkerImage == null || _routeEndMarkerImage == null) {
+      return;
+    }
+    final first = widget.points.first;
+    final last = widget.points.last;
+    await _pointAnnotationManager!.create(
+      PointAnnotationOptions(
+        geometry: Point(
+          coordinates: Position(first.longitude, first.latitude),
+        ),
+        image: _routeStartMarkerImage!,
+        iconSize: 1.0,
+      ),
+    );
+    await _pointAnnotationManager!.create(
+      PointAnnotationOptions(
+        geometry: Point(
+          coordinates: Position(last.longitude, last.latitude),
+        ),
+        image: _routeEndMarkerImage!,
+        iconSize: 1.0,
+      ),
+    );
+  }
+
+  Future<void> _ensureRouteMarkerImages() async {
+    _routeStartMarkerImage ??= await MarkerAssets.createMarkerImage(
+      AppColors.success,
+      'С',
+    );
+    _routeEndMarkerImage ??= await MarkerAssets.createMarkerImage(
+      AppColors.error,
+      'Ф',
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Flutter_map: полилиния маршрута
+  // ────────────────────────────────────────────────────────────────
+  List<flutter_map.Polyline> _buildFlutterMapPolylines() {
+    return [
+      flutter_map.Polyline(
+        points: widget.points,
+        strokeWidth: 3.0,
+        color: AppColors.brandPrimary,
+      ),
+    ];
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Flutter_map: маркеры старта и финиша
+  // ────────────────────────────────────────────────────────────────
+  List<flutter_map.Marker> _buildFlutterMapRouteMarkers() {
+    if (widget.points.length < 2) return const [];
+    return [
+      _routeMarker(widget.points.first, 'С', AppColors.success),
+      _routeMarker(widget.points.last, 'Ф', AppColors.error),
+    ];
+  }
+
+  flutter_map.Marker _routeMarker(
+    ll.LatLng point,
+    String label,
+    Color color,
+  ) {
+    return flutter_map.Marker(
+      point: point,
+      width: AppSpacing.xl,
+      height: AppSpacing.xl,
+      child: Container(
+        width: AppSpacing.xl,
+        height: AppSpacing.xl,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          label,
+          style: AppTextStyles.h14w6.copyWith(
+            color: AppColors.surface,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Вспомогательные методы вычисления центра и границ
+  // ────────────────────────────────────────────────────────────────
+  ll.LatLng _centerFromPoints(List<ll.LatLng> pts) {
+    double lat = 0;
+    double lng = 0;
+    for (final p in pts) {
+      lat += p.latitude;
+      lng += p.longitude;
+    }
+    final n = pts.length.toDouble();
+    return ll.LatLng(lat / n, lng / n);
+  }
+
+  _RouteLatLngBounds _boundsFromPoints(List<ll.LatLng> pts) {
+    double minLat = pts.first.latitude;
+    double maxLat = pts.first.latitude;
+    double minLng = pts.first.longitude;
+    double maxLng = pts.first.longitude;
+    for (final p in pts) {
+      if (p.latitude < minLat) minLat = p.latitude;
+      if (p.latitude > maxLat) maxLat = p.latitude;
+      if (p.longitude < minLng) minLng = p.longitude;
+      if (p.longitude > maxLng) maxLng = p.longitude;
+    }
+    return _RouteLatLngBounds(
+      ll.LatLng(minLat, minLng),
+      ll.LatLng(maxLat, maxLng),
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Локальные границы маршрута для fit камеры
+// ────────────────────────────────────────────────────────────────────
+class _RouteLatLngBounds {
+  final ll.LatLng southwest;
+  final ll.LatLng northeast;
+
+  _RouteLatLngBounds(this.southwest, this.northeast);
+}
+
+// ────────────────────────────────────────────────────────────────────
+// Кнопка-иконка в полупрозрачном тёмном кружке (как в description_screen).
+// ────────────────────────────────────────────────────────────────────
+class _CircleAppIcon extends StatelessWidget {
+  const _CircleAppIcon({
+    required this.icon,
+    this.onPressed,
+  });
+
+  final IconData icon;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconColor = AppColors.getSurfaceColor(context);
+    final backgroundColor =
+        AppColors.getTextPrimaryColor(context).withValues(alpha: 0.5);
+
+    return SizedBox(
+      width: 38,
+      height: 38,
+      child: GestureDetector(
+        onTap: onPressed ?? () {},
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Icon(icon, size: 20, color: iconColor),
         ),
       ),
     );
   }
 }
 
-class _DividerLine extends StatelessWidget {
-  const _DividerLine();
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      thickness: 0.5,
-      indent: 36,
-      endIndent: 8,
-      color: AppColors.getDividerColor(context),
-    );
-  }
-}
