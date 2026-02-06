@@ -18,7 +18,58 @@ import '../../viewing/viewing_equipment_screen.dart';
 const String _equipImagesBase =
     'https://uploads.paceup.ru/images/equip';
 
-/// Экран «Сохранить велосипед» — третий шаг. Показ изображения из equip или своего фото.
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Список расширений для фолбэка, если основной URL не отдал картинку.
+// ─────────────────────────────────────────────────────────────────────────────
+const List<String> _bikeImageExtFallbacks = [
+  'png',
+  'jpg',
+  'jpeg',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Формируем список URL для изображений велосипеда с фолбэками.
+// ─────────────────────────────────────────────────────────────────────────────
+List<String> _buildBikeImageUrls({
+  required int id,
+  required String? imageExt,
+}) {
+  // ── Базовый путь для картинок велосипедов.
+  final base = '$_equipImagesBase/bike/$id';
+  final normalized = _normalizeImageExt(imageExt);
+  final urls = <String>[];
+
+  // ── Первым идёт extension из БД, если он задан.
+  if (normalized != null) {
+    urls.add('$base.$normalized');
+  }
+
+  // ── Добавляем стандартные расширения, избегая дублей.
+  for (final ext in _bikeImageExtFallbacks) {
+    if (ext == normalized) continue;
+    urls.add('$base.$ext');
+  }
+
+  return urls;
+}
+
+/// Экран «Сохранить велосипед» — третий шаг.
+/// Показ изображения из equip или своего фото.
 class BikeStep3Screen extends ConsumerStatefulWidget {
   final String brand;
   final String model;
@@ -280,33 +331,31 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
     );
   }
 
+  // ─────────────────────────────────────────────────────────────────────
+  //                        ИЗОБРАЖЕНИЕ ЭКВИПА
+  // ─────────────────────────────────────────────────────────────────────
   Widget _buildEquipOrPlaceholderImage() {
     final id = widget.equipBaseId;
-    final ext = widget.imageExt;
-    if (id != null && ext != null && ext.isNotEmpty) {
-      final url = '$_equipImagesBase/bike/$id.$ext';
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.contain,
-          width: 220,
-          errorWidget: (_, __, ___) => _buildPlaceholderImage(),
-        ),
-      );
-    }
-    return _buildPlaceholderImage();
+    // ── Если нет id, оставляем пустую область под картинку.
+    if (id == null) return _buildEmptyImageSpace();
+    final urls = _buildBikeImageUrls(
+      id: id,
+      imageExt: widget.imageExt,
+    );
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: _EquipImage(
+        urls: urls,
+        placeholder: _buildEmptyImageSpace(),
+      ),
+    );
   }
 
-  Widget _buildPlaceholderImage() {
-    return Opacity(
-      opacity: 0.5,
-      child: Image.asset(
-        'assets/add_bike.png',
-        width: 220,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
+  Widget _buildEmptyImageSpace() {
+    // ── Пустое место, чтобы сохранить высоту блока без плейсхолдера.
+    return const SizedBox(
+      width: 220,
+      height: 220,
     );
   }
 
@@ -365,7 +414,8 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
           behavior: HitTestBehavior.opaque,
           child: Column(
             children: [
-              // ── Картинка: своё фото → изображение из equip (bike) → плейсхолдер
+              // ── Картинка: своё фото → изображение из equip (bike) →
+              // пустое место
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
                 child: Stack(
@@ -383,7 +433,9 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
                                   _imageFile!,
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) {
-                                    return _buildPlaceholderImage();
+                                    // ── Если локальная картинка недоступна,
+                                    // оставляем пустое место.
+                                    return _buildEmptyImageSpace();
                                   },
                                 ),
                               )
@@ -556,6 +608,44 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Картинка эквипа с фолбэком на другие расширения.
+// ─────────────────────────────────────────────────────────────────────────────
+class _EquipImage extends StatelessWidget {
+  const _EquipImage({
+    required this.urls,
+    required this.placeholder,
+  });
+
+  final List<String> urls;
+  final Widget placeholder;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Если URL-ов нет, сразу показываем пустое место.
+    if (urls.isEmpty) return placeholder;
+    return _buildWithIndex(0);
+  }
+
+  Widget _buildWithIndex(int index) {
+    final url = urls[index];
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.contain,
+      width: 220,
+      errorWidget: (_, __, ___) {
+        // ── Если есть следующий URL, пробуем его.
+        final nextIndex = index + 1;
+        if (nextIndex < urls.length) {
+          return _buildWithIndex(nextIndex);
+        }
+        // ── Иначе показываем пустое место.
+        return placeholder;
+      },
     );
   }
 }

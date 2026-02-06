@@ -11,6 +11,21 @@ import 'sneakers_step3_screen.dart';
 const String _equipImagesBase =
     'https://uploads.paceup.ru/images/equip';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
 /// Модель из API: id, name, image_ext (опционально)
 class _EquipModel {
   const _EquipModel({
@@ -23,8 +38,9 @@ class _EquipModel {
   final String? imageExt;
 
   String? get imageUrl {
-    if (imageExt == null || imageExt!.isEmpty) return null;
-    return '$_equipImagesBase/boots/$id.$imageExt';
+    // ── Если image_ext отсутствует, пробуем png как дефолтный вариант.
+    final ext = _normalizeImageExt(imageExt) ?? 'png';
+    return '$_equipImagesBase/boots/$id.$ext';
   }
 }
 

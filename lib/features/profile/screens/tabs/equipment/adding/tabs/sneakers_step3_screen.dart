@@ -19,9 +19,26 @@ import '../../viewing/viewing_equipment_screen.dart';
 const String _equipImagesBase =
     'https://uploads.paceup.ru/images/equip';
 
-/// Экран «Сохранить кроссовки» — третий шаг: бренд/модель, дата, пробег, фото.
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
+/// Экран «Сохранить кроссовки» — третий шаг: бренд/модель,
+/// дата, пробег, фото.
 /// Если передан equipBaseId + imageExt — показываем изображение из uploads,
-/// иначе плейсхолдер. Пользователь может загрузить своё фото (как сейчас).
+/// иначе оставляем пустое место.
+/// Пользователь может загрузить своё фото.
 class SneakersStep3Screen extends ConsumerStatefulWidget {
   final String brand;
   final String model;
@@ -286,34 +303,34 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
     );
   }
 
-  // ── Изображение эквипа из uploads или плейсхолдер (если нет своего фото)
+  // ─────────────────────────────────────────────────────────────────────
+  //                        ИЗОБРАЖЕНИЕ ЭКВИПА
+  // ─────────────────────────────────────────────────────────────────────
+  // ── Изображение эквипа из uploads или пустое место (если нет своего фото)
   Widget _buildEquipOrPlaceholderImage() {
     final id = widget.equipBaseId;
-    final ext = widget.imageExt;
-    if (id != null && ext != null && ext.isNotEmpty) {
-      final url = '$_equipImagesBase/boots/$id.$ext';
-      return ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 320),
-        child: CachedNetworkImage(
-          imageUrl: url,
-          fit: BoxFit.contain,
-          width: 220,
-          errorWidget: (_, __, ___) => _buildPlaceholderImage(),
-        ),
-      );
-    }
-    return _buildPlaceholderImage();
+    // ── Если нет id, оставляем пустую область под картинку.
+    if (id == null) return _buildEmptyImageSpace();
+    // ── Нормализуем расширение, при отсутствии пробуем png.
+    final ext = _normalizeImageExt(widget.imageExt) ?? 'png';
+    final url = '$_equipImagesBase/boots/$id.$ext';
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.contain,
+        width: 220,
+        // ── Если картинка не найдена, оставляем пустое место.
+        errorWidget: (_, __, ___) => _buildEmptyImageSpace(),
+      ),
+    );
   }
 
-  Widget _buildPlaceholderImage() {
-    return Opacity(
-      opacity: 0.5,
-      child: Image.asset(
-        'assets/add_boots.png',
-        width: 220,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-      ),
+  Widget _buildEmptyImageSpace() {
+    // ── Пустое место, чтобы сохранить высоту блока без плейсхолдера.
+    return const SizedBox(
+      width: 220,
+      height: 220,
     );
   }
 
@@ -373,7 +390,8 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
           child: Column(
             children: [
               // ───────────────────────── Большая картинка кроссовок ─────────────────────────
-              // Приоритет: своё фото → изображение из equip (uploads) → плейсхолдер
+              // Приоритет: своё фото → изображение из equip (uploads) →
+              // пустое место
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
                 child: Stack(
@@ -391,7 +409,9 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
                                   _imageFile!,
                                   fit: BoxFit.contain,
                                   errorBuilder: (_, __, ___) {
-                                    return _buildPlaceholderImage();
+                                    // ── Если локальная картинка недоступна,
+                                    // оставляем пустое место.
+                                    return _buildEmptyImageSpace();
                                   },
                                 ),
                               )

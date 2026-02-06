@@ -10,6 +10,56 @@ import 'bike_step3_screen.dart';
 const String _equipImagesBase =
     'https://uploads.paceup.ru/images/equip';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Список расширений для фолбэка, если основной URL не отдал картинку.
+// ─────────────────────────────────────────────────────────────────────────────
+const List<String> _bikeImageExtFallbacks = [
+  'png',
+  'jpg',
+  'jpeg',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Формируем список URL для изображений велосипеда с фолбэками.
+// ─────────────────────────────────────────────────────────────────────────────
+List<String> _buildBikeImageUrls({
+  required int id,
+  required String? imageExt,
+}) {
+  // ── Базовый путь для картинок велосипедов.
+  final base = '$_equipImagesBase/bike/$id';
+  final normalized = _normalizeImageExt(imageExt);
+  final urls = <String>[];
+
+  // ── Первым идёт extension из БД, если он задан.
+  if (normalized != null) {
+    urls.add('$base.$normalized');
+  }
+
+  // ── Добавляем стандартные расширения, избегая дублей.
+  for (final ext in _bikeImageExtFallbacks) {
+    if (ext == normalized) continue;
+    urls.add('$base.$ext');
+  }
+
+  return urls;
+}
+
 class _EquipModel {
   const _EquipModel({
     required this.id,
@@ -21,8 +71,9 @@ class _EquipModel {
   final String? imageExt;
 
   String? imageUrl(String folder) {
-    if (imageExt == null || imageExt!.isEmpty) return null;
-    return '$_equipImagesBase/$folder/$id.$imageExt';
+    // ── Если image_ext отсутствует, пробуем png как дефолтный вариант.
+    final ext = _normalizeImageExt(imageExt) ?? 'png';
+    return '$_equipImagesBase/$folder/$id.$ext';
   }
 }
 
@@ -339,7 +390,10 @@ class _ModelListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final url = equipModel.imageUrl('bike');
+    final urls = _buildBikeImageUrls(
+      id: equipModel.id,
+      imageExt: equipModel.imageExt,
+    );
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -352,13 +406,10 @@ class _ModelListItem extends StatelessWidget {
               child: SizedBox(
                 width: 50,
                 height: 50,
-                child: url != null
-                    ? CachedNetworkImage(
-                        imageUrl: url,
-                        fit: BoxFit.contain,
-                        errorWidget: (_, __, ___) => _placeholder(context),
-                      )
-                    : _placeholder(context),
+                child: _EquipImage(
+                  urls: urls,
+                  placeholder: _placeholder(context),
+                ),
               ),
             ),
             const SizedBox(width: 12),
@@ -408,6 +459,43 @@ class _ModelListItem extends StatelessWidget {
         size: 24,
         color: AppColors.getIconSecondaryColor(context),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Картинка эквипа с фолбэком на другие расширения.
+// ─────────────────────────────────────────────────────────────────────────────
+class _EquipImage extends StatelessWidget {
+  const _EquipImage({
+    required this.urls,
+    required this.placeholder,
+  });
+
+  final List<String> urls;
+  final Widget placeholder;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Если URL-ов нет, сразу показываем плейсхолдер.
+    if (urls.isEmpty) return placeholder;
+    return _buildWithIndex(0);
+  }
+
+  Widget _buildWithIndex(int index) {
+    final url = urls[index];
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.contain,
+      errorWidget: (_, __, ___) {
+        // ── Если есть следующий URL, пробуем его.
+        final nextIndex = index + 1;
+        if (nextIndex < urls.length) {
+          return _buildWithIndex(nextIndex);
+        }
+        // ── Иначе показываем плейсхолдер.
+        return placeholder;
+      },
     );
   }
 }
