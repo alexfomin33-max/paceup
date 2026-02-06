@@ -23,6 +23,8 @@ class EquipmentChip extends StatefulWidget {
   final VoidCallback? onEquipmentChanged; // callback после замены эквипа
   final VoidCallback? onEquipmentDetached; // оптимистичное скрытие блока при откреплении
   final bool showMenuButton; // показывать ли кнопку меню с тремя точками
+  final VoidCallback?
+  onMenuPressed; // опциональный обработчик для замены попапа на другой UI
   final Function(al.Equipment)?
   onEquipmentSelected; // callback для выбора экипировки (для экрана добавления)
   final Color?
@@ -43,6 +45,7 @@ class EquipmentChip extends StatefulWidget {
     this.onEquipmentDetached,
     this.showMenuButton =
         true, // по умолчанию показываем кнопку для обратной совместимости
+    this.onMenuPressed,
     this.onEquipmentSelected,
     this.backgroundColor,
     this.menuButtonColor,
@@ -255,18 +258,28 @@ class _EquipmentChipState extends State<EquipmentChip> {
                     bottom: 0,
                     child: Center(
                       child: GestureDetector(
-                        onTap: () => EquipmentPopup.showAnchored(
-                          context,
-                          anchorKey: _menuKey,
-                          items: widget.items,
-                          userId: widget.userId,
-                          activityType: widget.activityType,
-                          activityId: widget.activityId,
-                          activityDistance: widget.activityDistance,
-                          onEquipmentChanged: widget.onEquipmentChanged,
-                          onEquipmentDetached: widget.onEquipmentDetached,
-                          onEquipmentSelected: widget.onEquipmentSelected,
-                        ),
+                        onTap: () {
+                          // ────────────────────────────────────────────────────────────────
+                          // ✅ ПРИОРИТЕТ КАСТОМНОГО ОБРАБОТЧИКА: позволяет
+                          // заменить попап на bottom sheet на конкретных экранах
+                          // ────────────────────────────────────────────────────────────────
+                          if (widget.onMenuPressed != null) {
+                            widget.onMenuPressed?.call();
+                            return;
+                          }
+                          EquipmentPopup.showAnchored(
+                            context,
+                            anchorKey: _menuKey,
+                            items: widget.items,
+                            userId: widget.userId,
+                            activityType: widget.activityType,
+                            activityId: widget.activityId,
+                            activityDistance: widget.activityDistance,
+                            onEquipmentChanged: widget.onEquipmentChanged,
+                            onEquipmentDetached: widget.onEquipmentDetached,
+                            onEquipmentSelected: widget.onEquipmentSelected,
+                          );
+                        },
                         child: Container(
                           key:
                               _menuKey, // ← важный ключ для позиционирования попапа

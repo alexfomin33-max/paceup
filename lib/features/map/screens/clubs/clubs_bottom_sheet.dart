@@ -39,7 +39,7 @@ class ClubsBottomSheet extends StatelessWidget {
             top: Radius.circular(AppRadius.xl),
           ),
         ),
-        padding: const EdgeInsets.all(6),
+        padding: const EdgeInsets.fromLTRB(0,6,0,6),
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Вычисляем доступную высоту для контента

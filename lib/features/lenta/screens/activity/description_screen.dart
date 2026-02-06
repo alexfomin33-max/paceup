@@ -24,6 +24,7 @@ import '../widgets/activity/stats/stats_row.dart';
 import '../widgets/activity/equipment/equipment_chip.dart'
     as ab
     show EquipmentChip;
+import '../widgets/activity/equipment/equipment_bottom_sheet_content.dart';
 // Блок действий (лайк, комментарии, совместно)
 import '../widgets/activity/actions/activity_actions_row.dart';
 // Карусель маршрута с фотографиями
@@ -41,6 +42,7 @@ import '../../../../core/widgets/transparent_route.dart';
 import '../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../core/widgets/more_menu_overlay.dart';
 import '../../../../core/widgets/more_menu_hub.dart';
+import '../../../map/screens/clubs/clubs_bottom_sheet.dart';
 import '../../../../features/complaint.dart';
 import '../../../../core/services/api_service.dart'
     show ApiService, ApiException;
@@ -552,6 +554,50 @@ class _ActivityDescriptionPageState
   }
 
   /// ────────────────────────────────────────────────────────────────
+  /// 🧰 БОТТОМ-ШИТ ЭКИПИРОВКИ: карусель карточек + кнопка «Готово»
+  /// ────────────────────────────────────────────────────────────────
+  void _showEquipmentBottomSheet({
+    required BuildContext context,
+    required al.Activity activity,
+    required double activityDistance,
+  }) {
+    showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return ClubsBottomSheet(
+          title: _equipmentSheetTitle(activity.type),
+          child: EquipmentBottomSheetContent(
+            currentItems: activity.equipments,
+            userId: activity.userId,
+            activityType: activity.type,
+            activityId: activity.id,
+            activityDistance: activityDistance,
+            onEquipmentChanged: _refreshActivityAfterEquipmentChange,
+            onDone: () => Navigator.of(sheetContext).pop(),
+          ),
+        );
+      },
+    );
+  }
+
+  /// ────────────────────────────────────────────────────────────────
+  /// 🏷️ ЗАГОЛОВОК ШИТА: «Кроссовки» или «Велосипед»
+  /// ────────────────────────────────────────────────────────────────
+  String _equipmentSheetTitle(String activityType) {
+    final type = activityType.toLowerCase();
+    if (type == 'bike' || type == 'cycling' || type == 'bicycle') {
+      return 'Велосипед';
+    }
+    if (type == 'run' || type == 'running') {
+      return 'Кроссовки';
+    }
+    return 'Экипировка';
+  }
+
+  /// ────────────────────────────────────────────────────────────────
   /// 🔹 ДИАЛОГ «СОХРАНИТЬ МАРШРУТ»: название + уровень сложности
   /// ────────────────────────────────────────────────────────────────
   void _showSaveRouteDialog(BuildContext context, al.Activity activity) {
@@ -1015,6 +1061,7 @@ class _ActivityDescriptionPageState
                               mapSortOrder: a.mapSortOrder,
                               activityId: a.id,
                               userId: a.userId,
+                              showTopGradient: false, // Без градиентного затемнения сверху
                               // ────────────────────────────────────────────────────────────────
                               // 🔹 ОТКРЫТИЕ ПОЛНОЭКРАННОЙ КАРТЫ: при клике на слайд с картой
                               // ────────────────────────────────────────────────────────────────
@@ -1246,6 +1293,12 @@ class _ActivityDescriptionPageState
                         activityId: a.id,
                         activityDistance: (stats?.distance ?? 0.0) / 1000.0,
                         showMenuButton: a.userId == widget.currentUserId,
+                        onMenuPressed: () => _showEquipmentBottomSheet(
+                          context: context,
+                          activity: a,
+                          activityDistance:
+                              (stats?.distance ?? 0.0) / 1000.0,
+                        ),
                         onEquipmentChanged: _refreshActivityAfterEquipmentChange,
                         onEquipmentDetached: _optimisticDetachEquipment,
                       ),

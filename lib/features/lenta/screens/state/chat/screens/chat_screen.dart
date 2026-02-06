@@ -758,6 +758,31 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                                       ),
                                     ),
                                   ),
+                                // ─── Синий кружок с иконкой корзины для чатов продажи слота/вещи ───
+                                if (chat.isSlotChat || chat.isThingChat)
+                                  Positioned(
+                                    right: -3,
+                                    top: -3,
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: AppColors.brandPrimary,
+                                        border: Border.all(
+                                          color: AppColors.getSurfaceColor(
+                                            context,
+                                          ),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        CupertinoIcons.cart,
+                                        size: 12,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
                               ],
                             )
                           : ClipOval(

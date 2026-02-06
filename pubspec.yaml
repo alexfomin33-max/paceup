@@ -230,6 +230,10 @@ flutter:
      - assets/opacity_white.png
      - assets/choose_bike.png
      - assets/choose_sneakers.png
+     - assets/without_sneakers.png
+     - assets/without_bike.png
+     - assets/adding-sneakers.jpg
+     - assets/adding-bike.jpg
 
 
  

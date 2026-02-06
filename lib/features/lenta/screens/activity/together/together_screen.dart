@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/services/api_service.dart'; // для ApiException
 import '../../../../../core/widgets/app_bar.dart';
+import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../providers/services/auth_provider.dart';
 import 'together_providers.dart';
 import '../../../../profile/screens/profile_screen.dart';
@@ -57,16 +58,17 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
       orElse: () => false,
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.getSurfaceColor(context),
-      appBar: PaceAppBar(
-        title: 'Совместная тренировка',
+    return InteractiveBackSwipe(
+      child: Scaffold(
         backgroundColor: AppColors.getSurfaceColor(context),
-        showBottomDivider: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      body: CustomScrollView(
+        appBar: PaceAppBar(
+          title: 'Совместная тренировка',
+          backgroundColor: AppColors.getSurfaceColor(context),
+          showBottomDivider: false,
+          elevation: 0,
+          scrolledUnderElevation: 0,
+        ),
+        body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
           // ────────────────────────────────────────────────────────────────────
@@ -78,7 +80,7 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
               children: [
                 const SizedBox(height: 14),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  padding: EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
                     'Группа участников',
                     style: AppTextStyles.h15w6,
@@ -100,7 +102,7 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                       'Добавить участников',
                       style: AppTextStyles.h15w6,
@@ -138,6 +140,7 @@ class _TogetherScreenState extends ConsumerState<TogetherScreen> {
           // ────────────────────────────────────────────────────────────────────
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
+      ),
       ),
     );
   }
@@ -200,7 +203,7 @@ class _CandidatesSection extends ConsumerWidget {
           }
 
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: SelectableText.rich(
               TextSpan(
                 children: [
@@ -278,7 +281,7 @@ class _MembersSection extends ConsumerWidget {
         child: Center(child: CupertinoActivityIndicator(radius: 10)),
       ),
       error: (e, _) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: SelectableText.rich(
           TextSpan(
             children: [
@@ -346,15 +349,15 @@ class _SearchField extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: AppColors.twinchip,
-          width: 0.5,
+          width: 1.0,
         ),
-        boxShadow: [
-          const BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 10,
-            offset: Offset(0, 1),
-          ),
-        ],
+        // boxShadow: [
+        //   const BoxShadow(
+        //     color: AppColors.twinshadow,
+        //     blurRadius: 10,
+        //     offset: Offset(0, 1),
+        //   ),
+        // ],
       ),
       child: TextField(
         controller: controller,
@@ -427,7 +430,7 @@ class _CandidateRowTile extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
         children: [
           // ────────────────────────────────────────────────────────────────────
@@ -471,7 +474,7 @@ class _CandidateRowTile extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -535,7 +538,7 @@ class _CandidateRowTile extends ConsumerWidget {
                       ),
                       child: Text(
                         'Пригласить',
-                        style: AppTextStyles.h14w5.copyWith(
+                        style: AppTextStyles.h14w4.copyWith(
                           color: AppColors.brandPrimary,
                         ),
                       ),
@@ -581,8 +584,17 @@ class _MemberRowTile extends ConsumerWidget {
       orElse: () => false,
     );
 
+    // ────────────────────────────────────────────────────────────────────────────
+    // Проверяем количество участников группы
+    // ────────────────────────────────────────────────────────────────────────────
+    final membersState = ref.watch(togetherMembersProvider(activityId));
+    final canShowLeaveButton = membersState.maybeWhen(
+      data: (members) => isCurrentUser && members.length > 1,
+      orElse: () => false,
+    );
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       child: Row(
         children: [
           // ────────────────────────────────────────────────────────────────────
@@ -626,7 +638,7 @@ class _MemberRowTile extends ConsumerWidget {
                             overflow: TextOverflow.ellipsis,
                             style: const TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 15,
+                              fontSize: 14,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -639,9 +651,9 @@ class _MemberRowTile extends ConsumerWidget {
             ),
           ),
           // ────────────────────────────────────────────────────────────────────
-          // ✅ Кнопка "Покинуть" (только для текущего пользователя)
+          // ✅ Кнопка "Покинуть" (только для текущего пользователя и если участников больше одного)
           // ────────────────────────────────────────────────────────────────────
-          if (isCurrentUser)
+          if (canShowLeaveButton)
             Material(
               color: Colors.transparent,
               child: InkWell(
@@ -662,7 +674,7 @@ class _MemberRowTile extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 19,
+                    horizontal: 18,
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
@@ -671,7 +683,7 @@ class _MemberRowTile extends ConsumerWidget {
                   ),
                   child: Text(
                     'Покинуть',
-                    style: AppTextStyles.h14w5.copyWith(
+                    style: AppTextStyles.h14w4.copyWith(
                       color: AppColors.error,
                     ),
                   ),
