@@ -615,6 +615,7 @@ class SegmentsService {
     required int segmentId,
     String filter = 'all',
     int userId = 0,
+    String? gender,
   }) async {
     final queryParams = <String, String>{
       'segment_id': segmentId.toString(),
@@ -622,6 +623,10 @@ class SegmentsService {
     };
     if (userId > 0) {
       queryParams['user_id'] = userId.toString();
+    }
+    final normalizedGender = gender?.trim();
+    if (normalizedGender != null && normalizedGender.isNotEmpty) {
+      queryParams['gender'] = normalizedGender;
     }
     final response = await _api.get(
       '/get_segment_leaderboard.php',
