@@ -3,26 +3,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../providers/services/api_provider.dart';
 import 'sneakers_step2_screen.dart';
 import 'own_sneakers_screen.dart';
 
 /// ─────────────────────────────────────────────────────────────────────────────
-/// Список популярных брендов кроссовок в алфавитном порядке
+/// Экран «Бренд кроссовок» — первый шаг добавления кроссовок.
+/// Бренды загружаются из API (equip_base, type=boots, status=1), без дублей,
+/// по алфавиту. Поиск фильтрует список по введённому значению.
 /// ─────────────────────────────────────────────────────────────────────────────
-const List<String> _sneakerBrands = [
-  'Adidas',
-  'Asics',
-  'Brooks',
-  'Hoka',
-  'Mizuno',
-  'New Balance',
-  'Nike',
-  'Puma',
-  'Reebok',
-  'Salomon',
-  'Saucony',
-  'Under Armour',
-];
 
 /// Экран «Бренд кроссовок» — первый шаг добавления кроссовок
 class SneakersStep1Screen extends ConsumerStatefulWidget {
@@ -34,20 +23,19 @@ class SneakersStep1Screen extends ConsumerStatefulWidget {
 }
 
 class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
-  // ── Контроллер для поля поиска
   final TextEditingController _searchController = TextEditingController();
-  // ── Выбранный бренд (null = не выбран)
   String? _selectedBrand;
-  // ── Флаг выбора специального пункта "Добавить свои кроссовки"
   bool _isOwnSneakersSelected = false;
-  // ── Отфильтрованный список брендов на основе поиска
-  List<String> _filteredBrands = _sneakerBrands;
+  List<String> _allBrands = [];
+  List<String> _filteredBrands = [];
+  bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    // ── Подписка на изменения в поле поиска для фильтрации списка
     _searchController.addListener(_onSearchChanged);
+    _loadBrands();
   }
 
   @override
@@ -56,28 +44,55 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
     super.dispose();
   }
 
-  /// Обработчик изменения текста в поле поиска
-  void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+  /// Загрузка брендов из API (type=boots, status=1, без дублей, по алфавиту)
+  Future<void> _loadBrands() async {
     setState(() {
-      if (query.isEmpty) {
-        _filteredBrands = _sneakerBrands;
-      } else {
-        _filteredBrands = _sneakerBrands
-            .where((brand) =>
-                brand.toLowerCase().contains(query))
-            .toList();
-      }
-      // ── Сбрасываем выбор, если выбранный бренд не попадает в фильтр
-      if (_selectedBrand != null &&
-          !_filteredBrands.contains(_selectedBrand)) {
-        _selectedBrand = null;
-      }
-      // ── Сбрасываем выбор специального пункта при поиске
-      if (query.isNotEmpty) {
-        _isOwnSneakersSelected = false;
-      }
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/search_equipment_brands.php',
+        body: {'type': 'boots'},
+      );
+      if (!mounted) return;
+      final list = (data['brands'] as List<dynamic>?)?.cast<String>() ?? [];
+      final sorted = List<String>.from(list)..sort((a, b) => a.compareTo(b));
+      setState(() {
+        _allBrands = sorted;
+        _loading = false;
+        _loadError = null;
+        _applySearchFilter();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e.toString();
+        _allBrands = [];
+        _filteredBrands = [];
+      });
+    }
+  }
+
+  void _applySearchFilter() {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      _filteredBrands = List.from(_allBrands);
+    } else {
+      _filteredBrands = _allBrands
+          .where((b) => b.toLowerCase().contains(query))
+          .toList();
+    }
+    if (_selectedBrand != null && !_filteredBrands.contains(_selectedBrand)) {
+      _selectedBrand = null;
+    }
+    if (query.isNotEmpty) _isOwnSneakersSelected = false;
+  }
+
+  void _onSearchChanged() {
+    setState(_applySearchFilter);
   }
 
   @override
@@ -122,19 +137,39 @@ class _SneakersStep1ScreenState extends ConsumerState<SneakersStep1Screen> {
               ),
             ),
 
-            // ── Вертикальный список брендов
+            // ── Вертикальный список брендов (загрузка / ошибка / пусто / список)
             Expanded(
-              child: _filteredBrands.isEmpty && 
-                     _searchController.text.trim().isNotEmpty
-                  ? Center(
-                      child: Text(
-                        'Бренды не найдены',
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
+              child: _loading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _loadError != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: SelectableText.rich(
+                              TextSpan(
+                                text: 'Ошибка загрузки: $_loadError',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : _filteredBrands.isEmpty &&
+                              _searchController.text.trim().isNotEmpty
+                          ? Center(
+                              child: Text(
+                                'Бренды не найдены',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filteredBrands.length + 1,
                       itemBuilder: (context, index) {

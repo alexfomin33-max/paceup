@@ -1,5 +1,6 @@
 // lib/features/profile/screens/tabs/equipment/adding/tabs/bike_step3_screen.dart
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,17 +15,22 @@ import '../../../../../../../../core/providers/form_state_provider.dart';
 import '../../../../../../../../core/widgets/form_error_display.dart';
 import '../../viewing/viewing_equipment_screen.dart';
 
-/// Экран «Сохранить велосипед» — третий шаг добавления велосипеда
+const String _equipImagesBase =
+    'https://uploads.paceup.ru/images/equip';
+
+/// Экран «Сохранить велосипед» — третий шаг. Показ изображения из equip или своего фото.
 class BikeStep3Screen extends ConsumerStatefulWidget {
-  /// Выбранный бренд велосипеда
   final String brand;
-  /// Выбранная модель велосипеда
   final String model;
+  final int? equipBaseId;
+  final String? imageExt;
 
   const BikeStep3Screen({
     super.key,
     required this.brand,
     required this.model,
+    this.equipBaseId,
+    this.imageExt,
   });
 
   @override
@@ -274,6 +280,36 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
     );
   }
 
+  Widget _buildEquipOrPlaceholderImage() {
+    final id = widget.equipBaseId;
+    final ext = widget.imageExt;
+    if (id != null && ext != null && ext.isNotEmpty) {
+      final url = '$_equipImagesBase/bike/$id.$ext';
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 320),
+        child: CachedNetworkImage(
+          imageUrl: url,
+          fit: BoxFit.contain,
+          width: 220,
+          errorWidget: (_, __, ___) => _buildPlaceholderImage(),
+        ),
+      );
+    }
+    return _buildPlaceholderImage();
+  }
+
+  Widget _buildPlaceholderImage() {
+    return Opacity(
+      opacity: 0.5,
+      child: Image.asset(
+        'assets/add_bike.png',
+        width: 220,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+      ),
+    );
+  }
+
   // ─────────────────────────────────────────────────────────────────────
   //                           ФОРМАТТЕРЫ
   // ─────────────────────────────────────────────────────────────────────
@@ -329,13 +365,12 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
           behavior: HitTestBehavior.opaque,
           child: Column(
             children: [
-              // ───────────────────────── Большая картинка велосипеда ─────────────────────────
+              // ── Картинка: своё фото → изображение из equip (bike) → плейсхолдер
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // ── Показываем картинку по умолчанию или выбранную
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -347,23 +382,12 @@ class _BikeStep3ScreenState extends ConsumerState<BikeStep3Screen> {
                                 child: Image.file(
                                   _imageFile!,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.asset(
-                                      'assets/add_bike.png',
-                                      width: 220,
-                                      fit: BoxFit.contain,
-                                    );
+                                  errorBuilder: (_, __, ___) {
+                                    return _buildPlaceholderImage();
                                   },
                                 ),
                               )
-                            : Opacity(
-                                opacity: 0.5,
-                                child: Image.asset(
-                                  'assets/add_bike.png',
-                                  width: 220,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
+                            : _buildEquipOrPlaceholderImage(),
                       ),
                     ),
                     // кнопка «добавить фото» — в центре картинки
