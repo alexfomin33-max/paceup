@@ -405,8 +405,9 @@ class _AddOfficialEventScreenState
     try {
       await ref.read(submitEventProvider.notifier).submit(formState);
       // ── успешная отправка — сбрасываем состояние и закрываем экран
-      ref.read(addOfficialEventFormProvider.notifier).reset();
+      // После await виджет мог быть disposed — не используем ref без проверки.
       if (mounted) {
+        ref.read(addOfficialEventFormProvider.notifier).reset();
         Navigator.of(context).pop('created');
       }
     } catch (e) {

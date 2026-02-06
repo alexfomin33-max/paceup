@@ -368,7 +368,10 @@ class _CommentsBottomSheetState extends ConsumerState<CommentsBottomSheet> {
       // 🔔 ОБНОВЛЕНИЕ СЧЕТЧИКА: вызываем callback после удаления
       // ────────────────────────────────────────────────────────────────
       widget.onCommentDeleted?.call();
-      ref.read(notificationsProvider.notifier).updateUnreadCount();
+      // После await виджет мог быть disposed — не используем ref без проверки.
+      if (mounted) {
+        ref.read(notificationsProvider.notifier).updateUnreadCount();
+      }
 
       if (mounted) {
         final scaffoldMessenger = ScaffoldMessenger.maybeOf(context);

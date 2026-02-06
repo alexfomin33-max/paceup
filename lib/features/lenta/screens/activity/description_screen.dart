@@ -365,6 +365,9 @@ class _ActivityDescriptionPageState
       // Обновляем провайдер
       await ref.read(lentaProvider(userId).notifier).refresh();
 
+      // После await виджет мог быть disposed — не используем ref без проверки.
+      if (!mounted) return;
+
       // Получаем обновленную активность из провайдера
       final lentaState = ref.read(lentaProvider(userId));
       final updated = lentaState.items.firstWhere(
@@ -797,6 +800,9 @@ class _ActivityDescriptionPageState
     try {
       // Обновляем провайдер ленты
       await ref.read(lentaProvider(userId).notifier).refresh();
+
+      // После await виджет мог быть disposed — не используем ref без проверки.
+      if (!mounted) return;
 
       // Получаем обновленную активность из провайдера
       final lentaState = ref.read(lentaProvider(userId));
@@ -1988,7 +1994,10 @@ class _ActivityDescriptionPageState
       await ref
           .read(lentaProvider(widget.currentUserId).notifier)
           .removeItem(activity.lentaId);
-      ref.read(notificationsProvider.notifier).updateUnreadCount();
+      // После await виджет мог быть disposed — не используем ref без проверки.
+      if (context.mounted) {
+        ref.read(notificationsProvider.notifier).updateUnreadCount();
+      }
       // Закрываем экран описания
       if (context.mounted) {
         Navigator.of(context).pop();

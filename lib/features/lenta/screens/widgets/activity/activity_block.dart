@@ -1156,7 +1156,10 @@ Future<void> _handleDeleteActivity({
     await ref
         .read(lentaProvider(currentUserId).notifier)
         .removeItem(activity.lentaId);
-    ref.read(notificationsProvider.notifier).updateUnreadCount();
+    // После await виджет мог быть disposed — не используем ref без проверки.
+    if (context.mounted) {
+      ref.read(notificationsProvider.notifier).updateUnreadCount();
+    }
   } else {
     await _showErrorDialog(
       context: context,

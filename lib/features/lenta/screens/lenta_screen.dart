@@ -478,6 +478,8 @@ class _LentaScreenState extends ConsumerState<LentaScreen>
           showOwn: _showOwn,
           showOthers: _showOthers,
         );
+    // После await виджет мог быть disposed — не используем ref без проверки.
+    if (!mounted) return;
     // Обновляем количество непрочитанных чатов при обновлении ленты
     ref.read(unreadChatsProvider(userId).notifier).loadUnreadCount();
     // Обновляем счетчик непрочитанных уведомлений при обновлении ленты

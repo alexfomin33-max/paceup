@@ -1584,9 +1584,12 @@ Future<void> _handleHidePosts({
         await ref.read(lentaProvider(currentUserId).notifier).refresh();
       } else {
         // Скрываем посты - удаляем их из ленты
-        ref
-            .read(lentaProvider(currentUserId).notifier)
-            .removeUserContent(hiddenUserId: userId, contentType: 'post');
+        // После await виджет мог быть disposed — не используем ref без проверки.
+        if (context.mounted) {
+          ref
+              .read(lentaProvider(currentUserId).notifier)
+              .removeUserContent(hiddenUserId: userId, contentType: 'post');
+        }
       }
     } else if (context.mounted) {
       await _showErrorDialog(
@@ -1634,9 +1637,12 @@ Future<void> _handleHideActivities({
         await ref.read(lentaProvider(currentUserId).notifier).refresh();
       } else {
         // Скрываем тренировки - удаляем их из ленты
-        ref
-            .read(lentaProvider(currentUserId).notifier)
-            .removeUserContent(hiddenUserId: userId, contentType: 'activity');
+        // После await виджет мог быть disposed — не используем ref без проверки.
+        if (context.mounted) {
+          ref
+              .read(lentaProvider(currentUserId).notifier)
+              .removeUserContent(hiddenUserId: userId, contentType: 'activity');
+        }
       }
     } else if (context.mounted) {
       await _showErrorDialog(
