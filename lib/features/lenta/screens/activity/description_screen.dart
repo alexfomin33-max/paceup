@@ -59,6 +59,7 @@ import 'together/together_providers.dart';
 import '../../../../core/services/route_map_service.dart';
 import '../../../../core/services/routes_service.dart';
 import 'package:latlong2/latlong.dart' as ll_for_route;
+import '../state/favorites/edit_route_bottom_sheet.dart';
 
 /// Страница с подробным описанием тренировки.
 /// Верхний блок (аватар, дата, метрики) полностью повторяет ActivityBlock.
@@ -601,188 +602,23 @@ class _ActivityDescriptionPageState
   }
 
   /// ────────────────────────────────────────────────────────────────
-  /// 🔹 ДИАЛОГ «СОХРАНИТЬ МАРШРУТ»: название + уровень сложности
+  /// 🔹 Диалог «Сохранить маршрут»: общий боттом-шит из edit_route_bottom_sheet.
   /// ────────────────────────────────────────────────────────────────
   void _showSaveRouteDialog(BuildContext context, al.Activity activity) {
-    String name = '';
-    String difficulty = 'medium';
-    final nameController = TextEditingController(
-      text: activity.stats?.distance != null
-          ? 'Маршрут ${(activity.stats!.distance! / 1000).toStringAsFixed(1)} км'
-          : '',
-    );
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(ctx).viewInsets.bottom,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.getSurfaceColor(ctx),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Сохранить маршрут',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.getTextPrimaryColor(ctx),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: nameController,
-                        textCapitalization: TextCapitalization.sentences,
-                        decoration: InputDecoration(
-                          hintText: 'Название маршрута',
-                          hintStyle: TextStyle(
-                            color: AppColors.getTextSecondaryColor(ctx),
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(AppRadius.md),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 12,
-                          ),
-                        ),
-                        onChanged: (v) => name = v,
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Сложность',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 13,
-                          color: AppColors.getTextSecondaryColor(ctx),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SegmentedButton<String>(
-                        segments: const [
-                          ButtonSegment<String>(
-                            value: 'easy',
-                            label: Text('Лёгкий'),
-                          ),
-                          ButtonSegment<String>(
-                            value: 'medium',
-                            label: Text('Средний'),
-                          ),
-                          ButtonSegment<String>(
-                            value: 'hard',
-                            label: Text('Сложный'),
-                          ),
-                        ],
-                        selected: {difficulty},
-                        onSelectionChanged: (Set<String> v) {
-                          setModalState(() {
-                            difficulty = v.first;
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextButton(
-                              onPressed: () =>
-                                  Navigator.of(ctx).pop(),
-                              child: Text(
-                                'Отмена',
-                                style: TextStyle(
-                                  color: AppColors.getTextSecondaryColor(
-                                    ctx,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: FilledButton(
-                              onPressed: () async {
-                                name = nameController.text.trim();
-                                if (name.isEmpty) {
-                                  name = 'Маршрут ${activity.stats?.distance != null ? (activity.stats!.distance! / 1000).toStringAsFixed(1) : '?'} км';
-                                }
-                                Navigator.of(ctx).pop();
-                                final points = activity.points
-                                    .map(
-                                      (c) => ll_for_route.LatLng(
-                                        c.lat,
-                                        c.lng,
-                                      ),
-                                    )
-                                    .toList();
-                                final mapboxUrl = points.isNotEmpty
-                                    ? buildRouteMapboxImageUrl(points)
-                                    : null;
-                                try {
-                                  final result =
-                                      await RoutesService().saveRoute(
-                                    userId: widget.currentUserId,
-                                    activityId: activity.id,
-                                    name: name,
-                                    difficulty: difficulty,
-                                    mapboxImageUrl: mapboxUrl,
-                                  );
-                                  if (!mounted) return;
-                                  setState(() => _savedRouteId = result.routeId);
-                                  final msg = result.message ??
-                                      (result.addedToFavorite
-                                          ? 'Маршрут добавлен в избранное'
-                                          : 'Маршрут сохранён');
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
-                                    SnackBar(content: Text(msg)),
-                                  );
-                                } catch (e) {
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
-                                      SnackBar(
-                                        content: SelectableText.rich(
-                                          TextSpan(
-                                            text:
-                                                'Ошибка: ${e.toString()}',
-                                            style: const TextStyle(
-                                              color: Colors.red,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                }
-                              },
-                              child: const Text('Сохранить'),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+    final initialName = activity.stats?.distance != null
+        ? 'Маршрут ${(activity.stats!.distance / 1000).toStringAsFixed(1)} км'
+        : '';
+    final routePoints = activity.points
+        .map((c) => ll_for_route.LatLng(c.lat, c.lng))
+        .toList();
+    showSaveRouteFromActivityBottomSheet(
+      context,
+      userId: widget.currentUserId,
+      activityId: activity.id,
+      initialName: initialName,
+      routePoints: routePoints,
+      onSaved: (result) {
+        if (mounted) setState(() => _savedRouteId = result.routeId);
       },
     );
   }

@@ -13,6 +13,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../../domain/models/activity_lenta.dart';
 import '../config/app_config.dart';
+import '../theme/app_theme.dart';
 import '../utils/activity_format.dart';
 import '../utils/static_map_url_builder.dart';
 
@@ -349,7 +350,7 @@ class ShareImageGenerator {
       // Не используем @2x, чтобы не превышать лимиты API
       final mapUrl =
           'https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/'
-          'path-5+379AE6-0.8($polyline)/'
+          'path-5+${(_polylineHex(AppColors.polyline))}-0.8($polyline)/'
           '$centerLng,$centerLat,12,0/'
           '${requestWidth}x$requestHeight?'
           'access_token=${AppConfig.mapboxAccessToken}';
@@ -851,4 +852,9 @@ class ShareImageGenerator {
       return null;
     }
   }
+}
+
+/// HEX цвета полилинии для Mapbox path overlay (без альфы).
+String _polylineHex(Color color) {
+  return (color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
 }

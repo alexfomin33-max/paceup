@@ -267,7 +267,7 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
     await _polylineAnnotationManager!.create(
       PolylineAnnotationOptions(
         geometry: LineString(coordinates: coordinates),
-        lineColor: AppColors.brandPrimary.toARGB32(),
+        lineColor: AppColors.polyline.toARGB32(),
         lineWidth: 3.0,
       ),
     );
@@ -284,7 +284,7 @@ class _FullscreenRouteMapScreenState extends State<FullscreenRouteMapScreen> {
       flutter_map.Polyline(
         points: widget.points,
         strokeWidth: 3.0,
-        color: AppColors.brandPrimary,
+        color: AppColors.polyline,
       ),
     ];
   }

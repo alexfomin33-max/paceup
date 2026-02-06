@@ -8,6 +8,8 @@ abstract class AppColors {
   static const Color brandSecondary = Color(0xFF5856D6); // iOS Indigo
   // iOS Green (как доп. акцент)
   static const Color brandTertiary = Color(0xFF34C759);
+  // Линия маршрута на картах (полилиния)
+  static const Color polyline = Color(0xFF0091FF);
 
   // ┌───────────────────────────────────────────────────────────────────────┐
   // │ ТЕКСТ                                                                 │

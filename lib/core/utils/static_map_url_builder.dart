@@ -19,7 +19,7 @@ class StaticMapUrlBuilder {
   /// - [points] - список точек маршрута
   /// - [widthPx] - ширина изображения в пикселях
   /// - [heightPx] - высота изображения в пикселях
-  /// - [strokeColor] - цвет линии маршрута (по умолчанию AppColors.brandPrimary)
+  /// - [strokeColor] - цвет линии маршрута (по умолчанию AppColors.polyline)
   /// - [strokeWidth] - ширина линии (по умолчанию 3)
   /// - [padding] - отступы от краёв в процентах от размера изображения (по умолчанию 15% для предотвращения обрезания трека)
   /// - [maxWidth] - максимальная ширина изображения (по умолчанию 800px для оптимизации)
@@ -56,9 +56,9 @@ class StaticMapUrlBuilder {
     final encodedPolyline = _encodePolyline(points);
 
     // ────────────────────────────────────────────────────────────────
-    // 🔹 ЦВЕТ ЛИНИИ: используем brandPrimary по умолчанию
+    // 🔹 ЦВЕТ ЛИНИИ: используем polyline по умолчанию
     // ────────────────────────────────────────────────────────────────
-    final color = strokeColor ?? AppColors.brandPrimary;
+    final color = strokeColor ?? AppColors.polyline;
     final colorHex = _colorToHex(color).toUpperCase();
 
     // ────────────────────────────────────────────────────────────────

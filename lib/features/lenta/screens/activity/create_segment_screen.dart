@@ -478,7 +478,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       await _trackPolylineManager!.create(
         PolylineAnnotationOptions(
           geometry: LineString(coordinates: coordinates),
-          lineColor: AppColors.brandPrimary.toARGB32(),
+          lineColor: AppColors.polyline.toARGB32(),
           lineWidth: 3.0,
         ),
       );
@@ -1269,7 +1269,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       _segmentAnnotation = await _segmentPolylineManager!.create(
         PolylineAnnotationOptions(
           geometry: LineString(coordinates: coordinates),
-          lineColor: AppColors.brandPrimary.toARGB32(),
+          lineColor: AppColors.polyline.toARGB32(),
           lineWidth: 5.0,
         ),
       );
@@ -1475,7 +1475,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       flutter_map.Polyline(
         points: widget.points,
         strokeWidth: 3.0,
-        color: AppColors.brandPrimary,
+        color: AppColors.polyline,
       ),
     );
 
@@ -1506,7 +1506,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
           flutter_map.Polyline(
             points: segmentPoints,
             strokeWidth: 5.0,
-            color: AppColors.brandPrimary,
+            color: AppColors.polyline,
           ),
         );
       }
@@ -1747,7 +1747,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   }
 
   Color _colorForSegment(int segmentIndex) {
-    if (!_canColorByElevation()) return AppColors.brandPrimary;
+    if (!_canColorByElevation()) return AppColors.polyline;
 
     final midDistanceKm = _segmentMidDistanceKm(segmentIndex);
     final kmIndex =
@@ -1758,12 +1758,12 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     // 🔹 ЕСЛИ ИЗМЕНЕНИЕ МЕНЬШЕ ПОРОГА — РИСУЕМ БАЗОВЫМ ЦВЕТОМ
     // ──────────────────────────────────────────────────────────────
     if (diff.abs() < _elevationThresholdM) {
-      return AppColors.brandPrimary;
+      return AppColors.polyline;
     }
 
     if (diff > 0) return AppColors.error;
     if (diff < 0) return AppColors.success;
-    return AppColors.brandPrimary;
+    return AppColors.polyline;
   }
 
   double _segmentMidDistanceKm(int segmentIndex) {

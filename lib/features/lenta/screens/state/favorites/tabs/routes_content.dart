@@ -518,7 +518,7 @@ class _SavedRouteRow extends StatelessWidget {
                         child: _RouteRow._metric(
                           context,
                           null,
-                          route.durationText ?? '—',
+                          _RouteRow._durationWithoutMin(route.durationText),
                           MainAxisAlignment.center,
                         ),
                       ),
@@ -675,7 +675,7 @@ class _RouteRow extends StatelessWidget {
                         child: _RouteRow._metric(
                           context,
                           null,
-                          e.durationText,
+                          _RouteRow._durationWithoutMin(e.durationText),
                           MainAxisAlignment.center,
                         ),
                       ),
@@ -694,6 +694,13 @@ class _RouteRow extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Убирает суффикс «мин» у строки времени для отображения в карточке.
+  static String _durationWithoutMin(String? s) {
+    if (s == null || s.isEmpty) return '—';
+    final t = s.replaceFirst(RegExp(r'\s*мин\s*$'), '').trim();
+    return t.isEmpty ? '—' : t;
   }
 
   /// Отображает метрику с выравниванием по левому краю

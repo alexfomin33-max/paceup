@@ -92,7 +92,7 @@ class _RouteCardState extends State<RouteCard> {
                     flutter_map.Polyline(
                       points: points,
                       strokeWidth: 3.0,
-                      color: AppColors.brandPrimary,
+                      color: AppColors.polyline,
                     ),
                   ],
                 ),
@@ -153,7 +153,7 @@ class _RouteCardState extends State<RouteCard> {
                         await _polylineAnnotationManager!.create(
                           PolylineAnnotationOptions(
                             geometry: LineString(coordinates: coordinates),
-                            lineColor: AppColors.brandPrimary.toARGB32(),
+                            lineColor: AppColors.polyline.toARGB32(),
                             lineWidth: 3.0,
                           ),
                         );
