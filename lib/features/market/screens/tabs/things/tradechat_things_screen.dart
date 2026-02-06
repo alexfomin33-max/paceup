@@ -211,6 +211,8 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
   DateTime? _lastVisibleTime;
   int? _selectedMessageIdForDelete; // ID сообщения, выбранного для удаления
   int? _selectedMessageIdForReply; // ID сообщения, выбранного для ответа
+  int? _messageIdWithMenuOpen;
+  int? _messageIdWithRightMenuOpen;
 
   @override
   void initState() {
@@ -467,6 +469,260 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
     if (confirmed == true) {
       await _deleteMessage(messageId);
     }
+  }
+
+  void _showLeftBubbleMoreMenu(
+    BuildContext bubbleContext,
+    _ChatMessage message,
+  ) {
+    final box = bubbleContext.findRenderObject() as RenderBox?;
+    if (box == null || !mounted) return;
+    final overlay = Navigator.of(context).overlay;
+    if (overlay == null) return;
+    final overlayBox =
+        overlay.context.findRenderObject() as RenderBox?;
+    if (overlayBox == null) return;
+    setState(() => _messageIdWithMenuOpen = message.id);
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        box.localToGlobal(Offset.zero),
+        box.localToGlobal(box.size.bottomRight(Offset.zero)),
+      ),
+      Offset.zero & overlayBox.size,
+    );
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+      ),
+      color: AppColors.surface,
+      elevation: 8,
+      items: [
+        PopupMenuItem<String>(
+          value: 'reply',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.arrowshape_turn_up_left,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Ответить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'copy',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.doc_on_doc,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Копировать',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'report',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.exclamationmark_triangle,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Пожаловаться',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.delete,
+                size: 22,
+                color: AppColors.error,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Удалить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (mounted) setState(() => _messageIdWithMenuOpen = null);
+      if (value == null) return;
+      switch (value) {
+        case 'reply':
+        case 'copy':
+        case 'report':
+        case 'delete':
+          break;
+      }
+    });
+  }
+
+  void _showRightBubbleMoreMenu(
+    BuildContext bubbleContext,
+    _ChatMessage message,
+  ) {
+    final box = bubbleContext.findRenderObject() as RenderBox?;
+    if (box == null || !mounted) return;
+    final overlay = Navigator.of(context).overlay;
+    if (overlay == null) return;
+    final overlayBox =
+        overlay.context.findRenderObject() as RenderBox?;
+    if (overlayBox == null) return;
+    setState(() => _messageIdWithRightMenuOpen = message.id);
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        box.localToGlobal(Offset.zero),
+        box.localToGlobal(box.size.bottomRight(Offset.zero)),
+      ),
+      Offset.zero & overlayBox.size,
+    );
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+      ),
+      color: AppColors.surface,
+      elevation: 8,
+      items: [
+        PopupMenuItem<String>(
+          value: 'reply',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.arrowshape_turn_up_left,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Ответить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'copy',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.doc_on_doc,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Копировать',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(
+                Icons.edit_outlined,
+                size: 22,
+                color: AppColors.getIconPrimaryColor(context),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Изменить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                CupertinoIcons.delete,
+                size: 22,
+                color: AppColors.error,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Удалить',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.error,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ).then((value) {
+      if (mounted) setState(() => _messageIdWithRightMenuOpen = null);
+      if (value == null) return;
+      switch (value) {
+        case 'reply':
+        case 'copy':
+        case 'edit':
+          break;
+        case 'delete':
+          _showDeleteConfirmation(message.id);
+          break;
+      }
+    });
   }
 
   // ─── Удаление сообщения ───
@@ -962,10 +1218,14 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                 FocusScope.of(context).unfocus();
                 // ─── Сбрасываем выбор сообщения для удаления и ответа ───
                 if (_selectedMessageIdForDelete != null ||
-                    _selectedMessageIdForReply != null) {
+                    _selectedMessageIdForReply != null ||
+                    _messageIdWithMenuOpen != null ||
+                    _messageIdWithRightMenuOpen != null) {
                   setState(() {
                     _selectedMessageIdForDelete = null;
                     _selectedMessageIdForReply = null;
+                    _messageIdWithMenuOpen = null;
+                    _messageIdWithRightMenuOpen = null;
                   });
                 }
               },
@@ -1175,14 +1435,12 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                       time: _formatTime(msg.createdAt),
                                       messageId: msg.id,
                                       isSelectedForDelete:
-                                          _selectedMessageIdForDelete == msg.id,
-                                      onLongPress: () {
-                                        setState(() {
-                                          _selectedMessageIdForDelete = msg.id;
-                                          _selectedMessageIdForReply = null;
-                                        });
-                                      },
-                                      onDelete: () => _showDeleteConfirmation(msg.id),
+                                          _messageIdWithRightMenuOpen == msg.id,
+                                      onTap: (bubbleContext) =>
+                                          _showRightBubbleMoreMenu(
+                                            bubbleContext,
+                                            msg,
+                                          ),
                                       topSpacing: topSpacing,
                                       bottomSpacing: bottomSpacing,
                                       onImageTap:
@@ -1202,19 +1460,12 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                                       avatarUrl: otherUserAvatar,
                                       messageId: msg.id,
                                       isSelectedForReply:
-                                          _selectedMessageIdForReply == msg.id,
-                                      onLongPress: () {
-                                        setState(() {
-                                          _selectedMessageIdForReply = msg.id;
-                                          _selectedMessageIdForDelete = null;
-                                        });
-                                      },
-                                      onReply: () {
-                                        // TODO: Реализовать функциональность ответа
-                                        setState(() {
-                                          _selectedMessageIdForReply = null;
-                                        });
-                                      },
+                                          _messageIdWithMenuOpen == msg.id,
+                                      onTap: (bubbleContext) =>
+                                          _showLeftBubbleMoreMenu(
+                                            bubbleContext,
+                                            msg,
+                                          ),
                                       onAvatarTap: () {
                                         Navigator.of(context).push(
                                           TransparentPageRoute(
@@ -1572,10 +1823,8 @@ class _BubbleLeft extends StatelessWidget {
   final double bottomSpacing;
   final int messageId;
   final bool isSelectedForReply;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onReply;
+  final void Function(BuildContext bubbleContext)? onTap;
   final VoidCallback? onImageTap;
-  /// Клик по аватарке — переход в профиль отправителя
   final VoidCallback? onAvatarTap;
   const _BubbleLeft({
     required this.text,
@@ -1586,8 +1835,7 @@ class _BubbleLeft extends StatelessWidget {
     this.bottomSpacing = 0.0,
     required this.messageId,
     this.isSelectedForReply = false,
-    this.onLongPress,
-    this.onReply,
+    this.onTap,
     this.onImageTap,
     this.onAvatarTap,
   });
@@ -1648,7 +1896,7 @@ class _BubbleLeft extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           GestureDetector(
-            onLongPress: onLongPress,
+            onTap: onTap != null ? () => onTap!(context) : null,
             child: IntrinsicWidth(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: max),
@@ -1763,19 +2011,6 @@ class _BubbleLeft extends StatelessWidget {
               ),
             ),
           ),
-          // ─── Иконка ответа (показывается при длительном нажатии) ───
-          if (isSelectedForReply)
-            GestureDetector(
-              onTap: onReply,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 8),
-                child: Icon(
-                  CupertinoIcons.arrowshape_turn_up_left,
-                  size: 18,
-                  color: AppColors.getIconSecondaryColor(context),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1790,8 +2025,7 @@ class _BubbleRight extends StatelessWidget {
   final double bottomSpacing;
   final int messageId;
   final bool isSelectedForDelete;
-  final VoidCallback? onLongPress;
-  final VoidCallback? onDelete;
+  final void Function(BuildContext bubbleContext)? onTap;
   final VoidCallback? onImageTap;
   const _BubbleRight({
     required this.text,
@@ -1801,8 +2035,7 @@ class _BubbleRight extends StatelessWidget {
     this.bottomSpacing = 0.0,
     required this.messageId,
     this.isSelectedForDelete = false,
-    this.onLongPress,
-    this.onDelete,
+    this.onTap,
     this.onImageTap,
   });
   @override
@@ -1819,21 +2052,8 @@ class _BubbleRight extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ─── Иконка удаления (показывается при длительном нажатии) ───
-          if (isSelectedForDelete)
-            GestureDetector(
-              onTap: onDelete,
-              child: const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: Icon(
-                  CupertinoIcons.delete,
-                  size: 18,
-                  color: AppColors.error,
-                ),
-              ),
-            ),
           GestureDetector(
-            onLongPress: onLongPress,
+            onTap: onTap != null ? () => onTap!(context) : null,
             child: IntrinsicWidth(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: max),
