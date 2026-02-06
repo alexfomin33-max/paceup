@@ -1,11 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/services/segments_service.dart';
 import '../../../../../../core/utils/activity_format.dart';
 import '../../../../../../providers/services/auth_provider.dart';
+import '../../../../../../core/widgets/transparent_route.dart';
+import 'segment_description/segment_description_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Формат дистанции: до 2 знаков после запятой (как в маршрутах).
@@ -98,7 +101,10 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                                   ? 6
                                   : (hasOther ? 16 : 0),
                             ),
-                            child: _SegmentWithResultCard(segment: e.value),
+                            child: _SegmentWithResultCard(
+                              segment: e.value,
+                              userId: uid,
+                            ),
                           );
                         }),
                       ],
@@ -111,7 +117,10 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                                   ? 6
                                   : 0,
                             ),
-                            child: _SegmentWithResultCard(segment: e.value),
+                            child: _SegmentWithResultCard(
+                              segment: e.value,
+                              userId: uid,
+                            ),
                           );
                         }),
                       ],
@@ -188,9 +197,13 @@ class _SectionTitle extends StatelessWidget {
 /// Карточка участка: название, под ним строка метрик с иконками
 /// (позиция, дистанция, время, темп, пульс, каденс).
 class _SegmentWithResultCard extends StatelessWidget {
-  const _SegmentWithResultCard({required this.segment});
+  const _SegmentWithResultCard({
+    required this.segment,
+    required this.userId,
+  });
 
   final SegmentWithMyResult segment;
+  final int userId;
 
   @override
   Widget build(BuildContext context) {
@@ -198,75 +211,94 @@ class _SegmentWithResultCard extends StatelessWidget {
     final secondary = AppColors.getTextSecondaryColor(context);
     final primary = AppColors.getTextPrimaryColor(context);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.getSurfaceColor(context),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.twinchip,
-          width: 1.0,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            segment.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
-              color: primary,
+    return InkWell(
+      onTap: () {
+        // ── Открываем экран описания участка без нижнего меню
+        pushWithoutNavBar(
+          context,
+          TransparentPageRoute(
+            builder: (_) => SegmentDescriptionScreen(
+              segmentId: segment.id,
+              userId: userId,
+              initialSegment: segment,
             ),
           ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 12,
-            runSpacing: 4,
-            children: [
-              if (segment.position > 0)
-                _MetricChip(
-                  icon: Icons.emoji_events_outlined,
-                  value: '${segment.position}',
-                  color: secondary,
-                ),
-              _MetricChip(
-                icon: Icons.straighten,
-                value: '${_formatDistanceKm(segment.displayDistanceKm)} км',
-                color: secondary,
-              ),
-              if (best != null) ...[
-                _MetricChip(
-                  icon: Icons.timer_outlined,
-                  value: formatDuration(best.durationSec),
-                  color: secondary,
-                ),
-                if (best.paceMinPerKm != null && best.paceMinPerKm! > 0)
-                  _MetricChip(
-                    icon: Icons.speed,
-                    value: formatPace(best.paceMinPerKm!),
-                    color: secondary,
-                  ),
-                if (best.avgHeartRate != null && best.avgHeartRate! > 0)
-                  _MetricChip(
-                    icon: CupertinoIcons.heart_fill,
-                    value: best.avgHeartRate!.round().toString(),
-                    color: AppColors.error,
-                  ),
-                if (best.avgCadence != null && best.avgCadence! > 0)
-                  _MetricChip(
-                    icon: Icons.directions_run,
-                    value: best.avgCadence!.round().toString(),
-                    color: secondary,
-                  ),
-              ],
-            ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(
+            color: AppColors.twinchip,
+            width: 1.0,
           ),
-        ],
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm + AppSpacing.xs,
+          vertical: AppSpacing.sm + (AppSpacing.xs / 2),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              segment.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: primary,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm - (AppSpacing.xs / 2)),
+            Wrap(
+              spacing: AppSpacing.sm + AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: [
+                if (segment.position > 0)
+                  _MetricChip(
+                    icon: Icons.emoji_events_outlined,
+                    value: '${segment.position}',
+                    color: secondary,
+                  ),
+                _MetricChip(
+                  icon: Icons.straighten,
+                  value:
+                      '${_formatDistanceKm(segment.displayDistanceKm)} км',
+                  color: secondary,
+                ),
+                if (best != null) ...[
+                  _MetricChip(
+                    icon: Icons.timer_outlined,
+                    value: formatDuration(best.durationSec),
+                    color: secondary,
+                  ),
+                  if (best.paceMinPerKm != null && best.paceMinPerKm! > 0)
+                    _MetricChip(
+                      icon: Icons.speed,
+                      value: formatPace(best.paceMinPerKm!),
+                      color: secondary,
+                    ),
+                  if (best.avgHeartRate != null && best.avgHeartRate! > 0)
+                    _MetricChip(
+                      icon: CupertinoIcons.heart_fill,
+                      value: best.avgHeartRate!.round().toString(),
+                      color: AppColors.error,
+                    ),
+                  if (best.avgCadence != null && best.avgCadence! > 0)
+                    _MetricChip(
+                      icon: Icons.directions_run,
+                      value: best.avgCadence!.round().toString(),
+                      color: secondary,
+                    ),
+                ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -3,6 +3,8 @@
 // Сервис для создания участков маршрута (segments) по тренировкам.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'dart:convert';
+
 import 'package:latlong2/latlong.dart' as ll;
 
 import 'api_service.dart';
@@ -92,6 +94,199 @@ class SegmentsWithMyResults {
 
   final List<SegmentWithMyResult> mySegments;
   final List<SegmentWithMyResult> otherSegments;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Детали участка (экран описания участка).
+// ─────────────────────────────────────────────────────────────────────────────
+class SegmentDetail {
+  const SegmentDetail({
+    required this.id,
+    required this.name,
+    required this.distanceKm,
+    this.realDistanceKm,
+    required this.activityType,
+    this.points = const [],
+    this.personalBestDurationSec,
+    this.personalBestText,
+    this.personalBestActivityId,
+    this.personalBestPaceMinPerKm,
+    this.personalBestSpeedKmh,
+    this.personalBestAvgHeartRate,
+    this.personalBestElevationGainM,
+    this.myAttemptsCount = 0,
+  });
+
+  final int id;
+  final String name;
+  final double distanceKm;
+  final double? realDistanceKm;
+  final String activityType;
+  final List<ll.LatLng> points;
+  final int? personalBestDurationSec;
+  final String? personalBestText;
+  final int? personalBestActivityId;
+  final double? personalBestPaceMinPerKm;
+  final double? personalBestSpeedKmh;
+  final double? personalBestAvgHeartRate;
+  final double? personalBestElevationGainM;
+  final int myAttemptsCount;
+
+  double get displayDistanceKm => realDistanceKm ?? distanceKm;
+
+  factory SegmentDetail.fromJson(Map<String, dynamic> j) {
+    final bestRaw = j['personal_best'];
+    final best = bestRaw is Map
+        ? Map<String, dynamic>.from(bestRaw as Map)
+        : null;
+    return SegmentDetail(
+      id: (j['id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
+      activityType: (j['activity_type'] as String?) ?? '',
+      points: _parseSegmentPoints(
+        j['segment_points'] ?? j['points'],
+      ),
+      personalBestDurationSec:
+          (best?['duration_sec'] as num?)?.toInt(),
+      personalBestText: best?['duration_text'] as String?,
+      personalBestActivityId:
+          (best?['activity_id'] as num?)?.toInt(),
+      personalBestPaceMinPerKm:
+          (best?['pace_min_per_km'] as num?)?.toDouble(),
+      personalBestSpeedKmh:
+          (best?['speed_kmh'] as num?)?.toDouble(),
+      personalBestAvgHeartRate:
+          (best?['avg_heart_rate'] as num?)?.toDouble(),
+      personalBestElevationGainM:
+          (best?['elevation_gain_m'] as num?)?.toDouble(),
+      myAttemptsCount: (j['my_attempts_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Попытка пользователя по участку (Мои результаты).
+// ─────────────────────────────────────────────────────────────────────────────
+class SegmentAttemptItem {
+  const SegmentAttemptItem({
+    required this.activityId,
+    required this.when,
+    required this.durationText,
+    required this.paceText,
+    this.heartRate,
+  });
+
+  final int activityId;
+  final String when;
+  final String durationText;
+  final String paceText;
+  final int? heartRate;
+
+  factory SegmentAttemptItem.fromJson(Map<String, dynamic> j) {
+    return SegmentAttemptItem(
+      activityId: (j['activity_id'] as num?)?.toInt() ?? 0,
+      when: (j['when'] as String?) ?? '',
+      durationText: (j['duration_text'] as String?) ?? '—',
+      paceText: (j['pace_text'] as String?) ?? '—',
+      heartRate: (j['heart_rate'] as num?)?.toInt(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Элемент лидерборда по участку (общие результаты).
+// ─────────────────────────────────────────────────────────────────────────────
+class SegmentLeaderboardItem {
+  const SegmentLeaderboardItem({
+    required this.rank,
+    required this.userId,
+    required this.name,
+    required this.surname,
+    required this.avatar,
+    required this.bestDurationSec,
+    required this.bestDate,
+    required this.durationText,
+    required this.dateText,
+    this.paceText,
+  });
+
+  final int rank;
+  final int userId;
+  final String name;
+  final String surname;
+  final String avatar;
+  final int bestDurationSec;
+  final String bestDate;
+  final String durationText;
+  final String dateText;
+  final String? paceText;
+
+  String get fullName => '${name.trim()} ${surname.trim()}'.trim();
+
+  factory SegmentLeaderboardItem.fromJson(Map<String, dynamic> j) {
+    return SegmentLeaderboardItem(
+      rank: (j['rank'] as num).toInt(),
+      userId: (j['user_id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      surname: (j['surname'] as String?) ?? '',
+      avatar: (j['avatar'] as String?) ?? '',
+      bestDurationSec: (j['best_duration_sec'] as num).toInt(),
+      bestDate: (j['best_date'] as String?) ?? '',
+      durationText: (j['duration_text'] as String?) ?? '—',
+      dateText: (j['date_text'] as String?) ?? '',
+      paceText: j['pace_text'] as String?,
+    );
+  }
+}
+
+// ────────────────────────────────────────────────────────────────
+// Парсер точек участка (поддержка разных форматов API)
+// ────────────────────────────────────────────────────────────────
+List<ll.LatLng> _parseSegmentPoints(dynamic v) {
+  final out = <ll.LatLng>[];
+  if (v is String) {
+    try {
+      final decoded = jsonDecode(v);
+      return _parseSegmentPoints(decoded);
+    } catch (_) {
+      return out;
+    }
+  }
+  if (v is List) {
+    final regex = RegExp(
+      r'LatLng\(\s*([\-0-9\.]+)\s*,\s*([\-0-9\.]+)\s*\)',
+    );
+    for (final e in v) {
+      if (e is String) {
+        final m = regex.firstMatch(e);
+        if (m != null) {
+          out.add(
+            ll.LatLng(
+              double.tryParse(m.group(1)!) ?? 0,
+              double.tryParse(m.group(2)!) ?? 0,
+            ),
+          );
+        }
+      } else if (e is Map<String, dynamic>) {
+        out.add(
+          ll.LatLng(
+            (e['lat'] as num?)?.toDouble() ?? 0,
+            (e['lng'] as num?)?.toDouble() ?? 0,
+          ),
+        );
+      } else if (e is List && e.length >= 2) {
+        out.add(
+          ll.LatLng(
+            (e[0] as num?)?.toDouble() ?? 0,
+            (e[1] as num?)?.toDouble() ?? 0,
+          ),
+        );
+      }
+    }
+  }
+  return out;
 }
 
 /// Элемент участка из API (список «Избранное — Участки»).
@@ -359,6 +554,83 @@ class SegmentsService {
     if (list is! List) return [];
     return list
         .map((e) => SegmentWithMyResult.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДЕТАЛИ УЧАСТКА
+  // ────────────────────────────────────────────────────────────────
+  Future<SegmentDetail> getSegmentDetail({
+    required int segmentId,
+    int userId = 0,
+  }) async {
+    final queryParams = <String, String>{
+      'segment_id': segmentId.toString(),
+    };
+    if (userId > 0) {
+      queryParams['user_id'] = userId.toString();
+    }
+    final response = await _api.get(
+      '/get_segment.php',
+      queryParams: queryParams,
+    );
+    final segmentMap = response['segment'];
+    if (segmentMap is! Map<String, dynamic>) {
+      throw StateError('get_segment: ожидался объект segment');
+    }
+    return SegmentDetail.fromJson(
+      Map<String, dynamic>.from(segmentMap as Map),
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 МОИ РЕЗУЛЬТАТЫ ПО УЧАСТКУ
+  // ────────────────────────────────────────────────────────────────
+  Future<List<SegmentAttemptItem>> getSegmentAttempts({
+    required int segmentId,
+    required int userId,
+  }) async {
+    final response = await _api.get(
+      '/get_segment_attempts.php',
+      queryParams: {
+        'segment_id': segmentId.toString(),
+        'user_id': userId.toString(),
+      },
+    );
+    final list = response['attempts'];
+    if (list is! List) return [];
+    return list
+        .map((e) => SegmentAttemptItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ЛИДЕРБОРД ПО УЧАСТКУ
+  // ────────────────────────────────────────────────────────────────
+  Future<List<SegmentLeaderboardItem>> getSegmentLeaderboard({
+    required int segmentId,
+    String filter = 'all',
+    int userId = 0,
+  }) async {
+    final queryParams = <String, String>{
+      'segment_id': segmentId.toString(),
+      'filter': filter,
+    };
+    if (userId > 0) {
+      queryParams['user_id'] = userId.toString();
+    }
+    final response = await _api.get(
+      '/get_segment_leaderboard.php',
+      queryParams: queryParams,
+    );
+    final list = response['results'];
+    if (list is! List) return [];
+    return list
+        .map((e) => SegmentLeaderboardItem.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
         .toList();
