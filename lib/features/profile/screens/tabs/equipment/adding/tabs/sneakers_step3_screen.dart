@@ -1,5 +1,6 @@
 // lib/features/profile/screens/tabs/equipment/adding/tabs/sneakers_step3_screen.dart
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -14,17 +15,44 @@ import '../../../../../../../../core/providers/form_state_provider.dart';
 import '../../../../../../../../core/widgets/form_error_display.dart';
 import '../../viewing/viewing_equipment_screen.dart';
 
-/// Экран «Сохранить кроссовки» — третий шаг добавления кроссовок
+/// Базовый URL изображений снаряжения (как в sneakers_step2_screen)
+const String _equipImagesBase =
+    'https://uploads.paceup.ru/images/equip';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
+/// Экран «Сохранить кроссовки» — третий шаг: бренд/модель,
+/// дата, пробег, фото.
+/// Если передан equipBaseId + imageExt — показываем изображение из uploads,
+/// иначе оставляем пустое место.
+/// Пользователь может загрузить своё фото.
 class SneakersStep3Screen extends ConsumerStatefulWidget {
-  /// Выбранный бренд кроссовок
   final String brand;
-  /// Выбранная модель кроссовок
   final String model;
+  /// id из equip_base для отображения изображения (если есть на сервере)
+  final int? equipBaseId;
+  /// расширение файла изображения (png, jpg, jpeg)
+  final String? imageExt;
 
   const SneakersStep3Screen({
     super.key,
     required this.brand,
     required this.model,
+    this.equipBaseId,
+    this.imageExt,
   });
 
   @override
@@ -276,6 +304,37 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
   }
 
   // ─────────────────────────────────────────────────────────────────────
+  //                        ИЗОБРАЖЕНИЕ ЭКВИПА
+  // ─────────────────────────────────────────────────────────────────────
+  // ── Изображение эквипа из uploads или пустое место (если нет своего фото)
+  Widget _buildEquipOrPlaceholderImage() {
+    final id = widget.equipBaseId;
+    // ── Если нет id, оставляем пустую область под картинку.
+    if (id == null) return _buildEmptyImageSpace();
+    // ── Нормализуем расширение, при отсутствии пробуем png.
+    final ext = _normalizeImageExt(widget.imageExt) ?? 'png';
+    final url = '$_equipImagesBase/boots/$id.$ext';
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 320),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.contain,
+        width: 220,
+        // ── Если картинка не найдена, оставляем пустое место.
+        errorWidget: (_, __, ___) => _buildEmptyImageSpace(),
+      ),
+    );
+  }
+
+  Widget _buildEmptyImageSpace() {
+    // ── Пустое место, чтобы сохранить высоту блока без плейсхолдера.
+    return const SizedBox(
+      width: 220,
+      height: 220,
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
   //                           ФОРМАТТЕРЫ
   // ─────────────────────────────────────────────────────────────────────
   String? get _dateLabel {
@@ -331,12 +390,13 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
           child: Column(
             children: [
               // ───────────────────────── Большая картинка кроссовок ─────────────────────────
+              // Приоритет: своё фото → изображение из equip (uploads) →
+              // пустое место
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 30),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // ── Показываем картинку по умолчанию или выбранную
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -348,23 +408,14 @@ class _SneakersStep3ScreenState extends ConsumerState<SneakersStep3Screen> {
                                 child: Image.file(
                                   _imageFile!,
                                   fit: BoxFit.contain,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Image.asset(
-                                      'assets/add_boots.png',
-                                      width: 220,
-                                      fit: BoxFit.contain,
-                                    );
+                                  errorBuilder: (_, __, ___) {
+                                    // ── Если локальная картинка недоступна,
+                                    // оставляем пустое место.
+                                    return _buildEmptyImageSpace();
                                   },
                                 ),
                               )
-                            : Opacity(
-                                opacity: 0.5,
-                                child: Image.asset(
-                                  'assets/add_boots.png',
-                                  width: 220,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
+                            : _buildEquipOrPlaceholderImage(),
                       ),
                     ),
                     // кнопка «добавить фото» — в центре картинки

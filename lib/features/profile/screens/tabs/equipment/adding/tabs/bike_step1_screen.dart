@@ -3,28 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../providers/services/api_provider.dart';
 import 'bike_step2_screen.dart';
 import 'own_bike_screen.dart';
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// Список популярных брендов велосипедов в алфавитном порядке
-/// ─────────────────────────────────────────────────────────────────────────────
-const List<String> _bikeBrands = [
-  'Bianchi',
-  'Cannondale',
-  'Canyon',
-  'Cervelo',
-  'Colnago',
-  'Giant',
-  'Merida',
-  'Orbea',
-  'Pinarello',
-  'Scott',
-  'Specialized',
-  'Trek',
-];
-
-/// Экран «Бренд велосипеда» — первый шаг добавления велосипеда
+/// Экран «Бренд велосипеда» — первый шаг. Бренды из API (type=bike, status=1).
 class BikeStep1Screen extends ConsumerStatefulWidget {
   const BikeStep1Screen({super.key});
 
@@ -33,20 +16,19 @@ class BikeStep1Screen extends ConsumerStatefulWidget {
 }
 
 class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
-  // ── Контроллер для поля поиска
   final TextEditingController _searchController = TextEditingController();
-  // ── Выбранный бренд (null = не выбран)
   String? _selectedBrand;
-  // ── Флаг выбора специального пункта "Добавить свой велосипед"
   bool _isOwnBikeSelected = false;
-  // ── Отфильтрованный список брендов на основе поиска
-  List<String> _filteredBrands = _bikeBrands;
+  List<String> _allBrands = [];
+  List<String> _filteredBrands = [];
+  bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    // ── Подписка на изменения в поле поиска для фильтрации списка
     _searchController.addListener(_onSearchChanged);
+    _loadBrands();
   }
 
   @override
@@ -55,27 +37,54 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
     super.dispose();
   }
 
-  /// Обработчик изменения текста в поле поиска
-  void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+  Future<void> _loadBrands() async {
     setState(() {
-      if (query.isEmpty) {
-        _filteredBrands = _bikeBrands;
-      } else {
-        _filteredBrands = _bikeBrands
-            .where((brand) => brand.toLowerCase().contains(query))
-            .toList();
-      }
-      // ── Сбрасываем выбор, если выбранный бренд не попадает в фильтр
-      if (_selectedBrand != null &&
-          !_filteredBrands.contains(_selectedBrand)) {
-        _selectedBrand = null;
-      }
-      // ── Сбрасываем выбор специального пункта при поиске
-      if (query.isNotEmpty) {
-        _isOwnBikeSelected = false;
-      }
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/search_equipment_brands.php',
+        body: {'type': 'bike'},
+      );
+      if (!mounted) return;
+      final list = (data['brands'] as List<dynamic>?)?.cast<String>() ?? [];
+      final sorted = List<String>.from(list)..sort((a, b) => a.compareTo(b));
+      setState(() {
+        _allBrands = sorted;
+        _loading = false;
+        _loadError = null;
+        _applySearchFilter();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e.toString();
+        _allBrands = [];
+        _filteredBrands = [];
+      });
+    }
+  }
+
+  void _applySearchFilter() {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      _filteredBrands = List.from(_allBrands);
+    } else {
+      _filteredBrands = _allBrands
+          .where((b) => b.toLowerCase().contains(query))
+          .toList();
+    }
+    if (_selectedBrand != null && !_filteredBrands.contains(_selectedBrand)) {
+      _selectedBrand = null;
+    }
+    if (query.isNotEmpty) _isOwnBikeSelected = false;
+  }
+
+  void _onSearchChanged() {
+    setState(_applySearchFilter);
   }
 
   @override
@@ -120,19 +129,38 @@ class _BikeStep1ScreenState extends ConsumerState<BikeStep1Screen> {
               ),
             ),
 
-            // ── Вертикальный список брендов
             Expanded(
-              child: _filteredBrands.isEmpty && 
-                     _searchController.text.trim().isNotEmpty
-                  ? Center(
-                      child: Text(
-                        'Бренды не найдены',
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
+              child: _loading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _loadError != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: SelectableText.rich(
+                              TextSpan(
+                                text: 'Ошибка загрузки: $_loadError',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : _filteredBrands.isEmpty &&
+                              _searchController.text.trim().isNotEmpty
+                          ? Center(
+                              child: Text(
+                                'Бренды не найдены',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: _filteredBrands.length + 1,
                       itemBuilder: (context, index) {

@@ -1,115 +1,84 @@
 // lib/features/profile/screens/tabs/equipment/adding/tabs/bike_step2_screen.dart
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../../../../core/theme/app_theme.dart';
+import '../../../../../../../../providers/services/api_provider.dart';
 import 'bike_step3_screen.dart';
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// Список популярных моделей велосипедов по брендам
-/// ─────────────────────────────────────────────────────────────────────────────
-const Map<String, List<String>> _bikeModelsByBrand = {
-  'Bianchi': [
-    'Oltre XR4',
-    'Infinito CV',
-    'Aria',
-    'Sprint',
-    'Via Nirone 7',
-    'Impulso',
-  ],
-  'Cannondale': [
-    'SuperSix EVO',
-    'SystemSix',
-    'Synapse',
-    'CAAD13',
-    'Topstone',
-    'Scalpel',
-  ],
-  'Canyon': [
-    'Aeroad CF SLX',
-    'Ultimate CF SL',
-    'Endurace CF',
-    'Grizl',
-    'Grail',
-    'Speedmax',
-  ],
-  'Cervelo': [
-    'R5',
-    'S5',
-    'Caledonia',
-    'P5',
-    'Soloist',
-    'Áspero',
-  ],
-  'Colnago': [
-    'C64',
-    'V3Rs',
-    'C68',
-    'G3-X',
-    'Master',
-    'Arabesque',
-  ],
-  'Giant': [
-    'TCR Advanced Pro',
-    'Defy Advanced',
-    'Propel Advanced',
-    'Revolt Advanced',
-    'Trinity Advanced',
-    'Escape',
-  ],
-  'Merida': [
-    'Reacto',
-    'Scultura',
-    'Silex',
-    'Warrior',
-    'Ride',
-    'Big Nine',
-  ],
-  'Orbea': [
-    'Orca',
-    'Oiz',
-    'Terra',
-    'Avant',
-    'Gain',
-    'Occam',
-  ],
-  'Pinarello': [
-    'Dogma F',
-    'Grevel',
-    'Prince',
-    'Paris',
-    'X3',
-    'Razha',
-  ],
-  'Scott': [
-    'Addict RC',
-    'Foil RC',
-    'Spark',
-    'Scale',
-    'Contessa',
-    'Speedster',
-  ],
-  'Specialized': [
-    'Tarmac SL7',
-    'Roubaix',
-    'Aethos',
-    'Diverge',
-    'Stumpjumper',
-    'Epic',
-  ],
-  'Trek': [
-    'Emonda SLR',
-    'Madone SLR',
-    'Domane SLR',
-    'Checkpoint',
-    'Fuel EX',
-    'Supercaliber',
-  ],
-};
+const String _equipImagesBase =
+    'https://uploads.paceup.ru/images/equip';
 
-/// Экран «Модель X» — второй шаг добавления велосипеда
+// ─────────────────────────────────────────────────────────────────────────────
+// Нормализация расширения изображения для корректного URL.
+// ─────────────────────────────────────────────────────────────────────────────
+String? _normalizeImageExt(String? rawExt) {
+  // ── Приводим к нижнему регистру и убираем лишние пробелы/точку.
+  final trimmed = rawExt?.trim().toLowerCase();
+  if (trimmed == null || trimmed.isEmpty) return null;
+  final ext = trimmed.startsWith('.')
+      ? trimmed.substring(1)
+      : trimmed;
+  // ── В БД может быть "jpeg", а файл лежит как .jpg.
+  if (ext == 'jpeg') return 'jpg';
+  return ext;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Список расширений для фолбэка, если основной URL не отдал картинку.
+// ─────────────────────────────────────────────────────────────────────────────
+const List<String> _bikeImageExtFallbacks = [
+  'png',
+  'jpg',
+  'jpeg',
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Формируем список URL для изображений велосипеда с фолбэками.
+// ─────────────────────────────────────────────────────────────────────────────
+List<String> _buildBikeImageUrls({
+  required int id,
+  required String? imageExt,
+}) {
+  // ── Базовый путь для картинок велосипедов.
+  final base = '$_equipImagesBase/bike/$id';
+  final normalized = _normalizeImageExt(imageExt);
+  final urls = <String>[];
+
+  // ── Первым идёт extension из БД, если он задан.
+  if (normalized != null) {
+    urls.add('$base.$normalized');
+  }
+
+  // ── Добавляем стандартные расширения, избегая дублей.
+  for (final ext in _bikeImageExtFallbacks) {
+    if (ext == normalized) continue;
+    urls.add('$base.$ext');
+  }
+
+  return urls;
+}
+
+class _EquipModel {
+  const _EquipModel({
+    required this.id,
+    required this.name,
+    this.imageExt,
+  });
+  final int id;
+  final String name;
+  final String? imageExt;
+
+  String? imageUrl(String folder) {
+    // ── Если image_ext отсутствует, пробуем png как дефолтный вариант.
+    final ext = _normalizeImageExt(imageExt) ?? 'png';
+    return '$_equipImagesBase/$folder/$id.$ext';
+  }
+}
+
+/// Экран «Модель X» — второй шаг добавления велосипеда. Модели из API (bike).
 class BikeStep2Screen extends ConsumerStatefulWidget {
-  /// Выбранный бренд велосипеда
   final String brand;
 
   const BikeStep2Screen({
@@ -122,23 +91,18 @@ class BikeStep2Screen extends ConsumerStatefulWidget {
 }
 
 class _BikeStep2ScreenState extends ConsumerState<BikeStep2Screen> {
-  // ── Контроллер для поля поиска
   final TextEditingController _searchController = TextEditingController();
-  // ── Выбранная модель (null = не выбрана)
-  String? _selectedModel;
-  // ── Список моделей для выбранного бренда
-  late List<String> _models;
-  // ── Отфильтрованный список моделей на основе поиска
-  late List<String> _filteredModels;
+  _EquipModel? _selectedModel;
+  List<_EquipModel> _allModels = [];
+  List<_EquipModel> _filteredModels = [];
+  bool _loading = true;
+  String? _loadError;
 
   @override
   void initState() {
     super.initState();
-    // ── Получаем список моделей для выбранного бренда
-    _models = _bikeModelsByBrand[widget.brand] ?? [];
-    _filteredModels = _models;
-    // ── Подписка на изменения в поле поиска для фильтрации списка
     _searchController.addListener(_onSearchChanged);
+    _loadModels();
   }
 
   @override
@@ -147,23 +111,62 @@ class _BikeStep2ScreenState extends ConsumerState<BikeStep2Screen> {
     super.dispose();
   }
 
-  /// Обработчик изменения текста в поле поиска
-  void _onSearchChanged() {
-    final query = _searchController.text.trim().toLowerCase();
+  Future<void> _loadModels() async {
     setState(() {
-      if (query.isEmpty) {
-        _filteredModels = _models;
-      } else {
-        _filteredModels = _models
-            .where((model) => model.toLowerCase().contains(query))
-            .toList();
-      }
-      // ── Сбрасываем выбор, если выбранная модель не попадает в фильтр
-      if (_selectedModel != null &&
-          !_filteredModels.contains(_selectedModel)) {
-        _selectedModel = null;
-      }
+      _loading = true;
+      _loadError = null;
     });
+    try {
+      final api = ref.read(apiServiceProvider);
+      final data = await api.post(
+        '/search_equipment_models.php',
+        body: {'brand': widget.brand, 'type': 'bike'},
+      );
+      if (!mounted) return;
+      final list = (data['models'] as List<dynamic>?) ?? [];
+      final models = list.map((e) {
+        final map = e as Map<String, dynamic>;
+        return _EquipModel(
+          id: (map['id'] as num).toInt(),
+          name: (map['name'] as String?) ?? '',
+          imageExt: map['image_ext'] as String?,
+        );
+      }).toList();
+      models.sort((a, b) => a.name.compareTo(b.name));
+      setState(() {
+        _allModels = models;
+        _loading = false;
+        _loadError = null;
+        _applySearchFilter();
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = e.toString();
+        _allModels = [];
+        _filteredModels = [];
+      });
+    }
+  }
+
+  void _applySearchFilter() {
+    final query = _searchController.text.trim().toLowerCase();
+    if (query.isEmpty) {
+      _filteredModels = List.from(_allModels);
+    } else {
+      _filteredModels = _allModels
+          .where((m) => m.name.toLowerCase().contains(query))
+          .toList();
+    }
+    if (_selectedModel != null &&
+        !_filteredModels.any((m) => m.id == _selectedModel!.id)) {
+      _selectedModel = null;
+    }
+  }
+
+  void _onSearchChanged() {
+    setState(_applySearchFilter);
   }
 
   @override
@@ -208,50 +211,73 @@ class _BikeStep2ScreenState extends ConsumerState<BikeStep2Screen> {
               ),
             ),
 
-            // ── Вертикальный список моделей
             Expanded(
-              child: _filteredModels.isEmpty
-                  ? Center(
-                      child: Text(
-                        'Модели не найдены',
-                        style: AppTextStyles.h14w4.copyWith(
-                          color: AppColors.getTextSecondaryColor(context),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: _filteredModels.length,
-                      itemBuilder: (context, index) {
-                        final model = _filteredModels[index];
-                        final isSelected = _selectedModel == model;
-                        return _ModelListItem(
-                          model: model,
-                          isSelected: isSelected,
-                          onTap: () {
-                            setState(() {
-                              _selectedModel = isSelected ? null : model;
-                            });
-                          },
-                        );
-                      },
-                    ),
+              child: _loading
+                  ? const Center(child: CupertinoActivityIndicator())
+                  : _loadError != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: SelectableText.rich(
+                              TextSpan(
+                                text: 'Ошибка загрузки: $_loadError',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                      : _filteredModels.isEmpty
+                          ? Center(
+                              child: Text(
+                                'Модели не найдены',
+                                style: AppTextStyles.h14w4.copyWith(
+                                  color: AppColors.getTextSecondaryColor(
+                                    context,
+                                  ),
+                                ),
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              itemCount: _filteredModels.length,
+                              itemBuilder: (context, index) {
+                                final model = _filteredModels[index];
+                                final isSelected =
+                                    _selectedModel?.id == model.id;
+                                return _ModelListItem(
+                                  equipModel: model,
+                                  isSelected: isSelected,
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedModel =
+                                          isSelected ? null : model;
+                                    });
+                                  },
+                                );
+                              },
+                            ),
             ),
-
-            // ── Кнопка "Продолжить" внизу
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               child: Opacity(
                 opacity: isButtonEnabled ? 1.0 : 0.4,
                 child: ElevatedButton(
-                  onPressed: isButtonEnabled
+                  onPressed: isButtonEnabled && _selectedModel != null
                       ? () {
-                          // ── Переход на экран сохранения велосипеда
+                          final m = _selectedModel!;
                           Navigator.of(context, rootNavigator: true).push(
                             CupertinoPageRoute(
                               builder: (_) => BikeStep3Screen(
                                 brand: widget.brand,
-                                model: _selectedModel!,
+                                model: m.name,
+                                equipBaseId: m.id,
+                                imageExt: m.imageExt,
                               ),
                             ),
                           );
@@ -351,22 +377,23 @@ class _SearchField extends StatelessWidget {
   }
 }
 
-/// ─────────────────────────────────────────────────────────────────────────────
-/// Элемент списка модели
-/// ─────────────────────────────────────────────────────────────────────────────
 class _ModelListItem extends StatelessWidget {
-  final String model;
-  final bool isSelected;
-  final VoidCallback onTap;
-
   const _ModelListItem({
-    required this.model,
+    required this.equipModel,
     required this.isSelected,
     required this.onTap,
   });
 
+  final _EquipModel equipModel;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
+    final urls = _buildBikeImageUrls(
+      id: equipModel.id,
+      imageExt: equipModel.imageExt,
+    );
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -374,33 +401,21 @@ class _ModelListItem extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Row(
           children: [
-            // ── Миниатюра велосипеда слева
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.sm),
-              child: Image.asset(
-                'assets/add_bike.png',
+              child: SizedBox(
                 width: 50,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 50,
-                    decoration: BoxDecoration(
-                      color: AppColors.getBackgroundColor(context),
-                      borderRadius: BorderRadius.circular(AppRadius.sm),
-                    ),
-                    child: Icon(
-                      CupertinoIcons.circle,
-                      size: 24,
-                      color: AppColors.getIconSecondaryColor(context),
-                    ),
-                  );
-                },
+                height: 50,
+                child: _EquipImage(
+                  urls: urls,
+                  placeholder: _placeholder(context),
+                ),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                model,
+                equipModel.name,
                 style: AppTextStyles.h14w5.copyWith(
                   color: AppColors.getTextPrimaryColor(context),
                 ),
@@ -428,6 +443,59 @@ class _ModelListItem extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _placeholder(BuildContext context) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: AppColors.getBackgroundColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Icon(
+        CupertinoIcons.circle,
+        size: 24,
+        color: AppColors.getIconSecondaryColor(context),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Картинка эквипа с фолбэком на другие расширения.
+// ─────────────────────────────────────────────────────────────────────────────
+class _EquipImage extends StatelessWidget {
+  const _EquipImage({
+    required this.urls,
+    required this.placeholder,
+  });
+
+  final List<String> urls;
+  final Widget placeholder;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Если URL-ов нет, сразу показываем плейсхолдер.
+    if (urls.isEmpty) return placeholder;
+    return _buildWithIndex(0);
+  }
+
+  Widget _buildWithIndex(int index) {
+    final url = urls[index];
+    return CachedNetworkImage(
+      imageUrl: url,
+      fit: BoxFit.contain,
+      errorWidget: (_, __, ___) {
+        // ── Если есть следующий URL, пробуем его.
+        final nextIndex = index + 1;
+        if (nextIndex < urls.length) {
+          return _buildWithIndex(nextIndex);
+        }
+        // ── Иначе показываем плейсхолдер.
+        return placeholder;
+      },
     );
   }
 }
