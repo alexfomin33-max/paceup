@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../../../../../core/theme/app_theme.dart';
 import '../../../../../../core/services/segments_service.dart';
+import '../../../../../../core/utils/activity_format.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -13,15 +15,21 @@ String _formatDistanceKm(double km) {
   return truncated.toStringAsFixed(2);
 }
 
-/// Провайдер списка участков пользователя.
-final mySegmentsProvider = FutureProvider.family<List<ActivitySegmentItem>, int>(
+/// Провайдер: участки с результатами текущего пользователя (Мои + Все).
+final segmentsWithMyResultsProvider =
+    FutureProvider.family<SegmentsWithMyResults, int>(
   (ref, userId) async {
-    if (userId <= 0) return [];
-    return SegmentsService().getMySegments(userId);
+    if (userId <= 0) {
+      return const SegmentsWithMyResults(
+        mySegments: [],
+        otherSegments: [],
+      );
+    }
+    return SegmentsService().getSegmentsWithMyResults(userId);
   },
 );
 
-/// Вкладка «Участки»: список участков (название, под ним — расстояние).
+/// Вкладка «Участки»: два блока — «Мои участки» и «Все участки», с результатами.
 class SegmentsContent extends ConsumerStatefulWidget {
   const SegmentsContent({super.key});
 
@@ -38,19 +46,21 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
       _didRequestRefresh = true;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final uid = ref.read(currentUserIdProvider).valueOrNull ?? 0;
-        if (uid > 0) ref.invalidate(mySegmentsProvider(uid));
+        if (uid > 0) ref.invalidate(segmentsWithMyResultsProvider(uid));
       });
     }
     final userIdAsync = ref.watch(currentUserIdProvider);
     return userIdAsync.when(
       data: (userId) {
         final uid = userId ?? 0;
-        final segmentsAsync = ref.watch(mySegmentsProvider(uid));
-        return segmentsAsync.when(
-          data: (segments) {
+        final dataAsync = ref.watch(segmentsWithMyResultsProvider(uid));
+        return dataAsync.when(
+          data: (data) {
             final bottomPadding =
                 MediaQuery.of(context).viewPadding.bottom + 60 + 12;
-            if (segments.isEmpty) {
+            final hasMy = data.mySegments.isNotEmpty;
+            final hasOther = data.otherSegments.isNotEmpty;
+            if (!hasMy && !hasOther) {
               return CustomScrollView(
                 physics: const BouncingScrollPhysics(),
                 slivers: [
@@ -78,18 +88,34 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, i) {
-                        final s = segments[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i < segments.length - 1 ? 6 : 0,
-                          ),
-                          child: _SegmentCard(segment: s),
-                        );
-                      },
-                      childCount: segments.length,
-                    ),
+                    delegate: SliverChildListDelegate([
+                      if (hasMy) ...[
+                        _SectionTitle(title: 'Мои участки'),
+                        ...data.mySegments.asMap().entries.map((e) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: e.key < data.mySegments.length - 1
+                                  ? 6
+                                  : (hasOther ? 16 : 0),
+                            ),
+                            child: _SegmentWithResultCard(segment: e.value),
+                          );
+                        }),
+                      ],
+                      if (hasOther) ...[
+                        _SectionTitle(title: 'Все участки'),
+                        ...data.otherSegments.asMap().entries.map((e) {
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: e.key < data.otherSegments.length - 1
+                                  ? 6
+                                  : 0,
+                            ),
+                            child: _SegmentWithResultCard(segment: e.value),
+                          );
+                        }),
+                      ],
+                    ]),
                   ),
                 ),
                 SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
@@ -136,14 +162,42 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   }
 }
 
-/// Карточка участка: название, под ним расстояние.
-class _SegmentCard extends StatelessWidget {
-  const _SegmentCard({required this.segment});
+/// Заголовок блока (Мои участки / Все участки).
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle({required this.title});
 
-  final ActivitySegmentItem segment;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.getTextSecondaryColor(context),
+        ),
+      ),
+    );
+  }
+}
+
+/// Карточка участка: название, под ним строка метрик с иконками
+/// (позиция, дистанция, время, темп, пульс, каденс).
+class _SegmentWithResultCard extends StatelessWidget {
+  const _SegmentWithResultCard({required this.segment});
+
+  final SegmentWithMyResult segment;
+
+  @override
+  Widget build(BuildContext context) {
+    final best = segment.bestResult;
+    final secondary = AppColors.getTextSecondaryColor(context);
+    final primary = AppColors.getTextPrimaryColor(context);
+
     return Container(
       decoration: BoxDecoration(
         color: AppColors.getSurfaceColor(context),
@@ -166,20 +220,87 @@ class _SegmentCard extends StatelessWidget {
               fontFamily: 'Inter',
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: AppColors.getTextPrimaryColor(context),
+              color: primary,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '${_formatDistanceKm(segment.displayDistanceKm)} км',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              color: AppColors.getTextSecondaryColor(context),
-            ),
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 12,
+            runSpacing: 4,
+            children: [
+              if (segment.position > 0)
+                _MetricChip(
+                  icon: Icons.emoji_events_outlined,
+                  value: '${segment.position}',
+                  color: secondary,
+                ),
+              _MetricChip(
+                icon: Icons.straighten,
+                value: '${_formatDistanceKm(segment.displayDistanceKm)} км',
+                color: secondary,
+              ),
+              if (best != null) ...[
+                _MetricChip(
+                  icon: Icons.timer_outlined,
+                  value: formatDuration(best.durationSec),
+                  color: secondary,
+                ),
+                if (best.paceMinPerKm != null && best.paceMinPerKm! > 0)
+                  _MetricChip(
+                    icon: Icons.speed,
+                    value: formatPace(best.paceMinPerKm!),
+                    color: secondary,
+                  ),
+                if (best.avgHeartRate != null && best.avgHeartRate! > 0)
+                  _MetricChip(
+                    icon: CupertinoIcons.heart_fill,
+                    value: best.avgHeartRate!.round().toString(),
+                    color: AppColors.error,
+                  ),
+                if (best.avgCadence != null && best.avgCadence! > 0)
+                  _MetricChip(
+                    icon: Icons.directions_run,
+                    value: best.avgCadence!.round().toString(),
+                    color: secondary,
+                  ),
+              ],
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Компактная метрика: иконка + значение (без подписи).
+class _MetricChip extends StatelessWidget {
+  const _MetricChip({
+    required this.icon,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.getTextPrimaryColor(context),
+          ),
+        ),
+      ],
     );
   }
 }

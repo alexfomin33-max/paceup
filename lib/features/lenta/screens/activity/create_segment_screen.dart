@@ -60,6 +60,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   MapboxMap? _mapboxMap;
   PolylineAnnotationManager? _trackPolylineManager;
   PolylineAnnotationManager? _segmentPolylineManager;
+  PolylineAnnotationManager? _nearbySegmentsPolylineManager;
   PointAnnotationManager? _pointAnnotationManager;
   PointAnnotation? _startAnnotation;
   PointAnnotation? _endAnnotation;
@@ -67,6 +68,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   PointAnnotation? _routeStartAnnotation;
   PointAnnotation? _routeEndAnnotation;
   PolylineAnnotation? _segmentAnnotation;
+  final List<PolylineAnnotation> _nearbySegmentAnnotations = [];
 
   // ────────────────────────────────────────────────────────────────
   // 🔹 FLUTTER_MAP КОНТРОЛЛЕР
@@ -87,6 +89,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   // 🔹 ДАННЫЕ ДЛЯ ПРОВЕРКИ ДУБЛЕЙ
   // ────────────────────────────────────────────────────────────────
   List<ActivitySegmentDuplicateItem> _existingSegments = [];
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДАННЫЕ ДЛЯ ОТРИСОВКИ УЧАСТКОВ В ОБЛАСТИ
+  // ────────────────────────────────────────────────────────────────
+  List<ActivitySegmentMapItem> _nearbySegments = [];
 
   int? _startIndex;
   int? _endIndex;
@@ -116,6 +122,8 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   static const double _maxBikeKm = 5.0;
   static const double _maxSwimKm = 0.5;
   static const double _distanceEpsilonKm = 0.01;
+  static const double _nearbySegmentsStrokeWidth = 4.0;
+  static const double _nearbySegmentsAlpha = 0.9;
   // ────────────────────────────────────────────────────────────────
   // 🔹 ПОРОГ ПО ВЫСОТЕ: меньше — считаем участок «ровным»
   // ────────────────────────────────────────────────────────────────
@@ -130,6 +138,10 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     // 🔹 ПРЕДЗАГРУЗКА УЖЕ СОЗДАННЫХ УЧАСТКОВ
     // ──────────────────────────────────────────────────────────────
     _loadExistingSegments();
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 ПРЕДЗАГРУЗКА УЧАСТКОВ В ОБЛАСТИ ТРЕКА
+    // ──────────────────────────────────────────────────────────────
+    _loadNearbySegments();
   }
 
   @override
@@ -138,6 +150,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     if (oldWidget.points != widget.points ||
         oldWidget.points.length != widget.points.length) {
       _buildPrefixDistances();
+      _loadNearbySegments();
     }
     if (oldWidget.elevationPerKm != widget.elevationPerKm) {
       _elevationValues = _parseElevationPerKm(widget.elevationPerKm);
@@ -160,6 +173,66 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     } catch (_) {
       // Ошибки загрузки сегментов игнорируем: проверка дублей
       // остаётся мягкой, а итоговое решение — на бэкенде.
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ПРЕДЗАГРУЗКА УЧАСТКОВ В ОБЛАСТИ ТРЕКА
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _loadNearbySegments() async {
+    if (widget.points.isEmpty) return;
+    final bounds = _boundsFromPoints(widget.points);
+    try {
+      final segments = await SegmentsService().getSegmentsByBbox(
+        minLat: bounds.southwest.latitude,
+        minLng: bounds.southwest.longitude,
+        maxLat: bounds.northeast.latitude,
+        maxLng: bounds.northeast.longitude,
+        activityType: widget.activityType,
+      );
+      if (!mounted) return;
+      setState(() {
+        _nearbySegments = segments;
+      });
+      if (!Platform.isMacOS) {
+        await _drawNearbySegmentsMapbox();
+      }
+    } catch (_) {
+      // Ошибки загрузки участков по области игнорируем.
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 MAPBOX: ОТРИСОВКА УЧАСТКОВ В ОБЛАСТИ
+  // ────────────────────────────────────────────────────────────────
+  Future<void> _drawNearbySegmentsMapbox() async {
+    if (_nearbySegmentsPolylineManager == null) return;
+    try {
+      await _nearbySegmentsPolylineManager!.deleteAll();
+    } catch (_) {
+      // Игнорируем ошибки удаления.
+    }
+    _nearbySegmentAnnotations.clear();
+
+    if (_nearbySegments.isEmpty) return;
+
+    final color = AppColors.orange
+        .withValues(alpha: _nearbySegmentsAlpha)
+        .toARGB32();
+
+    for (final segment in _nearbySegments) {
+      if (segment.points.length < 2) continue;
+      final coordinates = segment.points
+          .map((p) => Position(p.longitude, p.latitude))
+          .toList();
+      final ann = await _nearbySegmentsPolylineManager!.create(
+        PolylineAnnotationOptions(
+          geometry: LineString(coordinates: coordinates),
+          lineColor: color,
+          lineWidth: _nearbySegmentsStrokeWidth,
+        ),
+      );
+      _nearbySegmentAnnotations.add(ann);
     }
   }
 
@@ -306,6 +379,8 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
           await mapboxMap.annotations.createPolylineAnnotationManager();
       _segmentPolylineManager =
           await mapboxMap.annotations.createPolylineAnnotationManager();
+      _nearbySegmentsPolylineManager =
+          await mapboxMap.annotations.createPolylineAnnotationManager();
       _pointAnnotationManager =
           await mapboxMap.annotations.createPointAnnotationManager();
     } catch (_) {
@@ -316,6 +391,11 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     // 🔹 РИСУЕМ ТРЕК
     // ────────────────────────────────────────────────────────────────
     await _drawTrackPolyline();
+
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 РИСУЕМ УЧАСТКИ В ОБЛАСТИ
+    // ────────────────────────────────────────────────────────────────
+    await _drawNearbySegmentsMapbox();
 
     // ────────────────────────────────────────────────────────────────
     // 🔹 МАРКЕРЫ СТАРТА И ФИНИША МАРШРУТА
@@ -511,7 +591,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       }
 
       // ──────────────────────────────────────────────────────────────
-      // 🔹 ПРОВЕРКА ДУБЛЕЙ ПО СТАРТУ/ФИНИШУ
+      // 🔹 ПРОВЕРКА ДУБЛЕЙ ПО СТАРТУ/ФИНИШУ И ПО РАССТОЯНИЮ ОТ ЛИНИИ
       // ──────────────────────────────────────────────────────────────
       final selection = _normalizedSelection();
       if (selection != null) {
@@ -520,6 +600,25 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
           if (mounted) {
             setState(() {
               _errorText = duplicateError;
+            });
+          }
+          return;
+        }
+        final duplicateNearby = _validateDuplicateNearbyByStartEnd(selection);
+        if (duplicateNearby != null) {
+          if (mounted) {
+            setState(() {
+              _errorText = duplicateNearby;
+            });
+          }
+          return;
+        }
+        final segmentPoints = _buildSegmentPolylinePoints(selection);
+        final duplicateByDist = _validateDuplicateByDistance(segmentPoints);
+        if (duplicateByDist != null) {
+          if (mounted) {
+            setState(() {
+              _errorText = duplicateByDist;
             });
           }
           return;
@@ -664,6 +763,8 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
       });
     }
 
+    final segmentPoints = _buildSegmentPolylinePoints(selection);
+
     try {
       await SegmentsService().createSegment(
         userId: widget.userId,
@@ -674,6 +775,7 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         endFraction: selection.endFraction,
         name: name,
         realDistanceKm: realDistanceKm,
+        segmentPoints: segmentPoints.length >= 2 ? segmentPoints : null,
       );
 
       if (!mounted) return;
@@ -733,12 +835,45 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
   // 🔹 ПРОВЕРКА ЛИМИТОВ ПО ТИПУ АКТИВНОСТИ
   // ────────────────────────────────────────────────────────────────
   String? _validateDistance(double distanceKm) {
+    final minKm = _minDistanceKmForType(widget.activityType);
+    if (minKm != null && distanceKm < minKm - _distanceEpsilonKm) {
+      return 'Минимальная длина участка: ${_formatLimit(minKm)}';
+    }
+
     final maxKm = _maxDistanceKmForType(widget.activityType);
     if (maxKm == null) return null;
 
     if (distanceKm <= maxKm + _distanceEpsilonKm) return null;
 
     return 'Превышена длина участка: максимум ${_formatLimit(maxKm)}';
+  }
+
+  double? _minDistanceKmForType(String type) {
+    final normalized = type.trim().toLowerCase();
+    if ([
+      'run',
+      'indoor-running',
+      'ski',
+      'skiing',
+    ].contains(normalized)) {
+      return 0.1;
+    }
+    if ([
+      'bike',
+      'indoor-cycling',
+      'cycling',
+      'bicycle',
+    ].contains(normalized)) {
+      return 0.5;
+    }
+    if ([
+      'walking',
+      'walk',
+      'hiking',
+    ].contains(normalized)) {
+      return 0.05;
+    }
+    return null;
   }
 
   double? _maxDistanceKmForType(String type) {
@@ -821,6 +956,103 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
     }
 
     return null;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДУБЛЬ ПО СТАРТУ/ФИНИШУ СРЕДИ УЧАСТКОВ В ОБЛАСТИ (100/200, 300/600, 50/100 М)
+  // ────────────────────────────────────────────────────────────────
+  String? _validateDuplicateNearbyByStartEnd(_SegmentSelection selection) {
+    final toleranceM = _duplicatePointToleranceM(widget.activityType);
+    if (toleranceM == null) return null;
+    if (_nearbySegments.isEmpty) return null;
+
+    final totalToleranceM = toleranceM * 2.0;
+
+    for (final segment in _nearbySegments) {
+      if (segment.points.length < 2) continue;
+      final theirStart = segment.points.first;
+      final theirEnd = segment.points.last;
+
+      final startDeltaM = _distance(selection.startPoint, theirStart);
+      final endDeltaM = _distance(selection.endPoint, theirEnd);
+      if (startDeltaM <= toleranceM &&
+          endDeltaM <= toleranceM &&
+          (startDeltaM + endDeltaM) <= totalToleranceM) {
+        return 'Такой участок уже существует';
+      }
+
+      final startDeltaRev = _distance(selection.startPoint, theirEnd);
+      final endDeltaRev = _distance(selection.endPoint, theirStart);
+      if (startDeltaRev <= toleranceM &&
+          endDeltaRev <= toleranceM &&
+          (startDeltaRev + endDeltaRev) <= totalToleranceM) {
+        return 'Такой участок уже существует';
+      }
+    }
+    return null;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ДУБЛЬ ПО РАДИУСУ 10 М ОТ ЛИНИИ СУЩЕСТВУЮЩЕГО УЧАСТКА
+  // ────────────────────────────────────────────────────────────────
+  static const double _duplicatePolylineRadiusM = 10.0;
+
+  String? _validateDuplicateByDistance(List<ll.LatLng> segmentPoints) {
+    if (segmentPoints.length < 2 || _nearbySegments.isEmpty) {
+      return null;
+    }
+    for (final existing in _nearbySegments) {
+      if (existing.points.length < 2) continue;
+      final distM = _polylineToPolylineDistanceM(
+        segmentPoints,
+        existing.points,
+      );
+      if (distM < _duplicatePolylineRadiusM) {
+        return 'Такой участок уже существует';
+      }
+    }
+    return null;
+  }
+
+  double _pointToPolylineDistanceM(ll.LatLng point, List<ll.LatLng> polyline) {
+    if (polyline.isEmpty) return double.infinity;
+    if (polyline.length == 1) return _distance(point, polyline.first);
+    double minDist = double.infinity;
+    for (int i = 0; i < polyline.length - 1; i++) {
+      final d = _distanceToSegmentM(
+        point,
+        polyline[i],
+        polyline[i + 1],
+      );
+      if (d < minDist) minDist = d;
+    }
+    return minDist;
+  }
+
+  double _distanceToSegmentM(
+    ll.LatLng p,
+    ll.LatLng a,
+    ll.LatLng b,
+  ) {
+    final proj = _projectToSegment(p, a, b);
+    return _distance(proj.point, p);
+  }
+
+  double _polylineToPolylineDistanceM(
+    List<ll.LatLng> a,
+    List<ll.LatLng> b,
+  ) {
+    double maxA = 0;
+    for (final p in a) {
+      final d = _pointToPolylineDistanceM(p, b);
+      if (d > maxA) maxA = d;
+    }
+    double maxB = 0;
+    for (final p in b) {
+      final d = _pointToPolylineDistanceM(p, a);
+      if (d > maxB) maxB = d;
+    }
+    return maxA > maxB ? maxA : maxB;
   }
 
   // ────────────────────────────────────────────────────────────────
@@ -1246,6 +1478,25 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         color: AppColors.brandPrimary,
       ),
     );
+
+    // ──────────────────────────────────────────────────────────────
+    // 🔹 УЧАСТКИ В ОБЛАСТИ ТРЕКА
+    // ──────────────────────────────────────────────────────────────
+    if (_nearbySegments.isNotEmpty) {
+      final color = AppColors.orange.withValues(
+        alpha: _nearbySegmentsAlpha,
+      );
+      for (final segment in _nearbySegments) {
+        if (segment.points.length < 2) continue;
+        polylines.add(
+          flutter_map.Polyline(
+            points: segment.points,
+            strokeWidth: _nearbySegmentsStrokeWidth,
+            color: color,
+          ),
+        );
+      }
+    }
 
     final selection = _normalizedSelection();
     if (selection != null) {

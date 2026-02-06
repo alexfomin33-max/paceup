@@ -39,7 +39,7 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     final uid = ref.read(currentUserIdProvider).valueOrNull ?? 0;
     if (uid <= 0) return;
     if (_tab.index == 2) ref.invalidate(myRoutesProvider(uid));
-    if (_tab.index == 3) ref.invalidate(mySegmentsProvider(uid));
+    if (_tab.index == 3) ref.invalidate(segmentsWithMyResultsProvider(uid));
   }
 
   @override

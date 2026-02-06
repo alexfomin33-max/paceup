@@ -3,11 +3,96 @@
 // Сервис для создания участков маршрута (segments) по тренировкам.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import 'package:latlong2/latlong.dart' as ll;
+
 import 'api_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 🔹 МОДЕЛИ ОТВЕТОВ API
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Участок с результатами текущего пользователя (Лента — Избранное — Участки).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Лучшая попытка пользователя по участку (одна запись из user_segment_attempts).
+class SegmentBestResult {
+  const SegmentBestResult({
+    required this.durationSec,
+    required this.distanceKm,
+    this.paceMinPerKm,
+    this.avgHeartRate,
+    this.avgCadence,
+  });
+
+  final int durationSec;
+  final double distanceKm;
+  final double? paceMinPerKm;
+  final double? avgHeartRate;
+  final double? avgCadence;
+
+  static SegmentBestResult? fromJson(Map<String, dynamic>? j) {
+    if (j == null) return null;
+    return SegmentBestResult(
+      durationSec: (j['duration_sec'] as num?)?.toInt() ?? 0,
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      paceMinPerKm: (j['pace_min_per_km'] as num?)?.toDouble(),
+      avgHeartRate: (j['avg_heart_rate'] as num?)?.toDouble(),
+      avgCadence: (j['avg_cadence'] as num?)?.toDouble(),
+    );
+  }
+}
+
+/// Участок с лучшим результатом текущего пользователя и позицией в таблице.
+class SegmentWithMyResult {
+  const SegmentWithMyResult({
+    required this.id,
+    required this.name,
+    required this.distanceKm,
+    this.realDistanceKm,
+    this.bestResult,
+    this.position = 0,
+    this.totalParticipants = 0,
+  });
+
+  final int id;
+  final String name;
+  final double distanceKm;
+  final double? realDistanceKm;
+  final SegmentBestResult? bestResult;
+  final int position;
+  final int totalParticipants;
+
+  double get displayDistanceKm => realDistanceKm ?? distanceKm;
+
+  static SegmentWithMyResult fromJson(Map<String, dynamic> j) {
+    final best = j['best_result'];
+    return SegmentWithMyResult(
+      id: (j['id'] as num).toInt(),
+      name: (j['name'] as String?) ?? '',
+      distanceKm: (j['distance_km'] as num?)?.toDouble() ?? 0,
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
+      bestResult: best is Map
+          ? SegmentBestResult.fromJson(
+              Map<String, dynamic>.from(best as Map),
+            )
+          : null,
+      position: (j['position'] as num?)?.toInt() ?? 0,
+      totalParticipants: (j['total_participants'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// Два блока участков: мои и все (с результатами текущего пользователя).
+class SegmentsWithMyResults {
+  const SegmentsWithMyResults({
+    required this.mySegments,
+    required this.otherSegments,
+  });
+
+  final List<SegmentWithMyResult> mySegments;
+  final List<SegmentWithMyResult> otherSegments;
+}
 
 /// Элемент участка из API (список «Избранное — Участки»).
 /// Пока только название и расстояние; остальные параметры — позже.
@@ -67,6 +152,46 @@ class ActivitySegmentDuplicateItem {
       endIndex: (j['end_index'] as num?)?.toInt() ?? 0,
       startFraction: (j['start_fraction'] as num?)?.toDouble() ?? 0,
       endFraction: (j['end_fraction'] as num?)?.toDouble() ?? 0,
+    );
+  }
+}
+
+/// Участок для отрисовки на карте (BBOX).
+class ActivitySegmentMapItem {
+  const ActivitySegmentMapItem({
+    required this.id,
+    required this.name,
+    required this.points,
+    this.distanceKm,
+    this.realDistanceKm,
+  });
+
+  final int id;
+  final String name;
+  final List<ll.LatLng> points;
+  final double? distanceKm;
+  final double? realDistanceKm;
+
+  factory ActivitySegmentMapItem.fromJson(Map<String, dynamic> j) {
+    final rawPoints = j['points'];
+    final points = <ll.LatLng>[];
+    if (rawPoints is List) {
+      for (final item in rawPoints) {
+        if (item is Map) {
+          final lat = (item['lat'] as num?)?.toDouble();
+          final lng = (item['lng'] as num?)?.toDouble();
+          if (lat != null && lng != null) {
+            points.add(ll.LatLng(lat, lng));
+          }
+        }
+      }
+    }
+    return ActivitySegmentMapItem(
+      id: (j['id'] as num?)?.toInt() ?? 0,
+      name: (j['name'] as String?) ?? '',
+      points: points,
+      distanceKm: (j['distance_km'] as num?)?.toDouble(),
+      realDistanceKm: (j['real_distance_km'] as num?)?.toDouble(),
     );
   }
 }
@@ -147,6 +272,7 @@ class SegmentsService {
     required double endFraction,
     String? name,
     double? realDistanceKm,
+    List<ll.LatLng>? segmentPoints,
   }) async {
     final body = <String, dynamic>{
       'user_id': userId,
@@ -161,6 +287,11 @@ class SegmentsService {
     }
     if (realDistanceKm != null) {
       body['real_distance_km'] = realDistanceKm;
+    }
+    if (segmentPoints != null && segmentPoints.length >= 2) {
+      body['segment_points'] = segmentPoints
+          .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+          .toList();
     }
 
     final response = await _api.post('/create_segment.php', body: body);
@@ -203,6 +334,67 @@ class SegmentsService {
         .map((e) => ActivitySegmentItem.fromJson(
               Map<String, dynamic>.from(e as Map),
             ))
+        .toList();
+  }
+
+  /// Участки с результатами текущего пользователя: «Мои участки» и «Все участки».
+  /// my_segments — созданные текущим пользователем; other_segments — чужие,
+  /// по которым у текущего есть попытки в user_segment_attempts.
+  Future<SegmentsWithMyResults> getSegmentsWithMyResults(int userId) async {
+    final response = await _api.get(
+      '/get_segments_with_my_results.php',
+      queryParams: {'user_id': userId.toString()},
+    );
+    final myList = response['my_segments'];
+    final otherList = response['other_segments'];
+    return SegmentsWithMyResults(
+      mySegments: _parseSegmentWithMyResultList(myList),
+      otherSegments: _parseSegmentWithMyResultList(otherList),
+    );
+  }
+
+  static List<SegmentWithMyResult> _parseSegmentWithMyResultList(
+    dynamic list,
+  ) {
+    if (list is! List) return [];
+    return list
+        .map((e) => SegmentWithMyResult.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .toList();
+  }
+
+  /// Участки в границах BBOX для карты.
+  /// [activityType] — показывать только участки этого вида спорта (run, bike и т.д.).
+  Future<List<ActivitySegmentMapItem>> getSegmentsByBbox({
+    required double minLat,
+    required double minLng,
+    required double maxLat,
+    required double maxLng,
+    int limit = 200,
+    String? activityType,
+  }) async {
+    final queryParams = <String, String>{
+      'min_lat': minLat.toString(),
+      'min_lng': minLng.toString(),
+      'max_lat': maxLat.toString(),
+      'max_lng': maxLng.toString(),
+      'limit': limit.toString(),
+    };
+    if (activityType != null && activityType.trim().isNotEmpty) {
+      queryParams['activity_type'] = activityType.trim();
+    }
+    final response = await _api.get(
+      '/get_segments_by_bbox.php',
+      queryParams: queryParams,
+    );
+    final list = response['segments'];
+    if (list is! List) return [];
+    return list
+        .map((e) => ActivitySegmentMapItem.fromJson(
+              Map<String, dynamic>.from(e as Map),
+            ))
+        .where((e) => e.points.length >= 2)
         .toList();
   }
 }
