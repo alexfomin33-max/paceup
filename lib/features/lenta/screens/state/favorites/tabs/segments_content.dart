@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +10,7 @@ import '../../../../../../core/services/segments_service.dart';
 import '../../../../../../core/utils/activity_format.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
+import '../edit_segment_bottom_sheet.dart';
 import 'segment_description/segment_description_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -42,6 +45,31 @@ class SegmentsContent extends ConsumerStatefulWidget {
 
 class _SegmentsContentState extends ConsumerState<SegmentsContent> {
   bool _didRequestRefresh = false;
+  // ───────────────────────────────────────────────────────────────────────────
+  // Параметры постраничной подгрузки (15 элементов за шаг).
+  // ───────────────────────────────────────────────────────────────────────────
+  static const int _pageSize = 15;
+  static const Duration _loadDebounceDelay = Duration(milliseconds: 200);
+  int _myPage = 1;
+  int _otherPage = 1;
+  bool _isLoadingMoreMy = false;
+  bool _isLoadingMoreOther = false;
+  Timer? _myLoadDebounceTimer;
+  Timer? _otherLoadDebounceTimer;
+  // ───────────────────────────────────────────────────────────────────────────
+  // Локальные данные для оптимистического переименования.
+  // ───────────────────────────────────────────────────────────────────────────
+  SegmentsWithMyResults? _localSegments;
+  int _localUserId = 0;
+  bool _hasLocalEdits = false;
+
+  @override
+  void dispose() {
+    // ── Отменяем таймеры, чтобы не вызывать setState после dispose
+    _myLoadDebounceTimer?.cancel();
+    _otherLoadDebounceTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +87,17 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
         final dataAsync = ref.watch(segmentsWithMyResultsProvider(uid));
         return dataAsync.when(
           data: (data) {
+            // ── Берём локальные данные (если есть оптимистические правки)
+            final viewData = _resolveSegmentsData(uid, data);
+            // ── Размеры списков и видимые элементы (постранично)
+            final myTotal = viewData.mySegments.length;
+            final otherTotal = viewData.otherSegments.length;
+            final myVisible = _visibleMyCount(myTotal);
+            final otherVisible = _visibleOtherCount(otherTotal);
             final bottomPadding =
                 MediaQuery.of(context).viewPadding.bottom + 60 + 12;
-            final hasMy = data.mySegments.isNotEmpty;
-            final hasOther = data.otherSegments.isNotEmpty;
+            final hasMy = myTotal > 0;
+            final hasOther = otherTotal > 0;
             if (!hasMy && !hasOther) {
               return CustomScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -88,45 +123,101 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 const SliverToBoxAdapter(child: SizedBox(height: 10)),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      if (hasMy) ...[
-                        _SectionTitle(title: 'Мои участки'),
-                        ...data.mySegments.asMap().entries.map((e) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: e.key < data.mySegments.length - 1
-                                  ? 6
-                                  : (hasOther ? 16 : 0),
-                            ),
-                            child: _SegmentWithResultCard(
-                              segment: e.value,
-                              userId: uid,
-                            ),
-                          );
-                        }),
-                      ],
-                      if (hasOther) ...[
-                        _SectionTitle(title: 'Все участки'),
-                        ...data.otherSegments.asMap().entries.map((e) {
-                          return Padding(
-                            padding: EdgeInsets.only(
-                              bottom: e.key < data.otherSegments.length - 1
-                                  ? 6
-                                  : 0,
-                            ),
-                            child: _SegmentWithResultCard(
-                              segment: e.value,
-                              userId: uid,
-                            ),
-                          );
-                        }),
-                      ],
-                    ]),
+                if (hasMy) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    sliver: const SliverToBoxAdapter(
+                      child: _SectionTitle(title: 'Мои участки'),
+                    ),
                   ),
-                ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          // ── Подгружаем следующую страницу при скролле вниз
+                          _maybeLoadMoreMy(
+                            index: index,
+                            totalCount: myTotal,
+                          );
+                          final segment = viewData.mySegments[index];
+                          final bottom = _myItemBottomPadding(
+                            index: index,
+                            visibleCount: myVisible,
+                            totalCount: myTotal,
+                            hasOther: hasOther,
+                          );
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: bottom),
+                            child: _SegmentWithResultCard(
+                              segment: segment,
+                              userId: uid,
+                              onSegmentUpdated: (updatedName) {
+                                // ── Оптимистически обновляем локальные данные
+                                _applyOptimisticRename(
+                                  segmentId: segment.id,
+                                  name: updatedName,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        childCount: myVisible,
+                      ),
+                    ),
+                  ),
+                ],
+                if (hasOther) ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    sliver: const SliverToBoxAdapter(
+                      child: _SectionTitle(title: 'Все участки'),
+                    ),
+                  ),
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.sm,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          // ── Подгружаем следующую страницу при скролле вниз
+                          _maybeLoadMoreOther(
+                            index: index,
+                            totalCount: otherTotal,
+                          );
+                          final segment = viewData.otherSegments[index];
+                          final bottom = _otherItemBottomPadding(
+                            index: index,
+                            visibleCount: otherVisible,
+                            totalCount: otherTotal,
+                          );
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: bottom),
+                            child: _SegmentWithResultCard(
+                              segment: segment,
+                              userId: uid,
+                              onSegmentUpdated: (updatedName) {
+                                // ── Оптимистически обновляем локальные данные
+                                _applyOptimisticRename(
+                                  segmentId: segment.id,
+                                  name: updatedName,
+                                );
+                              },
+                            ),
+                          );
+                        },
+                        childCount: otherVisible,
+                      ),
+                    ),
+                  ),
+                ],
                 SliverToBoxAdapter(child: SizedBox(height: bottomPadding)),
               ],
             );
@@ -169,6 +260,230 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
       ),
     );
   }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Синхронизация данных: берём локальные при наличии правок.
+  // ───────────────────────────────────────────────────────────────────────────
+  SegmentsWithMyResults _resolveSegmentsData(
+    int userId,
+    SegmentsWithMyResults fresh,
+  ) {
+    // ── При смене пользователя сбрасываем локальное состояние
+    if (_localUserId != userId) {
+      _localUserId = userId;
+      _localSegments = fresh;
+      _hasLocalEdits = false;
+      // ── Сбрасываем параметры пагинации для нового пользователя
+      _resetPagination();
+    }
+    // ── Если правок не было — используем свежие данные провайдера
+    if (!_hasLocalEdits) {
+      _localSegments = fresh;
+    }
+    return _localSegments ?? fresh;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Сброс параметров пагинации (используем при смене пользователя).
+  // ───────────────────────────────────────────────────────────────────────────
+  void _resetPagination() {
+    _myPage = 1;
+    _otherPage = 1;
+    _isLoadingMoreMy = false;
+    _isLoadingMoreOther = false;
+    _myLoadDebounceTimer?.cancel();
+    _otherLoadDebounceTimer?.cancel();
+    _myLoadDebounceTimer = null;
+    _otherLoadDebounceTimer = null;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Количество видимых элементов для секции «Мои участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  int _visibleMyCount(int totalCount) {
+    final maxVisible = _myPage * _pageSize;
+    return totalCount < maxVisible ? totalCount : maxVisible;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Количество видимых элементов для секции «Все участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  int _visibleOtherCount(int totalCount) {
+    final maxVisible = _otherPage * _pageSize;
+    return totalCount < maxVisible ? totalCount : maxVisible;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Постраничная подгрузка для «Мои участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  void _maybeLoadMoreMy({
+    required int index,
+    required int totalCount,
+  }) {
+    final visibleCount = _visibleMyCount(totalCount);
+    if (visibleCount == 0) return;
+    if (index != visibleCount - 1) return;
+    if (visibleCount >= totalCount) return;
+    if (_isLoadingMoreMy) return;
+    if (_myLoadDebounceTimer?.isActive ?? false) return;
+    _isLoadingMoreMy = true;
+    // ── Debounce: защищаемся от частых вызовов на быстром скролле
+    _myLoadDebounceTimer = Timer(_loadDebounceDelay, () {
+      _myLoadDebounceTimer = null;
+      if (!mounted) return;
+      // ── Увеличиваем страницу после завершения текущего кадра
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _myPage += 1;
+          _isLoadingMoreMy = false;
+        });
+      });
+    });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Постраничная подгрузка для «Все участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  void _maybeLoadMoreOther({
+    required int index,
+    required int totalCount,
+  }) {
+    final visibleCount = _visibleOtherCount(totalCount);
+    if (visibleCount == 0) return;
+    if (index != visibleCount - 1) return;
+    if (visibleCount >= totalCount) return;
+    if (_isLoadingMoreOther) return;
+    if (_otherLoadDebounceTimer?.isActive ?? false) return;
+    _isLoadingMoreOther = true;
+    // ── Debounce: защищаемся от частых вызовов на быстром скролле
+    _otherLoadDebounceTimer = Timer(_loadDebounceDelay, () {
+      _otherLoadDebounceTimer = null;
+      if (!mounted) return;
+      // ── Увеличиваем страницу после завершения текущего кадра
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _otherPage += 1;
+          _isLoadingMoreOther = false;
+        });
+      });
+    });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Нижние отступы для элементов «Мои участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  double _myItemBottomPadding({
+    required int index,
+    required int visibleCount,
+    required int totalCount,
+    required bool hasOther,
+  }) {
+    final itemGap = AppSpacing.sm - (AppSpacing.xs / 2);
+    final sectionGap = AppSpacing.md;
+    final isLastVisible = index == visibleCount - 1;
+    if (!isLastVisible) return itemGap;
+    final hasMore = visibleCount < totalCount;
+    if (hasMore) return itemGap;
+    return hasOther ? sectionGap : 0;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Нижние отступы для элементов «Все участки».
+  // ───────────────────────────────────────────────────────────────────────────
+  double _otherItemBottomPadding({
+    required int index,
+    required int visibleCount,
+    required int totalCount,
+  }) {
+    final itemGap = AppSpacing.sm - (AppSpacing.xs / 2);
+    final isLastVisible = index == visibleCount - 1;
+    if (!isLastVisible) return itemGap;
+    final hasMore = visibleCount < totalCount;
+    if (hasMore) return itemGap;
+    return 0;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Проверка: имя уже совпадает, обновление не нужно.
+  // ───────────────────────────────────────────────────────────────────────────
+  bool _hasSameName(
+    List<SegmentWithMyResult> list,
+    int segmentId,
+    String name,
+  ) {
+    for (final item in list) {
+      if (item.id == segmentId) {
+        return item.name == name;
+      }
+    }
+    return false;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Оптимистическое переименование участка в локальных данных.
+  // ───────────────────────────────────────────────────────────────────────────
+  void _applyOptimisticRename({
+    required int segmentId,
+    required String name,
+  }) {
+    final current = _localSegments;
+    if (current == null) return;
+    // ── Ранний выход: имя не изменилось, setState не нужен
+    final isSameName = _hasSameName(
+      current.mySegments,
+      segmentId,
+      name,
+    ) ||
+        _hasSameName(
+          current.otherSegments,
+          segmentId,
+          name,
+        );
+    if (isSameName) return;
+    // ── Обновляем имя в обеих секциях, если участок там присутствует
+    final updated = SegmentsWithMyResults(
+      mySegments: _renameInList(
+        current.mySegments,
+        segmentId,
+        name,
+      ),
+      otherSegments: _renameInList(
+        current.otherSegments,
+        segmentId,
+        name,
+      ),
+    );
+    setState(() {
+      _localSegments = updated;
+      _hasLocalEdits = true;
+    });
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Обновление имени в списке участков (иммутабельное копирование).
+  // ───────────────────────────────────────────────────────────────────────────
+  List<SegmentWithMyResult> _renameInList(
+    List<SegmentWithMyResult> list,
+    int segmentId,
+    String name,
+  ) {
+    return list.map((item) {
+      if (item.id != segmentId) {
+        return item;
+      }
+      return SegmentWithMyResult(
+        id: item.id,
+        name: name,
+        distanceKm: item.distanceKm,
+        realDistanceKm: item.realDistanceKm,
+        bestResult: item.bestResult,
+        position: item.position,
+        totalParticipants: item.totalParticipants,
+      );
+    }).toList();
+  }
 }
 
 /// Заголовок блока (Мои участки / Все участки).
@@ -200,10 +515,12 @@ class _SegmentWithResultCard extends StatelessWidget {
   const _SegmentWithResultCard({
     required this.segment,
     required this.userId,
+    required this.onSegmentUpdated,
   });
 
   final SegmentWithMyResult segment;
   final int userId;
+  final void Function(String name) onSegmentUpdated;
 
   @override
   Widget build(BuildContext context) {
@@ -242,16 +559,35 @@ class _SegmentWithResultCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              segment.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: primary,
-              ),
+            // ── Верхняя строка: название + меню «три точки»
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    segment.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: primary,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+                _SegmentMenuButton(
+                  onEdit: () {
+                    // ── Открываем лист переименования участка
+                    showEditSegmentBottomSheet(
+                      context,
+                      segment: segment,
+                      userId: userId,
+                      onSaved: onSegmentUpdated,
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: AppSpacing.sm - (AppSpacing.xs / 2)),
             Wrap(
@@ -296,6 +632,68 @@ class _SegmentWithResultCard extends StatelessWidget {
                     ),
                 ],
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Меню «три точки» для карточки участка (только пункт «Изменить»).
+// ─────────────────────────────────────────────────────────────────────────────
+class _SegmentMenuButton extends StatelessWidget {
+  const _SegmentMenuButton({required this.onEdit});
+
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Меню с единым пунктом «Изменить»
+    return SizedBox(
+      width: AppSpacing.md,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: PopupMenuButton<String>(
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(minWidth: 1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.xll),
+          ),
+          color: AppColors.surface,
+          elevation: 8,
+          icon: Icon(
+            Icons.more_vert,
+            size: 20,
+            color: AppColors.getIconSecondaryColor(context),
+          ),
+          onSelected: (value) {
+            if (value == 'edit') {
+              onEdit();
+            }
+          },
+          itemBuilder: (ctx) => [
+            PopupMenuItem<String>(
+              value: 'edit',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.edit_outlined,
+                    size: 22,
+                    color: AppColors.brandPrimary,
+                  ),
+                  const SizedBox(width: AppSpacing.md - AppSpacing.xs),
+                  Text(
+                    'Изменить',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 16,
+                      color: AppColors.getTextPrimaryColor(ctx),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
