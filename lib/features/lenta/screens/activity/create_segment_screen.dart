@@ -803,11 +803,11 @@ class _CreateSegmentScreenState extends State<CreateSegmentScreen> {
         _errorText = 'Не удалось сохранить участок';
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: SelectableText.rich(
             TextSpan(
               text: 'Ошибка: не удалось сохранить участок',
-              style: const TextStyle(
+              style: TextStyle(
                 color: Colors.red,
               ),
             ),

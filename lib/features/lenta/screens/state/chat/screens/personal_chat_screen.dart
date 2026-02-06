@@ -858,40 +858,14 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             ],
           ),
         ),
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(
-                CupertinoIcons.delete,
-                size: 20,
-                color: AppColors.error,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Удалить',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     ).then((value) {
       if (mounted) setState(() => _messageIdWithMenuOpen = null);
-      // Функционал пунктов добавим позже
       if (value == null) return;
       switch (value) {
         case 'reply':
-          break;
         case 'copy':
-          break;
         case 'report':
-          break;
-        case 'delete':
           break;
       }
     });
@@ -989,7 +963,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             ],
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'delete',
           child: Row(
             children: [
@@ -998,7 +972,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                 size: 22,
                 color: AppColors.error,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 'Удалить',
                 style: TextStyle(

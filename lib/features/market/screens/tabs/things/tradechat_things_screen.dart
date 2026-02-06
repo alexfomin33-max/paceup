@@ -562,27 +562,6 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
             ],
           ),
         ),
-        PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(
-                CupertinoIcons.delete,
-                size: 22,
-                color: AppColors.error,
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Удалить',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     ).then((value) {
       if (mounted) setState(() => _messageIdWithMenuOpen = null);
@@ -591,7 +570,6 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
         case 'reply':
         case 'copy':
         case 'report':
-        case 'delete':
           break;
       }
     });
@@ -688,7 +666,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
             ],
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'delete',
           child: Row(
             children: [
@@ -697,7 +675,7 @@ class _TradeChatThingsScreenState extends ConsumerState<TradeChatThingsScreen>
                 size: 22,
                 color: AppColors.error,
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text(
                 'Удалить',
                 style: TextStyle(

@@ -166,18 +166,18 @@ class _PolarScreenState extends ConsumerState<PolarScreen> {
                 border: Border.all(color: AppColors.border, width: 1),
               ),
               padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
+                      Icon(
                         CupertinoIcons.heart_fill,
                         size: 28,
                         color: AppColors.brandPrimary,
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           'Синхронизация с Polar. Подключите аккаунт Polar, чтобы импортировать тренировки, дистанцию, пульс и активные калории.',

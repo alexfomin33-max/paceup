@@ -149,11 +149,11 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
               slivers: [
                 const SliverToBoxAdapter(child: SizedBox(height: 10)),
                 if (hasMy) ...[
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
                     ),
-                    sliver: const SliverToBoxAdapter(
+                    sliver: SliverToBoxAdapter(
                       child: _SectionTitle(title: 'Мои участки'),
                     ),
                   ),
@@ -198,11 +198,11 @@ class _SegmentsContentState extends ConsumerState<SegmentsContent> {
                   ),
                 ],
                 if (hasOther) ...[
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
                     ),
-                    sliver: const SliverToBoxAdapter(
+                    sliver: SliverToBoxAdapter(
                       child: _SectionTitle(title: 'Все участки'),
                     ),
                   ),

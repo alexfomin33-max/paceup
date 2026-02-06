@@ -74,7 +74,7 @@ class _SegmentEditSheetWrapper extends StatelessWidget {
               top: Radius.circular(AppRadius.xl),
             ),
           ),
-          padding: EdgeInsets.all(
+          padding: const EdgeInsets.all(
             AppSpacing.sm - (AppSpacing.xs / 2),
           ),
           child: GestureDetector(
@@ -237,7 +237,7 @@ class _SegmentEditSheetContentState extends State<_SegmentEditSheetContent> {
             width: 1,
           ),
         ),
-        contentPadding: EdgeInsets.symmetric(
+        contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.md - AppSpacing.xs,
           vertical: AppSpacing.md,
         ),
