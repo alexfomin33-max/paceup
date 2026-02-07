@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -14,6 +15,7 @@ import '../../../../../core/utils/local_image_compressor.dart'
     show compressLocalImage, ImageCompressionPreset;
 import '../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../core/widgets/transparent_route.dart';
+import '../../../../features/complaint.dart';
 import '../../../../features/profile/screens/profile_screen.dart';
 import '../../../lenta/screens/state/chat/pinned_chats_api.dart';
 import 'event_detail_screen2.dart';
@@ -38,6 +40,12 @@ class _ChatMessage {
   final String messageType; // 'text' или 'image'
   final String? text;
   final String? imageUrl;
+  /// ─── ID сообщения, на которое дан ответ ───
+  final int? replyToMessageId;
+  /// ─── Текст сообщения, на которое дан ответ ───
+  final String? replyToText;
+  /// ─── Превью ответа (вычисляется один раз) ───
+  final String? replyPreviewText;
   final String createdAt;
   final bool isMine;
   final bool isRead;
@@ -51,12 +59,43 @@ class _ChatMessage {
     required this.messageType,
     this.text,
     this.imageUrl,
+    this.replyToMessageId,
+    this.replyToText,
+    this.replyPreviewText,
     required this.createdAt,
     required this.isMine,
     required this.isRead,
   });
 
+  // ──────────────────────────────────────────────────────────────
+  // ─── Формируем превью ответа (один раз) ───────────────────────
+  // ──────────────────────────────────────────────────────────────
+  static String? _buildReplyPreviewText({
+    required int? replyToMessageId,
+    required String? replyToText,
+  }) {
+    // ─── Если это не ответ, превью не нужно ───
+    if (replyToMessageId == null) return null;
+
+    // ─── Берём текст ответа, если он есть ───
+    final trimmed = replyToText?.trim() ?? '';
+    if (trimmed.isNotEmpty) return trimmed;
+
+    // ─── Фолбэк, если текста нет ───
+    return 'Сообщение';
+  }
+
   factory _ChatMessage.fromJson(Map<String, dynamic> json) {
+    // ─── Парсим данные ответа ───
+    final replyToMessageId = json['reply_to_message_id'] != null
+        ? (json['reply_to_message_id'] as num).toInt()
+        : null;
+    final replyToText = json['reply_to_text'] as String?;
+    final replyPreviewText = _buildReplyPreviewText(
+      replyToMessageId: replyToMessageId,
+      replyToText: replyToText,
+    );
+
     return _ChatMessage(
       id: json['id'] ?? 0,
       senderId: json['sender_id'] ?? 0,
@@ -66,6 +105,9 @@ class _ChatMessage {
       messageType: json['message_type'] ?? 'text',
       text: json['text'],
       imageUrl: json['image'],
+      replyToMessageId: replyToMessageId,
+      replyToText: replyToText,
+      replyPreviewText: replyPreviewText,
       createdAt: json['created_at'] ?? '',
       isMine: json['is_mine'] ?? false,
       isRead: json['is_read'] ?? false,
@@ -117,6 +159,12 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   final _api = ApiService();
   final _auth = AuthService();
   final _scrollController = ScrollController();
+  /// ─── Ключи сообщений для скролла к ответу ───
+  final Map<int, GlobalKey> _messageKeys = {};
+  /// ─── Сет текущих ID сообщений ───
+  final Set<int> _messageIds = {};
+  /// ─── Счетчики ответов по ID сообщения ───
+  final Map<int, int> _replyTargetCounts = {};
 
   _ChatData? _chatData;
   List<_ChatMessage> _messages = [];
@@ -129,6 +177,10 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   bool _wasPaused = false;
   DateTime? _lastVisibleTime;
   int? _selectedMessageIdForDelete;
+  /// ─── Сообщение, на которое отвечаем (плашка над вводом) ───
+  _ChatMessage? _replyMessage;
+  /// ─── ID сообщения, которое редактируем (плашка над вводом) ───
+  int? _editingMessageId;
   int? _messageIdWithMenuOpen;
   int? _messageIdWithRightMenuOpen;
   Rect? _bubbleDimRect;
@@ -269,6 +321,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
           _error = null;
           _offset = messages.length;
           _hasMore = response['has_more'] as bool? ?? false;
+          _rebuildReplyTargets();
         });
 
         _startPolling();
@@ -365,6 +418,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
             _offset += newMessages.length;
             _hasMore = response['has_more'] as bool? ?? false;
             _isLoadingMore = false;
+            _applyAddedMessages(newMessages);
           });
 
           // ─── Восстанавливаем позицию скролла ───
@@ -423,6 +477,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
             setState(() {
               _messages.addAll(newMessages);
               _lastMessageId = newMessages.last.id;
+              _applyAddedMessages(newMessages);
             });
 
             // ─── Прокручиваем вниз при получении новых сообщений ───
@@ -480,6 +535,176 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   void _hideBubbleDimOverlay() {
     if (!mounted) return;
     setState(() => _bubbleDimRect = null);
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Ответ, редактирование и копирование ───────────────────────
+  // ──────────────────────────────────────────────────────────────
+  /// ─── Формируем текст для плашки ответа ───
+  String _buildReplyPreview(_ChatMessage message) {
+    // ─── Берём текст, если он есть, иначе показываем "Изображение" ───
+    final trimmed = (message.text ?? '').trim();
+    if (trimmed.isNotEmpty) return trimmed;
+    if (message.messageType == 'image') return 'Изображение';
+    return 'Сообщение';
+  }
+
+  /// ─── Активируем режим ответа на сообщение ───
+  void _startReply(_ChatMessage message) {
+    // ─── Снимаем режим редактирования, чтобы не смешивать состояния ───
+    if (!mounted) return;
+    setState(() {
+      _editingMessageId = null;
+      _replyMessage = message;
+    });
+  }
+
+  /// ─── Активируем режим редактирования сообщения ───
+  void _startEdit(_ChatMessage message) {
+    // ─── Снимаем режим ответа и подставляем текст в поле ввода ───
+    if (!mounted) return;
+    setState(() {
+      _replyMessage = null;
+      _editingMessageId = message.id;
+    });
+    final newText = message.text ?? '';
+    _ctrl
+      ..text = newText
+      ..selection = TextSelection.collapsed(
+        offset: newText.length,
+      );
+  }
+
+  /// ─── Отменяем режим ответа ───
+  void _cancelReply() {
+    if (!mounted) return;
+    setState(() {
+      _replyMessage = null;
+    });
+  }
+
+  /// ─── Отменяем режим редактирования ───
+  void _cancelEdit() {
+    if (!mounted) return;
+    setState(() {
+      _editingMessageId = null;
+    });
+    _ctrl.clear();
+  }
+
+  /// ─── Копируем текст сообщения в буфер обмена ───
+  Future<void> _copyMessageText(String? text) async {
+    // ─── Не копируем пустые строки ───
+    final trimmed = (text ?? '').trim();
+    if (trimmed.isEmpty) return;
+    await Clipboard.setData(
+      ClipboardData(text: trimmed),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Скролл к сообщению (для ответов) ─────────────────────────
+  // ──────────────────────────────────────────────────────────────
+  void _scrollToMessage(int messageId) {
+    // ─── Находим контекст сообщения по ключу ───
+    final key = _messageKeys[messageId];
+    final targetContext = key?.currentContext;
+    if (targetContext == null) return;
+
+    // ─── Плавно скроллим к нужному сообщению ───
+    Scrollable.ensureVisible(
+      targetContext,
+      alignment: 0.5,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Полная пересборка ключей для ответов ─────────────────────
+  // ──────────────────────────────────────────────────────────────
+  void _rebuildReplyTargets() {
+    // ─── Пересобираем сет ID сообщений ───
+    _messageIds
+      ..clear()
+      ..addAll(_messages.map((m) => m.id));
+
+    // ─── Пересобираем счетчики ответов ───
+    _replyTargetCounts.clear();
+    for (final message in _messages) {
+      final targetId = message.replyToMessageId;
+      if (targetId != null) {
+        _replyTargetCounts[targetId] = (_replyTargetCounts[targetId] ?? 0) + 1;
+      }
+    }
+
+    // ─── Удаляем лишние ключи ───
+    _messageKeys.removeWhere(
+      (messageId, _) =>
+          !_messageIds.contains(messageId) ||
+          !_replyTargetCounts.containsKey(messageId),
+    );
+
+    // ─── Добавляем ключи для нужных сообщений ───
+    for (final targetId in _replyTargetCounts.keys) {
+      if (_messageIds.contains(targetId)) {
+        _messageKeys.putIfAbsent(targetId, () => GlobalKey());
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Инкрементальное добавление сообщений ─────────────────────
+  // ──────────────────────────────────────────────────────────────
+  void _applyAddedMessages(Iterable<_ChatMessage> newMessages) {
+    // ─── Сначала добавляем ID ───
+    for (final message in newMessages) {
+      _messageIds.add(message.id);
+    }
+
+    // ─── Обновляем счетчики ответов и ключи ───
+    for (final message in newMessages) {
+      final targetId = message.replyToMessageId;
+      if (targetId != null) {
+        _replyTargetCounts[targetId] = (_replyTargetCounts[targetId] ?? 0) + 1;
+        if (_messageIds.contains(targetId)) {
+          _messageKeys.putIfAbsent(targetId, () => GlobalKey());
+        }
+      }
+
+      // ─── Если новое сообщение является целью ответа ───
+      if (_replyTargetCounts.containsKey(message.id)) {
+        _messageKeys.putIfAbsent(message.id, () => GlobalKey());
+      }
+    }
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Инкрементальное удаление сообщений ───────────────────────
+  // ──────────────────────────────────────────────────────────────
+  void _applyRemovedMessages(Iterable<_ChatMessage> removedMessages) {
+    for (final message in removedMessages) {
+      // ─── Убираем ID сообщения ───
+      _messageIds.remove(message.id);
+      _messageKeys.remove(message.id);
+
+      // ─── Обновляем счетчик цели ответа ───
+      final targetId = message.replyToMessageId;
+      if (targetId != null) {
+        final current = _replyTargetCounts[targetId] ?? 0;
+        if (current <= 1) {
+          _replyTargetCounts.remove(targetId);
+          _messageKeys.remove(targetId);
+        } else {
+          _replyTargetCounts[targetId] = current - 1;
+        }
+      }
+    }
+
+    // ─── Чистим ключи без сообщений ───
+    _messageKeys.removeWhere(
+      (messageId, _) => !_messageIds.contains(messageId),
+    );
   }
 
   void _showLeftBubbleMoreMenu(
@@ -583,8 +808,26 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       if (value == null) return;
       switch (value) {
         case 'reply':
+          _startReply(message);
+          break;
         case 'copy':
+          _copyMessageText(message.text);
+          break;
         case 'report':
+          // ─── Открываем экран жалобы на сообщение ───
+          final chatId = _chatData?.chatId ?? 0;
+          if (chatId == 0) return;
+          Navigator.of(context, rootNavigator: true).push(
+            TransparentPageRoute(
+              builder: (_) => ComplaintScreen(
+                contentType: 'chat_message',
+                contentId: message.id,
+                chatType: 'event',
+                chatId: chatId,
+                messageId: message.id,
+              ),
+            ),
+          );
           break;
       }
     });
@@ -712,8 +955,13 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       if (value == null) return;
       switch (value) {
         case 'reply':
+          _startReply(message);
+          break;
         case 'copy':
+          _copyMessageText(message.text);
+          break;
         case 'edit':
+          _startEdit(message);
           break;
         case 'delete':
           _showDeleteConfirmation(message.id);
@@ -739,8 +987,10 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       if (response['success'] == true) {
         if (!mounted) return;
         setState(() {
+          final removed = _messages.where((m) => m.id == messageId).toList();
           _messages.removeWhere((m) => m.id == messageId);
           _selectedMessageIdForDelete = null;
+          _applyRemovedMessages(removed);
         });
       } else {
         if (mounted) {
@@ -766,14 +1016,85 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
     }
   }
 
+  // ──────────────────────────────────────────────────────────────
+  // ─── Редактирование сообщения (API) ────────────────────────────
+  // ──────────────────────────────────────────────────────────────
+  Future<void> _editMessageText({
+    required int messageId,
+    required String newText,
+  }) async {
+    // ─── Проверяем базовые условия ───
+    if (_currentUserId == null || _chatData == null) return;
+
+    try {
+      // ─── Отправляем запрос на редактирование ───
+      final response = await _api.post(
+        '/edit_event_chat_message.php',
+        body: {
+          'event_id': widget.eventId.toString(),
+          'user_id': _currentUserId.toString(),
+          'message_id': messageId.toString(),
+          'text': newText,
+        },
+      );
+
+      if (response['success'] == true) {
+        if (!mounted) return;
+        setState(() {
+          final index = _messages.indexWhere((m) => m.id == messageId);
+          if (index != -1) {
+            final old = _messages[index];
+            _messages[index] = _ChatMessage(
+              id: old.id,
+              senderId: old.senderId,
+              senderName: old.senderName,
+              senderAvatar: old.senderAvatar,
+              senderGender: old.senderGender,
+              messageType: old.messageType,
+              text: newText,
+              imageUrl: old.imageUrl,
+              replyToMessageId: old.replyToMessageId,
+              replyToText: old.replyToText,
+              replyPreviewText: old.replyPreviewText,
+              createdAt: old.createdAt,
+              isMine: old.isMine,
+              isRead: old.isRead,
+            );
+          }
+          // ─── Сбрасываем режим редактирования ───
+          _editingMessageId = null;
+        });
+        _ctrl.clear();
+      }
+    } catch (_) {
+      // ─── Мягко игнорируем ошибки, чтобы не ломать UI ───
+    }
+  }
+
   // ─── Отправка текстового сообщения ───
   Future<void> _sendText() async {
     final text = _ctrl.text.trim();
     if (text.isEmpty || _chatData == null) return;
 
+    // ─── Если активен режим редактирования, обновляем сообщение ───
+    if (_editingMessageId != null) {
+      await _editMessageText(
+        messageId: _editingMessageId!,
+        newText: text,
+      );
+      return;
+    }
+
     try {
       final userId = _currentUserId;
       if (userId == null) return;
+
+      // ─── Сохраняем данные ответа до очистки состояния ───
+      final replyMessage = _replyMessage;
+      final replyToMessageId = replyMessage?.id;
+      final replyToText = replyMessage != null
+          ? _buildReplyPreview(replyMessage)
+          : null;
 
       final response = await _api.post(
         '/send_event_chat_message.php',
@@ -781,6 +1102,8 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
           'event_id': widget.eventId.toString(),
           'user_id': userId.toString(),
           'text': text,
+          if (replyToMessageId != null)
+            'reply_to_message_id': replyToMessageId,
         },
       );
 
@@ -796,6 +1119,9 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
           senderGender: null,
           messageType: 'text',
           text: text,
+          replyToMessageId: replyToMessageId,
+          replyToText: replyToText,
+          replyPreviewText: replyToText,
           createdAt: response['created_at'] ?? DateTime.now().toIso8601String(),
           isMine: true,
           isRead: false,
@@ -805,6 +1131,9 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
           setState(() {
             _messages.add(newMessage);
             _lastMessageId = newMessage.id;
+            // ─── Сбрасываем плашку ответа после успешной отправки ───
+            _replyMessage = null;
+            _applyAddedMessages([newMessage]);
           });
 
           // ─── Прокручиваем вниз после отправки сообщения ───
@@ -837,6 +1166,9 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       final userId = _currentUserId;
       if (userId == null) return;
 
+      // ─── Сохраняем данные ответа для изображения ───
+      final replyToMessageId = _replyMessage?.id;
+
       // ─── Сжимаем изображение на клиенте ───
       final compressedFile = await compressLocalImage(
         sourceFile: File(x.path),
@@ -851,6 +1183,8 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
         fields: {
           'event_id': widget.eventId.toString(),
           'user_id': userId.toString(),
+          if (replyToMessageId != null)
+            'reply_to_message_id': replyToMessageId.toString(),
         },
         timeout: const Duration(seconds: 60),
       );
@@ -858,6 +1192,13 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       if (response['success'] == true) {
         // Перезагружаем сообщения для получения правильного URL изображения
         await _loadChatData();
+
+        // ─── Сбрасываем плашку ответа после успешной отправки ───
+        if (mounted) {
+          setState(() {
+            _replyMessage = null;
+          });
+        }
 
         // ─── Прокручиваем вниз после отправки изображения ───
         WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1327,6 +1668,11 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                               }
 
                               final msg = _messages[messageIndex];
+                              // ─── Данные ответа для превью и скролла ───
+                              final replyPreviewText =
+                                  msg.replyPreviewText;
+                              final replyToMessageId = msg.replyToMessageId;
+                              final messageKey = _messageKeys[msg.id];
 
                               // ─── Определяем отступы между пузырями ───
                               // Проверяем, есть ли предыдущее сообщение (не разделитель даты)
@@ -1344,7 +1690,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                   messageIndex == _messages.length - 1;
                               final bottomSpacing = isLastMessage ? 8.0 : 0.0;
 
-                              return msg.isMine
+                              final bubble = msg.isMine
                                   ? _BubbleRight(
                                       text: msg.text ?? '',
                                       image: msg.messageType == 'image'
@@ -1352,6 +1698,12 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                           : null,
                                       time: _formatTime(msg.createdAt),
                                       messageId: msg.id,
+                                      replyText: replyPreviewText,
+                                      onReplyTap: replyToMessageId != null
+                                          ? () => _scrollToMessage(
+                                              replyToMessageId,
+                                            )
+                                          : null,
                                       isSelectedForDelete:
                                           _messageIdWithRightMenuOpen == msg.id,
                                       onTap: (bubbleContext) =>
@@ -1380,6 +1732,12 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                       avatarUrl: msg.senderAvatar,
                                       senderGender: msg.senderGender,
                                       messageId: msg.id,
+                                      replyText: replyPreviewText,
+                                      onReplyTap: replyToMessageId != null
+                                          ? () => _scrollToMessage(
+                                              replyToMessageId,
+                                            )
+                                          : null,
                                       isSelectedForReply:
                                           _messageIdWithMenuOpen == msg.id,
                                       onTap: (bubbleContext) =>
@@ -1397,12 +1755,31 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                                             )
                                           : null,
                                     );
+
+                              // ─── Оборачиваем ключом только нужные сообщения ───
+                              return messageKey != null
+                                  ? KeyedSubtree(
+                                      key: messageKey,
+                                      child: bubble,
+                                    )
+                                  : bubble;
                             }, childCount: _calculateTotalItemsCount()),
                           ),
                         ),
                       ],
                     ),
                   ),
+
+                  // ─── Плашка ответа/редактирования над вводом ───
+                  if (_replyMessage != null || _editingMessageId != null)
+                    _ComposerContextBanner(
+                      text: _editingMessageId != null
+                          ? 'Редактирование'
+                          : _buildReplyPreview(_replyMessage!),
+                      onClose: _editingMessageId != null
+                          ? _cancelEdit
+                          : _cancelReply,
+                    ),
 
                   // Composer
                   _Composer(
@@ -1518,6 +1895,10 @@ class _BubbleLeft extends StatelessWidget {
   final double topSpacing;
   final double bottomSpacing;
   final int messageId;
+  /// ─── Текст ответа (если сообщение является ответом) ───
+  final String? replyText;
+  /// ─── Тап по ответу — скролл к исходному сообщению ───
+  final VoidCallback? onReplyTap;
   final bool isSelectedForReply;
   final void Function(BuildContext bubbleContext)? onTap;
   final VoidCallback? onImageTap;
@@ -1532,6 +1913,8 @@ class _BubbleLeft extends StatelessWidget {
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
     required this.messageId,
+    this.replyText,
+    this.onReplyTap,
     this.isSelectedForReply = false,
     this.onTap,
     this.onImageTap,
@@ -1671,6 +2054,15 @@ class _BubbleLeft extends StatelessWidget {
                               ),
                             ),
                           ),
+                          // ─── Плашка ответа (если есть) ───
+                          if (replyText != null &&
+                              replyText!.isNotEmpty) ...[
+                            const SizedBox(height: AppSpacing.xs),
+                            _ReplyPreview(
+                              text: replyText!,
+                              onTap: onReplyTap,
+                            ),
+                          ],
                           // ─── Изображение (если есть) ───
                           if ((image?.isNotEmpty ?? false)) ...[
                             GestureDetector(
@@ -1772,6 +2164,10 @@ class _BubbleRight extends StatelessWidget {
   final double topSpacing;
   final double bottomSpacing;
   final int messageId;
+  /// ─── Текст ответа (если сообщение является ответом) ───
+  final String? replyText;
+  /// ─── Тап по ответу — скролл к исходному сообщению ───
+  final VoidCallback? onReplyTap;
   final bool isSelectedForDelete;
   final void Function(BuildContext bubbleContext)? onTap;
   final VoidCallback? onImageTap;
@@ -1782,6 +2178,8 @@ class _BubbleRight extends StatelessWidget {
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
     required this.messageId,
+    this.replyText,
+    this.onReplyTap,
     this.isSelectedForDelete = false,
     this.onTap,
     this.onImageTap,
@@ -1822,6 +2220,14 @@ class _BubbleRight extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // ─── Плашка ответа (если есть) ───
+                      if (replyText != null && replyText!.isNotEmpty) ...[
+                        _ReplyPreview(
+                          text: replyText!,
+                          onTap: onReplyTap,
+                        ),
+                        const SizedBox(height: AppSpacing.xs),
+                      ],
                       // ─── Изображение (если есть) ───
                       if ((image?.isNotEmpty ?? false)) ...[
                         GestureDetector(
@@ -1906,6 +2312,108 @@ class _BubbleRight extends StatelessWidget {
                   ),
                 ),
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// ──────────────────────────────────────────────────────────────
+/// Плашка ответа внутри пузыря сообщения
+/// ──────────────────────────────────────────────────────────────
+class _ReplyPreview extends StatelessWidget {
+  final String text;
+  final VoidCallback? onTap;
+
+  const _ReplyPreview({
+    required this.text,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // ─── Используем жест для перехода к исходному сообщению ───
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          AppSpacing.xs,
+          AppSpacing.sm,
+          AppSpacing.xs,
+        ),
+        decoration: BoxDecoration(
+          color: AppColors.getSurfaceMutedColor(context),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          border: Border(
+            left: BorderSide(
+              color: AppColors.brandPrimary,
+              width: AppSpacing.xs,
+            ),
+          ),
+        ),
+        child: Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.h12w4Sec.copyWith(
+            color: AppColors.getTextSecondaryColor(context),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ──────────────────────────────────────────────────────────────
+/// Плашка контекста (ответ/редактирование) над полем ввода
+/// ──────────────────────────────────────────────────────────────
+class _ComposerContextBanner extends StatelessWidget {
+  final String text;
+  final VoidCallback onClose;
+
+  const _ComposerContextBanner({
+    required this.text,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // ─── Контейнер плашки над полем ввода ───
+    return Container(
+      color: AppColors.getSurfaceColor(context),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
+      child: Row(
+        children: [
+          // ─── Текст контекста (ответ или редактирование) ───
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.h13w4.copyWith(
+                color: AppColors.getTextSecondaryColor(context),
+              ),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          // ─── Кнопка закрытия плашки ───
+          IconButton(
+            onPressed: onClose,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(),
+            icon: Icon(
+              CupertinoIcons.xmark,
+              size: 18,
+              color: AppColors.getIconSecondaryColor(context),
             ),
           ),
         ],

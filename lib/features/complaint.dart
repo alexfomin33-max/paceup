@@ -17,10 +17,22 @@ class ComplaintScreen extends StatefulWidget {
   /// ID контента (активности или поста)
   final int contentId;
 
+  /// ─── Тип чата для жалоб на сообщение ───
+  final String? chatType;
+
+  /// ─── ID чата для жалоб на сообщение ───
+  final int? chatId;
+
+  /// ─── ID сообщения для жалоб на сообщение ───
+  final int? messageId;
+
   const ComplaintScreen({
     super.key,
     required this.contentType,
     required this.contentId,
+    this.chatType,
+    this.chatId,
+    this.messageId,
   });
 
   @override
@@ -368,13 +380,40 @@ class _ComplaintScreenState extends State<ComplaintScreen> {
         throw Exception('Неизвестный тип жалобы: $_selectedReason');
       }
 
+      // ──────────────────────────────────────────────────────────────
+      // ─── Параметры для жалобы на сообщение чата ───────────────────
+      // ──────────────────────────────────────────────────────────────
+      final isChatMessage = widget.contentType == 'chat_message';
+      final messageId = widget.messageId ?? widget.contentId;
+      final contentId = isChatMessage ? messageId : widget.contentId;
+
+      if (isChatMessage) {
+        if (widget.chatType == null || widget.chatType!.trim().isEmpty) {
+          throw Exception('Не указан chatType для жалобы на сообщение');
+        }
+        if (messageId <= 0) {
+          throw Exception('Некорректный messageId для жалобы на сообщение');
+        }
+      }
+
       // Подготавливаем данные для отправки
       final requestBody = <String, dynamic>{
         'userId': userId,
         'content_type': widget.contentType,
-        'content_id': widget.contentId,
+        'content_id': contentId,
         'report_type': reportType,
       };
+
+      // ──────────────────────────────────────────────────────────────
+      // ─── Дополнительные поля для жалобы на сообщение ──────────────
+      // ──────────────────────────────────────────────────────────────
+      if (isChatMessage) {
+        requestBody['chat_type'] = widget.chatType;
+        requestBody['message_id'] = messageId;
+        if (widget.chatId != null && widget.chatId! > 0) {
+          requestBody['chat_id'] = widget.chatId;
+        }
+      }
 
       // Добавляем комментарий, если выбран пункт "Другое" или он заполнен
       if (_selectedReason == 'Другое' ||
