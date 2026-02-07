@@ -131,6 +131,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
   int? _selectedMessageIdForDelete;
   int? _messageIdWithMenuOpen;
   int? _messageIdWithRightMenuOpen;
+  Rect? _bubbleDimRect;
   int _offset = 0;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -163,6 +164,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
     _ctrl.dispose();
     _scrollController.dispose();
     _pollTimer?.cancel();
+    _bubbleDimRect = null;
     super.dispose();
   }
 
@@ -471,6 +473,15 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
     }
   }
 
+  void _showBubbleDimOverlay(Rect bubbleRect) {
+    setState(() => _bubbleDimRect = bubbleRect);
+  }
+
+  void _hideBubbleDimOverlay() {
+    if (!mounted) return;
+    setState(() => _bubbleDimRect = null);
+  }
+
   void _showLeftBubbleMoreMenu(
     BuildContext bubbleContext,
     _ChatMessage message,
@@ -483,16 +494,19 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
         overlay.context.findRenderObject() as RenderBox?;
     if (overlayBox == null) return;
     setState(() => _messageIdWithMenuOpen = message.id);
+    final bubbleRect = Rect.fromPoints(
+      box.localToGlobal(Offset.zero),
+      box.localToGlobal(box.size.bottomRight(Offset.zero)),
+    );
+    _showBubbleDimOverlay(bubbleRect);
     final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        box.localToGlobal(Offset.zero),
-        box.localToGlobal(box.size.bottomRight(Offset.zero)),
-      ),
+      bubbleRect,
       Offset.zero & overlayBox.size,
     );
     showMenu<String>(
       context: context,
       position: position,
+      useRootNavigator: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xll),
       ),
@@ -565,6 +579,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       ],
     ).then((value) {
       if (mounted) setState(() => _messageIdWithMenuOpen = null);
+      _hideBubbleDimOverlay();
       if (value == null) return;
       switch (value) {
         case 'reply':
@@ -587,16 +602,19 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
         overlay.context.findRenderObject() as RenderBox?;
     if (overlayBox == null) return;
     setState(() => _messageIdWithRightMenuOpen = message.id);
+    final bubbleRect = Rect.fromPoints(
+      box.localToGlobal(Offset.zero),
+      box.localToGlobal(box.size.bottomRight(Offset.zero)),
+    );
+    _showBubbleDimOverlay(bubbleRect);
     final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        box.localToGlobal(Offset.zero),
-        box.localToGlobal(box.size.bottomRight(Offset.zero)),
-      ),
+      bubbleRect,
       Offset.zero & overlayBox.size,
     );
     showMenu<String>(
       context: context,
       position: position,
+      useRootNavigator: true,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppRadius.xll),
       ),
@@ -690,6 +708,7 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
       ],
     ).then((value) {
       if (mounted) setState(() => _messageIdWithRightMenuOpen = null);
+      _hideBubbleDimOverlay();
       if (value == null) return;
       switch (value) {
         case 'reply':
@@ -1395,6 +1414,17 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
               ),
             ),
           ),
+          if (_bubbleDimRect != null)
+            Positioned.fill(
+              child: IgnorePointer(
+                child: CustomPaint(
+                  painter: _BubbleDimPainter(
+                    bubbleRect: _bubbleDimRect!,
+                    color: AppColors.scrim40,
+                  ),
+                ),
+              ),
+            ),
           // ─── Overlay для полноэкранного просмотра изображения ───
           if (_fullscreenImageUrl != null)
             _FullscreenImageOverlay(
@@ -1408,6 +1438,46 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
 }
 
 // ─── Компоненты UI ───
+
+class _BubbleDimPainter extends CustomPainter {
+  final Rect bubbleRect;
+  final Color color;
+
+  const _BubbleDimPainter({
+    required this.bubbleRect,
+    required this.color,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final fullPath = Path()..addRect(Offset.zero & size);
+    final cutoutRect = Rect.fromLTRB(
+      bubbleRect.left,
+      bubbleRect.top - 4,
+      size.width,
+      bubbleRect.bottom - 4,
+    );
+    final bubblePath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          cutoutRect,
+          const Radius.circular(AppRadius.xl),
+        ),
+      );
+    final diffPath = Path.combine(
+      PathOperation.difference,
+      fullPath,
+      bubblePath,
+    );
+    final paint = Paint()..color = color;
+    canvas.drawPath(diffPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BubbleDimPainter oldDelegate) {
+    return oldDelegate.bubbleRect != bubbleRect || oldDelegate.color != color;
+  }
+}
 
 class _DateSeparator extends StatelessWidget {
   final String text;
