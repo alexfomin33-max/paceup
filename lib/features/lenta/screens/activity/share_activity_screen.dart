@@ -54,6 +54,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   // ────────────────────────────────────────────────────────────────
   late final ValueNotifier<double> _darknessOpacityNotifier;
   // ────────────────────────────────────────────────────────────────
+  // 🔹 СОХРАНЁННОЕ ЗАТЕМНЕНИЕ ДЛЯ НЕ-ПРОЗРАЧНОГО ФОНА (ВОССТАН. ПРИ ВОЗВРАТЕ)
+  // ────────────────────────────────────────────────────────────────
+  double _savedDarknessForNonTransparent = 0.0;
+  // ────────────────────────────────────────────────────────────────
   // 🔹 ЦВЕТ ТЕКСТА: ЛЮБОЙ (БЕЗ ЛИШНИХ ПЕРЕСТРОЕНИЙ)
   // ────────────────────────────────────────────────────────────────
   late final ValueNotifier<Color> _textColorNotifier;
@@ -299,6 +303,9 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                           if (item.isAsset &&
                               item.imageUrl == _opacityAssetPath) {
                             _displayModeIndex = 4;
+                            _savedDarknessForNonTransparent =
+                                _darknessOpacityNotifier.value;
+                            _darknessOpacityNotifier.value = 0.0;
                             _textColorNotifier.value = AppColors.surface;
                             _routeColorNotifier.value =
                                 _routeColorDefaultOpacity;
@@ -306,6 +313,8 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                             if (_displayModeIndex >= 4) {
                               _displayModeIndex = 0;
                             }
+                            _darknessOpacityNotifier.value =
+                                _savedDarknessForNonTransparent;
                             if (item.isMap) {
                               _routeColorNotifier.value =
                                   _routeColorDefaultMap;
