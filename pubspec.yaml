@@ -84,6 +84,7 @@ dependencies:
   share_plus: ^10.1.2
   cross_file: ^0.3.4
   image: ^4.3.0
+  flutter_colorpicker: ^1.1.0
 
 dev_dependencies:
   flutter_test:
