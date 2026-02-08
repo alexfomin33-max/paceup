@@ -81,6 +81,8 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   // 🔹 ПУТЬ К ПРОЗРАЧНОМУ АССЕТУ
   // ────────────────────────────────────────────────────────────────
   static const String _opacityAssetPath = 'assets/opacity.jpg';
+  static const Color _routeColorDefaultMap = AppColors.polyline; // ярко-синий
+  static const Color _routeColorDefaultOpacity = Color(0xFF7FFF00); // салатовый
   // ────────────────────────────────────────────────────────────────
   // 🔹 ГОРИЗОНТАЛЬНЫЙ СДВИГ ФОТО/КАРТЫ (КАК В РЕДАКТОРЕ ОБРЕЗКИ)
   // ────────────────────────────────────────────────────────────────
@@ -108,11 +110,24 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     _darknessOpacityNotifier = ValueNotifier<double>(0.0);
     _panOffsetNotifier = ValueNotifier<double>(0.0);
     _textColorNotifier = ValueNotifier<Color>(AppColors.surface);
+    _routeColorNotifier = ValueNotifier<Color>(
+      _initialRouteColorForSelectedItem(),
+    );
     // ярко-салатовый по умолчанию
-    _routeColorNotifier = ValueNotifier<Color>(const Color(0xFF7FFF00));
-    // ярко-салатовый по умолчанию
-    _iconColorNotifier = ValueNotifier<Color>(const Color(0xFF7FFF00));
+    _iconColorNotifier = ValueNotifier<Color>(_routeColorDefaultOpacity);
     _routeLineWidthNotifier = ValueNotifier<double>(3.0);
+  }
+
+  /// Цвет маршрута по умолчанию: карта — ярко-синий, прозрачный фон — салатовый.
+  Color _initialRouteColorForSelectedItem() {
+    if (_selectedIndex < 0 || _selectedIndex >= _mediaItems.length) {
+      return _routeColorDefaultMap;
+    }
+    final item = _mediaItems[_selectedIndex];
+    if (item.isAsset && item.imageUrl == _opacityAssetPath) {
+      return _routeColorDefaultOpacity;
+    }
+    return _routeColorDefaultMap;
   }
 
   @override
@@ -284,11 +299,17 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                           if (item.isAsset &&
                               item.imageUrl == _opacityAssetPath) {
                             _displayModeIndex = 4;
-                          } else if (_displayModeIndex >= 4) {
-                            // ─────────────────────────────────────────
-                            // 🔹 5-6 ВИДЫ ТОЛЬКО ДЛЯ ПРОЗРАЧНОГО ФОНА
-                            // ─────────────────────────────────────────
-                            _displayModeIndex = 0;
+                            _textColorNotifier.value = AppColors.surface;
+                            _routeColorNotifier.value =
+                                _routeColorDefaultOpacity;
+                          } else {
+                            if (_displayModeIndex >= 4) {
+                              _displayModeIndex = 0;
+                            }
+                            if (item.isMap) {
+                              _routeColorNotifier.value =
+                                  _routeColorDefaultMap;
+                            }
                           }
                         });
                       },
@@ -301,6 +322,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                       onDisplayModeChanged: (index) {
                         setState(() {
                           _displayModeIndex = index;
+                          if (index == 5 && _isOpacitySelected) {
+                            _routeColorNotifier.value =
+                                _routeColorDefaultOpacity;
+                          }
                         });
                       },
                       isOpacitySelected: _isOpacitySelected,
