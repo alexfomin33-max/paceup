@@ -207,7 +207,7 @@ class CoffeeRunVldMembersContentState
           textStyle: const TextStyle(color: AppColors.red),
           onTap: () async {
             MoreMenuHub.hide();
-            await _removeMember(memberUserId, memberName);
+            await _showRemoveMemberDialog(memberUserId, memberName);
           },
         ),
       );
@@ -309,16 +309,107 @@ class CoffeeRunVldMembersContentState
     }
   }
 
+  /// ──────────────────────── Диалог исключения с причиной ────────────────────────
+  Future<void> _showRemoveMemberDialog(
+    int memberUserId,
+    String memberName,
+  ) async {
+    final controller = TextEditingController();
+
+    final reason = await showCupertinoDialog<String?>(
+      context: context,
+      builder: (context) {
+        // ─────────────────────────────────────────────────────────────────────
+        // Цвета для текстового поля причины (читаемость на любом фоне)
+        // ─────────────────────────────────────────────────────────────────────
+        final textColor = AppColors.getTextPrimaryColor(context);
+        final placeholderColor = AppColors.getTextSecondaryColor(context);
+        final borderColor = AppColors.getBorderColor(context);
+        final surfaceColor = AppColors.getSurfaceColor(context);
+
+        return CupertinoAlertDialog(
+          title: Text('Исключить $memberName?'),
+          content: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Column(
+              children: [
+                const SizedBox(height: AppSpacing.sm),
+                // ─────────────────────────────────────────────────────────────
+                // Поле для ввода причины исключения
+                // ─────────────────────────────────────────────────────────────
+                CupertinoTextField(
+                  controller: controller,
+                  placeholder: 'Причина (опционально)',
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                  keyboardType: TextInputType.text,
+                  textInputAction: TextInputAction.done,
+                  cursorColor: AppColors.brandPrimary,
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: surfaceColor,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    border: Border.all(color: borderColor),
+                  ),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: textColor,
+                  ),
+                  placeholderStyle: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    color: placeholderColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Отмена'),
+            ),
+            CupertinoDialogAction(
+              onPressed: () => Navigator.of(context).pop(controller.text),
+              isDestructiveAction: true,
+              child: const Text('Исключить'),
+            ),
+          ],
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (reason == null) return;
+
+    await _removeMember(
+      memberUserId,
+      memberName,
+      reason: reason,
+    );
+  }
+
   /// ──────────────────────── Исключить участника из клуба ────────────────────────
-  Future<void> _removeMember(int memberUserId, String memberName) async {
+  Future<void> _removeMember(
+    int memberUserId,
+    String memberName, {
+    String? reason,
+  }) async {
     try {
       final api = ref.read(apiServiceProvider);
+      final trimmedReason = reason?.trim();
+      final body = <String, String>{
+        'club_id': widget.clubId.toString(),
+        'user_id': memberUserId.toString(),
+      };
+      if (trimmedReason != null && trimmedReason.isNotEmpty) {
+        body['reason'] = trimmedReason;
+      }
       final data = await api.post(
         '/remove_club_member.php',
-        body: {
-          'club_id': widget.clubId.toString(),
-          'user_id': memberUserId.toString(),
-        },
+        body: body,
       );
 
       if (!mounted) return;
@@ -478,7 +569,6 @@ class CoffeeRunVldMembersContentState
                 avatarUrl: avatarUrl,
                 userId: userId,
                 isCurrentUser: isCurrentUser,
-                isOwner: _currentUserIsOwner || widget.isOwner,
                 onTap: userId != null
                     ? () {
                         Navigator.of(context).push(
@@ -529,7 +619,6 @@ class _MemberRow extends StatelessWidget {
   final String avatarUrl;
   final int? userId;
   final bool isCurrentUser;
-  final bool isOwner;
   final VoidCallback? onTap;
   final void Function(GlobalKey)? onShowMenu;
 
@@ -539,7 +628,6 @@ class _MemberRow extends StatelessWidget {
     required this.avatarUrl,
     this.userId,
     this.isCurrentUser = false,
-    this.isOwner = false,
     this.onTap,
     this.onShowMenu,
   });
@@ -604,10 +692,10 @@ class _MemberRow extends StatelessWidget {
             // Иконка действий.
             // ── Для текущего пользователя показываем пустое место того же размера,
             //    чтобы высота карточки совпадала с другими пользователями.
-            // ── Для владельца клуба показываем иконку трех точек для меню действий.
+            // ── Для администратора/владельца показываем иконку меню действий.
             if (isCurrentUser)
               const SizedBox(width: 48, height: 48)
-            else if (isOwner && onShowMenu != null)
+            else if (onShowMenu != null)
               Builder(
                 builder: (context) {
                   final menuKey = GlobalKey();

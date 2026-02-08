@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/spacing.dart';
 import '../../../../core/utils/error_handler.dart';
 import '../../../../providers/services/api_provider.dart';
 import '../../../../providers/services/auth_provider.dart';
@@ -19,6 +20,7 @@ import 'tabs/members_content.dart';
 import 'tabs/stats_content.dart';
 import 'edit_club_screen.dart';
 import 'club_chat_screen.dart';
+import 'club_blacklist_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
 import '../../providers/search/clubs_search_provider.dart';
@@ -45,6 +47,8 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   bool _isMember = false; // Является ли пользователь участником
   bool _isRequest = false; // Подана ли заявка (для закрытых клубов)
   bool _isJoining = false; // Идёт ли процесс вступления
+  // ──────────────────────── Статус исключения пользователя ────────────────────────
+  bool _isBanned = false;
   int?
   _updatedMembersCount; // Обновленное количество участников (если было изменено)
   // ──────────────────────── Контроллер основного скролла ────────────────────────
@@ -84,13 +88,20 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
         // Проверяем права на редактирование: только создатель может редактировать
         final clubUserId = club['user_id'] as int?;
+        // ─────────── Проверяем статус блокировки пользователя
+        final isBanned = club['current_user_is_banned'] as bool? ?? false;
+
+        // ─────────── Права на действия с клубом
         final canEdit = userId != null && clubUserId == userId;
         final canManageMembers =
-            club['current_user_can_manage_members'] as bool? ?? false;
+            (club['current_user_can_manage_members'] as bool? ?? false) &&
+                !isBanned;
         final canAssignAdmins =
-            club['current_user_can_assign_admins'] as bool? ?? false;
+            (club['current_user_can_assign_admins'] as bool? ?? false) &&
+                !isBanned;
         final canManagePhotos =
-            club['current_user_can_manage_photos'] as bool? ?? false;
+            (club['current_user_can_manage_photos'] as bool? ?? false) &&
+                !isBanned;
 
         // Проверяем, является ли пользователь участником клуба
         bool isMember = false;
@@ -106,9 +117,13 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             _canManageMembers = canManageMembers || canEdit;
             _canAssignAdmins = canAssignAdmins || canEdit;
             _canManagePhotos = canManagePhotos || canEdit;
-            _isMember = isMember;
+            _isMember = isBanned ? false : isMember;
             _isRequest = false; // Сбрасываем статус заявки при загрузке
+            _isBanned = isBanned;
             _loading = false;
+            if (isBanned) {
+              _tab = 0;
+            }
           });
         }
 
@@ -463,39 +478,61 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
     }
 
+    // ── Пункт "Черный список" (для владельца и админов)
+    if (_canManageMembers) {
+      items.add(
+        MoreMenuItem(
+          text: 'Черный список',
+          icon: CupertinoIcons.person_2,
+          onTap: () {
+            MoreMenuHub.hide();
+            Navigator.of(context).push(
+              TransparentPageRoute(
+                builder: (_) => ClubBlacklistScreen(clubId: widget.clubId),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     // ── Пункт "Вступить / Выйти"
-    final isOpen = _clubData?['is_open'] as bool? ?? true;
-    final isJoinAction = !_isMember && !_isRequest;
-    items.add(
-      MoreMenuItem(
-        text: _isMember
-            ? 'Выйти из клуба'
-            : (_isRequest
-                  ? 'Заявка подана'
-                  : (isOpen ? 'Вступить в клуб' : 'Подать заявку')),
-        icon: _isMember
-            ? CupertinoIcons.minus_circle
-            : CupertinoIcons.person_add,
-        iconColor: _isMember
-            ? AppColors.red
-            : (isJoinAction ? AppColors.brandPrimary : null),
-        textStyle: _isMember
-            ? const TextStyle(color: AppColors.red)
-            : (isJoinAction
-                  ? const TextStyle(color: AppColors.brandPrimary)
-                  : null),
-        onTap: () {
-          MoreMenuHub.hide();
-          if (_isMember) {
-            _leaveClub();
-          } else {
-            _joinClub();
-          }
-        },
-      ),
-    );
+    if (!_isBanned) {
+      final isOpen = _clubData?['is_open'] as bool? ?? true;
+      final isJoinAction = !_isMember && !_isRequest;
+      items.add(
+        MoreMenuItem(
+          text: _isMember
+              ? 'Выйти из клуба'
+              : (_isRequest
+                    ? 'Заявка подана'
+                    : (isOpen ? 'Вступить в клуб' : 'Подать заявку')),
+          icon: _isMember
+              ? CupertinoIcons.minus_circle
+              : CupertinoIcons.person_add,
+          iconColor: _isMember
+              ? AppColors.red
+              : (isJoinAction ? AppColors.brandPrimary : null),
+          textStyle: _isMember
+              ? const TextStyle(color: AppColors.red)
+              : (isJoinAction
+                    ? const TextStyle(color: AppColors.brandPrimary)
+                    : null),
+          onTap: () {
+            MoreMenuHub.hide();
+            if (_isMember) {
+              _leaveClub();
+            } else {
+              _joinClub();
+            }
+          },
+        ),
+      );
+    }
 
     // Показываем попап меню
+    // ───── Не открываем меню без пунктов ─────
+    if (items.isEmpty) return;
     MoreMenuOverlay(anchorKey: _menuKey, items: items).show(context);
   }
 
@@ -909,101 +946,133 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     // ───────── Пилюля с табами
                     SliverToBoxAdapter(
                       child: Builder(
-                        builder: (context) => Container(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.getSurfaceColor(context),
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(AppRadius.xl),
-                              topRight: Radius.circular(AppRadius.xl),
-                            ),
-                            border: const Border(
-                              top: BorderSide(
-                                color: AppColors.twinchip,
-                                width: 1,
+                        builder: (context) {
+                          // ───── Формируем табы и блокируем при исключении ─────
+                          final tabs = TabsBar(
+                            value: _tab,
+                            items: const [
+                              'Лента',
+                              'Фото',
+                              'Участники',
+                              'Статистика',
+                            ],
+                            onChanged: (index) {
+                              if (_isBanned) return;
+                              setState(() => _tab = index);
+                            },
+                          );
+
+                          final tabsWidget = _isBanned
+                              ? IgnorePointer(
+                                  child: Opacity(
+                                    opacity: 0.5,
+                                    child: tabs,
+                                  ),
+                                )
+                              : tabs;
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppColors.getSurfaceColor(context),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(AppRadius.xl),
+                                topRight: Radius.circular(AppRadius.xl),
+                              ),
+                              border: const Border(
+                                top: BorderSide(
+                                  color: AppColors.twinchip,
+                                  width: 1,
+                                ),
                               ),
                             ),
-                          ),
-                          child: TabsBar(
-                            value: _tab,
-                            items: const ['Лента', 'Фото', 'Участники', 'Статистика'],
-                            onChanged: (index) => setState(() => _tab = index),
-                          ),
-                        ),
+                            child: tabsWidget,
+                          );
+                        },
                       ),
                     ),
 
                     // ───────── Контент табов (с сохранением состояния)
-                    // ───── Лента: сохраняем состояние при скрытии ─────
-                    SliverVisibility(
-                      visible: _tab == 0,
-                      maintainState: true,
-                      sliver: ClubLentaContent(
-                        key: _lentaContentKey,
-                        clubId: widget.clubId,
-                        scrollController: _scrollController,
+                    if (_isBanned)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _BannedMessage(
+                          text:
+                              'Вы исключены из клуба. Данные клуба вам не доступны.',
+                        ),
+                      )
+                    else ...[
+                      // ───── Лента: сохраняем состояние при скрытии ─────
+                      SliverVisibility(
+                        visible: _tab == 0,
+                        maintainState: true,
+                        sliver: ClubLentaContent(
+                          key: _lentaContentKey,
+                          clubId: widget.clubId,
+                          scrollController: _scrollController,
+                        ),
                       ),
-                    ),
-                    // ───── Фото: сохраняем состояние при скрытии ─────
-                    SliverVisibility(
-                      visible: _tab == 1,
-                      maintainState: true,
-                      sliver: SliverToBoxAdapter(
-                        child: Builder(
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(2),
-                            color: AppColors.getSurfaceColor(context),
-                            child: ClubPhotoContent(
-                              clubId: widget.clubId,
-                              canEdit: _canManagePhotos,
-                              clubData: _clubData,
-                              onPhotosUpdated: _loadClub,
+                      // ───── Фото: сохраняем состояние при скрытии ─────
+                      SliverVisibility(
+                        visible: _tab == 1,
+                        maintainState: true,
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(2),
+                              color: AppColors.getSurfaceColor(context),
+                              child: ClubPhotoContent(
+                                clubId: widget.clubId,
+                                canEdit: _canManagePhotos,
+                                clubData: _clubData,
+                                onPhotosUpdated: _loadClub,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // ───── Участники: сохраняем состояние при скрытии ─────
-                    SliverVisibility(
-                      visible: _tab == 2,
-                      maintainState: true,
-                      sliver: SliverToBoxAdapter(
-                        child: Builder(
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(8),
-                            color: AppColors.getSurfaceColor(context),
-                            child: CoffeeRunVldMembersContent(
-                              key: _membersContentKey,
-                              clubId: widget.clubId,
-                              isOwner: _canEdit,
-                              canManageMembers: _canManageMembers,
-                              canAssignAdmins: _canAssignAdmins,
-                              scrollController: _scrollController,
+                      // ───── Участники: сохраняем состояние при скрытии ─────
+                      SliverVisibility(
+                        visible: _tab == 2,
+                        maintainState: true,
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(8),
+                              color: AppColors.getSurfaceColor(context),
+                              child: CoffeeRunVldMembersContent(
+                                key: _membersContentKey,
+                                clubId: widget.clubId,
+                                isOwner: _canEdit,
+                                canManageMembers: _canManageMembers,
+                                canAssignAdmins: _canAssignAdmins,
+                                scrollController: _scrollController,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    // ───── Статистика: сохраняем состояние при скрытии ─────
-                    SliverVisibility(
-                      visible: _tab == 3,
-                      maintainState: true,
-                      sliver: SliverToBoxAdapter(
-                        child: Builder(
-                          builder: (context) => Container(
-                            padding: const EdgeInsets.all(12),
-                            color: AppColors.getSurfaceColor(context),
-                            child: CoffeeRunVldStatsContent(
-                              clubId: widget.clubId,
-                              scrollController: _scrollController,
+                      // ───── Статистика: сохраняем состояние при скрытии ─────
+                      SliverVisibility(
+                        visible: _tab == 3,
+                        maintainState: true,
+                        sliver: SliverToBoxAdapter(
+                          child: Builder(
+                            builder: (context) => Container(
+                              padding: const EdgeInsets.all(12),
+                              color: AppColors.getSurfaceColor(context),
+                              child: CoffeeRunVldStatsContent(
+                                clubId: widget.clubId,
+                                scrollController: _scrollController,
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
 
                     // ── Добавляем нижний отступ для контента перед плавающей кнопкой
-                    if (!_isMember && !_isRequest)
+                    if (!_isMember && !_isRequest && !_isBanned)
                       const SliverToBoxAdapter(
                         child: SizedBox(height: kToolbarHeight),
                       )
@@ -1012,7 +1081,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                   ],
                 );
                 // ───── Pull-to-refresh только для ленты ─────
-                if (_tab == 0) {
+                if (_tab == 0 && !_isBanned) {
                   return RefreshIndicator(
                     onRefresh: () =>
                         _lentaContentKey.currentState?.refreshLenta() ??
@@ -1031,7 +1100,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
               },
             ),
                 // ───────── Плавающая кнопка вступления (только для не участников)
-                if (!_isMember && !_isRequest)
+                if (!_isMember && !_isRequest && !_isBanned)
                   Positioned(
                     left: 16,
                     right: 16,
@@ -1085,6 +1154,43 @@ String _getMembersWord(int count) {
     return 'участника';
   } else {
     return 'участников';
+  }
+}
+
+/// ──────────────────────── Сообщение для исключенного пользователя ────────────────────────
+class _BannedMessage extends StatelessWidget {
+  final String text;
+
+  const _BannedMessage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: AppColors.twinchip,
+            ),
+          ),
+          child: SelectableText.rich(
+            TextSpan(
+              text: text,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.error,
+              ),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
   }
 }
 
