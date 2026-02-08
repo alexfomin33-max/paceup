@@ -474,22 +474,34 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
               .toList();
 
           if (newMessages.isNotEmpty && mounted) {
+            // ─── Дедупликация и пересчет последнего ID ───
+            final uniqueNewMessages = _filterUniqueMessages(newMessages);
+            final maxNewId = newMessages
+                .map((m) => m.id)
+                .reduce((a, b) => a > b ? a : b);
+
             setState(() {
-              _messages.addAll(newMessages);
-              _lastMessageId = newMessages.last.id;
-              _applyAddedMessages(newMessages);
+              if (uniqueNewMessages.isNotEmpty) {
+                _messages.addAll(uniqueNewMessages);
+                _applyAddedMessages(uniqueNewMessages);
+              }
+              if (_lastMessageId == null || maxNewId > _lastMessageId!) {
+                _lastMessageId = maxNewId;
+              }
             });
 
             // ─── Прокручиваем вниз при получении новых сообщений ───
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_scrollController.hasClients) {
-                _scrollController.animateTo(
-                  _scrollController.position.maxScrollExtent,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeOut,
-                );
-              }
-            });
+            if (uniqueNewMessages.isNotEmpty) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (_scrollController.hasClients) {
+                  _scrollController.animateTo(
+                    _scrollController.position.maxScrollExtent,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                  );
+                }
+              });
+            }
           }
         }
       } catch (e) {
@@ -705,6 +717,27 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
     _messageKeys.removeWhere(
       (messageId, _) => !_messageIds.contains(messageId),
     );
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Дедупликация новых сообщений ─────────────────────────────
+  // ──────────────────────────────────────────────────────────────
+  List<_ChatMessage> _filterUniqueMessages(
+    Iterable<_ChatMessage> messages,
+  ) {
+    // ─── Отбрасываем уже присутствующие и дубли в пачке ───
+    final unique = <_ChatMessage>[];
+    final seen = <int>{};
+    for (final message in messages) {
+      if (_messageIds.contains(message.id)) {
+        continue;
+      }
+      if (!seen.add(message.id)) {
+        continue;
+      }
+      unique.add(message);
+    }
+    return unique;
   }
 
   void _showLeftBubbleMoreMenu(
@@ -1128,24 +1161,34 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
         );
 
         if (mounted) {
+          // ─── Дедупликация, если polling уже добавил сообщение ───
+          final uniqueNewMessages = _filterUniqueMessages([newMessage]);
+          final nextLastId = newMessage.id;
+
           setState(() {
-            _messages.add(newMessage);
-            _lastMessageId = newMessage.id;
+            if (uniqueNewMessages.isNotEmpty) {
+              _messages.addAll(uniqueNewMessages);
+              _applyAddedMessages(uniqueNewMessages);
+            }
+            if (_lastMessageId == null || nextLastId > _lastMessageId!) {
+              _lastMessageId = nextLastId;
+            }
             // ─── Сбрасываем плашку ответа после успешной отправки ───
             _replyMessage = null;
-            _applyAddedMessages([newMessage]);
           });
 
           // ─── Прокручиваем вниз после отправки сообщения ───
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (_scrollController.hasClients) {
-              _scrollController.animateTo(
-                _scrollController.position.maxScrollExtent,
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-              );
-            }
-          });
+          if (uniqueNewMessages.isNotEmpty) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (_scrollController.hasClients) {
+                _scrollController.animateTo(
+                  _scrollController.position.maxScrollExtent,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOut,
+                );
+              }
+            });
+          }
         }
       }
     } catch (e) {
@@ -1395,6 +1438,8 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
     }
 
     final chatData = _chatData!;
+    // ─── Высота клавиатуры для сдвига чата ───
+    final viewInsets = MediaQuery.of(context).viewInsets;
 
     return InteractiveBackSwipe(
       child: Stack(
@@ -1403,6 +1448,8 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
             backgroundColor: Theme.of(context).brightness == Brightness.light
                 ? AppColors.getSurfaceColor(context)
                 : AppColors.getBackgroundColor(context),
+            // ─── Ручной сдвиг под клавиатуру ───
+            resizeToAvoidBottomInset: false,
             appBar: AppBar(
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? AppColors.darkSurface
@@ -1579,28 +1626,33 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                 ),
               ),
             ),
-            body: GestureDetector(
-              onTap: () {
-                FocusScope.of(context).unfocus();
-                // ─── Сбрасываем выбор сообщения для удаления ───
-                if ((_selectedMessageIdForDelete != null ||
-                        _messageIdWithMenuOpen != null ||
-                        _messageIdWithRightMenuOpen != null) &&
-                    mounted) {
-                  setState(() {
-                    _selectedMessageIdForDelete = null;
-                    _messageIdWithMenuOpen = null;
-                    _messageIdWithRightMenuOpen = null;
-                  });
-                }
-              },
-              behavior: HitTestBehavior.translucent,
-              child: Column(
-                children: [
-                  Expanded(
-                    child: CustomScrollView(
-                      controller: _scrollController,
-                      slivers: [
+            // ─── Сдвигаем чат вверх при появлении клавиатуры ───
+            body: AnimatedPadding(
+              padding: EdgeInsets.only(bottom: viewInsets.bottom),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: GestureDetector(
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  // ─── Сбрасываем выбор сообщения для удаления ───
+                  if ((_selectedMessageIdForDelete != null ||
+                          _messageIdWithMenuOpen != null ||
+                          _messageIdWithRightMenuOpen != null) &&
+                      mounted) {
+                    setState(() {
+                      _selectedMessageIdForDelete = null;
+                      _messageIdWithMenuOpen = null;
+                      _messageIdWithRightMenuOpen = null;
+                    });
+                  }
+                },
+                behavior: HitTestBehavior.translucent,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: CustomScrollView(
+                        controller: _scrollController,
+                        slivers: [
                         // ─── Индикатор загрузки при подгрузке старых сообщений ───
                         if (_isLoadingMore)
                           const SliverToBoxAdapter(
@@ -1787,7 +1839,8 @@ class _EventChatScreenState extends ConsumerState<EventChatScreen>
                     onSend: _sendText,
                     onPickImage: _pickImage,
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

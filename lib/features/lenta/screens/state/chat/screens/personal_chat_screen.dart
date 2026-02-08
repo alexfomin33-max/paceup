@@ -1717,6 +1717,9 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
 
   @override
   Widget build(BuildContext context) {
+    // ─── Высота клавиатуры для сдвига чата ───
+    final viewInsets = MediaQuery.of(context).viewInsets;
+
     return InteractiveBackSwipe(
       child: Stack(
         children: [
@@ -1724,7 +1727,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             backgroundColor: Theme.of(context).brightness == Brightness.light
                 ? AppColors.surface
                 : AppColors.getBackgroundColor(context),
-            resizeToAvoidBottomInset: true,
+            // ─── Ручной сдвиг под клавиатуру ───
+            resizeToAvoidBottomInset: false,
             appBar: AppBar(
               backgroundColor: Theme.of(context).brightness == Brightness.dark
                   ? AppColors.getSurfaceColor(context)
@@ -1867,29 +1871,34 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                 ),
               ),
             ),
-            body: GestureDetector(
-              // ─── Убираем фокус с поля ввода при тапе на экран ───
-              onTap: () {
-                FocusScope.of(context).unfocus();
-                // ─── Сбрасываем выбор сообщения для удаления, ответа и меню ───
-                if (_selectedMessageIdForDelete != null ||
-                    _selectedMessageIdForReply != null ||
-                    _messageIdWithMenuOpen != null ||
-                    _messageIdWithRightMenuOpen != null) {
-                  setState(() {
-                    _selectedMessageIdForDelete = null;
-                    _selectedMessageIdForReply = null;
-                    _messageIdWithMenuOpen = null;
-                    _messageIdWithRightMenuOpen = null;
-                  });
-                }
-              },
-              behavior: HitTestBehavior.translucent,
-              child: Column(
-                children: [
-                  // ─── Прокручиваемая область с сообщениями ───
-                  Expanded(
-                    child: () {
+            // ─── Сдвигаем чат вверх при появлении клавиатуры ───
+            body: AnimatedPadding(
+              padding: EdgeInsets.only(bottom: viewInsets.bottom),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOut,
+              child: GestureDetector(
+                // ─── Убираем фокус с поля ввода при тапе на экран ───
+                onTap: () {
+                  FocusScope.of(context).unfocus();
+                  // ─── Сбрасываем выбор сообщения для удаления, ответа и меню ───
+                  if (_selectedMessageIdForDelete != null ||
+                      _selectedMessageIdForReply != null ||
+                      _messageIdWithMenuOpen != null ||
+                      _messageIdWithRightMenuOpen != null) {
+                    setState(() {
+                      _selectedMessageIdForDelete = null;
+                      _selectedMessageIdForReply = null;
+                      _messageIdWithMenuOpen = null;
+                      _messageIdWithRightMenuOpen = null;
+                    });
+                  }
+                },
+                behavior: HitTestBehavior.translucent,
+                child: Column(
+                  children: [
+                    // ─── Прокручиваемая область с сообщениями ───
+                    Expanded(
+                      child: () {
                       if (_error != null && _messages.isEmpty) {
                         return Center(
                           child: Padding(
@@ -2135,7 +2144,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                       });
                     },
                   ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
