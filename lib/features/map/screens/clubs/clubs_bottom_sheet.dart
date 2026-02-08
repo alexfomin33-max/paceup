@@ -234,6 +234,7 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
       required String title,
       required int membersCount,
       required String? city,
+      required bool isOpen,
       VoidCallback? onTap,
     }) {
       // ── определяем цвет тени в зависимости от темы
@@ -242,81 +243,70 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
           ? AppColors.darkShadowSoft
           : AppColors.shadowSoft;
 
-      final card = Container(
-        decoration: BoxDecoration(
-          color: AppColors.getSurfaceColor(context),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: AppColors.twinchip,
-            width: 0.5,
-          ),
-          boxShadow: const [
-          BoxShadow(
-            color: AppColors.twinshadow,
-            blurRadius: 10,
-            offset: Offset(0, 1),
-          ),
-        ],
-        ),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Логотип клуба (круглый)
-            Container(
-              height: 100,
-              width: 100,
-              decoration: const BoxDecoration(shape: BoxShape.circle),
-              child: ClipOval(child: _ClubLogoImage(logoUrl: logoUrl)),
-            ),
-            const SizedBox(height: 8),
-
-            // Название клуба с обрезанием текста
-            Center(
-              child: Text(
-                title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  height: 1.2,
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
+      final card = Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.getSurfaceColor(context),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(
+                color: AppColors.twinchip,
+                width: 0.5,
               ),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.twinshadow,
+                  blurRadius: 10,
+                  offset: Offset(0, 1),
+                ),
+              ],
             ),
-            const SizedBox(height: 6),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Логотип клуба (круглый)
+                Container(
+                  height: 100,
+                  width: 100,
+                  decoration: const BoxDecoration(shape: BoxShape.circle),
+                  child: ClipOval(child: _ClubLogoImage(logoUrl: logoUrl)),
+                ),
+                const SizedBox(height: 8),
 
-            // Количество участников и город
-            Align(
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    CupertinoIcons.person_2,
-                    size: 15,
-                    color: AppColors.getTextPrimaryColor(context),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatMembers(membersCount),
+                // Название клуба с обрезанием текста
+                Center(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 13,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                       height: 1.2,
                       color: AppColors.getTextPrimaryColor(context),
                     ),
                   ),
-                  if (city != null && city.isNotEmpty) ...[
-                    Flexible(
-                      child: Text(
-                        '  ·  $city',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+
+                // Количество участников и город
+                Align(
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        CupertinoIcons.person_2,
+                        size: 15,
+                        color: AppColors.getTextPrimaryColor(context),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatMembers(membersCount),
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 13,
@@ -324,13 +314,34 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
                           color: AppColors.getTextPrimaryColor(context),
                         ),
                       ),
-                    ),
-                  ],
-                ],
-              ),
+                      if (city != null && city.isNotEmpty) ...[
+                        Flexible(
+                          child: Text(
+                            '  ·  $city',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 13,
+                              height: 1.2,
+                              color: AppColors.getTextPrimaryColor(context),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          if (!isOpen)
+            const Positioned(
+              top: 8,
+              right: 8,
+              child: _PrivateClubBadge(),
+            ),
+        ],
       );
 
       if (onTap == null) return card;
@@ -362,12 +373,15 @@ class _ClubsListFromApiState extends State<ClubsListFromApi> {
         final logoUrl = club['logo_url'] as String?;
         final membersCount = club['members_count'] as int? ?? 0;
         final city = club['city'] as String?;
+        // ── Флаг приватности для бейджа
+        final isOpen = _parseIsOpen(club['is_open']);
 
         return clubCard(
           logoUrl: logoUrl,
           title: name,
           membersCount: membersCount,
           city: city,
+          isOpen: isOpen,
           onTap: clubId != null
               ? () async {
                   final result = await Navigator.of(context).push<dynamic>(
@@ -461,4 +475,36 @@ String _formatMembers(int n) {
     }
   }
   return buf.toString();
+}
+
+/// Парсинг флага открытости клуба
+bool _parseIsOpen(dynamic value) {
+  if (value == null) return true;
+  if (value is bool) return value;
+  if (value is int) return value != 0;
+  if (value is num) return value.toInt() != 0;
+  final str = value.toString().trim().toLowerCase();
+  return str == 'true' || str == '1';
+}
+
+/// Иконка приватного клуба (замочек)
+class _PrivateClubBadge extends StatelessWidget {
+  const _PrivateClubBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: Border.all(color: AppColors.twinchip),
+      ),
+      child: Icon(
+        CupertinoIcons.lock_fill,
+        size: 12,
+        color: AppColors.brandPrimary,
+      ),
+    );
+  }
 }

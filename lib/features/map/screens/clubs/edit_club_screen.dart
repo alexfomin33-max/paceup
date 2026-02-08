@@ -40,7 +40,7 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
   // ── выборы
   String? activity;
   DateTime? foundationDate;
-  bool isOpenCommunity = true;
+  bool isPrivateClub = false;
 
   // ── список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
@@ -196,14 +196,27 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
           activity = null;
         }
 
-        // Заполняем статус открытости
-        final isOpen = club['is_open'];
-        if (isOpen is bool) {
-          isOpenCommunity = isOpen;
-        } else if (isOpen is int) {
-          isOpenCommunity = isOpen == 1;
-        } else if (isOpen is String) {
-          isOpenCommunity = isOpen == '1' || isOpen.toLowerCase() == 'true';
+        // Заполняем статус приватности
+        final isPrivate = club['is_private'];
+        if (isPrivate is bool) {
+          isPrivateClub = isPrivate;
+        } else if (isPrivate is int) {
+          isPrivateClub = isPrivate == 1;
+        } else if (isPrivate is String) {
+          isPrivateClub = isPrivate == '1' ||
+              isPrivate.toLowerCase() == 'true';
+        } else {
+          final isOpen = club['is_open'];
+          bool isOpenValue = true;
+          if (isOpen is bool) {
+            isOpenValue = isOpen;
+          } else if (isOpen is int) {
+            isOpenValue = isOpen == 1;
+          } else if (isOpen is String) {
+            isOpenValue = isOpen == '1' ||
+                isOpen.toLowerCase() == 'true';
+          }
+          isPrivateClub = !isOpenValue;
         }
 
         // Заполняем дату основания
@@ -686,7 +699,9 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
         fields['city'] = cityCtrl.text.trim();
         fields['description'] = descCtrl.text.trim();
         fields['activity'] = activity!;
-        fields['is_open'] = isOpenCommunity ? '1' : '0';
+        // ── сохраняем тип клуба (public/private)
+        fields['is_open'] = isPrivateClub ? '0' : '1';
+        fields['is_private'] = isPrivateClub ? '1' : '0';
         fields['foundation_date'] = _fmtDate(foundationDate!);
         // Координаты не обязательны - будут получены по городу на сервере
 
@@ -1076,49 +1091,43 @@ class _EditClubScreenState extends ConsumerState<EditClubScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ---------- Радиокнопки: Открытое/Закрытое сообщество ----------
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Radio<bool>(
-                          value: true,
-                          // ignore: deprecated_member_use
-                          groupValue: isOpenCommunity,
-                          // ignore: deprecated_member_use
-                          onChanged: (v) =>
-                              setState(() => isOpenCommunity = v ?? false),
-                          activeColor: AppColors.brandPrimary,
+                  // ---------- Приватный клуб ----------
+                  Builder(
+                    builder: (context) => Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Transform.scale(
+                            scale: 0.85,
+                            alignment: Alignment.centerLeft,
+                            child: Checkbox(
+                              value: isPrivateClub,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              activeColor: AppColors.brandPrimary,
+                              checkColor: AppColors.getSurfaceColor(context),
+                              side: BorderSide(
+                                color: AppColors.getIconSecondaryColor(context),
+                                width: 1.5,
+                              ),
+                              onChanged: (v) => setState(
+                                () => isPrivateClub = v ?? false,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Открытое сообщество',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Radio<bool>(
-                          value: false,
-                          // ignore: deprecated_member_use
-                          groupValue: isOpenCommunity,
-                          // ignore: deprecated_member_use
-                          onChanged: (v) =>
-                              setState(() => isOpenCommunity = v ?? false),
-                          activeColor: AppColors.brandPrimary,
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Приватный клуб',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Закрытое сообщество',
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 

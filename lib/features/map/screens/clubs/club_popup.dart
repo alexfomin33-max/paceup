@@ -218,11 +218,13 @@ class _ClubPopupContent extends StatelessWidget {
     final name = club['name'] as String? ?? '';
     final logoUrl = club['logo_url'] as String?;
     final membersCount = club['members_count'] as int? ?? 0;
+    final isOpen = _parseIsOpen(club['is_open']);
 
     return _ClubRow(
       imageUrl: logoUrl,
       name: name,
       membersCount: membersCount,
+      isOpen: isOpen,
       onTap: clubId != null
           ? () async {
               onDismiss(); // закрываем попап
@@ -244,17 +246,19 @@ class _ClubRow extends StatelessWidget {
   final String? imageUrl;
   final String name;
   final int membersCount;
+  final bool isOpen;
   final VoidCallback? onTap;
 
   const _ClubRow({
     required this.imageUrl,
     required this.name,
     required this.membersCount,
+    required this.isOpen,
     this.onTap,
   });
 
   Widget _buildRowContent(BuildContext context) {
-    return Row(
+    final row = Row(
       children: [
         // Слева 56×56 - квадратный контейнер для изображения из БД или заглушки
         Container(
@@ -396,6 +400,19 @@ class _ClubRow extends StatelessWidget {
         ),
       ],
     );
+
+    if (isOpen) return row;
+
+    return Stack(
+      children: [
+        row,
+        const Positioned(
+          top: 4,
+          right: 4,
+          child: _PrivateClubBadge(),
+        ),
+      ],
+    );
   }
 
   @override
@@ -414,6 +431,38 @@ class _ClubRow extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: rowContent,
+    );
+  }
+}
+
+/// Парсинг флага открытости клуба
+bool _parseIsOpen(dynamic value) {
+  if (value == null) return true;
+  if (value is bool) return value;
+  if (value is int) return value != 0;
+  if (value is num) return value.toInt() != 0;
+  final str = value.toString().trim().toLowerCase();
+  return str == 'true' || str == '1';
+}
+
+/// Иконка приватного клуба (замочек)
+class _PrivateClubBadge extends StatelessWidget {
+  const _PrivateClubBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.getSurfaceColor(context),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
+        border: Border.all(color: AppColors.twinchip),
+      ),
+      child: Icon(
+        CupertinoIcons.lock_fill,
+        size: 11,
+        color: AppColors.brandPrimary,
+      ),
     );
   }
 }

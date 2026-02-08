@@ -21,6 +21,7 @@ import 'tabs/stats_content.dart';
 import 'edit_club_screen.dart';
 import 'club_chat_screen.dart';
 import 'club_blacklist_screen.dart';
+import 'club_join_requests_screen.dart';
 import '../../../../core/widgets/transparent_route.dart';
 import '../../../profile/providers/user_clubs_provider.dart';
 import '../../providers/search/clubs_search_provider.dart';
@@ -111,6 +112,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         }
 
         if (mounted) {
+          final isRequest = club['current_user_is_request'] as bool? ?? false;
           setState(() {
             _clubData = club;
             _canEdit = canEdit;
@@ -118,7 +120,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
             _canAssignAdmins = canAssignAdmins || canEdit;
             _canManagePhotos = canManagePhotos || canEdit;
             _isMember = isBanned ? false : isMember;
-            _isRequest = false; // Сбрасываем статус заявки при загрузке
+            _isRequest = isBanned ? false : isRequest;
             _isBanned = isBanned;
             _loading = false;
             if (isBanned) {
@@ -448,6 +450,9 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
   /// ──────────────────────── Показ меню с действиями ────────────────────────
   void _showMenu(BuildContext context) {
     final items = <MoreMenuItem>[];
+    // ── Тип клуба для отображения пунктов меню
+    final isOpen = _clubData?['is_open'] as bool? ?? true;
+    final isPrivateClub = !isOpen;
 
     // ── Пункт "Редактировать" (только для владельца клуба)
     if (_canEdit) {
@@ -478,6 +483,24 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
       );
     }
 
+    // ── Пункт "Заявки" (для владельца и админов в приватных клубах)
+    if (_canManageMembers && isPrivateClub) {
+      items.add(
+        MoreMenuItem(
+          text: 'Заявки',
+          icon: CupertinoIcons.person_3,
+          onTap: () {
+            MoreMenuHub.hide();
+            Navigator.of(context).push(
+              TransparentPageRoute(
+                builder: (_) => ClubJoinRequestsScreen(clubId: widget.clubId),
+              ),
+            );
+          },
+        ),
+      );
+    }
+
     // ── Пункт "Черный список" (для владельца и админов)
     if (_canManageMembers) {
       items.add(
@@ -498,7 +521,6 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
 
     // ── Пункт "Вступить / Выйти"
     if (!_isBanned) {
-      final isOpen = _clubData?['is_open'] as bool? ?? true;
       final isJoinAction = !_isMember && !_isRequest;
       items.add(
         MoreMenuItem(
@@ -592,6 +614,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
         : <String>[];
 
     final description = _clubData!['description'] as String? ?? '';
+    // ─────────── Статус приватности клуба ───────────
+    final isOpen = _clubData!['is_open'] as bool? ?? true;
+    final isPrivateClub = !isOpen;
+    final isPrivateLocked = isPrivateClub && !_isMember && !_canManageMembers;
 
     return PopScope(
       canPop: _updatedMembersCount == null,
@@ -866,8 +892,10 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                     const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Промежуточный блок: информация
-                    if (description.isNotEmpty || link.isNotEmpty ||
-                        extraLinks.isNotEmpty)
+                    if (description.isNotEmpty ||
+                        link.isNotEmpty ||
+                        extraLinks.isNotEmpty ||
+                        isPrivateClub)
                       SliverPadding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         sliver: SliverToBoxAdapter(
@@ -885,16 +913,46 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'Информация',
-                                  style: TextStyle(
-                                    fontFamily: 'Inter',
-                                    fontSize: 12,
-                                    color: AppColors.getTextSecondaryColor(
-                                      context,
+                                if (isPrivateClub)
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Информация',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12,
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
+                                      Text(
+                                        'Приватный клуб',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 12,
+                                          color:
+                                              AppColors.getTextSecondaryColor(
+                                                context,
+                                              ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                else
+                                  Text(
+                                    'Информация',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12,
+                                      color: AppColors.getTextSecondaryColor(
+                                        context,
+                                      ),
                                     ),
                                   ),
-                                ),
                                 if (description.isNotEmpty) ...[
                                   const SizedBox(height: 4),
                                   Text(
@@ -940,14 +998,15 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         ),
                       ),
 
-                    if (description.isNotEmpty)
+                    if (description.isNotEmpty || isPrivateClub)
                       const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
                     // ───────── Пилюля с табами
                     SliverToBoxAdapter(
                       child: Builder(
                         builder: (context) {
-                          // ───── Формируем табы и блокируем при исключении ─────
+                          // ───── Формируем табы и блокируем при ограничении ─────
+                          final isTabsLocked = _isBanned || isPrivateLocked;
                           final tabs = TabsBar(
                             value: _tab,
                             items: const [
@@ -957,12 +1016,12 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                               'Статистика',
                             ],
                             onChanged: (index) {
-                              if (_isBanned) return;
+                              if (isTabsLocked) return;
                               setState(() => _tab = index);
                             },
                           );
 
-                          final tabsWidget = _isBanned
+                          final tabsWidget = isTabsLocked
                               ? IgnorePointer(
                                   child: Opacity(
                                     opacity: 0.5,
@@ -999,6 +1058,14 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                         child: _BannedMessage(
                           text:
                               'Вы исключены из клуба. Данные клуба вам не доступны.',
+                        ),
+                      )
+                    else if (isPrivateLocked)
+                      SliverFillRemaining(
+                        hasScrollBody: false,
+                        child: _PrivateClubMessage(
+                          text:
+                              'Приватный клуб. Подайте заявку, чтобы увидеть контент.',
                         ),
                       )
                     else ...[
@@ -1081,7 +1148,7 @@ class _ClubDetailScreenState extends ConsumerState<ClubDetailScreen> {
                   ],
                 );
                 // ───── Pull-to-refresh только для ленты ─────
-                if (_tab == 0 && !_isBanned) {
+                if (_tab == 0 && !_isBanned && !isPrivateLocked) {
                   return RefreshIndicator(
                     onRefresh: () =>
                         _lentaContentKey.currentState?.refreshLenta() ??
@@ -1184,6 +1251,43 @@ class _BannedMessage extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 14,
                 color: AppColors.error,
+              ),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// ──────────────────────── Сообщение для приватного клуба ────────────────────────
+class _PrivateClubMessage extends StatelessWidget {
+  final String text;
+
+  const _PrivateClubMessage({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.getSurfaceColor(context),
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: AppColors.twinchip,
+            ),
+          ),
+          child: SelectableText.rich(
+            TextSpan(
+              text: text,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: AppColors.getTextSecondaryColor(context),
               ),
             ),
             textAlign: TextAlign.center,

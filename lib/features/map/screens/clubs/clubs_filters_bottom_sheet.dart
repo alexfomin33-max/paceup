@@ -414,9 +414,9 @@ extension ClubTypeExtension on ClubType {
   String get label {
     switch (this) {
       case ClubType.open:
-        return 'Открытые';
+        return 'Публичные';
       case ClubType.closed:
-        return 'Закрытые';
+        return 'Приватные';
     }
   }
 
@@ -424,9 +424,9 @@ extension ClubTypeExtension on ClubType {
   String get apiValue {
     switch (this) {
       case ClubType.open:
-        return 'open';
+        return 'public';
       case ClubType.closed:
-        return 'closed';
+        return 'private';
     }
   }
 

@@ -16,6 +16,7 @@ class ClubSearch {
   final String city;
   final int membersCount;
   final String logo;
+  final bool isOpen;
 
   ClubSearch({
     required this.id,
@@ -23,15 +24,26 @@ class ClubSearch {
     required this.city,
     required this.membersCount,
     required this.logo,
+    required this.isOpen,
   });
 
   factory ClubSearch.fromJson(Map<String, dynamic> json) {
+    bool toBool(dynamic v) {
+      if (v == null) return true;
+      if (v is bool) return v;
+      if (v is int) return v != 0;
+      if (v is num) return v.toInt() != 0;
+      final s = v.toString().trim().toLowerCase();
+      return s == 'true' || s == '1';
+    }
+    
     return ClubSearch(
       id: json['id'] as int,
       name: json['name'] as String? ?? '',
       city: json['city'] as String? ?? '',
       membersCount: json['members_count'] as int? ?? 0,
       logo: json['logo'] as String? ?? '',
+      isOpen: toBool(json['is_open']),
     );
   }
 

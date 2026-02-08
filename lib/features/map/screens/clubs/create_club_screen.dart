@@ -34,8 +34,7 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
   // ── выборы
   String? activity;
   DateTime? foundationDate;
-  bool isOpenCommunity =
-      true; // true = открытое сообщество (по умолчанию выбрано)
+  bool isPrivateClub = false; // true = приватный клуб
 
   // ── список городов для автокомплита (загружается из БД)
   List<String> _cities = [];
@@ -413,7 +412,9 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
       fields['city'] = cityCtrl.text.trim();
       fields['description'] = descCtrl.text.trim();
       fields['activity'] = activity!;
-      fields['is_open'] = isOpenCommunity ? '1' : '0';
+      // ── сохраняем тип клуба (public/private)
+      fields['is_open'] = isPrivateClub ? '0' : '1';
+      fields['is_private'] = isPrivateClub ? '1' : '0';
       fields['foundation_date'] = _fmtDate(foundationDate!);
       // Координаты не обязательны - будут получены по городу на сервере
 
@@ -746,49 +747,43 @@ class _CreateClubScreenState extends ConsumerState<CreateClubScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // ---------- Радиокнопки: Открытое/Закрытое сообщество ----------
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Radio<bool>(
-                          value: true,
-                          // ignore: deprecated_member_use
-                          groupValue: isOpenCommunity,
-                          // ignore: deprecated_member_use
-                          onChanged: (v) =>
-                              setState(() => isOpenCommunity = v ?? false),
-                          activeColor: AppColors.brandPrimary,
+                  // ---------- Приватный клуб ----------
+                  Builder(
+                    builder: (context) => Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: Transform.scale(
+                            scale: 0.85,
+                            alignment: Alignment.centerLeft,
+                            child: Checkbox(
+                              value: isPrivateClub,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                              activeColor: AppColors.brandPrimary,
+                              checkColor: AppColors.getSurfaceColor(context),
+                              side: BorderSide(
+                                color: AppColors.getIconSecondaryColor(context),
+                                width: 1.5,
+                              ),
+                              onChanged: (v) => setState(
+                                () => isPrivateClub = v ?? false,
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Открытое сообщество',
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: Radio<bool>(
-                          value: false,
-                          // ignore: deprecated_member_use
-                          groupValue: isOpenCommunity,
-                          // ignore: deprecated_member_use
-                          onChanged: (v) =>
-                              setState(() => isOpenCommunity = v ?? false),
-                          activeColor: AppColors.brandPrimary,
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Приватный клуб',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Закрытое сообщество',
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
 
