@@ -46,6 +46,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   late int _selectedIndex;
   int _displayModeIndex = 0;
   // ────────────────────────────────────────────────────────────────
+  // 🔹 ТИП ЗАГОЛОВКА МЕТРИК ДЛЯ ПЕРВОЙ МИНИАТЮРЫ: false = Текст, true = Иконка
+  // ────────────────────────────────────────────────────────────────
+  bool _metricsHeaderAsIcon = false;
+  // ────────────────────────────────────────────────────────────────
   // 🔹 ИНТЕНСИВНОСТЬ ГРАДИЕНТНОГО ЗАТЕМНЕНИЯ (0.0 - 1.0)
   // ────────────────────────────────────────────────────────────────
   late final ValueNotifier<double> _darknessOpacityNotifier;
@@ -57,6 +61,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
   // 🔹 ЦВЕТ МАРШРУТА: ЛЮБОЙ (ОТДЕЛЬНО ОТ ТЕКСТА)
   // ────────────────────────────────────────────────────────────────
   late final ValueNotifier<Color> _routeColorNotifier;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ЦВЕТ ИКОНКИ ВИДА СПОРТА: ДЛЯ 5-Й МИНИАТЮРЫ (НЕ ЗАВИСИТ ОТ ЦВЕТА ТЕКСТА)
+  // ────────────────────────────────────────────────────────────────
+  late final ValueNotifier<Color> _iconColorNotifier;
   // ────────────────────────────────────────────────────────────────
   // 🔹 ТОЛЩИНА ЛИНИИ МАРШРУТА (1.0 - 5.0 ПИКСЕЛЕЙ)
   // ────────────────────────────────────────────────────────────────
@@ -100,7 +108,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     _darknessOpacityNotifier = ValueNotifier<double>(0.0);
     _panOffsetNotifier = ValueNotifier<double>(0.0);
     _textColorNotifier = ValueNotifier<Color>(AppColors.surface);
-    _routeColorNotifier = ValueNotifier<Color>(AppColors.brandPrimary);
+    // ярко-салатовый по умолчанию
+    _routeColorNotifier = ValueNotifier<Color>(const Color(0xFF7FFF00));
+    // ярко-салатовый по умолчанию
+    _iconColorNotifier = ValueNotifier<Color>(const Color(0xFF7FFF00));
     _routeLineWidthNotifier = ValueNotifier<double>(3.0);
   }
 
@@ -113,6 +124,7 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
     _panOffsetNotifier.dispose();
     _textColorNotifier.dispose();
     _routeColorNotifier.dispose();
+    _iconColorNotifier.dispose();
     _routeLineWidthNotifier.dispose();
     _sheetController.dispose();
     super.dispose();
@@ -179,6 +191,8 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                                         selectedItem: selectedItem,
                                         heightFactor: 16 / 9,
                                         displayModeIndex: _displayModeIndex,
+                                        metricsHeaderAsIcon:
+                                            _metricsHeaderAsIcon,
                                         isTransparentMode:
                                             _isOpacitySelected,
                                         darknessOpacity: darknessOpacity,
@@ -186,6 +200,8 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                                             _textColorNotifier,
                                         routeColorNotifier:
                                             _routeColorNotifier,
+                                        iconColorNotifier:
+                                            _iconColorNotifier,
                                         routeLineWidthNotifier:
                                             _routeLineWidthNotifier,
                                         panOffset: panOffset,
@@ -218,9 +234,11 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                                     selectedItem: selectedItem,
                                     heightFactor: 16 / 9,
                                     displayModeIndex: _displayModeIndex,
+                                    metricsHeaderAsIcon: _metricsHeaderAsIcon,
                                     darknessOpacity: darknessOpacity,
                                     textColorListenable: _textColorNotifier,
                                     routeColorNotifier: _routeColorNotifier,
+                                    iconColorNotifier: _iconColorNotifier,
                                     routeLineWidthNotifier:
                                         _routeLineWidthNotifier,
                                     panOffset: panOffset,
@@ -276,6 +294,7 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                       },
                       textColorNotifier: _textColorNotifier,
                       routeColorNotifier: _routeColorNotifier,
+                      iconColorNotifier: _iconColorNotifier,
                       routeLineWidthNotifier: _routeLineWidthNotifier,
                       isMapSelected: _currentSelectedItem?.isMap == true,
                       displayModeIndex: _displayModeIndex,
@@ -287,6 +306,10 @@ class _ShareActivityScreenState extends State<ShareActivityScreen> {
                       isOpacitySelected: _isOpacitySelected,
                       darknessOpacityNotifier: _darknessOpacityNotifier,
                       onSharePressed: _onSharePressed,
+                      metricsHeaderAsIcon: _metricsHeaderAsIcon,
+                      onMetricsHeaderTypeChanged: (v) {
+                        setState(() => _metricsHeaderAsIcon = v);
+                      },
                     );
                   },
                 ),
@@ -431,6 +454,10 @@ class _ShareTopImage extends StatelessWidget {
   final double heightFactor;
   final int displayModeIndex;
   // ────────────────────────────────────────────────────────────────
+  // 🔹 ТИП ЗАГОЛОВКА МЕТРИК ДЛЯ ПЕРВОЙ МИНИАТЮРЫ: ИКОНКИ ВМЕСТО ТЕКСТА
+  // ────────────────────────────────────────────────────────────────
+  final bool metricsHeaderAsIcon;
+  // ────────────────────────────────────────────────────────────────
   // 🔹 РЕЖИМ ПРОЗРАЧНОГО ФОНА ДЛЯ opacity.jpg
   // ────────────────────────────────────────────────────────────────
   final bool isTransparentMode;
@@ -447,6 +474,10 @@ class _ShareTopImage extends StatelessWidget {
   // ────────────────────────────────────────────────────────────────
   final ValueNotifier<Color> routeColorNotifier;
   // ────────────────────────────────────────────────────────────────
+  // 🔹 ЦВЕТ ИКОНКИ ВИДА СПОРТА: ДЛЯ 5-Й МИНИАТЮРЫ
+  // ────────────────────────────────────────────────────────────────
+  final ValueNotifier<Color> iconColorNotifier;
+  // ────────────────────────────────────────────────────────────────
   // 🔹 ТОЛЩИНА ЛИНИИ МАРШРУТА (1.0 - 5.0 ПИКСЕЛЕЙ)
   // ────────────────────────────────────────────────────────────────
   final ValueNotifier<double> routeLineWidthNotifier;
@@ -461,10 +492,12 @@ class _ShareTopImage extends StatelessWidget {
     required this.selectedItem,
     this.heightFactor = 16 / 9,
     required this.displayModeIndex,
+    this.metricsHeaderAsIcon = false,
     this.isTransparentMode = false,
     this.darknessOpacity = 0.0,
     required this.textColorListenable,
     required this.routeColorNotifier,
+    required this.iconColorNotifier,
     required this.routeLineWidthNotifier,
     this.panOffset = 0.0,
     required this.onPanUpdate,
@@ -491,6 +524,28 @@ class _ShareTopImage extends StatelessWidget {
     }
     // Дефолтная иконка для бега
     return Icons.directions_run;
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 НАЗВАНИЕ ВИДА СПОРТА ДЛЯ ПОДПИСИ МЕТРИКИ (ВМЕСТО «РАССТОЯНИЕ»)
+  // ────────────────────────────────────────────────────────────────
+  String _getSportTypeName(String activityType) {
+    final type = activityType.toLowerCase();
+    if (type == 'run' || type == 'running' || type == 'indoor-running') {
+      return 'Бег';
+    } else if (type == 'bike' ||
+        type == 'cycling' ||
+        type == 'bicycle' ||
+        type == 'indoor-cycling') {
+      return 'Велосипед';
+    } else if (type == 'swim' || type == 'swimming') {
+      return 'Плавание';
+    } else if (type == 'ski' || type == 'skiing') {
+      return 'Лыжи';
+    } else if (type == 'walking' || type == 'hiking') {
+      return 'Ходьба';
+    }
+    return 'Бег';
   }
   // ────────────────────────────────────────────────────────────────
   // 🔹 ОПРЕДЕЛЯЕМ, ЧТО КОНТЕНТ — ЭТО КАРТА (ДЛЯ ИНТЕРАКТИВА)
@@ -656,7 +711,9 @@ class _ShareTopImage extends StatelessWidget {
                                           color: textColor,
                                           colorBlendMode: BlendMode.srcIn,
                                         ),
-                                        const SizedBox(height: 16),
+                                        SizedBox(
+                                            height:
+                                                showRouteMini ? 20 : 20),
                                         if (showRouteMini)
                                           ValueListenableBuilder<Color>(
                                             valueListenable:
@@ -694,15 +751,29 @@ class _ShareTopImage extends StatelessWidget {
                                             },
                                           )
                                         else
-                                          Icon(
-                                            _getSportIcon(activity.type),
-                                            size: 32,
-                                            color: textColor,
+                                          ValueListenableBuilder<Color>(
+                                            valueListenable:
+                                                iconColorNotifier,
+                                            builder:
+                                                (context, iconColor, _) {
+                                              return Icon(
+                                                _getSportIcon(
+                                                    activity.type),
+                                                size: 32,
+                                                color: iconColor,
+                                              );
+                                            },
                                           ),
-                                        const SizedBox(height: 12),
+                                        SizedBox(
+                                            height:
+                                                showRouteMini ? 16 : 16),
                                         _buildOverlayMetricsColumnCentered(
                                           context,
                                           textColor: textColor,
+                                          useIconHeaders:
+                                              displayModeIndex == 5
+                                                  ? metricsHeaderAsIcon
+                                                  : false,
                                         ),
                                       ],
                                     ),
@@ -722,6 +793,7 @@ class _ShareTopImage extends StatelessWidget {
                               child: _buildOverlayMetricsColumn(
                                 context,
                                 textColor: textColor,
+                                useIconHeaders: metricsHeaderAsIcon,
                               ),
                             )
                           else if (displayModeIndex == 3)
@@ -732,6 +804,7 @@ class _ShareTopImage extends StatelessWidget {
                                 context,
                                 isRightAligned: true,
                                 textColor: textColor,
+                                useIconHeaders: metricsHeaderAsIcon,
                               ),
                             )
                           else if (!isCenteredMode)
@@ -743,6 +816,11 @@ class _ShareTopImage extends StatelessWidget {
                               child: _buildOverlayMetricsRow(
                                 context,
                                 textColor: textColor,
+                                useIconHeaders:
+                                    (displayModeIndex == 0 ||
+                                            displayModeIndex == 1)
+                                        ? metricsHeaderAsIcon
+                                        : false,
                               ),
                             ),
                         ],
@@ -920,9 +998,12 @@ class _ShareTopImage extends StatelessWidget {
   // ────────────────────────────────────────────────────────────────
   // 🔹 МЕТРИКИ ПОВЕРХ ФОТО: БЕЗ ТЕМНОГО ГРАДИЕНТА
   // ────────────────────────────────────────────────────────────────
+  // useIconHeaders: слева от значений показывать иконки вместо текста
+  // (Расстояние → route, Время → timer, Темп → speed).
   Widget _buildOverlayMetricsRow(
     BuildContext context, {
     required Color textColor,
+    bool useIconHeaders = false,
   }) {
     final stats = activity.stats;
     final activityTypeLower = activity.type.toLowerCase();
@@ -1007,123 +1088,156 @@ class _ShareTopImage extends StatelessWidget {
         ? '${speedKmh.toStringAsFixed(1)} км/ч'
         : '—';
 
-    return Row(
-      mainAxisSize: MainAxisSize.max,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 130,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Расстояние',
-                style: AppTextStyles.h11w4Sec.copyWith(
+    // ────────────────────────────────────────────────────────────────
+    // 🔹 ЗАГОЛОВОК ИЛИ ИКОНКА: ТЕКСТ СВЕРХУ ИЛИ ИКОНКА СЛЕВА ОТ ЗНАЧЕНИЯ
+    // ────────────────────────────────────────────────────────────────
+    Widget buildMetricHeader(Object iconOrLabel) {
+      if (useIconHeaders && iconOrLabel is IconData) {
+        return Icon(
+          iconOrLabel,
+          size: 18,
+          color: textColor,
+        );
+      }
+      return Text(
+        iconOrLabel as String,
+        style: AppTextStyles.h11w4Sec.copyWith(
+          color: textColor,
+        ),
+      );
+    }
+
+    Widget wrapMetricCell(Widget header, Widget value) {
+      if (useIconHeaders) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            header,
+            const SizedBox(width: 6),
+            value,
+          ],
+        );
+      }
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          header,
+          const SizedBox(height: 1),
+          value,
+        ],
+      );
+    }
+
+    final distanceHeader = useIconHeaders
+        ? _getSportIcon(activity.type)
+        : _getSportTypeName(activity.type);
+    final durationHeader = useIconHeaders
+        ? Icons.timer_outlined
+        : 'Время, мин';
+    final paceLabel = isBike
+        ? 'Скорость'
+        : isSwim
+            ? 'Темп, /100м'
+            : 'Темп, /км';
+    final paceHeader = useIconHeaders
+        ? Icons.speed
+        : paceLabel;
+
+    final distanceValue = distanceText == '—'
+        ? Text(
+            distanceText,
+            style: AppTextStyles.h17w6.copyWith(
+              color: textColor,
+            ),
+          )
+        : Text.rich(
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: distanceText
+                      .replaceAll(' км', '')
+                      .replaceAll(' м', ''),
+                  style: AppTextStyles.h17w6.copyWith(
+                    color: textColor,
+                  ),
+                ),
+                TextSpan(
+                  text: distanceText.contains(' км') ? ' км' : ' м',
+                  style: AppTextStyles.h17w6.copyWith(
+                    fontSize: 16,
+                    color: textColor,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+    final durationValue = Text(
+      durationText,
+      style: AppTextStyles.h17w6.copyWith(
+        color: textColor,
+      ),
+    );
+
+    final paceValue = isBike
+        ? (speedText == '—'
+            ? Text(
+                speedText,
+                style: AppTextStyles.h17w6.copyWith(
                   color: textColor,
                 ),
-              ),
-              const SizedBox(height: 1),
-              distanceText == '—'
-                  ? Text(
-                      distanceText,
+              )
+            : Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: speedText.replaceAll(' км/ч', ''),
                       style: AppTextStyles.h17w6.copyWith(
                         color: textColor,
                       ),
-                    )
-                  : Text.rich(
-                      TextSpan(
-                        children: [
-                          TextSpan(
-                            text: distanceText
-                                .replaceAll(' км', '')
-                                .replaceAll(' м', ''),
-                            style: AppTextStyles.h17w6.copyWith(
-                              color: textColor,
-                            ),
-                          ),
-                          TextSpan(
-                            text: distanceText.contains(' км') ? ' км' : ' м',
-                            style: AppTextStyles.h17w6.copyWith(
-                              fontSize: 16,
-                              color: textColor,
-                            ),
-                          ),
-                        ],
+                    ),
+                    TextSpan(
+                      text: ' км/ч',
+                      style: AppTextStyles.h17w6.copyWith(
+                        fontSize: 16,
+                        color: textColor,
                       ),
                     ),
-            ],
+                  ],
+                ),
+              ))
+        : Text(
+            paceText,
+            style: AppTextStyles.h17w6.copyWith(
+              color: textColor,
+            ),
+          );
+
+    return Row(
+      mainAxisSize: MainAxisSize.max,
+      crossAxisAlignment:
+          useIconHeaders ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 130,
+          child: wrapMetricCell(
+            buildMetricHeader(distanceHeader),
+            distanceValue,
           ),
         ),
         SizedBox(
           width: 110,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Время, мин',
-                style: AppTextStyles.h11w4Sec.copyWith(
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 0),
-              Text(
-                durationText,
-                style: AppTextStyles.h17w6.copyWith(
-                  color: textColor,
-                ),
-              ),
-            ],
+          child: wrapMetricCell(
+            buildMetricHeader(durationHeader),
+            durationValue,
           ),
         ),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                isBike
-                    ? 'Скорость'
-                    : isSwim
-                        ? 'Темп, /100м'
-                        : 'Темп, /км',
-                style: AppTextStyles.h11w4Sec.copyWith(
-                  color: textColor,
-                ),
-              ),
-              const SizedBox(height: 0),
-              isBike
-                  ? (speedText == '—'
-                      ? Text(
-                          speedText,
-                          style: AppTextStyles.h17w6.copyWith(
-                            color: textColor,
-                          ),
-                        )
-                      : Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: speedText.replaceAll(' км/ч', ''),
-                                style: AppTextStyles.h17w6.copyWith(
-                                  color: textColor,
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' км/ч',
-                                style: AppTextStyles.h17w6.copyWith(
-                                  fontSize: 16,
-                                  color: textColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ))
-                  : Text(
-                      paceText,
-                      style: AppTextStyles.h17w6.copyWith(
-                        color: textColor,
-                      ),
-                    ),
-            ],
+          child: wrapMetricCell(
+            buildMetricHeader(paceHeader),
+            paceValue,
           ),
         ),
       ],
@@ -1137,6 +1251,7 @@ class _ShareTopImage extends StatelessWidget {
     BuildContext context, {
     bool isRightAligned = false,
     required Color textColor,
+    bool useIconHeaders = false,
   }) {
     final textAlign = isRightAligned ? TextAlign.right : TextAlign.left;
     final itemCrossAxisAlignment = isRightAligned
@@ -1228,17 +1343,43 @@ class _ShareTopImage extends StatelessWidget {
         ? '${speedKmh.toStringAsFixed(1)} км/ч'
         : '—';
 
-    Widget buildMetricItem(String label, Widget value) {
+    Widget buildMetricHeader(Object iconOrLabel) {
+      if (useIconHeaders && iconOrLabel is IconData) {
+        return Icon(
+          iconOrLabel,
+          size: 18,
+          color: textColor,
+        );
+      }
+      return Text(
+        iconOrLabel as String,
+        style: AppTextStyles.h11w4Sec.copyWith(
+          color: textColor,
+        ),
+        textAlign: textAlign,
+      );
+    }
+
+    Widget buildMetricItem(Object header, Widget value) {
+      if (useIconHeaders) {
+        final row = Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            buildMetricHeader(header),
+            const SizedBox(width: 6),
+            value,
+          ],
+        );
+        return Align(
+          alignment: itemAlignment,
+          child: row,
+        );
+      }
       return Column(
         crossAxisAlignment: itemCrossAxisAlignment,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.h11w4Sec.copyWith(
-              color: textColor,
-            ),
-            textAlign: textAlign,
-          ),
+          buildMetricHeader(header),
           const SizedBox(height: 1),
           Align(
             alignment: itemAlignment,
@@ -1247,6 +1388,20 @@ class _ShareTopImage extends StatelessWidget {
         ],
       );
     }
+
+    final distanceHeader = useIconHeaders
+        ? _getSportIcon(activity.type)
+        : _getSportTypeName(activity.type);
+    final durationHeader = useIconHeaders
+        ? Icons.timer_outlined
+        : 'Время, мин';
+    final paceLabel = isBike
+        ? 'Скорость'
+        : isSwim
+            ? 'Темп, /100м'
+            : 'Темп, /км';
+    final paceHeader =
+        useIconHeaders ? Icons.speed : paceLabel;
 
     final distanceValue = distanceText == '—'
         ? Text(
@@ -1327,28 +1482,22 @@ class _ShareTopImage extends StatelessWidget {
     return Column(
       crossAxisAlignment: itemCrossAxisAlignment,
       children: [
-        buildMetricItem('Расстояние', distanceValue),
+        buildMetricItem(distanceHeader, distanceValue),
         const SizedBox(height: 12),
-        buildMetricItem('Время, мин', durationValue),
+        buildMetricItem(durationHeader, durationValue),
         const SizedBox(height: 12),
-        buildMetricItem(
-          isBike
-              ? 'Скорость'
-              : isSwim
-                  ? 'Темп, /100м'
-                  : 'Темп, /км',
-          paceValue,
-        ),
+        buildMetricItem(paceHeader, paceValue),
       ],
     );
   }
 
   // ────────────────────────────────────────────────────────────────
-  // 🔹 МЕТРИКИ С ЦЕНТРИРОВАНИЕМ ДЛЯ 5-ГО ВИДА
+  // 🔹 МЕТРИКИ С ЦЕНТРИРОВАНИЕМ ДЛЯ 5-ГО И 6-ГО ВИДА
   // ────────────────────────────────────────────────────────────────
   Widget _buildOverlayMetricsColumnCentered(
     BuildContext context, {
     required Color textColor,
+    bool useIconHeaders = false,
   }) {
     final stats = activity.stats;
     final activityTypeLower = activity.type.toLowerCase();
@@ -1433,18 +1582,41 @@ class _ShareTopImage extends StatelessWidget {
         ? '${speedKmh.toStringAsFixed(1)} км/ч'
         : '—';
 
-    Widget buildMetricItem(String label, Widget value) {
+    Widget buildMetricHeader(Object iconOrLabel) {
+      if (useIconHeaders && iconOrLabel is IconData) {
+        return Icon(
+          iconOrLabel,
+          size: 22,
+          color: textColor,
+        );
+      }
+      return Text(
+        iconOrLabel as String,
+        style: AppTextStyles.h13w4Sec.copyWith(
+          fontWeight: FontWeight.w500,
+          color: textColor,
+        ),
+        textAlign: TextAlign.center,
+      );
+    }
+
+    Widget buildMetricItem(Object header, Widget value) {
+      if (useIconHeaders) {
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            buildMetricHeader(header),
+            const SizedBox(width: 8),
+            value,
+          ],
+        );
+      }
       return Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            label,
-            style: AppTextStyles.h13w4Sec.copyWith(
-              fontWeight: FontWeight.w500,
-              color: textColor,
-            ),
-            textAlign: TextAlign.center,
-          ),
+          buildMetricHeader(header),
           const SizedBox(height: 0),
           Center(
             child: value,
@@ -1452,6 +1624,19 @@ class _ShareTopImage extends StatelessWidget {
         ],
       );
     }
+
+    final distanceHeader = useIconHeaders
+        ? _getSportIcon(activity.type)
+        : _getSportTypeName(activity.type);
+    final durationHeader =
+        useIconHeaders ? Icons.timer_outlined : 'Время';
+    final paceLabel = isBike
+        ? 'Скорость'
+        : isSwim
+            ? 'Темп, /100м'
+            : 'Темп';
+    final paceHeader =
+        useIconHeaders ? Icons.speed : paceLabel;
 
     final distanceValue = distanceText == '—'
         ? Text(
@@ -1546,18 +1731,11 @@ class _ShareTopImage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        buildMetricItem('Расстояние', distanceValue),
+        buildMetricItem(distanceHeader, distanceValue),
         const SizedBox(height: 12),
-        buildMetricItem('Время', durationValue),
+        buildMetricItem(durationHeader, durationValue),
         const SizedBox(height: 12),
-        buildMetricItem(
-          isBike
-              ? 'Скорость'
-              : isSwim
-                  ? 'Темп, /100м'
-                  : 'Темп',
-          paceValue,
-        ),
+        buildMetricItem(paceHeader, paceValue),
       ],
     );
   }
@@ -2027,16 +2205,11 @@ class _MiniRoutePainter extends CustomPainter {
     }
 
     // ────────────────────────────────────────────────────────────────
-    // 🔹 ПОДБИРАЕМ ТОЛЩИНУ ЛИНИИ ДЛЯ МАЛОГО РАЗМЕРА
-    // ────────────────────────────────────────────────────────────────
-    final effectiveLineWidth = (lineWidth * 0.6).clamp(1.0, 3.0);
-
-    // ────────────────────────────────────────────────────────────────
-    // 🔹 РИСУЕМ ЛИНИЮ МАРШРУТА
+    // 🔹 РИСУЕМ ЛИНИЮ МАРШРУТА (ТОЛЩИНА БЕЗ УМЕНЬШЕНИЯ)
     // ────────────────────────────────────────────────────────────────
     final paint = Paint()
       ..color = lineColor
-      ..strokeWidth = effectiveLineWidth
+      ..strokeWidth = lineWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;

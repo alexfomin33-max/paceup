@@ -42,6 +42,7 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final ValueNotifier<Color> textColorNotifier;
   final ValueNotifier<Color> routeColorNotifier;
+  final ValueNotifier<Color> iconColorNotifier;
   final ValueNotifier<double> routeLineWidthNotifier;
   final bool isMapSelected;
   final int displayModeIndex;
@@ -49,6 +50,11 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
   final bool isOpacitySelected;
   final ValueNotifier<double> darknessOpacityNotifier;
   final VoidCallback onSharePressed;
+  // ────────────────────────────────────────────────────────────────
+  // 🔹 ТИП ЗАГОЛОВКА МЕТРИК ДЛЯ ПЕРВОЙ МИНИАТЮРЫ: ТЕКСТ ИЛИ ИКОНКА
+  // ────────────────────────────────────────────────────────────────
+  final bool metricsHeaderAsIcon;
+  final ValueChanged<bool> onMetricsHeaderTypeChanged;
 
   const ShareActivityBottomSheetContent({
     super.key,
@@ -60,6 +66,7 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
     required this.onSelected,
     required this.textColorNotifier,
     required this.routeColorNotifier,
+    required this.iconColorNotifier,
     required this.routeLineWidthNotifier,
     required this.isMapSelected,
     required this.displayModeIndex,
@@ -67,6 +74,8 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
     required this.isOpacitySelected,
     required this.darknessOpacityNotifier,
     required this.onSharePressed,
+    required this.metricsHeaderAsIcon,
+    required this.onMetricsHeaderTypeChanged,
   });
 
   @override
@@ -143,6 +152,15 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
               textColorNotifier: textColorNotifier,
             ),
           ),
+          if (isOpacitySelected && displayModeIndex == 4) ...[
+            const SliverToBoxAdapter(child: SizedBox(height: 28)),
+            SliverToBoxAdapter(
+              child: _ShareColorSliderRow(
+                title: 'Цвет иконки',
+                textColorNotifier: iconColorNotifier,
+              ),
+            ),
+          ],
           if (isMapSelected ||
               (isOpacitySelected && displayModeIndex == 5)) ...[
             const SliverToBoxAdapter(child: SizedBox(height: 28)),
@@ -161,6 +179,22 @@ class ShareActivityBottomSheetContent extends StatelessWidget {
             ),
           ],
           const SliverToBoxAdapter(child: SizedBox(height: 28)),
+          // ────────────────────────────────────────────────────────
+          // 🔹 ТИП ЗАГОЛОВКА МЕТРИК: НАД «ВИД ОТОБРАЖЕНИЯ», ДЛЯ 1–4-Й И 6-Й
+          // ────────────────────────────────────────────────────────
+          if (displayModeIndex == 0 ||
+              displayModeIndex == 1 ||
+              displayModeIndex == 2 ||
+              displayModeIndex == 3 ||
+              displayModeIndex == 5) ...[
+            SliverToBoxAdapter(
+              child: _ShareMetricsHeaderTypeRow(
+                useIcon: metricsHeaderAsIcon,
+                onChanged: onMetricsHeaderTypeChanged,
+              ),
+            ),
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+          ],
           SliverToBoxAdapter(
             child: _ShareSectionTitle(text: 'Вид отображения'),
           ),
@@ -206,6 +240,7 @@ class ShareActivityBottomSheet extends StatelessWidget {
   final ValueChanged<int> onSelected;
   final ValueNotifier<Color> textColorNotifier;
   final ValueNotifier<Color> routeColorNotifier;
+  final ValueNotifier<Color> iconColorNotifier;
   final ValueNotifier<double> routeLineWidthNotifier;
   final bool isMapSelected;
   final int displayModeIndex;
@@ -213,6 +248,8 @@ class ShareActivityBottomSheet extends StatelessWidget {
   final bool isOpacitySelected;
   final ValueNotifier<double> darknessOpacityNotifier;
   final VoidCallback onSharePressed;
+  final bool metricsHeaderAsIcon;
+  final ValueChanged<bool> onMetricsHeaderTypeChanged;
 
   const ShareActivityBottomSheet({
     super.key,
@@ -222,6 +259,7 @@ class ShareActivityBottomSheet extends StatelessWidget {
     required this.onSelected,
     required this.textColorNotifier,
     required this.routeColorNotifier,
+    required this.iconColorNotifier,
     required this.routeLineWidthNotifier,
     required this.isMapSelected,
     required this.displayModeIndex,
@@ -229,6 +267,8 @@ class ShareActivityBottomSheet extends StatelessWidget {
     required this.isOpacitySelected,
     required this.darknessOpacityNotifier,
     required this.onSharePressed,
+    required this.metricsHeaderAsIcon,
+    required this.onMetricsHeaderTypeChanged,
   });
 
   @override
@@ -254,6 +294,13 @@ class ShareActivityBottomSheet extends StatelessWidget {
               title: 'Цвет текста',
               textColorNotifier: textColorNotifier,
             ),
+            if (isOpacitySelected && displayModeIndex == 4) ...[
+              const SizedBox(height: 28),
+              _ShareColorSliderRow(
+                title: 'Цвет иконки',
+                textColorNotifier: iconColorNotifier,
+              ),
+            ],
             if (isMapSelected ||
                 (isOpacitySelected && displayModeIndex == 5)) ...[
               const SizedBox(height: 28),
@@ -268,6 +315,17 @@ class ShareActivityBottomSheet extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 28),
+            if (displayModeIndex == 0 ||
+                displayModeIndex == 1 ||
+                displayModeIndex == 2 ||
+                displayModeIndex == 3 ||
+                displayModeIndex == 5) ...[
+              _ShareMetricsHeaderTypeRow(
+                useIcon: metricsHeaderAsIcon,
+                onChanged: onMetricsHeaderTypeChanged,
+              ),
+              const SizedBox(height: 16),
+            ],
             const _ShareSectionTitle(text: 'Вид отображения'),
             const SizedBox(height: 12),
             _ShareDisplayModeSelector(
@@ -647,6 +705,159 @@ class _ShareDisplayModeSelector extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// ────────────────────────────────────────────────────────────────
+/// 🔹 ТИП ЗАГОЛОВКА МЕТРИК: ТЕКСТ ИЛИ ИКОНКА (ДЛЯ ПЕРВОЙ МИНИАТЮРЫ)
+/// 🔹 Кастомный сегментированный контрол: контейнер и активный сегмент с xl
+/// ────────────────────────────────────────────────────────────────
+class _ShareMetricsHeaderTypeRow extends StatelessWidget {
+  final bool useIcon;
+  final ValueChanged<bool> onChanged;
+
+  const _ShareMetricsHeaderTypeRow({
+    required this.useIcon,
+    required this.onChanged,
+  });
+
+  static const double _trackPadding = 3;
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor = AppColors.getTextPrimaryColor(context);
+    final surfaceColor = AppColors.getSurfaceColor(context);
+    final trackColor = AppColors.getBorderColor(context);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Text(
+            'Тип заголовка',
+            style: AppTextStyles.h15w4.copyWith(
+              color: textColor,
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+              ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                final w = constraints.maxWidth;
+                final innerW = w - _trackPadding * 2;
+                final halfW = innerW / 2;
+
+                return Container(
+                  padding: const EdgeInsets.all(_trackPadding),
+                  decoration: BoxDecoration(
+                    color: trackColor,
+                    borderRadius:
+                        BorderRadius.circular(AppRadius.xl),
+                  ),
+                  child: Stack(
+                    children: [
+                      AnimatedPositioned(
+                        duration: const Duration(
+                          milliseconds: 220,
+                        ),
+                        curve: Curves.easeInOut,
+                        left: useIcon ? halfW : 0,
+                        top: 0,
+                        bottom: 0,
+                        width: halfW,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: surfaceColor,
+                            borderRadius: useIcon
+                                ? const BorderRadius.only(
+                                    topRight:
+                                        Radius.circular(
+                                            AppRadius.xl),
+                                    bottomRight:
+                                        Radius.circular(
+                                            AppRadius.xl),
+                                  )
+                                : const BorderRadius.only(
+                                    topLeft:
+                                        Radius.circular(
+                                            AppRadius.xl),
+                                    bottomLeft:
+                                        Radius.circular(
+                                            AppRadius.xl),
+                                  ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  onChanged(false),
+                              behavior:
+                                  HitTestBehavior.opaque,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets
+                                        .symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Текст',
+                                    style: AppTextStyles
+                                        .h13w4
+                                        .copyWith(
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () =>
+                                  onChanged(true),
+                              behavior:
+                                  HitTestBehavior.opaque,
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets
+                                        .symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    'Иконка',
+                                    style: AppTextStyles
+                                        .h13w4
+                                        .copyWith(
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            ),
+          ),
+        ],
       ),
     );
   }
