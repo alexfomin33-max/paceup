@@ -193,6 +193,61 @@ class _RouteSaveSheetWrapper extends StatelessWidget {
   }
 }
 
+/// Показывает окно сохранения готового маршрута в избранное (по route_id).
+void showSaveRouteToFavoritesBottomSheet(
+  BuildContext context, {
+  required int userId,
+  required int routeId,
+  required String initialName,
+  required String initialDifficulty,
+  void Function(SaveRouteResult result)? onSaved,
+}) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    useRootNavigator: true,
+    builder: (ctx) {
+      return _RouteSaveSheetWrapper(
+        initialName: initialName,
+        initialDifficulty: normalizeRouteDifficulty(initialDifficulty),
+        fallbackName: initialName,
+        onConfirm: (sheetCtx, name, difficulty) async {
+          Navigator.of(sheetCtx).pop();
+          try {
+            final result = await RoutesService().saveRouteToFavorites(
+              userId: userId,
+              routeId: routeId,
+              name: name,
+              difficulty: difficulty,
+            );
+            if (context.mounted) {
+              onSaved?.call(result);
+              final msg = result.message ?? 'Маршрут сохранён';
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(msg)),
+              );
+            }
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: SelectableText.rich(
+                    TextSpan(
+                      text: 'Ошибка: ${e.toString()}',
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
+                ),
+              );
+            }
+          }
+        },
+      );
+    },
+  );
+}
+
 /// Контент листа: ручка, заголовок, поле названия, пилюли сложности, кнопка.
 class _RouteSaveSheetContent extends StatefulWidget {
   final String initialName;

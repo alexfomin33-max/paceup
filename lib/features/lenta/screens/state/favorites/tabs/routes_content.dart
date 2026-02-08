@@ -12,6 +12,7 @@ import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
 import '../edit_route_bottom_sheet.dart';
 import 'rout_description/rout_description_screen.dart';
+import 'rout_description/route_share_screen.dart';
 
 // ────────────────────────────────────────────────────────────────
 // Дистанция без округления (отсечение до 2 знаков, как в тренировке)
@@ -189,6 +190,8 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
                             bottom: i < totalCount - 1 ? 6 : 0,
                           ),
                           child: _SavedRouteCard(
+                            // ── Стабильный ключ элемента, чтобы снизить переразметку
+                            key: ValueKey(r.id),
                             route: r,
                             userId: uid,
                             onRouteUpdated: (name, difficulty) {
@@ -444,6 +447,7 @@ class _RoutesContentState extends ConsumerState<RoutesContent> {
 /// Карточка сохранённого маршрута из API (карта по URL, метрики, сложность).
 class _SavedRouteCard extends StatelessWidget {
   const _SavedRouteCard({
+    super.key,
     required this.route,
     required this.userId,
     required this.onRouteUpdated,
@@ -468,6 +472,7 @@ class _SavedRouteCard extends StatelessWidget {
               routeId: route.id,
               userId: userId,
               initialRoute: route,
+              isInitiallySaved: true,
               onRouteDeleted: onRouteDeleted,
               onRouteUpdated: onRouteUpdated,
             ),
@@ -547,6 +552,23 @@ class _SavedRouteCard extends StatelessWidget {
               }
             }
           },
+          // ───────────────────────────────────────────────────────
+          // Репост маршрута в чат: доступно для автора/сохранившего
+          // ───────────────────────────────────────────────────────
+          onShare: (userId > 0 && route.id > 0)
+              ? () {
+                  // ── Открываем экран выбора чата (личный/клуб)
+                  Navigator.of(context, rootNavigator: true).push(
+                    TransparentPageRoute(
+                      builder: (_) => RouteShareScreen(
+                        routeId: route.id,
+                        userId: userId,
+                        routeName: route.name,
+                      ),
+                    ),
+                  );
+                }
+              : null,
         ),
       ),
     );
@@ -579,6 +601,7 @@ class _RouteCard extends StatelessWidget {
                 routeId: 0,
                 userId: 0,
                 initialRoute: mockRoute,
+                isInitiallySaved: false,
               ),
             ),
           );
@@ -601,17 +624,54 @@ class _RouteCard extends StatelessWidget {
   }
 }
 
+// ───────────────────────────────────────────────────────────────
+// Бейдж «бег» для метрик: общий константный виджет
+// ───────────────────────────────────────────────────────────────
+class _RouteRunBadge extends StatelessWidget {
+  const _RouteRunBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // ── Фиксированная ширина нужна для стабильного выравнивания метрик
+    return const SizedBox(
+      width: 18,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.brandPrimary,
+              borderRadius: BorderRadius.all(
+                Radius.circular(AppRadius.xl),
+              ),
+            ),
+            child: Icon(
+              Icons.directions_run,
+              size: 12,
+              color: AppColors.surface,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Строка карточки сохранённого маршрута (картинка по URL, название, чип, метрики).
 class _SavedRouteRow extends StatelessWidget {
   const _SavedRouteRow({
     required this.route,
     required this.onEdit,
     required this.onDelete,
+    this.onShare,
   });
 
   final SavedRouteItem route;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -626,21 +686,27 @@ class _SavedRouteRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: route.routeMapUrl != null && route.routeMapUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: route.routeMapUrl!,
-                    width: 80,
-                    height: 76,
-                    fit: BoxFit.cover,
-                    memCacheWidth: cacheWidth,
-                    memCacheHeight: cacheHeight,
-                    // Добавляем cacheKey для принудительного обновления при изменении URL
-                    cacheKey: '${route.routeMapUrl}_v2',
-                    errorWidget: (_, __, ___) => _mapPlaceholder(context),
-                  )
-                : _mapPlaceholder(context),
+          // ───────────────────────────────────────────────────────
+          // Превью карты: изоляция перерисовок карточки
+          // ───────────────────────────────────────────────────────
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: route.routeMapUrl != null &&
+                      route.routeMapUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: route.routeMapUrl!,
+                      width: 80,
+                      height: 76,
+                      fit: BoxFit.cover,
+                      memCacheWidth: cacheWidth,
+                      memCacheHeight: cacheHeight,
+                      // Добавляем cacheKey для принудительного обновления при изменении URL
+                      cacheKey: '${route.routeMapUrl}_v2',
+                      errorWidget: (_, __, ___) => _mapPlaceholder(context),
+                    )
+                  : _mapPlaceholder(context),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -684,111 +750,132 @@ class _SavedRouteRow extends StatelessWidget {
                             color:
                                 AppColors.getIconSecondaryColor(context),
                           ),
-                      onSelected: (value) {
-                        if (value == 'edit') {
-                          onEdit();
-                        } else if (value == 'delete') {
-                          onDelete();
-                        }
-                      },
-                      itemBuilder: (ctx) => [
-                        PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.edit_outlined,
-                                size: 22,
-                                color: AppColors.brandPrimary,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Изменить',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  color: AppColors.getTextPrimaryColor(ctx),
+                          onSelected: (value) {
+                            if (value == 'share') {
+                              onShare?.call();
+                            } else if (value == 'edit') {
+                              onEdit();
+                            } else if (value == 'delete') {
+                              onDelete();
+                            }
+                          },
+                          itemBuilder: (ctx) {
+                            // ─────────────────────────────────────
+                            // Список пунктов меню маршрута (по доступу)
+                            // ─────────────────────────────────────
+                            final items = <PopupMenuEntry<String>>[];
+                            if (onShare != null) {
+                              items.add(
+                                PopupMenuItem<String>(
+                                  value: 'share',
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.share,
+                                        size: 22,
+                                        color: AppColors.brandPrimary,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'Поделиться',
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 16,
+                                          color:
+                                              AppColors.getTextPrimaryColor(
+                                            ctx,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }
+                            items.addAll([
+                              PopupMenuItem<String>(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.edit_outlined,
+                                      size: 22,
+                                      color: AppColors.brandPrimary,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Изменить',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        color:
+                                            AppColors.getTextPrimaryColor(
+                                          ctx,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.delete_outline,
-                                size: 22,
-                                color: AppColors.error,
-                              ),
-                              SizedBox(width: 12),
-                              Text(
-                                'Удалить',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  color: AppColors.error,
+                              const PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.delete_outline,
+                                      size: 22,
+                                      color: AppColors.error,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'Удалить',
+                                      style: const TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        color: AppColors.error,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
+                            ]);
+                            return items;
+                          },
                         ),
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 6),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        width: 18,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: AppColors.brandPrimary,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xl,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.directions_run,
-                              size: 12,
-                              color: AppColors.surface,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      _RouteRow._metric(
+                // ─────────────────────────────────────────────
+                // Метрики маршрута: лёгкий Row без IntrinsicHeight
+                // ─────────────────────────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const _RouteRunBadge(),
+                    const SizedBox(width: 6),
+                    _RouteRow._metric(
+                      context,
+                      null,
+                      '${_formatDistanceKm(route.distanceKm)} км',
+                      MainAxisAlignment.start,
+                    ),
+                    Expanded(
+                      child: _RouteRow._metric(
                         context,
                         null,
-                        '${_formatDistanceKm(route.distanceKm)} км',
-                        MainAxisAlignment.start,
+                        _RouteRow._durationWithoutMin(route.durationText),
+                        MainAxisAlignment.center,
                       ),
-                      Expanded(
-                        child: _RouteRow._metric(
-                          context,
-                          null,
-                          _RouteRow._durationWithoutMin(route.durationText),
-                          MainAxisAlignment.center,
-                        ),
-                      ),
-                      _RouteRow._metric(
-                        context,
-                        null,
-                        '${route.ascentM} м',
-                        MainAxisAlignment.start,
-                      ),
-                    ],
-                  ),
+                    ),
+                    _RouteRow._metric(
+                      context,
+                      null,
+                      '${route.ascentM} м',
+                      MainAxisAlignment.start,
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -853,22 +940,27 @@ class _RouteRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            child: Image.asset(
-              e.asset,
-              width: 80,
-              height: 76,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => Container(
+          // ───────────────────────────────────────────────────────
+          // Превью карты: изоляция перерисовок карточки
+          // ───────────────────────────────────────────────────────
+          RepaintBoundary(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Image.asset(
+                e.asset,
                 width: 80,
                 height: 76,
-                color: AppColors.getBackgroundColor(context),
-                alignment: Alignment.center,
-                child: Icon(
-                  CupertinoIcons.map,
-                  size: 24,
-                  color: AppColors.getIconSecondaryColor(context),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: 80,
+                  height: 76,
+                  color: AppColors.getBackgroundColor(context),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    CupertinoIcons.map,
+                    size: 24,
+                    color: AppColors.getIconSecondaryColor(context),
+                  ),
                 ),
               ),
             ),
@@ -898,54 +990,35 @@ class _RouteRow extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 18),
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      SizedBox(
-                        width: 18,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Container(
-                            width: 18,
-                            height: 18,
-                            decoration: BoxDecoration(
-                              color: AppColors.brandPrimary,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.xl,
-                              ),
-                            ),
-                            child: const Icon(
-                              Icons.directions_run,
-                              size: 12,
-                              color: AppColors.surface,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      _RouteRow._metric(
+                // ─────────────────────────────────────────────
+                // Метрики маршрута: лёгкий Row без IntrinsicHeight
+                // ─────────────────────────────────────────────
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const _RouteRunBadge(),
+                    const SizedBox(width: 6),
+                    _RouteRow._metric(
+                      context,
+                      null,
+                      '${e.distanceKm.toStringAsFixed(2)} км',
+                      MainAxisAlignment.start,
+                    ),
+                    Expanded(
+                      child: _RouteRow._metric(
                         context,
                         null,
-                        '${e.distanceKm.toStringAsFixed(2)} км',
-                        MainAxisAlignment.start,
+                        _RouteRow._durationWithoutMin(e.durationText),
+                        MainAxisAlignment.center,
                       ),
-                      Expanded(
-                        child: _RouteRow._metric(
-                          context,
-                          null,
-                          _RouteRow._durationWithoutMin(e.durationText),
-                          MainAxisAlignment.center,
-                        ),
-                      ),
-                      _RouteRow._metric(
-                        context,
-                        null,
-                        '${e.ascentM} м',
-                        MainAxisAlignment.start,
-                      ),
-                    ],
-                  ),
+                    ),
+                    _RouteRow._metric(
+                      context,
+                      null,
+                      '${e.ascentM} м',
+                      MainAxisAlignment.start,
+                    ),
+                  ],
                 ),
               ],
             ),

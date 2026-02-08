@@ -117,6 +117,8 @@ class RouteDetail {
     this.personalBestAscentM,
     this.myWorkoutsCount = 0,
     this.participantsCount = 0,
+    this.isSaved = false,
+    this.isOwner = false,
   });
 
   final int id;
@@ -145,6 +147,10 @@ class RouteDetail {
   final double? personalBestAscentM;
   final int myWorkoutsCount;
   final int participantsCount;
+  /// Маршрут сохранён у текущего пользователя (избранное).
+  final bool isSaved;
+  /// Текущий пользователь — создатель маршрута.
+  final bool isOwner;
 
   factory RouteDetail.fromJson(Map<String, dynamic> j) {
     RouteAuthor? author;
@@ -187,6 +193,8 @@ class RouteDetail {
       myWorkoutsCount: (j['my_workouts_count'] as num?)?.toInt() ?? 0,
       participantsCount:
           (j['participants_count'] as num?)?.toInt() ?? 0,
+      isSaved: j['is_saved'] == true || j['is_saved'] == 1,
+      isOwner: j['is_owner'] == true || j['is_owner'] == 1,
     );
   }
 }
@@ -434,6 +442,28 @@ class RoutesService {
       body['mapbox_image_url'] = mapboxImageUrl;
     }
     final response = await _api.post('/save_route.php', body: body);
+    return SaveRouteResult.fromJson(
+      Map<String, dynamic>.from(response as Map),
+    );
+  }
+
+  /// Добавить готовый маршрут в избранное (по route_id).
+  /// Используется при сохранении маршрута из чата/деталей.
+  Future<SaveRouteResult> saveRouteToFavorites({
+    required int userId,
+    required int routeId,
+    required String name,
+    required String difficulty,
+  }) async {
+    final response = await _api.post(
+      '/save_route_to_favorites.php',
+      body: {
+        'user_id': userId.toString(),
+        'route_id': routeId.toString(),
+        'name': name,
+        'difficulty': difficulty,
+      },
+    );
     return SaveRouteResult.fromJson(
       Map<String, dynamic>.from(response as Map),
     );

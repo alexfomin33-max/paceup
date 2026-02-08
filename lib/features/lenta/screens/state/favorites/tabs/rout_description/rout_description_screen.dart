@@ -16,6 +16,7 @@ import '../../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../../core/widgets/transparent_route.dart';
 import '../../edit_route_bottom_sheet.dart';
 import 'rout_description_bottom_sheet.dart';
+import 'route_share_screen.dart';
 import '../../../../../../map/services/marker_assets.dart';
 
 /// Экран описания маршрута. Загружает детали из API (дата, автор, рекорды).
@@ -25,6 +26,7 @@ class RouteDescriptionScreen extends StatefulWidget {
     required this.routeId,
     required this.userId,
     required this.initialRoute,
+    this.isInitiallySaved = false,
     this.onRouteDeleted,
     this.onRouteUpdated,
   });
@@ -32,6 +34,7 @@ class RouteDescriptionScreen extends StatefulWidget {
   final int routeId;
   final int userId;
   final SavedRouteItem initialRoute;
+  final bool isInitiallySaved;
   /// Вызывается после удаления маршрута; затем выполняется pop на экран избранных.
   final VoidCallback? onRouteDeleted;
   /// Вызывается после редактирования маршрута (имя/сложность).
@@ -52,6 +55,10 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
   // Точки маршрута для интерактивной карты
   // ────────────────────────────────────────────────────────────────
   List<ll.LatLng> _routePoints = const [];
+  // ────────────────────────────────────────────────────────────────
+  // Локальный флаг сохранения маршрута (для мгновенного обновления UI)
+  // ────────────────────────────────────────────────────────────────
+  bool? _isSavedOverride;
 
   late final DraggableScrollableController _sheetController;
 
@@ -159,6 +166,16 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
       _detail?.difficulty ?? widget.initialRoute.difficulty;
 
   // ────────────────────────────────────────────────────────────────
+  // Флаги доступа для меню маршрута
+  // ────────────────────────────────────────────────────────────────
+  bool get _isSaved =>
+      _isSavedOverride ??
+      _detail?.isSaved ??
+      widget.isInitiallySaved;
+  bool get _isOwner => _detail?.isOwner ?? false;
+  bool get _canShare => _isOwner || _isSaved;
+
+  // ────────────────────────────────────────────────────────────────
   // Пустой фон карты (когда нет точек маршрута): без плейсхолдера и иконки
   // ────────────────────────────────────────────────────────────────
   static Widget _mapPlaceholder(BuildContext context, double height) {
@@ -198,15 +215,65 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
       16,
       0,
     );
-    showMenu<String>(
-      context: context,
-      position: position,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.xll),
-      ),
-      color: AppColors.surface,
-      elevation: 8,
-      items: [
+    // ──────────────────────────────────────────────────────────
+    // 🔹 Формируем пункты меню по доступу
+    // ──────────────────────────────────────────────────────────
+    final items = <PopupMenuEntry<String>>[];
+
+    if (!_isSaved) {
+      items.add(
+        PopupMenuItem<String>(
+          value: 'save',
+          child: Row(
+            children: [
+              const Icon(
+                CupertinoIcons.bookmark,
+                size: 22,
+                color: AppColors.brandPrimary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Сохранить маршрут',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_canShare) {
+      items.add(
+        PopupMenuItem<String>(
+          value: 'share',
+          child: Row(
+            children: [
+              const Icon(
+                CupertinoIcons.share,
+                size: 22,
+                color: AppColors.brandPrimary,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Поделиться',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  color: AppColors.getTextPrimaryColor(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_isSaved) {
+      items.addAll([
         PopupMenuItem<String>(
           value: 'edit',
           child: Row(
@@ -249,8 +316,27 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
             ],
           ),
         ),
-      ],
+      ]);
+    }
+
+    showMenu<String>(
+      context: context,
+      position: position,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+      ),
+      color: AppColors.surface,
+      elevation: 8,
+      items: items,
     ).then((value) {
+      if (value == 'save') {
+        _showSaveRouteToFavorites(context);
+        return;
+      }
+      if (value == 'share') {
+        _openShareRoute(context);
+        return;
+      }
       if (value == 'edit') {
         showEditRouteBottomSheet(
           context,
@@ -265,6 +351,41 @@ class _RouteDescriptionScreenState extends State<RouteDescriptionScreen> {
         _confirmAndDeleteRoute(context);
       }
     });
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Сохранение маршрута в избранное (из экрана маршрута)
+  // ────────────────────────────────────────────────────────────────
+  void _showSaveRouteToFavorites(BuildContext context) {
+    if (widget.userId <= 0 || widget.routeId <= 0) return;
+    showSaveRouteToFavoritesBottomSheet(
+      context,
+      userId: widget.userId,
+      routeId: widget.routeId,
+      initialName: _title,
+      initialDifficulty: _difficulty,
+      onSaved: (result) {
+        if (!mounted) return;
+        setState(() => _isSavedOverride = true);
+        _loadDetail();
+      },
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────
+  // Репост маршрута в чат (личный/клуб)
+  // ────────────────────────────────────────────────────────────────
+  void _openShareRoute(BuildContext context) {
+    if (widget.routeId <= 0 || widget.userId <= 0) return;
+    Navigator.of(context, rootNavigator: true).push(
+      TransparentPageRoute(
+        builder: (_) => RouteShareScreen(
+          routeId: widget.routeId,
+          userId: widget.userId,
+          routeName: _title,
+        ),
+      ),
+    );
   }
 
   /// Диалог подтверждения удаления; после удаления — pop на экран избранных.

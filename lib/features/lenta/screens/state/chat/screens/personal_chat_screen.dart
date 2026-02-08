@@ -13,10 +13,13 @@ import '../../../../../../core/utils/local_image_compressor.dart'
 import '../../../../../../core/utils/error_handler.dart';
 import '../../../../../../core/widgets/interactive_back_swipe.dart';
 import '../../../../../../core/widgets/transparent_route.dart';
+import '../../../../../../core/services/routes_service.dart';
 import '../../../../../../providers/services/api_provider.dart';
 import '../../../../../../providers/services/auth_provider.dart';
 import '../../../../../../features/complaint.dart';
 import '../../../../../../features/profile/screens/profile_screen.dart';
+import '../../favorites/tabs/rout_description/rout_description_screen.dart';
+import '../widgets/chat_route_card.dart';
 
 /// ────────────────────────────────────────────────────────────────────────
 /// Экран персонального чата с конкретным пользователем
@@ -47,8 +50,10 @@ class PersonalChatScreen extends ConsumerStatefulWidget {
 class ChatMessage {
   final int id;
   final int senderId;
+  final String messageType;
   final String text;
   final String? image; // URL изображения
+  final ChatRouteInfo? route;
   /// ─── ID сообщения, на которое дан ответ ───
   final int? replyToMessageId;
   /// ─── Текст сообщения, на которое дан ответ ───
@@ -63,8 +68,10 @@ class ChatMessage {
   const ChatMessage({
     required this.id,
     required this.senderId,
+    required this.messageType,
     required this.text,
     this.image,
+    this.route,
     this.replyToMessageId,
     this.replyToText,
     this.replyPreviewText,
@@ -103,11 +110,27 @@ class ChatMessage {
       replyToText: replyToText,
     );
 
+    final rawRoute = json['route'];
+    final route = rawRoute is Map<String, dynamic>
+        ? ChatRouteInfo.fromJson(
+            Map<String, dynamic>.from(rawRoute),
+          )
+        : null;
+    final imageUrl = json['image'] as String?;
+    var messageType = json['message_type'] as String? ?? 'text';
+    if (route != null) {
+        messageType = 'route';
+    } else if (imageUrl != null && imageUrl.isNotEmpty) {
+        messageType = 'image';
+    }
+
     return ChatMessage(
       id: (json['id'] as num).toInt(),
       senderId: (json['sender_id'] as num).toInt(),
-      text: json['text'] as String,
-      image: json['image'] as String?,
+      messageType: messageType,
+      text: json['text'] as String? ?? '',
+      image: imageUrl,
+      route: route,
       replyToMessageId: replyToMessageId,
       replyToText: replyToText,
       replyPreviewText: replyPreviewText,
@@ -666,6 +689,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         final tempMessage = ChatMessage(
           id: -1, // Временный ID
           senderId: _currentUserId!,
+          messageType: 'image',
           text: '', // Пустой текст для сообщения с изображением
           image: imageUrl, // Полный URL изображения
           replyToMessageId: replyToMessageId,
@@ -725,6 +749,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             final updatedMessage = ChatMessage(
               id: messageId,
               senderId: _currentUserId!,
+              messageType: 'image',
               text: '',
               image: imageUrl, // Используем тот же URL
               replyToMessageId: replyToMessageId,
@@ -844,6 +869,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             _messages[index] = ChatMessage(
               id: old.id,
               senderId: old.senderId,
+              messageType: old.messageType,
               text: newText,
               image: old.image,
               replyToMessageId: old.replyToMessageId,
@@ -894,6 +920,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
         final tempMessage = ChatMessage(
           id: -1, // Временный ID
           senderId: _currentUserId!,
+          messageType: 'text',
           text: messageText,
           replyToMessageId: replyToMessageId,
           replyToText: replyToText,
@@ -989,6 +1016,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             final updatedMessage = ChatMessage(
               id: messageId,
               senderId: _currentUserId!,
+              messageType: 'text',
               text: messageText,
               replyToMessageId: replyToMessageId,
               replyToText: replyToText,
@@ -1086,8 +1114,38 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     // ─── Берём текст, если он есть, иначе показываем "Изображение" ───
     final trimmed = message.text.trim();
     if (trimmed.isNotEmpty) return trimmed;
+    if (message.messageType == 'route') {
+      final routeName = message.route?.name.trim() ?? '';
+      return routeName.isNotEmpty ? routeName : 'Маршрут';
+    }
     if (message.image?.isNotEmpty ?? false) return 'Изображение';
     return 'Сообщение';
+  }
+
+  // ──────────────────────────────────────────────────────────────
+  // ─── Переход на экран маршрута из сообщения ───────────────────
+  // ──────────────────────────────────────────────────────────────
+  void _openRouteFromMessage(ChatRouteInfo route) {
+    if (route.id <= 0) return;
+    final userId = _currentUserId ?? 0;
+    final initialRoute = SavedRouteItem(
+      id: route.id,
+      name: route.name,
+      difficulty: route.difficulty,
+      distanceKm: route.distanceKm,
+      ascentM: route.ascentM,
+      routeMapUrl: route.routeMapUrl,
+    );
+    Navigator.of(context).push(
+      TransparentPageRoute(
+        builder: (_) => RouteDescriptionScreen(
+          routeId: route.id,
+          userId: userId,
+          initialRoute: initialRoute,
+          isInitiallySaved: false,
+        ),
+      ),
+    );
   }
 
   /// ─── Активируем режим ответа на сообщение ───
@@ -1140,6 +1198,15 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
     await Clipboard.setData(
       ClipboardData(text: trimmed),
     );
+  }
+
+  /// ─── Текст для копирования: маршрут → название, иначе → текст ───
+  String _resolveCopyText(ChatMessage message) {
+    if (message.messageType == 'route') {
+      final routeName = message.route?.name.trim() ?? '';
+      return routeName.isNotEmpty ? routeName : 'Маршрут';
+    }
+    return message.text;
   }
 
   /// ─── Меню по тапу на левый пузырь: Ответить, Копировать, Пожаловаться ───
@@ -1245,7 +1312,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           _startReply(message);
           break;
         case 'copy':
-          _copyMessageText(message.text);
+          _copyMessageText(_resolveCopyText(message));
           break;
         case 'report':
           // ─── Открываем экран жалобы на сообщение ───
@@ -1289,58 +1356,57 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
       bubbleRect,
       Offset.zero & overlayBox.size,
     );
-    showMenu<String>(
-      context: context,
-      position: position,
-      useRootNavigator: true,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadius.xll),
+    // ──────────────────────────────────────────────────────────
+    // 🔹 Формируем пункты меню (редактирование только для текста)
+    // ──────────────────────────────────────────────────────────
+    final items = <PopupMenuEntry<String>>[
+      PopupMenuItem<String>(
+        value: 'reply',
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.arrowshape_turn_up_left,
+              size: 22,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Ответить',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: AppColors.getTextPrimaryColor(context),
+              ),
+            ),
+          ],
+        ),
       ),
-      color: AppColors.surface,
-      elevation: 8,
-      items: [
-        PopupMenuItem<String>(
-          value: 'reply',
-          child: Row(
-            children: [
-              Icon(
-                CupertinoIcons.arrowshape_turn_up_left,
-                size: 22,
-                color: AppColors.getIconPrimaryColor(context),
+      PopupMenuItem<String>(
+        value: 'copy',
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.doc_on_doc,
+              size: 22,
+              color: AppColors.getIconPrimaryColor(context),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Копировать',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
+                color: AppColors.getTextPrimaryColor(context),
               ),
-              const SizedBox(width: 12),
-              Text(
-                'Ответить',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-        PopupMenuItem<String>(
-          value: 'copy',
-          child: Row(
-            children: [
-              Icon(
-                CupertinoIcons.doc_on_doc,
-                size: 22,
-                color: AppColors.getIconPrimaryColor(context),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                'Копировать',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  color: AppColors.getTextPrimaryColor(context),
-                ),
-              ),
-            ],
-          ),
-        ),
+      ),
+    ];
+    final canEdit = message.messageType == 'text' &&
+        message.text.trim().isNotEmpty;
+    if (canEdit) {
+      items.add(
         PopupMenuItem<String>(
           value: 'edit',
           child: Row(
@@ -1362,28 +1428,42 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
             ],
           ),
         ),
-        const PopupMenuItem<String>(
-          value: 'delete',
-          child: Row(
-            children: [
-              Icon(
-                CupertinoIcons.delete,
-                size: 22,
+      );
+    }
+    items.add(
+      const PopupMenuItem<String>(
+        value: 'delete',
+        child: Row(
+          children: [
+            Icon(
+              CupertinoIcons.delete,
+              size: 22,
+              color: AppColors.error,
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Удалить',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 16,
                 color: AppColors.error,
               ),
-              SizedBox(width: 12),
-              Text(
-                'Удалить',
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 16,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
+    );
+
+    showMenu<String>(
+      context: context,
+      position: position,
+      useRootNavigator: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xll),
+      ),
+      color: AppColors.surface,
+      elevation: 8,
+      items: items,
     ).then((value) {
       if (mounted) setState(() => _messageIdWithRightMenuOpen = null);
       _hideBubbleDimOverlay();
@@ -1393,7 +1473,7 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
           _startReply(message);
           break;
         case 'copy':
-          _copyMessageText(message.text);
+          _copyMessageText(_resolveCopyText(message));
           break;
         case 'edit':
           _startEdit(message);
@@ -2040,6 +2120,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                 ? _BubbleRight(
                                     text: message.text,
                                     image: message.image,
+                                    messageType: message.messageType,
+                                    route: message.route,
                                     time: _formatTime(message.createdAt),
                                     topSpacing: topSpacing,
                                     bottomSpacing: bottomSpacing,
@@ -2058,6 +2140,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                           bubbleContext,
                                           message,
                                         ),
+                                    onRouteTap: message.route != null
+                                        ? () => _openRouteFromMessage(
+                                            message.route!,
+                                          )
+                                        : null,
                                     onImageTap:
                                         (message.image?.isNotEmpty ?? false)
                                         ? () => _showFullscreenImage(
@@ -2068,6 +2155,8 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                 : _BubbleLeft(
                                     text: message.text,
                                     image: message.image,
+                                    messageType: message.messageType,
+                                    route: message.route,
                                     time: _formatTime(message.createdAt),
                                     avatarUrl:
                                         _getAvatarUrl(widget.userAvatar),
@@ -2085,6 +2174,11 @@ class _PersonalChatScreenState extends ConsumerState<PersonalChatScreen>
                                           bubbleContext,
                                           message,
                                         ),
+                                    onRouteTap: message.route != null
+                                        ? () => _openRouteFromMessage(
+                                            message.route!,
+                                          )
+                                        : null,
                                     onAvatarTap: () {
                                       Navigator.of(context).push(
                                         TransparentPageRoute(
@@ -2247,6 +2341,8 @@ class _DateSeparator extends StatelessWidget {
 class _BubbleLeft extends StatelessWidget {
   final String text;
   final String? image;
+  final String messageType;
+  final ChatRouteInfo? route;
   final String time;
   final String avatarUrl;
   final double topSpacing;
@@ -2260,6 +2356,7 @@ class _BubbleLeft extends StatelessWidget {
   final bool isSelectedForReply;
   /// Тап по пузырю — открытие меню (Ответить, Копировать, Пожаловаться, Удалить)
   final void Function(BuildContext bubbleContext)? onTap;
+  final VoidCallback? onRouteTap;
   final VoidCallback? onImageTap;
   /// Клик по аватару — переход в профиль собеседника
   final VoidCallback? onAvatarTap;
@@ -2267,6 +2364,8 @@ class _BubbleLeft extends StatelessWidget {
   const _BubbleLeft({
     required this.text,
     this.image,
+    required this.messageType,
+    this.route,
     required this.time,
     required this.avatarUrl,
     this.topSpacing = 0.0,
@@ -2276,6 +2375,7 @@ class _BubbleLeft extends StatelessWidget {
     this.onReplyTap,
     this.isSelectedForReply = false,
     this.onTap,
+    this.onRouteTap,
     this.onImageTap,
     this.onAvatarTap,
   });
@@ -2374,83 +2474,111 @@ class _BubbleLeft extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                       ],
-                      // ─── Изображение (если есть) ───
-                      if ((image?.isNotEmpty ?? false)) ...[
-                        GestureDetector(
-                          onTap: onImageTap,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            child: Builder(
-                              builder: (context) {
-                                final dpr = MediaQuery.of(context).devicePixelRatio;
-                                final maxW = max * 0.9;
-                                final w = (maxW * dpr).round();
-                                return CachedNetworkImage(
-                                  imageUrl: image!,
-                                  width: maxW,
-                                  fit: BoxFit.cover,
-                                  // ── Встроенная анимация fade-in работает по умолчанию
-                                  memCacheWidth: w,
-                                  maxWidthDiskCache: w,
-                                  placeholder: (context, url) => Container(
+                      // ──────────────────────────────────────────
+                      // 🔹 Контент сообщения: маршрут или медиа/текст
+                      // ──────────────────────────────────────────
+                      if (messageType == 'route' && route != null) ...[
+                        ChatRouteCard(
+                          route: route!,
+                          onTap: onRouteTap,
+                          onLongPress: onTap != null
+                              ? () => onTap!(context)
+                              : null,
+                        ),
+                      ] else ...[
+                        // ─── Изображение (если есть) ───
+                        if ((image?.isNotEmpty ?? false)) ...[
+                          GestureDetector(
+                            onTap: onImageTap,
+                            child: ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.xl),
+                              child: Builder(
+                                builder: (context) {
+                                  final dpr = MediaQuery.of(context)
+                                      .devicePixelRatio;
+                                  final maxW = max * 0.9;
+                                  final w = (maxW * dpr).round();
+                                  return CachedNetworkImage(
+                                    imageUrl: image!,
                                     width: maxW,
-                                    height: 200,
-                                    color: AppColors.getSurfaceMutedColor(context),
-                                    child: Center(
-                                      child: CupertinoActivityIndicator(
-                                        radius: 12,
-                                        color: AppColors.getIconSecondaryColor(context),
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) {
-                                    return Container(
+                                    fit: BoxFit.cover,
+                                    // ── Встроенная анимация fade-in работает
+                                    memCacheWidth: w,
+                                    maxWidthDiskCache: w,
+                                    placeholder: (context, url) => Container(
                                       width: maxW,
                                       height: 200,
-                                      color: AppColors.getSurfaceMutedColor(
+                                      color:
+                                          AppColors.getSurfaceMutedColor(
                                         context,
                                       ),
-                                      child: Icon(
-                                        CupertinoIcons.photo,
-                                        size: 40,
-                                        color: AppColors.getIconSecondaryColor(
-                                          context,
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 12,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                );
-                              },
+                                    ),
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        width: maxW,
+                                        height: 200,
+                                        color:
+                                            AppColors.getSurfaceMutedColor(
+                                          context,
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 40,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        if (text.isNotEmpty) const SizedBox(height: 8),
-                      ],
-                      // ─── Текст и время на одной строке ───
-                      if (text.isNotEmpty)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                text,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  height: 1.35,
-                                  color: AppColors.getTextPrimaryColor(context),
+                          if (text.isNotEmpty) const SizedBox(height: 8),
+                        ],
+                        // ─── Текст и время на одной строке ───
+                        if (text.isNotEmpty)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    height: 1.35,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              time,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.getTextTertiaryColor(context),
+                              const SizedBox(width: 6),
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color:
+                                      AppColors.getTextTertiaryColor(
+                                    context,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                      ],
                     ],
                   ),
                 ),
@@ -2467,6 +2595,8 @@ class _BubbleLeft extends StatelessWidget {
 class _BubbleRight extends StatelessWidget {
   final String text;
   final String? image;
+  final String messageType;
+  final ChatRouteInfo? route;
   final String time;
   final double topSpacing;
   final double bottomSpacing;
@@ -2479,11 +2609,14 @@ class _BubbleRight extends StatelessWidget {
   final bool isSelectedForDelete;
   /// Тап по пузырю — открытие меню (Ответить, Копировать, Изменить, Удалить)
   final void Function(BuildContext bubbleContext)? onTap;
+  final VoidCallback? onRouteTap;
   final VoidCallback? onImageTap;
 
   const _BubbleRight({
     required this.text,
     this.image,
+    required this.messageType,
+    this.route,
     required this.time,
     this.topSpacing = 0.0,
     this.bottomSpacing = 0.0,
@@ -2492,6 +2625,7 @@ class _BubbleRight extends StatelessWidget {
     this.onReplyTap,
     this.isSelectedForDelete = false,
     this.onTap,
+    this.onRouteTap,
     this.onImageTap,
   });
 
@@ -2540,83 +2674,111 @@ class _BubbleRight extends StatelessWidget {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                       ],
-                      // ─── Изображение (если есть) ───
-                      if ((image?.isNotEmpty ?? false)) ...[
-                        GestureDetector(
-                          onTap: onImageTap,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppRadius.xl),
-                            child: Builder(
-                              builder: (context) {
-                                final dpr = MediaQuery.of(context).devicePixelRatio;
-                                final maxW = max * 0.9;
-                                final w = (maxW * dpr).round();
-                                return CachedNetworkImage(
-                                  imageUrl: image!,
-                                  width: maxW,
-                                  fit: BoxFit.cover,
-                                  // ── Встроенная анимация fade-in работает по умолчанию
-                                  memCacheWidth: w,
-                                  maxWidthDiskCache: w,
-                                  placeholder: (context, url) => Container(
+                      // ──────────────────────────────────────────
+                      // 🔹 Контент сообщения: маршрут или медиа/текст
+                      // ──────────────────────────────────────────
+                      if (messageType == 'route' && route != null) ...[
+                        ChatRouteCard(
+                          route: route!,
+                          onTap: onRouteTap,
+                          onLongPress: onTap != null
+                              ? () => onTap!(context)
+                              : null,
+                        ),
+                      ] else ...[
+                        // ─── Изображение (если есть) ───
+                        if ((image?.isNotEmpty ?? false)) ...[
+                          GestureDetector(
+                            onTap: onImageTap,
+                            child: ClipRRect(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.xl),
+                              child: Builder(
+                                builder: (context) {
+                                  final dpr = MediaQuery.of(context)
+                                      .devicePixelRatio;
+                                  final maxW = max * 0.9;
+                                  final w = (maxW * dpr).round();
+                                  return CachedNetworkImage(
+                                    imageUrl: image!,
                                     width: maxW,
-                                    height: 200,
-                                    color: AppColors.getSurfaceMutedColor(context),
-                                    child: Center(
-                                      child: CupertinoActivityIndicator(
-                                        radius: 12,
-                                        color: AppColors.getIconSecondaryColor(context),
-                                      ),
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) {
-                                    return Container(
+                                    fit: BoxFit.cover,
+                                    // ── Встроенная анимация fade-in работает
+                                    memCacheWidth: w,
+                                    maxWidthDiskCache: w,
+                                    placeholder: (context, url) => Container(
                                       width: maxW,
                                       height: 200,
-                                      color: AppColors.getSurfaceMutedColor(
+                                      color:
+                                          AppColors.getSurfaceMutedColor(
                                         context,
                                       ),
-                                      child: Icon(
-                                        CupertinoIcons.photo,
-                                        size: 40,
-                                        color: AppColors.getIconSecondaryColor(
-                                          context,
+                                      child: Center(
+                                        child: CupertinoActivityIndicator(
+                                          radius: 12,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  },
-                                );
-                              },
+                                    ),
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        width: maxW,
+                                        height: 200,
+                                        color:
+                                            AppColors.getSurfaceMutedColor(
+                                          context,
+                                        ),
+                                        child: Icon(
+                                          CupertinoIcons.photo,
+                                          size: 40,
+                                          color:
+                                              AppColors.getIconSecondaryColor(
+                                            context,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        if (text.isNotEmpty) const SizedBox(height: 8),
-                      ],
-                      // ─── Текст и время на одной строке ───
-                      if (text.isNotEmpty)
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                text,
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  height: 1.35,
-                                  color: AppColors.getTextPrimaryColor(context),
+                          if (text.isNotEmpty) const SizedBox(height: 8),
+                        ],
+                        // ─── Текст и время на одной строке ───
+                        if (text.isNotEmpty)
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  text,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    height: 1.35,
+                                    color: AppColors.getTextPrimaryColor(
+                                      context,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              time,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.getTextTertiaryColor(context),
+                              const SizedBox(width: 6),
+                              Text(
+                                time,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color:
+                                      AppColors.getTextTertiaryColor(
+                                    context,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
+                      ],
                     ],
                   ),
                 ),
